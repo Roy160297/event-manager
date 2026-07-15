@@ -71,3 +71,23 @@ export async function deleteGuest(eventId: string, guestId: string) {
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/guests`);
 }
+
+export async function updateGuest(eventId: string, guestId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const name = String(formData.get("name") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const rsvpStatus = String(formData.get("rsvp_status") ?? "pending") as RsvpStatus;
+  const partySize = Number(formData.get("party_size") ?? 1) || 1;
+  const seatingTable = String(formData.get("seating_table") ?? "").trim() || null;
+
+  if (!name) throw new Error("שם האורח הוא שדה חובה");
+
+  const { error } = await supabase
+    .from("guests")
+    .update({ name, phone, rsvp_status: rsvpStatus, party_size: partySize, seating_table: seatingTable })
+    .eq("id", guestId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/guests`);
+}

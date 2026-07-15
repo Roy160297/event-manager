@@ -1,8 +1,13 @@
+import { Fragment } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { deleteGuest } from "./actions";
+import { deleteGuest, updateGuest } from "./actions";
 import GuestCsvImport from "./GuestCsvImport";
+import { TrashIcon } from "@/components/icons";
+import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { RSVP_STATUS_LABELS } from "@/lib/labels";
-import type { GuestRow } from "@/lib/types";
+import type { GuestRow, RsvpStatus } from "@/lib/types";
+
+const RSVP_STATUSES = Object.keys(RSVP_STATUS_LABELS) as RsvpStatus[];
 
 export default async function GuestsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = await params;
@@ -61,25 +66,81 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
                   "use server";
                   await deleteGuest(eventId, guest.id);
                 }
+                async function saveEdit(formData: FormData) {
+                  "use server";
+                  await updateGuest(eventId, guest.id, formData);
+                }
+                const cellClass = "border-b border-neutral-100 p-2 dark:border-neutral-900";
+                const fieldClass = "rounded-md border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-900";
                 return (
-                  <tr key={guest.id}>
-                    <td className="border-b border-neutral-100 p-2 dark:border-neutral-900">{guest.name}</td>
-                    <td className="border-b border-neutral-100 p-2 dark:border-neutral-900">{guest.phone ?? "—"}</td>
-                    <td className="border-b border-neutral-100 p-2 dark:border-neutral-900">
-                      {RSVP_STATUS_LABELS[guest.rsvp_status]}
-                    </td>
-                    <td className="border-b border-neutral-100 p-2 dark:border-neutral-900">{guest.party_size}</td>
-                    <td className="border-b border-neutral-100 p-2 dark:border-neutral-900">
-                      {guest.seating_table ?? "—"}
-                    </td>
-                    <td className="border-b border-neutral-100 p-2 dark:border-neutral-900">
-                      <form action={remove}>
-                        <button type="submit" className="text-red-600 hover:underline">
-                          מחק
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
+                  <Fragment key={guest.id}>
+                    <tr>
+                      <td className={cellClass}>{guest.name}</td>
+                      <td className={cellClass}>{guest.phone ?? "—"}</td>
+                      <td className={cellClass}>{RSVP_STATUS_LABELS[guest.rsvp_status]}</td>
+                      <td className={cellClass}>{guest.party_size}</td>
+                      <td className={cellClass}>{guest.seating_table ?? "—"}</td>
+                      <td className={cellClass}>
+                        <form action={remove}>
+                          <button
+                            type="submit"
+                            title="מחק אורח"
+                            className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                            <span className="sr-only">מחק</span>
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colSpan={6} className={`${cellClass} bg-neutral-50/50 dark:bg-neutral-900/50`}>
+                        <details>
+                          <summary className="cursor-pointer text-xs font-medium text-neutral-500">ערוך אורח</summary>
+                          <SaveDetailsForm action={saveEdit} className="mt-2 flex flex-wrap items-end gap-2">
+                            <label className="flex flex-col gap-1 text-xs">
+                              <span>שם</span>
+                              <input name="name" defaultValue={guest.name} required className={fieldClass} />
+                            </label>
+                            <label className="flex flex-col gap-1 text-xs">
+                              <span>טלפון</span>
+                              <input name="phone" defaultValue={guest.phone ?? ""} className={fieldClass} />
+                            </label>
+                            <label className="flex flex-col gap-1 text-xs">
+                              <span>סטטוס</span>
+                              <select name="rsvp_status" defaultValue={guest.rsvp_status} className={fieldClass}>
+                                {RSVP_STATUSES.map((status) => (
+                                  <option key={status} value={status}>
+                                    {RSVP_STATUS_LABELS[status]}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="flex flex-col gap-1 text-xs">
+                              <span>סועדים</span>
+                              <input
+                                type="number"
+                                name="party_size"
+                                min={1}
+                                defaultValue={guest.party_size}
+                                className={`${fieldClass} w-20`}
+                              />
+                            </label>
+                            <label className="flex flex-col gap-1 text-xs">
+                              <span>שולחן</span>
+                              <input name="seating_table" defaultValue={guest.seating_table ?? ""} className={fieldClass} />
+                            </label>
+                            <button
+                              type="submit"
+                              className="rounded-full border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                            >
+                              שמור
+                            </button>
+                          </SaveDetailsForm>
+                        </details>
+                      </td>
+                    </tr>
+                  </Fragment>
                 );
               })}
             </tbody>

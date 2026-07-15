@@ -9,11 +9,22 @@ export async function createTask(eventId: string, formData: FormData) {
 
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
-  const assigneeId = String(formData.get("assignee_id") ?? "") || null;
-  const dueDate = String(formData.get("due_date") ?? "") || null;
+  const assigneeId = String(formData.get("assignee_id") ?? "").trim() || null;
+  let dueDate = String(formData.get("due_date") ?? "").trim() || null;
   const priority = String(formData.get("priority") ?? "normal") as TaskPriority;
 
-  if (!title) throw new Error("כותרת המשימה היא שדה חובה");
+  if (!title || !assigneeId) {
+    throw new Error("כותרת ואחראי הם שדות חובה");
+  }
+
+  if (!dueDate) {
+    const { data: event } = await supabase
+      .from("events")
+      .select("event_date")
+      .eq("id", eventId)
+      .single();
+    dueDate = event?.event_date ?? null;
+  }
 
   const { error } = await supabase.from("tasks").insert({
     event_id: eventId,
@@ -31,6 +42,37 @@ export async function createTask(eventId: string, formData: FormData) {
 export async function updateTaskStatus(eventId: string, taskId: string, status: TaskStatus) {
   const supabase = await createClient();
   const { error } = await supabase.from("tasks").update({ status }).eq("id", taskId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
+export async function updateTask(eventId: string, taskId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const assigneeId = String(formData.get("assignee_id") ?? "").trim() || null;
+  let dueDate = String(formData.get("due_date") ?? "").trim() || null;
+  const priority = String(formData.get("priority") ?? "normal") as TaskPriority;
+
+  if (!title || !assigneeId) {
+    throw new Error("כותרת ואחראי הם שדות חובה");
+  }
+
+  if (!dueDate) {
+    const { data: event } = await supabase
+      .from("events")
+      .select("event_date")
+      .eq("id", eventId)
+      .single();
+    dueDate = event?.event_date ?? null;
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({ title, description, assignee_id: assigneeId, due_date: dueDate, priority })
+    .eq("id", taskId);
+
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/tasks`);
 }
