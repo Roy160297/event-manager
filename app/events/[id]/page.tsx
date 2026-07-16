@@ -279,7 +279,10 @@ export default async function EventOverviewPage({
               return (
                 <li key={manager.id} className="flex flex-col gap-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">{manager.name}</span>
+                    <span className="text-sm">
+                      <span className="font-medium">{manager.name}</span>
+                      <span className="text-foreground/60"> · מנהל/ת אירוע</span>
+                    </span>
                     <form action={removeManagerAndRefresh}>
                       <input type="hidden" name="staff_id" value={manager.id} />
                       <ConfirmSubmitButton

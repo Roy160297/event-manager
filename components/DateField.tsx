@@ -39,6 +39,19 @@ export function DateSelects({
 }) {
   const [local, setLocal] = useState(() => parseDate(value));
 
+  // Both the native desktop input and this select-based picker share one
+  // value, so if the native input changes the date, resync here too (adjusted
+  // during render, not in an effect, per React's guidance for state derived
+  // from props). Only resync when they actually disagree, so this doesn't
+  // clobber an in-progress partial pick (whose combined value is still "").
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
+    if (combine(local.y, local.m, local.d) !== value) {
+      setLocal(parseDate(value));
+    }
+  }
+
   function update(next: Partial<typeof local>) {
     const merged = { ...local, ...next };
     setLocal(merged);
@@ -98,16 +111,54 @@ export function DateSelects({
   );
 }
 
+const nativeInputClass = "rounded-md border border-border-classic bg-surface px-3 py-2 text-sm";
+
+// Native <input type="date"> actually renders fine on desktop browsers (the
+// icon + compact "16/07/2026" look), so the OS-locale problem above only
+// bites on phones. Show the real native input on wider screens and fall back
+// to the select-based picker only below the sm breakpoint.
+export function DateInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  return (
+    <>
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`hidden sm:block ${className ?? nativeInputClass}`}
+      />
+      <div className="sm:hidden">
+        <DateSelects value={value} onChange={onChange} />
+      </div>
+    </>
+  );
+}
+
 // Drop-in replacement for <input type="date" name="..." defaultValue="..." />
 // inside a plain <form action={serverAction}> - keeps its own state and
 // mirrors it into a hidden input so FormData picks it up on submit.
-export function DateField({ name, defaultValue }: { name: string; defaultValue?: string }) {
+export function DateField({
+  name,
+  defaultValue,
+  className,
+}: {
+  name: string;
+  defaultValue?: string;
+  className?: string;
+}) {
   const [value, setValue] = useState(defaultValue ?? "");
 
   return (
     <>
       <input type="hidden" name={name} value={value} />
-      <DateSelects value={value} onChange={setValue} />
+      <DateInput value={value} onChange={setValue} className={className} />
     </>
   );
 }

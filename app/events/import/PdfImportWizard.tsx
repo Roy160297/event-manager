@@ -5,8 +5,8 @@ import { useRef, useState } from "react";
 import { addManagerFromImport, createEventFromPdfImport, parsePdfImport } from "./actions";
 import type { PdfImportDraft, ScheduleItemDraft, SupplierDraft } from "@/lib/pdfImport";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
-import { DateSelects } from "@/components/DateField";
-import { TimeSelects } from "@/components/TimeField";
+import { DateInput } from "@/components/DateField";
+import { TimeInput } from "@/components/TimeField";
 import type { EventType, StaffRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -209,17 +209,17 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
 
         <label className={labelClass}>
           <span className="font-medium">תאריך</span>
-          <DateSelects value={draft.event_date ?? ""} onChange={(v) => updateField("event_date", v || null)} />
+          <DateInput value={draft.event_date ?? ""} onChange={(v) => updateField("event_date", v || null)} />
         </label>
 
         <label className={labelClass}>
           <span className="font-medium">שעת התחלה</span>
-          <TimeSelects value={draft.start_time ?? ""} onChange={(v) => updateField("start_time", v || null)} />
+          <TimeInput value={draft.start_time ?? ""} onChange={(v) => updateField("start_time", v || null)} />
         </label>
 
         <label className={labelClass}>
           <span className="font-medium">שעת סיום</span>
-          <TimeSelects value={draft.end_time ?? ""} onChange={(v) => updateField("end_time", v || null)} />
+          <TimeInput value={draft.end_time ?? ""} onChange={(v) => updateField("end_time", v || null)} />
         </label>
 
         <label className={labelClass}>
@@ -349,7 +349,7 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
         <p className="font-medium">לוז אירוע</p>
         {draft.schedule.map((item, index) => (
           <div key={index} className="flex items-center gap-2">
-            <TimeSelects
+            <TimeInput
               value={item.approx_time}
               onChange={(v) => updateScheduleRow(index, { approx_time: v })}
             />

@@ -63,16 +63,56 @@ export function TimeSelects({
   );
 }
 
+const nativeInputClass = "rounded-md border border-border-classic bg-surface px-3 py-2 text-sm";
+
+// Native <input type="time"> actually renders fine on desktop browsers (the
+// icon + compact "19:30" look), so the OS-locale problem above only bites on
+// phones. Show the real native input on wider screens and fall back to the
+// select-based picker only below the sm breakpoint.
+export function TimeInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  return (
+    <>
+      <input
+        type="time"
+        lang="he"
+        step={300}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`hidden sm:block ${className ?? nativeInputClass}`}
+      />
+      <div className="sm:hidden">
+        <TimeSelects value={value} onChange={onChange} />
+      </div>
+    </>
+  );
+}
+
 // Drop-in replacement for <input type="time" name="..." defaultValue="..." />
 // inside a plain <form action={serverAction}> - keeps its own state and
 // mirrors it into a hidden input so FormData picks it up on submit.
-export function TimeField({ name, defaultValue }: { name: string; defaultValue?: string }) {
+export function TimeField({
+  name,
+  defaultValue,
+  className,
+}: {
+  name: string;
+  defaultValue?: string;
+  className?: string;
+}) {
   const [value, setValue] = useState(defaultValue ?? "");
 
   return (
     <>
       <input type="hidden" name={name} value={value} />
-      <TimeSelects value={value} onChange={setValue} />
+      <TimeInput value={value} onChange={setValue} className={className} />
     </>
   );
 }
