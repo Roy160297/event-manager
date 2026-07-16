@@ -14,6 +14,7 @@ import { EVENT_STATUS_LABELS, EVENT_STATUS_OPTIONS, EVENT_TYPE_LABELS } from "@/
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
+import { TimeField } from "@/components/TimeField";
 import type { EventRow, EventStatus, EventSupplierRow, EventType, StaffRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -158,12 +159,12 @@ export default async function EventOverviewPage({
           <div className="flex flex-col gap-4">
             <label className={labelClass}>
               <span className="font-medium">שעת התחלה</span>
-              <input type="time" lang="he" name="start_time" step={300} defaultValue={event?.start_time ?? ""} className={inputClass} />
+              <TimeField name="start_time" defaultValue={event?.start_time ?? ""} />
             </label>
 
             <label className={labelClass}>
               <span className="font-medium">שעת סיום</span>
-              <input type="time" lang="he" name="end_time" step={300} defaultValue={event?.end_time ?? ""} className={inputClass} />
+              <TimeField name="end_time" defaultValue={event?.end_time ?? ""} />
             </label>
           </div>
 

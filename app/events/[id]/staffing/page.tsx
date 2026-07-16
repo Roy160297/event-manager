@@ -12,11 +12,20 @@ import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import TableSketchImportWizard from "./TableSketchImportWizard";
 import TableSketchPhoto from "./TableSketchPhoto";
-import type { EventRow, GuestRow, LocationRow, LocationType, WaiterAssignmentRow, WaiterRow } from "@/lib/types";
+import type {
+  EventRow,
+  GuestRow,
+  LocationRow,
+  LocationType,
+  WaiterAssignmentRow,
+  WaiterRole,
+  WaiterRow,
+} from "@/lib/types";
 
 const LOCATION_TYPES = Object.keys(LOCATION_TYPE_LABELS) as LocationType[];
+const WAITER_ROLES = Object.keys(WAITER_ROLE_LABELS) as WaiterRole[];
 
-type AssignmentWithWaiter = WaiterAssignmentRow & { waiters: Pick<WaiterRow, "id" | "name" | "role"> | null };
+type AssignmentWithWaiter = WaiterAssignmentRow & { waiters: Pick<WaiterRow, "id" | "name"> | null };
 
 export default async function StaffingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = await params;
@@ -36,10 +45,10 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
         .select("seating_table, party_size")
         .eq("event_id", eventId)
         .returns<Pick<GuestRow, "seating_table" | "party_size">[]>(),
-      supabase.from("waiters").select("*").order("role").order("name").returns<WaiterRow[]>(),
+      supabase.from("waiters").select("*").order("name").returns<WaiterRow[]>(),
       supabase
         .from("waiter_assignments")
-        .select("*, waiters(id, name, role)")
+        .select("*, waiters(id, name)")
         .eq("event_id", eventId)
         .returns<AssignmentWithWaiter[]>(),
       supabase
@@ -171,7 +180,12 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
           }
           async function addAssignment(formData: FormData) {
             "use server";
-            await assignWaiter(eventId, location.id, String(formData.get("waiter_id") ?? ""));
+            await assignWaiter(
+              eventId,
+              location.id,
+              String(formData.get("waiter_id") ?? ""),
+              (String(formData.get("role") ?? "waiter")) as WaiterRole,
+            );
           }
           async function saveLocationEdit(formData: FormData) {
             "use server";
@@ -230,7 +244,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                         title="הסר שיבוץ"
                       >
                         {assignment.waiters?.name}
-                        {assignment.waiters?.role === "runner" ? ` (${WAITER_ROLE_LABELS.runner})` : ""} ✕
+                        {assignment.role === "runner" ? ` (${WAITER_ROLE_LABELS.runner})` : ""} ✕
                       </button>
                     </form>
                   );
@@ -248,7 +262,18 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                       </option>
                       {availableWaiters.map((waiter) => (
                         <option key={waiter.id} value={waiter.id}>
-                          {waiter.name} ({WAITER_ROLE_LABELS[waiter.role]})
+                          {waiter.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      name="role"
+                      defaultValue="waiter"
+                      className="rounded-md border border-border-classic bg-surface px-2 py-1 text-sm"
+                    >
+                      {WAITER_ROLES.map((role) => (
+                        <option key={role} value={role}>
+                          {WAITER_ROLE_LABELS[role]}
                         </option>
                       ))}
                     </select>

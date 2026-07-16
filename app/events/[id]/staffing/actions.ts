@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText } from "@/lib/pdfImport";
 import { parseTableSketchDraft, type TableSketchDraft } from "@/lib/tableSketchImport";
-import type { LocationType } from "@/lib/types";
+import type { LocationType, WaiterRole } from "@/lib/types";
 
 export async function createLocation(eventId: string, formData: FormData) {
   const supabase = await createClient();
@@ -192,12 +192,12 @@ export async function updateLocation(eventId: string, locationId: string, formDa
   revalidatePath(`/events/${eventId}/staffing`);
 }
 
-export async function assignWaiter(eventId: string, locationId: string, waiterId: string) {
+export async function assignWaiter(eventId: string, locationId: string, waiterId: string, role: WaiterRole) {
   if (!waiterId) return;
   const supabase = await createClient();
   const { error } = await supabase
     .from("waiter_assignments")
-    .insert({ event_id: eventId, location_id: locationId, waiter_id: waiterId });
+    .insert({ event_id: eventId, location_id: locationId, waiter_id: waiterId, role });
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/staffing`);
 }

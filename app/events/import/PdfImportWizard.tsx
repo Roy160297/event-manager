@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { addManagerFromImport, createEventFromPdfImport, parsePdfImport } from "./actions";
 import type { PdfImportDraft, ScheduleItemDraft, SupplierDraft } from "@/lib/pdfImport";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { TimeSelects } from "@/components/TimeField";
 import type { EventType, StaffRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -218,24 +219,12 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
 
         <label className={labelClass}>
           <span className="font-medium">שעת התחלה</span>
-          <input
-            type="time"
-            lang="he"
-            value={draft.start_time ?? ""}
-            onChange={(e) => updateField("start_time", e.target.value || null)}
-            className={inputClass}
-          />
+          <TimeSelects value={draft.start_time ?? ""} onChange={(v) => updateField("start_time", v || null)} />
         </label>
 
         <label className={labelClass}>
           <span className="font-medium">שעת סיום</span>
-          <input
-            type="time"
-            lang="he"
-            value={draft.end_time ?? ""}
-            onChange={(e) => updateField("end_time", e.target.value || null)}
-            className={inputClass}
-          />
+          <TimeSelects value={draft.end_time ?? ""} onChange={(v) => updateField("end_time", v || null)} />
         </label>
 
         <label className={labelClass}>
@@ -365,12 +354,9 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
         <p className="font-medium">לוז אירוע</p>
         {draft.schedule.map((item, index) => (
           <div key={index} className="flex items-center gap-2">
-            <input
-              type="time"
-              lang="he"
+            <TimeSelects
               value={item.approx_time}
-              onChange={(e) => updateScheduleRow(index, { approx_time: e.target.value })}
-              className={inputClass}
+              onChange={(v) => updateScheduleRow(index, { approx_time: v })}
             />
             <input
               value={item.label}

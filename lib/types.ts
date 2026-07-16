@@ -100,7 +100,6 @@ export interface WaiterRow {
   name: string;
   phone: string | null;
   notes: string | null;
-  role: WaiterRole;
   created_at: string;
 }
 
@@ -117,4 +116,5 @@ export interface WaiterAssignmentRow {
   event_id: string;
   waiter_id: string;
   location_id: string;
+  role: WaiterRole;
 }

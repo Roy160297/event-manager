@@ -2,10 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createWaiter, deleteWaiter, updateWaiter } from "./actions";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
-import { WAITER_ROLE_LABELS } from "@/lib/labels";
-import type { WaiterRole, WaiterRow } from "@/lib/types";
+import type { WaiterRow } from "@/lib/types";
 
-const ROLES = Object.keys(WAITER_ROLE_LABELS) as WaiterRole[];
 const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
 
 export default async function WaitersPage() {
@@ -16,7 +14,8 @@ export default async function WaitersPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">מלצרים</h1>
       <p className="text-sm text-foreground/60">
-        רשימת המלצרים היא מאגר קבוע המשמש לשיבוץ בכל האירועים — הוסיפו כאן פעם אחת.
+        רשימת המלצרים היא מאגר קבוע המשמש לשיבוץ בכל האירועים — הוסיפו כאן פעם אחת. תפקיד (מלצר/ראנר)
+        נבחר בעת השיבוץ לכל אירוע בנפרד.
       </p>
 
       <form
@@ -26,16 +25,6 @@ export default async function WaitersPage() {
         <label className="flex flex-1 flex-col gap-1 text-sm">
           <span>שם</span>
           <input name="name" required className={inputClass} />
-        </label>
-        <label className="flex flex-1 flex-col gap-1 text-sm">
-          <span>סוג</span>
-          <select name="role" defaultValue="waiter" className={inputClass}>
-            {ROLES.map((role) => (
-              <option key={role} value={role}>
-                {WAITER_ROLE_LABELS[role]}
-              </option>
-            ))}
-          </select>
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
           <span>טלפון</span>
@@ -74,12 +63,7 @@ export default async function WaitersPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">
-                    {waiter.name}{" "}
-                    <span className="text-sm font-normal text-foreground/60">
-                      ({WAITER_ROLE_LABELS[waiter.role]})
-                    </span>
-                  </p>
+                  <p className="font-medium">{waiter.name}</p>
                   <p className="text-sm text-foreground/60">
                     {waiter.phone ?? "—"}
                     {waiter.notes ? ` · ${waiter.notes}` : ""}
@@ -102,16 +86,6 @@ export default async function WaitersPage() {
                   <label className="flex flex-1 flex-col gap-1 text-sm">
                     <span>שם</span>
                     <input name="name" defaultValue={waiter.name} required className={inputClass} />
-                  </label>
-                  <label className="flex flex-1 flex-col gap-1 text-sm">
-                    <span>סוג</span>
-                    <select name="role" defaultValue={waiter.role} className={inputClass}>
-                      {ROLES.map((role) => (
-                        <option key={role} value={role}>
-                          {WAITER_ROLE_LABELS[role]}
-                        </option>
-                      ))}
-                    </select>
                   </label>
                   <label className="flex flex-1 flex-col gap-1 text-sm">
                     <span>טלפון</span>
