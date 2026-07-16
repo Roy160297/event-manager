@@ -6,7 +6,6 @@ import { addManagerFromImport, createEventFromPdfImport, parsePdfImport } from "
 import type { PdfImportDraft, ScheduleItemDraft, SupplierDraft } from "@/lib/pdfImport";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
 import { TimeSelects } from "@/components/TimeField";
-import { DateSelects } from "@/components/DateField";
 import type { EventType, StaffRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -209,7 +208,13 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
 
         <label className={labelClass}>
           <span className="font-medium">תאריך</span>
-          <DateSelects value={draft.event_date ?? ""} onChange={(v) => updateField("event_date", v || null)} />
+          <input
+            type="date"
+            value={draft.event_date ?? ""}
+            onChange={(e) => updateField("event_date", e.target.value || null)}
+            required
+            className={inputClass}
+          />
         </label>
 
         <label className={labelClass}>
