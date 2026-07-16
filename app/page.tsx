@@ -16,9 +16,9 @@ export default async function EventsDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-serif text-2xl font-bold">אירועים</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/events/import"
             className="rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
@@ -56,11 +56,14 @@ export default async function EventsDashboard() {
           return (
             <li
               key={event.id}
-              className="flex items-center justify-between rounded-lg border border-border-classic bg-surface p-4 hover:border-accent"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-classic bg-surface p-4 hover:border-accent"
             >
-              <Link href={`/events/${event.id}`} className="flex flex-1 items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium">{event.name}</p>
+              <Link
+                href={`/events/${event.id}`}
+                className="flex flex-1 flex-wrap items-center justify-between gap-3 min-w-0"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{event.name}</p>
                   <p className="text-sm text-foreground/60">
                     {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
                   </p>
