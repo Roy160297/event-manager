@@ -50,7 +50,7 @@ export default function TableSketchPhoto({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-medium">סקיצת פריסת שולחנות</p>
         <div className="flex gap-2">
@@ -65,7 +65,7 @@ export default function TableSketchPhoto({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isPending}
-            className="rounded-full border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft disabled:opacity-50"
           >
             {isPending ? "מעלה..." : sketchUrl ? "החלף תמונה" : "העלה תמונת סקיצה"}
           </button>
@@ -74,7 +74,7 @@ export default function TableSketchPhoto({
               type="button"
               onClick={handleRemove}
               disabled={isPending}
-              className="rounded-full border border-neutral-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-neutral-700"
+              className="rounded-full border border-border-classic px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
               הסר
             </button>
@@ -90,7 +90,7 @@ export default function TableSketchPhoto({
             <embed
               src={sketchUrl}
               type="application/pdf"
-              className="h-[600px] w-full rounded-md border border-neutral-200 dark:border-neutral-800"
+              className="h-[600px] w-full rounded-md border border-border-classic"
             />
             <a href={sketchUrl} target="_blank" rel="noopener noreferrer" className="self-start text-sm underline">
               אם הקובץ לא מוצג כראוי - פתח/י אותו בכרטיסייה חדשה
@@ -102,12 +102,12 @@ export default function TableSketchPhoto({
             <img
               src={sketchUrl}
               alt="סקיצת פריסת שולחנות"
-              className="max-h-[600px] w-full rounded-md border border-neutral-200 object-contain dark:border-neutral-800"
+              className="max-h-[600px] w-full rounded-md border border-border-classic object-contain"
             />
           </a>
         )
       ) : (
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-foreground/60">
           העלו תמונה או PDF של סקיצת הפריסה כדי שיהיה ניתן לראות אותה כאן בזמן שיבוץ המלצרים.
         </p>
       )}

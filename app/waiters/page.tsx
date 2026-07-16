@@ -6,6 +6,7 @@ import { WAITER_ROLE_LABELS } from "@/lib/labels";
 import type { WaiterRole, WaiterRow } from "@/lib/types";
 
 const ROLES = Object.keys(WAITER_ROLE_LABELS) as WaiterRole[];
+const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
 
 export default async function WaitersPage() {
   const supabase = await createClient();
@@ -14,29 +15,21 @@ export default async function WaitersPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">מלצרים</h1>
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-foreground/60">
         רשימת המלצרים היא מאגר קבוע המשמש לשיבוץ בכל האירועים — הוסיפו כאן פעם אחת.
       </p>
 
       <form
         action={createWaiter}
-        className="flex flex-col gap-3 rounded-lg border border-neutral-200 p-4 sm:flex-row sm:items-end dark:border-neutral-800"
+        className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4 sm:flex-row sm:items-end"
       >
         <label className="flex flex-1 flex-col gap-1 text-sm">
           <span>שם</span>
-          <input
-            name="name"
-            required
-            className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          />
+          <input name="name" required className={inputClass} />
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
           <span>סוג</span>
-          <select
-            name="role"
-            defaultValue="waiter"
-            className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          >
+          <select name="role" defaultValue="waiter" className={inputClass}>
             {ROLES.map((role) => (
               <option key={role} value={role}>
                 {WAITER_ROLE_LABELS[role]}
@@ -46,28 +39,22 @@ export default async function WaitersPage() {
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
           <span>טלפון</span>
-          <input
-            name="phone"
-            className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          />
+          <input name="phone" className={inputClass} />
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
           <span>הערות</span>
-          <input
-            name="notes"
-            className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          />
+          <input name="notes" className={inputClass} />
         </label>
         <button
           type="submit"
-          className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 dark:bg-white dark:text-black"
+          className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
         >
           הוסף מלצר
         </button>
       </form>
 
       {(!waiters || waiters.length === 0) && (
-        <p className="text-neutral-500">עדיין לא נוספו מלצרים למאגר.</p>
+        <p className="text-foreground/60">עדיין לא נוספו מלצרים למאגר.</p>
       )}
 
       <ul className="flex flex-col gap-2">
@@ -83,17 +70,17 @@ export default async function WaitersPage() {
           return (
             <li
               key={waiter.id}
-              className="flex flex-col gap-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+              className="flex flex-col gap-2 rounded-lg border border-border-classic bg-surface p-4"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">
                     {waiter.name}{" "}
-                    <span className="text-sm font-normal text-neutral-500">
+                    <span className="text-sm font-normal text-foreground/60">
                       ({WAITER_ROLE_LABELS[waiter.role]})
                     </span>
                   </p>
-                  <p className="text-sm text-neutral-500">
+                  <p className="text-sm text-foreground/60">
                     {waiter.phone ?? "—"}
                     {waiter.notes ? ` · ${waiter.notes}` : ""}
                   </p>
@@ -110,24 +97,15 @@ export default async function WaitersPage() {
                 </form>
               </div>
               <details>
-                <summary className="cursor-pointer text-xs font-medium text-neutral-500">ערוך פרטים</summary>
+                <summary className="cursor-pointer text-xs font-medium text-foreground/60">ערוך פרטים</summary>
                 <SaveDetailsForm action={saveEdit} className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end">
                   <label className="flex flex-1 flex-col gap-1 text-sm">
                     <span>שם</span>
-                    <input
-                      name="name"
-                      defaultValue={waiter.name}
-                      required
-                      className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-                    />
+                    <input name="name" defaultValue={waiter.name} required className={inputClass} />
                   </label>
                   <label className="flex flex-1 flex-col gap-1 text-sm">
                     <span>סוג</span>
-                    <select
-                      name="role"
-                      defaultValue={waiter.role}
-                      className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-                    >
+                    <select name="role" defaultValue={waiter.role} className={inputClass}>
                       {ROLES.map((role) => (
                         <option key={role} value={role}>
                           {WAITER_ROLE_LABELS[role]}
@@ -137,23 +115,15 @@ export default async function WaitersPage() {
                   </label>
                   <label className="flex flex-1 flex-col gap-1 text-sm">
                     <span>טלפון</span>
-                    <input
-                      name="phone"
-                      defaultValue={waiter.phone ?? ""}
-                      className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-                    />
+                    <input name="phone" defaultValue={waiter.phone ?? ""} className={inputClass} />
                   </label>
                   <label className="flex flex-1 flex-col gap-1 text-sm">
                     <span>הערות</span>
-                    <input
-                      name="notes"
-                      defaultValue={waiter.notes ?? ""}
-                      className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-                    />
+                    <input name="notes" defaultValue={waiter.notes ?? ""} className={inputClass} />
                   </label>
                   <button
                     type="submit"
-                    className="rounded-full border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                    className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
                   >
                     שמור
                   </button>

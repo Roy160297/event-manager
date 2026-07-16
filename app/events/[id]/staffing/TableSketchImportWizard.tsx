@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { createLocationsFromSketch, parseTableSketchImport } from "./actions";
 import type { TableSketchDraft } from "@/lib/tableSketchImport";
 
-const inputClass = "rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900";
+const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
 
 export default function TableSketchImportWizard({ eventId }: { eventId: string }) {
   const router = useRouter();
@@ -73,7 +73,7 @@ export default function TableSketchImportWizard({ eventId }: { eventId: string }
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-full border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+        className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
       >
         ייבוא סקיצת שולחנות מ-iPlan
       </button>
@@ -81,7 +81,7 @@ export default function TableSketchImportWizard({ eventId }: { eventId: string }
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
       {!draft ? (
         <form onSubmit={handleUpload} className="flex flex-col gap-3">
           <p className="text-sm font-medium">העלאת סקיצת שולחנות (PDF מ-iPlan)</p>
@@ -98,25 +98,25 @@ export default function TableSketchImportWizard({ eventId }: { eventId: string }
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-full border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
             >
               בחר קובץ
             </button>
-            <span className="text-sm text-neutral-500">{fileName ?? "לא נבחר קובץ"}</span>
+            <span className="text-sm text-foreground/60">{fileName ?? "לא נבחר קובץ"}</span>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={isPending || !fileName}
-              className="self-start rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 dark:bg-white dark:text-black"
+              className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
             >
               {isPending ? "מעבד..." : "העלה קובץ"}
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded-full border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
             >
               ביטול
             </button>
@@ -135,7 +135,7 @@ export default function TableSketchImportWizard({ eventId }: { eventId: string }
           <p className="text-sm font-medium">בדיקת הנתונים לפני יצירת השולחנות והעמדות</p>
 
           <div>
-            <p className="mb-2 text-sm font-medium text-neutral-500">שולחנות ({draft.tables.length})</p>
+            <p className="mb-2 text-sm font-medium text-foreground/60">שולחנות ({draft.tables.length})</p>
             <ul className="flex flex-col gap-2">
               {draft.tables.map((table, index) => (
                 <li key={index} className="flex items-center gap-2">
@@ -166,7 +166,7 @@ export default function TableSketchImportWizard({ eventId }: { eventId: string }
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-medium text-neutral-500">עמדות אוכל ({draft.foodStands.length})</p>
+            <p className="mb-2 text-sm font-medium text-foreground/60">עמדות אוכל ({draft.foodStands.length})</p>
             <ul className="flex flex-col gap-2">
               {draft.foodStands.map((stand, index) => (
                 <li key={index} className="flex items-center gap-2">
@@ -194,7 +194,7 @@ export default function TableSketchImportWizard({ eventId }: { eventId: string }
               type="button"
               onClick={handleConfirm}
               disabled={isPending}
-              className="self-start rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 dark:bg-white dark:text-black"
+              className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
             >
               {isPending ? "יוצר..." : "צור שולחנות ועמדות"}
             </button>
@@ -204,7 +204,7 @@ export default function TableSketchImportWizard({ eventId }: { eventId: string }
                 setDraft(null);
                 setFileName(null);
               }}
-              className="rounded-full border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
             >
               ביטול
             </button>

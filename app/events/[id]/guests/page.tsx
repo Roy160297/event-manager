@@ -29,22 +29,22 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
       <GuestCsvImport eventId={eventId} />
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-          <p className="text-sm text-neutral-500">מאשרים הגעה</p>
+        <div className="rounded-lg border border-border-classic bg-surface p-4">
+          <p className="text-sm text-foreground/60">מאשרים הגעה</p>
           <p className="text-2xl font-bold">{confirmed}</p>
         </div>
-        <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-          <p className="text-sm text-neutral-500">ממתינים</p>
+        <div className="rounded-lg border border-border-classic bg-surface p-4">
+          <p className="text-sm text-foreground/60">ממתינים</p>
           <p className="text-2xl font-bold">{pending}</p>
         </div>
-        <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-          <p className="text-sm text-neutral-500">לא מגיעים</p>
+        <div className="rounded-lg border border-border-classic bg-surface p-4">
+          <p className="text-sm text-foreground/60">לא מגיעים</p>
           <p className="text-2xl font-bold">{declined}</p>
         </div>
       </div>
 
       {(!guests || guests.length === 0) && (
-        <p className="text-neutral-500">עדיין לא יובאו אורחים לאירוע זה.</p>
+        <p className="text-foreground/60">עדיין לא יובאו אורחים לאירוע זה.</p>
       )}
 
       {guests && guests.length > 0 && (
@@ -52,12 +52,12 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
           <table className="w-full min-w-max border-collapse text-sm">
             <thead>
               <tr>
-                <th className="border-b border-neutral-200 p-2 text-right dark:border-neutral-800">שם</th>
-                <th className="border-b border-neutral-200 p-2 text-right dark:border-neutral-800">טלפון</th>
-                <th className="border-b border-neutral-200 p-2 text-right dark:border-neutral-800">סטטוס</th>
-                <th className="border-b border-neutral-200 p-2 text-right dark:border-neutral-800">סועדים</th>
-                <th className="border-b border-neutral-200 p-2 text-right dark:border-neutral-800">שולחן</th>
-                <th className="border-b border-neutral-200 p-2 text-right dark:border-neutral-800" />
+                <th className="border-b border-border-classic p-2 text-right">שם</th>
+                <th className="border-b border-border-classic p-2 text-right">טלפון</th>
+                <th className="border-b border-border-classic p-2 text-right">סטטוס</th>
+                <th className="border-b border-border-classic p-2 text-right">סועדים</th>
+                <th className="border-b border-border-classic p-2 text-right">שולחן</th>
+                <th className="border-b border-border-classic p-2 text-right" />
               </tr>
             </thead>
             <tbody>
@@ -70,8 +70,8 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
                   "use server";
                   await updateGuest(eventId, guest.id, formData);
                 }
-                const cellClass = "border-b border-neutral-100 p-2 dark:border-neutral-900";
-                const fieldClass = "rounded-md border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-900";
+                const cellClass = "border-b border-border-classic p-2";
+                const fieldClass = "rounded-md border border-border-classic bg-surface px-2 py-1 text-sm";
                 return (
                   <Fragment key={guest.id}>
                     <tr>
@@ -94,9 +94,9 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
                       </td>
                     </tr>
                     <tr>
-                      <td colSpan={6} className={`${cellClass} bg-neutral-50/50 dark:bg-neutral-900/50`}>
+                      <td colSpan={6} className={`${cellClass} bg-accent-soft/50`}>
                         <details>
-                          <summary className="cursor-pointer text-xs font-medium text-neutral-500">ערוך אורח</summary>
+                          <summary className="cursor-pointer text-xs font-medium text-foreground/60">ערוך אורח</summary>
                           <SaveDetailsForm action={saveEdit} className="mt-2 flex flex-wrap items-end gap-2">
                             <label className="flex flex-col gap-1 text-xs">
                               <span>שם</span>
@@ -132,7 +132,7 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
                             </label>
                             <button
                               type="submit"
-                              className="rounded-full border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                              className="rounded-full border border-border-classic px-3 py-1.5 text-sm hover:bg-accent-soft"
                             >
                               שמור
                             </button>

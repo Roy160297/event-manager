@@ -63,7 +63,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
 
   if (step === "done") {
     return (
-      <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300">
+      <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
         הייבוא הושלם בהצלחה.{" "}
         <button className="underline" onClick={reset}>
           ייבוא קובץ נוסף
@@ -74,8 +74,8 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
 
   if (step === "map" && parsed) {
     return (
-      <div className="flex flex-col gap-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-        <p className="text-sm text-neutral-500">
+      <div className="flex flex-col gap-4 rounded-lg border border-border-classic bg-surface p-4">
+        <p className="text-sm text-foreground/60">
           זוהה קידוד: {parsed.detectedEncoding} · נמצאו {parsed.rows.length} שורות. התאימו כל שדה
           לעמודה המתאימה בקובץ.
         </p>
@@ -91,7 +91,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
                 onChange={(e) =>
                   setMapping((current) => ({ ...current, [field.key]: e.target.value }))
                 }
-                className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+                className="rounded-md border border-border-classic bg-surface px-3 py-2"
               >
                 <option value="">— לא לייבא —</option>
                 {parsed.headers.map((header) => (
@@ -111,10 +111,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
               <thead>
                 <tr>
                   {parsed.headers.map((header) => (
-                    <th
-                      key={header}
-                      className="border-b border-neutral-200 p-2 text-right dark:border-neutral-800"
-                    >
+                    <th key={header} className="border-b border-border-classic p-2 text-right">
                       {header}
                     </th>
                   ))}
@@ -124,10 +121,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
                 {parsed.rows.slice(0, 3).map((row, index) => (
                   <tr key={index}>
                     {parsed.headers.map((header) => (
-                      <td
-                        key={header}
-                        className="border-b border-neutral-100 p-2 dark:border-neutral-900"
-                      >
+                      <td key={header} className="border-b border-border-classic p-2">
                         {row[header]}
                       </td>
                     ))}
@@ -144,13 +138,13 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
           <button
             onClick={handleImport}
             disabled={isPending}
-            className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 dark:bg-white dark:text-black"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
           >
             {isPending ? "מייבא..." : `ייבא ${parsed.rows.length} אורחים`}
           </button>
           <button
             onClick={reset}
-            className="rounded-full border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
           >
             ביטול
           </button>
@@ -162,7 +156,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
   return (
     <form
       onSubmit={handleUpload}
-      className="flex flex-col gap-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+      className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
     >
       <p className="text-sm font-medium">ייבוא רשימת אורחים מ-iPlan (CSV)</p>
       <input type="file" name="file" accept=".csv,text/csv" required className="text-sm" />
@@ -170,7 +164,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
       <button
         type="submit"
         disabled={isPending}
-        className="self-start rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 dark:bg-white dark:text-black"
+        className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
       >
         {isPending ? "מעבד..." : "העלה קובץ"}
       </button>

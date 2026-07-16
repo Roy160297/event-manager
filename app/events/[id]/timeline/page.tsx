@@ -69,6 +69,7 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
           />
           <input
             type="time"
+            lang="he"
             name="approx_time"
             required
             className="rounded-md border border-border-classic bg-surface px-3 py-2"
@@ -143,6 +144,7 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
                   />
                   <input
                     type="time"
+                    lang="he"
                     name="approx_time"
                     defaultValue={item.approx_time ?? ""}
                     required

@@ -90,15 +90,15 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
     <div className="flex flex-col gap-6">
       <TableSketchPhoto eventId={eventId} sketchUrl={sketchUrl} isPdf={isSketchPdf} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-        <p className="text-sm text-neutral-500">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-classic bg-surface p-4">
+        <p className="text-sm text-foreground/60">
           צרו שולחנות אוטומטית מרשימת האורחים המיובאת, או הוסיפו שולחנות/עמדות אוכל ידנית.
         </p>
         <div className="flex flex-wrap gap-2">
           <form action={quickAddTables}>
             <button
               type="submit"
-              className="rounded-full border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
             >
               צור שולחנות מרשימת האורחים
             </button>
@@ -109,14 +109,14 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
 
       <form
         action={addLocation}
-        className="flex flex-col gap-3 rounded-lg border border-neutral-200 p-4 sm:flex-row sm:items-end dark:border-neutral-800"
+        className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4 sm:flex-row sm:items-end"
       >
         <label className="flex flex-col gap-1 text-sm">
           <span>סוג</span>
           <select
             name="location_type"
             defaultValue="table"
-            className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-md border border-border-classic bg-surface px-3 py-2"
           >
             {LOCATION_TYPES.map((type) => (
               <option key={type} value={type}>
@@ -131,7 +131,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
             name="label"
             required
             placeholder='לדוגמה: שולחן 5, "עמדת סושי"'
-            className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-md border border-border-classic bg-surface px-3 py-2"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -141,19 +141,19 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
             name="capacity"
             min={0}
             defaultValue={0}
-            className="w-24 rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+            className="w-24 rounded-md border border-border-classic bg-surface px-3 py-2"
           />
         </label>
         <button
           type="submit"
-          className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 dark:bg-white dark:text-black"
+          className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
         >
           הוסף
         </button>
       </form>
 
       {(!locations || locations.length === 0) && (
-        <p className="text-neutral-500">עדיין לא הוגדרו שולחנות או עמדות אוכל.</p>
+        <p className="text-foreground/60">עדיין לא הוגדרו שולחנות או עמדות אוכל.</p>
       )}
 
       <ul className="flex flex-col gap-3">
@@ -181,7 +181,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
           return (
             <li
               key={location.id}
-              className="flex flex-col gap-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+              className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -191,14 +191,14 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                     ) : (
                       <>
                         {location.label}{" "}
-                        <span className="text-sm font-normal text-neutral-500">
+                        <span className="text-sm font-normal text-foreground/60">
                           ({LOCATION_TYPE_LABELS[location.location_type]})
                         </span>
                       </>
                     )}
                   </p>
                   {location.location_type === "table" && (
-                    <p className="text-sm text-neutral-500">
+                    <p className="text-sm text-foreground/60">
                       קיבולת: {location.capacity}
                       {guestCount !== null ? ` · אורחים משובצים: ${guestCount}` : ""}
                     </p>
@@ -226,7 +226,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                     <form key={assignment.id} action={remove}>
                       <button
                         type="submit"
-                        className="flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-sm hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                        className="flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-sm hover:opacity-80"
                         title="הסר שיבוץ"
                       >
                         {assignment.waiters?.name}
@@ -241,7 +241,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                     <select
                       name="waiter_id"
                       defaultValue=""
-                      className="rounded-md border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+                      className="rounded-md border border-border-classic bg-surface px-2 py-1 text-sm"
                     >
                       <option value="" disabled>
                         שבץ מלצר...
@@ -254,7 +254,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                     </select>
                     <button
                       type="submit"
-                      className="rounded-md border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                      className="rounded-md border border-border-classic px-2 py-1 text-sm hover:bg-accent-soft"
                     >
                       שבץ
                     </button>
@@ -263,14 +263,14 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
               </div>
 
               <details>
-                <summary className="cursor-pointer text-xs font-medium text-neutral-500">ערוך פרטים</summary>
+                <summary className="cursor-pointer text-xs font-medium text-foreground/60">ערוך פרטים</summary>
                 <SaveDetailsForm action={saveLocationEdit} className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end">
                   <label className="flex flex-col gap-1 text-sm">
                     <span>סוג</span>
                     <select
                       name="location_type"
                       defaultValue={location.location_type}
-                      className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+                      className="rounded-md border border-border-classic bg-surface px-3 py-2"
                     >
                       {LOCATION_TYPES.map((type) => (
                         <option key={type} value={type}>
@@ -285,7 +285,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                       name="label"
                       defaultValue={location.label}
                       required
-                      className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+                      className="rounded-md border border-border-classic bg-surface px-3 py-2"
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-sm">
@@ -295,12 +295,12 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                       name="capacity"
                       min={0}
                       defaultValue={location.capacity}
-                      className="w-24 rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+                      className="w-24 rounded-md border border-border-classic bg-surface px-3 py-2"
                     />
                   </label>
                   <button
                     type="submit"
-                    className="rounded-full border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                    className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
                   >
                     שמור
                   </button>

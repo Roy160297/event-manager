@@ -158,12 +158,12 @@ export default async function EventOverviewPage({
           <div className="flex flex-col gap-4">
             <label className={labelClass}>
               <span className="font-medium">שעת התחלה</span>
-              <input type="time" name="start_time" step={300} defaultValue={event?.start_time ?? ""} className={inputClass} />
+              <input type="time" lang="he" name="start_time" step={300} defaultValue={event?.start_time ?? ""} className={inputClass} />
             </label>
 
             <label className={labelClass}>
               <span className="font-medium">שעת סיום</span>
-              <input type="time" name="end_time" step={300} defaultValue={event?.end_time ?? ""} className={inputClass} />
+              <input type="time" lang="he" name="end_time" step={300} defaultValue={event?.end_time ?? ""} className={inputClass} />
             </label>
           </div>
 

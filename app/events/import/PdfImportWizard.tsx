@@ -220,6 +220,7 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
           <span className="font-medium">שעת התחלה</span>
           <input
             type="time"
+            lang="he"
             value={draft.start_time ?? ""}
             onChange={(e) => updateField("start_time", e.target.value || null)}
             className={inputClass}
@@ -230,6 +231,7 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
           <span className="font-medium">שעת סיום</span>
           <input
             type="time"
+            lang="he"
             value={draft.end_time ?? ""}
             onChange={(e) => updateField("end_time", e.target.value || null)}
             className={inputClass}
@@ -365,6 +367,7 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
           <div key={index} className="flex items-center gap-2">
             <input
               type="time"
+              lang="he"
               value={item.approx_time}
               onChange={(e) => updateScheduleRow(index, { approx_time: e.target.value })}
               className={inputClass}
