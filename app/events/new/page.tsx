@@ -1,6 +1,7 @@
 import { createEvent } from "@/app/events/actions";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
 import type { EventType } from "@/lib/types";
+import { DateField } from "@/components/DateField";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
@@ -35,12 +36,7 @@ export default function NewEventPage() {
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">תאריך</span>
-          <input
-            type="date"
-            name="event_date"
-            required
-            className="rounded-md border border-border-classic bg-surface px-3 py-2"
-          />
+          <DateField name="event_date" />
         </label>
 
         <button
