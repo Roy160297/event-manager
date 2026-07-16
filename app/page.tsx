@@ -23,7 +23,7 @@ export default async function EventsDashboard() {
             href="/events/import"
             className="rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
           >
-            ייבוא מ-PDF (iPlan)
+            ייבא טופס אירוע חתונה מiPlan
           </Link>
           <Link
             href="/events/new"
