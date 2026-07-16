@@ -63,11 +63,15 @@ export default async function WaitersPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">{waiter.name}</p>
-                  <p className="text-sm text-foreground/60">
-                    {waiter.phone ?? "—"}
-                    {waiter.notes ? ` · ${waiter.notes}` : ""}
+                  <p className="text-sm">
+                    <span className="font-medium">{waiter.name}</span>
+                    <span className="text-foreground/60"> · מלצר</span>
                   </p>
+                  {(waiter.phone || waiter.notes) && (
+                    <p className="text-sm text-foreground/60">
+                      {[waiter.phone, waiter.notes].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
                 </div>
                 <form action={remove}>
                   <button

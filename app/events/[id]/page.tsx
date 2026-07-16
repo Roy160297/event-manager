@@ -14,6 +14,7 @@ import { EVENT_STATUS_LABELS, EVENT_STATUS_OPTIONS, EVENT_TYPE_LABELS } from "@/
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
+import { DateField } from "@/components/DateField";
 import type { EventRow, EventStatus, EventSupplierRow, EventType, StaffRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -140,7 +141,7 @@ export default async function EventOverviewPage({
           <div className="flex flex-col gap-4">
             <label className={labelClass}>
               <span className="font-medium">תאריך</span>
-              <input type="date" name="event_date" defaultValue={event?.event_date} required className={inputClass} />
+              <DateField name="event_date" defaultValue={event?.event_date ?? ""} />
             </label>
 
             <label className={labelClass}>

@@ -10,6 +10,7 @@ import {
   formatDate,
 } from "@/lib/labels";
 import type { EventRow, StaffRow, TaskRow, TaskStatus } from "@/lib/types";
+import { DateField } from "@/components/DateField";
 
 const STATUSES = Object.keys(TASK_STATUS_LABELS) as TaskStatus[];
 const PRIORITIES = Object.keys(TASK_PRIORITY_LABELS) as (keyof typeof TASK_PRIORITY_LABELS)[];
@@ -73,7 +74,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
             ))}
           </select>
           <div className="flex flex-col gap-0.5 sm:col-span-2">
-            <input type="date" name="due_date" defaultValue={event?.event_date ?? ""} className={inputClass} />
+            <DateField name="due_date" defaultValue={event?.event_date ?? ""} />
             <span className="text-xs text-foreground/50">
               (אם לא ייבחר תאריך, ברירת המחדל היא תאריך האירוע)
             </span>
@@ -187,12 +188,9 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                       </option>
                     ))}
                   </select>
-                  <input
-                    type="date"
-                    name="due_date"
-                    defaultValue={task.due_date ?? ""}
-                    className={`${inputClass} sm:col-span-2`}
-                  />
+                  <div className="sm:col-span-2">
+                    <DateField name="due_date" defaultValue={task.due_date ?? ""} />
+                  </div>
                   <button
                     type="submit"
                     className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft sm:col-span-2"

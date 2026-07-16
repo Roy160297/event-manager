@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { addManagerFromImport, createEventFromPdfImport, parsePdfImport } from "./actions";
 import type { PdfImportDraft, ScheduleItemDraft, SupplierDraft } from "@/lib/pdfImport";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { DateSelects } from "@/components/DateField";
 import type { EventType, StaffRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -207,13 +208,7 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
 
         <label className={labelClass}>
           <span className="font-medium">תאריך</span>
-          <input
-            type="date"
-            value={draft.event_date ?? ""}
-            onChange={(e) => updateField("event_date", e.target.value || null)}
-            required
-            className={inputClass}
-          />
+          <DateSelects value={draft.event_date ?? ""} onChange={(v) => updateField("event_date", v || null)} />
         </label>
 
         <label className={labelClass}>
