@@ -67,8 +67,16 @@ export default function TableSketchPhoto({
             disabled={isPending}
             className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft disabled:opacity-50"
           >
-            {isPending ? "מעלה..." : sketchUrl ? "החלף תמונה" : "העלה תמונת סקיצה"}
+            {isPending ? "מעלה..." : sketchUrl ? "החלף סקיצת PDF מ-iPlan" : "העלה סקיצת PDF מ-iPlan"}
           </button>
+          <a
+            href="https://iplan.co.il/he-IL/corp/sign_in?"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
+          >
+            מעבר ל-iPlan
+          </a>
           {sketchUrl && (
             <button
               type="button"

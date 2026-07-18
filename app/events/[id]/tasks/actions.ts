@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { ALL_CLOSING_CHECKLIST_KEYS } from "@/lib/closingChecklist";
 import type { TaskPriority, TaskStatus } from "@/lib/types";
 
 export async function createTask(eventId: string, formData: FormData) {
@@ -80,6 +81,20 @@ export async function updateTask(eventId: string, taskId: string, formData: Form
 export async function deleteTask(eventId: string, taskId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
+export async function setClosingChecklistItem(eventId: string, itemKey: string, checked: boolean) {
+  if (!ALL_CLOSING_CHECKLIST_KEYS.has(itemKey)) {
+    throw new Error("פריט צ'קליסט לא מוכר");
+  }
+
+  const supabase = await createClient();
+  const { error } = checked
+    ? await supabase.from("closing_checklist_checks").upsert({ event_id: eventId, item_key: itemKey })
+    : await supabase.from("closing_checklist_checks").delete().eq("event_id", eventId).eq("item_key", itemKey);
+
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/tasks`);
 }

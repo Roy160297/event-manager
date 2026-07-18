@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { createTask, deleteTask, updateTask, updateTaskStatus } from "./actions";
+import ClosingChecklist from "./ClosingChecklist";
 import {
   TASK_PRIORITY_COLORS,
   TASK_PRIORITY_LABELS,
@@ -21,7 +22,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
   const { id: eventId } = await params;
   const supabase = await createClient();
 
-  const [{ data: tasks }, { data: staff }, { data: event }] = await Promise.all([
+  const [{ data: tasks }, { data: staff }, { data: event }, { data: closingChecklistChecks }] = await Promise.all([
     supabase
       .from("tasks")
       .select("*, staff(name)")
@@ -35,6 +36,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       .eq("id", eventId)
       .returns<Pick<EventRow, "manager_id" | "event_date">[]>()
       .single(),
+    supabase.from("closing_checklist_checks").select("item_key").eq("event_id", eventId).returns<{ item_key: string }[]>(),
   ]);
 
   async function addTask(formData: FormData) {
@@ -46,6 +48,11 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="flex flex-col gap-6">
+      <ClosingChecklist
+        eventId={eventId}
+        initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
+      />
+
       <form action={addTask} className="flex flex-col gap-2 rounded-lg border border-border-classic bg-surface p-3">
         <p className="text-sm font-medium">משימה חדשה</p>
         <div className="grid gap-2 sm:grid-cols-2">
