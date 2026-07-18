@@ -2,7 +2,7 @@ export const RESOURCES = ["events", "guests", "tasks", "timeline", "staffing", "
 export type Resource = (typeof RESOURCES)[number];
 
 export const RESOURCE_LABELS: Record<Resource, string> = {
-  events: "אירועים",
+  events: "סקירה",
   guests: "אורחים",
   tasks: "משימות",
   timeline: "לוח זמנים",

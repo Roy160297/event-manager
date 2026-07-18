@@ -56,7 +56,7 @@ export function PermissionGrid({
         <table className="w-full min-w-max border-collapse text-sm">
           <thead>
             <tr className="border-b border-border-classic bg-accent-soft/40">
-              <th className="sticky right-0 bg-accent-soft/40 px-3 py-2 text-start font-medium">משאב</th>
+              <th className="sticky right-0 bg-accent-soft/40 px-3 py-2 text-start font-medium">קטגוריה</th>
               {roles.map((role) => (
                 <th key={role.id} colSpan={2} className="border-s border-border-classic px-3 py-2 text-center font-medium">
                   {role.name}
