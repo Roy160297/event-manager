@@ -40,6 +40,26 @@ export interface EventRow {
   menu_notes: string | null;
   parking_notes: string | null;
   table_sketch_path: string | null;
+  production_company: string | null;
+  exit_time: string | null;
+  final_guest_count_counter: number | null;
+  final_guest_count_iplan: string | null;
+  reserve_opened_count: number | null;
+  bar_manager_name: string | null;
+  bartender_count: string | null;
+  floor_manager_name: string | null;
+  waiter_count: number | null;
+  cook_count: number | null;
+  kitchen_dishwasher_count: number | null;
+  dishwasher_count: number | null;
+  security_notes: string | null;
+  report_summary: string | null;
+  report_general_notes: string | null;
+  hall_cleaner_hours: string | null;
+  restroom_cleaner_hours: string | null;
+  kitchen_dishwasher_hours: string | null;
+  dishwasher_hours: string | null;
+  photographer_contact: string | null;
   created_at: string;
 }
 

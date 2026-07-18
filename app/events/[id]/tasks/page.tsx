@@ -2,16 +2,20 @@ import { createClient } from "@/lib/supabase/server";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { createTask, deleteTask, updateTask, updateTaskStatus } from "./actions";
+import { updateEventSummaryReport } from "@/app/events/actions";
 import ClosingChecklist from "./ClosingChecklist";
 import {
+  EVENT_TYPE_LABELS,
   TASK_PRIORITY_COLORS,
   TASK_PRIORITY_LABELS,
   TASK_STATUS_COLORS,
   TASK_STATUS_LABELS,
   formatDate,
+  formatTime,
 } from "@/lib/labels";
 import type { EventRow, StaffRow, TaskRow, TaskStatus } from "@/lib/types";
 import { DateField } from "@/components/DateField";
+import { TimeField } from "@/components/TimeField";
 
 const STATUSES = Object.keys(TASK_STATUS_LABELS) as TaskStatus[];
 const PRIORITIES = Object.keys(TASK_PRIORITY_LABELS) as (keyof typeof TASK_PRIORITY_LABELS)[];
@@ -30,12 +34,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       .order("due_date", { ascending: true, nullsFirst: false })
       .returns<TaskWithAssignee[]>(),
     supabase.from("staff").select("id, name").order("name").returns<Pick<StaffRow, "id" | "name">[]>(),
-    supabase
-      .from("events")
-      .select("manager_id, event_date")
-      .eq("id", eventId)
-      .returns<Pick<EventRow, "manager_id" | "event_date">[]>()
-      .single(),
+    supabase.from("events").select("*").eq("id", eventId).returns<EventRow[]>().single(),
     supabase.from("closing_checklist_checks").select("item_key").eq("event_id", eventId).returns<{ item_key: string }[]>(),
   ]);
 
@@ -44,7 +43,19 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     await createTask(eventId, formData);
   }
 
+  async function saveSummaryReport(formData: FormData) {
+    "use server";
+    await updateEventSummaryReport(eventId, formData);
+  }
+
+  const managerName = staff?.find((member) => member.id === event?.manager_id)?.name ?? null;
+  const guestCommitment =
+    event?.guests_adults != null || event?.guests_children != null
+      ? `${event?.guests_adults ?? "-"}+${event?.guests_children ?? "-"}`
+      : null;
+
   const inputClass = "rounded-md border border-border-classic bg-surface px-2.5 py-1.5 text-sm";
+  const reportLabelClass = "flex flex-col gap-1 text-sm";
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,6 +63,219 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         eventId={eventId}
         initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
       />
+
+      <details className="rounded-lg border border-border-classic bg-surface p-4">
+        <summary className="cursor-pointer text-sm font-medium">דוח סיכום אירוע</summary>
+
+        <div className="mt-4 flex flex-col gap-4">
+          <div className="grid gap-x-4 gap-y-1 rounded-md bg-accent-soft p-3 text-sm sm:grid-cols-3">
+            <p>
+              <span className="text-foreground/60">תאריך: </span>
+              {formatDate(event?.event_date ?? null)}
+            </p>
+            <p>
+              <span className="text-foreground/60">שם הלקוח: </span>
+              {event?.name ?? "—"}
+            </p>
+            <p>
+              <span className="text-foreground/60">סוג אירוע: </span>
+              {event ? EVENT_TYPE_LABELS[event.event_type] : "—"}
+            </p>
+            <p>
+              <span className="text-foreground/60">שעת תחילת האירוע: </span>
+              {formatTime(event?.start_time ?? null)}
+            </p>
+            <p>
+              <span className="text-foreground/60">שעת סיום האירוע: </span>
+              {formatTime(event?.end_time ?? null)}
+            </p>
+            <p>
+              <span className="text-foreground/60">מינימום אורחים בהתחייבות: </span>
+              {guestCommitment ?? "—"}
+            </p>
+            <p>
+              <span className="text-foreground/60">מנהל אירוע: </span>
+              {managerName ?? "—"}
+            </p>
+          </div>
+
+          <SaveDetailsForm action={saveSummaryReport} message="הדוח נשמר בהצלחה" className="flex flex-col gap-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className={reportLabelClass}>
+                <span>חברת הפקה</span>
+                <input name="production_company" defaultValue={event?.production_company ?? ""} className={inputClass} />
+              </label>
+              <label className={reportLabelClass}>
+                <span>שעת יציאה מהאולם</span>
+                <TimeField name="exit_time" defaultValue={event?.exit_time ?? ""} />
+              </label>
+              <label className={reportLabelClass}>
+                <span>כמות אורחים סופית - קאונטר</span>
+                <input
+                  type="number"
+                  min={0}
+                  name="final_guest_count_counter"
+                  defaultValue={event?.final_guest_count_counter ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>כמות אורחים סופית - אייפלן</span>
+                <input
+                  name="final_guest_count_iplan"
+                  defaultValue={event?.final_guest_count_iplan ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>כמות רזרבה שנפתחו</span>
+                <input
+                  type="number"
+                  min={0}
+                  name="reserve_opened_count"
+                  defaultValue={event?.reserve_opened_count ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <div />
+              <label className={reportLabelClass}>
+                <span>מנהל בר</span>
+                <input name="bar_manager_name" defaultValue={event?.bar_manager_name ?? ""} className={inputClass} />
+              </label>
+              <label className={reportLabelClass}>
+                <span>כמות ברמנים</span>
+                <input name="bartender_count" defaultValue={event?.bartender_count ?? ""} className={inputClass} />
+              </label>
+              <label className={reportLabelClass}>
+                <span>מנהל פלור</span>
+                <input name="floor_manager_name" defaultValue={event?.floor_manager_name ?? ""} className={inputClass} />
+              </label>
+              <label className={reportLabelClass}>
+                <span>כמות מלצרים</span>
+                <input
+                  type="number"
+                  min={0}
+                  name="waiter_count"
+                  defaultValue={event?.waiter_count ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>כמות טבחים</span>
+                <input
+                  type="number"
+                  min={0}
+                  name="cook_count"
+                  defaultValue={event?.cook_count ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>כמות שוטפי מטבח</span>
+                <input
+                  type="number"
+                  min={0}
+                  name="kitchen_dishwasher_count"
+                  defaultValue={event?.kitchen_dishwasher_count ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>כמות שוטפי כלים</span>
+                <input
+                  type="number"
+                  min={0}
+                  name="dishwasher_count"
+                  defaultValue={event?.dishwasher_count ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>שעות מנקה אולם</span>
+                <input
+                  name="hall_cleaner_hours"
+                  placeholder="לדוגמה: 16-2:20"
+                  defaultValue={event?.hall_cleaner_hours ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>שעות מנקה שירותים</span>
+                <input
+                  name="restroom_cleaner_hours"
+                  placeholder="לדוגמה: 16:20-2:30"
+                  defaultValue={event?.restroom_cleaner_hours ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>שעות שוטפי מטבח</span>
+                <input
+                  name="kitchen_dishwasher_hours"
+                  placeholder="לדוגמה: 15-3"
+                  defaultValue={event?.kitchen_dishwasher_hours ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>שעות שוטפי כלים</span>
+                <input
+                  name="dishwasher_hours"
+                  placeholder="לדוגמה: 18-3:15"
+                  defaultValue={event?.dishwasher_hours ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>צלם וטלפון</span>
+                <input
+                  name="photographer_contact"
+                  defaultValue={event?.photographer_contact ?? ""}
+                  className={inputClass}
+                />
+              </label>
+            </div>
+
+            <label className={reportLabelClass}>
+              <span>מאבטחים</span>
+              <textarea
+                name="security_notes"
+                rows={3}
+                placeholder="שמות המאבטחים, שעות יציאה, נוהל נשק, אירועים, ברקוד..."
+                defaultValue={event?.security_notes ?? ""}
+                className={inputClass}
+              />
+            </label>
+
+            <label className={reportLabelClass}>
+              <span>סיכום האירוע</span>
+              <textarea
+                name="report_summary"
+                rows={2}
+                defaultValue={event?.report_summary ?? ""}
+                className={inputClass}
+              />
+            </label>
+
+            <label className={reportLabelClass}>
+              <span>הערות כלליות</span>
+              <textarea
+                name="report_general_notes"
+                rows={3}
+                defaultValue={event?.report_general_notes ?? ""}
+                className={inputClass}
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+            >
+              שמור דוח
+            </button>
+          </SaveDetailsForm>
+        </div>
+      </details>
 
       <form action={addTask} className="flex flex-col gap-2 rounded-lg border border-border-classic bg-surface p-3">
         <p className="text-sm font-medium">משימה חדשה</p>
