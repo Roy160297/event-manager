@@ -12,6 +12,7 @@ export type TaskPriority = "low" | "normal" | "high";
 export type RsvpStatus = "pending" | "confirmed" | "declined";
 export type LocationType = "table" | "food_stand";
 export type WaiterRole = "waiter" | "runner";
+export type PermissionResource = "events" | "guests" | "tasks" | "timeline" | "staffing" | "waiters" | "admin";
 
 export interface EventRow {
   id: string;
@@ -78,7 +79,22 @@ export interface StaffRow {
   name: string;
   email: string | null;
   phone: string | null;
+  user_id: string | null;
+  role_id: string | null;
   created_at: string;
+}
+
+export interface RoleRow {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface RolePermissionRow {
+  role_id: string;
+  resource: PermissionResource;
+  can_read: boolean;
+  can_write: boolean;
 }
 
 export interface TaskRow {

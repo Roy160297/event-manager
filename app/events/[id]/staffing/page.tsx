@@ -73,7 +73,9 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
     : locationsRaw;
 
   const sketchPath = event?.table_sketch_path ?? null;
-  const sketchUrl = sketchPath ? supabase.storage.from("event-sketches").getPublicUrl(sketchPath).data.publicUrl : null;
+  const sketchUrl = sketchPath
+    ? ((await supabase.storage.from("event-sketches").createSignedUrl(sketchPath, 60 * 60)).data?.signedUrl ?? null)
+    : null;
   const isSketchPdf = sketchPath?.toLowerCase().endsWith(".pdf") ?? false;
 
   const guestCountByTable = new Map<string, number>();

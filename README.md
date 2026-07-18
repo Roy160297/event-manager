@@ -25,6 +25,46 @@ npm run dev
 
 Open http://localhost:3000.
 
+## Auth & roles
+
+Sign-in is Google SSO via Supabase Auth, gated to a pre-approved allowlist — only
+emails that already exist as a row in `staff` can complete login; anyone else is
+signed back out. Access within the app is controlled by **roles**: each role has
+independent read/write permissions per feature area (events, guests, tasks,
+timeline, staffing, waiters) plus an `admin` permission that gates the
+management screens themselves. Manage roles and staff/allowlist at `/admin`
+(link only shown to users whose role has `admin` read access).
+
+Schema for this lives in `supabase/migrations/00000000000010_auth_roles.sql`
+(`roles`, `role_permissions`, `staff.user_id`/`staff.role_id`, RLS policies on
+every table driven by a `has_permission()` check, and a `link_staff_account()`
+function that links a freshly-authenticated Google account to its `staff` row).
+
+**One-time setup** (do this once per Supabase project):
+
+1. Push the migration: `supabase db push` (needs `SUPABASE_ACCESS_TOKEN` + the
+   project's DB password — see the note above about resetting it if needed).
+2. **Google Cloud Console**: create an OAuth 2.0 Client ID (APIs & Services →
+   Credentials → Create Credentials → OAuth client ID → Web application). Add
+   `https://<your-project-ref>.supabase.co/auth/v1/callback` as an authorized
+   redirect URI.
+3. **Supabase Dashboard** → Authentication → Sign In / Providers → Google:
+   paste the Client ID/Secret from step 2 and enable the provider.
+4. **Supabase Dashboard** → Authentication → URL Configuration: set Site URL
+   to your deployed app URL (and add `http://localhost:3000` under Redirect
+   URLs for local dev).
+5. **Bootstrap the first admin**: add yourself to `staff` with the seeded
+   "מנהל מערכת" (full-access) role, via the Supabase SQL editor:
+   ```sql
+   insert into staff (name, email, role_id)
+   values ('<your name>', '<your-google-email>', (select id from roles where name = 'מנהל מערכת'));
+   ```
+   Then sign in with Google using that exact email. From then on, manage
+   everyone else's access from `/admin`.
+
+The `event-sketches` storage bucket is private (not a public bucket) — the
+staffing page reads it via a signed URL, gated by the `staffing` permission.
+
 ## Notes
 
 - **CSV import (guests)**: the importer auto-detects the file's character encoding (handles Windows-1255, which is common for Hebrew exports from Israeli tools) before parsing, then lets you map CSV columns to guest fields. No fixed iPlan schema is assumed yet — confirm the exact export format once available and adjust `lib/csv-import.ts` / the mapping UI if needed.

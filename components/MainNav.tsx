@@ -9,13 +9,14 @@ const NAV_LINKS = [
   { href: "/waiters", label: "מלצרים" },
 ];
 
-export function MainNav() {
+export function MainNav({ showAdmin = false }: { showAdmin?: boolean }) {
   const pathname = usePathname();
+  const links = showAdmin ? [...NAV_LINKS, { href: "/admin", label: "ניהול" }] : NAV_LINKS;
 
   return (
     <nav>
       <ul className="flex gap-2">
-        {NAV_LINKS.map((link) => {
+        {links.map((link) => {
           const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
           return (
             <li key={link.href}>
