@@ -1,10 +1,24 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Fragment, useState, useTransition } from "react";
+import { Fragment, useState } from "react";
 import { setRolePermission } from "./actions";
 import { RESOURCES, RESOURCE_LABELS, type Resource } from "@/lib/permissions";
 import type { RolePermissionRow, RoleRow } from "@/lib/types";
+
+type PermissionsState = Record<string, Record<Resource, { can_read: boolean; can_write: boolean }>>;
+
+function buildInitialState(roles: RoleRow[], permissionsByRole: Record<string, RolePermissionRow[]>): PermissionsState {
+  const state: PermissionsState = {};
+  for (const role of roles) {
+    state[role.id] = Object.fromEntries(
+      RESOURCES.map((resource) => {
+        const perm = permissionsByRole[role.id]?.find((p) => p.resource === resource);
+        return [resource, { can_read: perm?.can_read ?? false, can_write: perm?.can_write ?? false }];
+      }),
+    ) as PermissionsState[string];
+  }
+  return state;
+}
 
 export function PermissionGrid({
   roles,
@@ -13,24 +27,26 @@ export function PermissionGrid({
   roles: RoleRow[];
   permissionsByRole: Record<string, RolePermissionRow[]>;
 }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<PermissionsState>(() => buildInitialState(roles, permissionsByRole));
   const [error, setError] = useState<string | null>(null);
 
+  // Optimistic: flip the checkbox immediately and persist in the background;
+  // only touch the UI again if the save actually fails, so ticking through a
+  // grid of checkboxes doesn't wait on a round-trip per click.
   function toggle(roleId: string, resource: Resource, field: "can_read" | "can_write", checked: boolean) {
     setError(null);
-    startTransition(async () => {
-      try {
-        await setRolePermission(roleId, resource, field, checked);
-        router.refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "שגיאה בעדכון ההרשאה");
-      }
-    });
-  }
+    setState((prev) => ({
+      ...prev,
+      [roleId]: { ...prev[roleId], [resource]: { ...prev[roleId][resource], [field]: checked } },
+    }));
 
-  function isChecked(roleId: string, resource: Resource, field: "can_read" | "can_write") {
-    return permissionsByRole[roleId]?.find((p) => p.resource === resource)?.[field] ?? false;
+    setRolePermission(roleId, resource, field, checked).catch((err) => {
+      setError(err instanceof Error ? err.message : "שגיאה בעדכון ההרשאה");
+      setState((prev) => ({
+        ...prev,
+        [roleId]: { ...prev[roleId], [resource]: { ...prev[roleId][resource], [field]: !checked } },
+      }));
+    });
   }
 
   return (
@@ -66,16 +82,14 @@ export function PermissionGrid({
                     <td className="border-s border-border-classic px-2 py-2 text-center">
                       <input
                         type="checkbox"
-                        disabled={isPending}
-                        checked={isChecked(role.id, resource, "can_read")}
+                        checked={state[role.id][resource].can_read}
                         onChange={(e) => toggle(role.id, resource, "can_read", e.target.checked)}
                       />
                     </td>
                     <td className="px-2 py-2 text-center">
                       <input
                         type="checkbox"
-                        disabled={isPending}
-                        checked={isChecked(role.id, resource, "can_write")}
+                        checked={state[role.id][resource].can_write}
                         onChange={(e) => toggle(role.id, resource, "can_write", e.target.checked)}
                       />
                     </td>
