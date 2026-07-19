@@ -1,18 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { importGuests, parseGuestCsv, type GuestColumnMapping } from "./actions";
+import { importGuests, parseGuestFile, type GuestColumnMapping } from "./actions";
 import type { ParsedCsv } from "@/lib/csv-import";
 
-const FIELDS: { key: keyof GuestColumnMapping; label: string; required?: boolean }[] = [
-  { key: "name", label: "שם האורח", required: true },
-  { key: "email", label: "אימייל" },
-  { key: "phone", label: "טלפון" },
-  { key: "rsvp_status", label: "סטטוס הגעה" },
-  { key: "party_size", label: "מספר סועדים" },
-  { key: "dietary_notes", label: "הערות תזונה" },
-  { key: "seating_table", label: "שולחן הושבה" },
+const FIELDS: { key: keyof GuestColumnMapping; label: string; required?: boolean; aliases: string[] }[] = [
+  { key: "name", label: "שם האורח", required: true, aliases: ["שם פרטי+שם משפחה", "שם", "שם אורח", "שם מלא"] },
+  { key: "email", label: "אימייל", aliases: ["אימייל", "דוא\"ל", "email"] },
+  { key: "phone", label: "טלפון", aliases: ["טלפון", "נייד", "phone"] },
+  { key: "rsvp_status", label: "סטטוס הגעה", aliases: ["סטטוס הגעה", "סטטוס", "אישור הגעה"] },
+  { key: "party_size", label: "מספר סועדים", aliases: ["הושבו בשולחן", "מספר סועדים", "סועדים", "כמות"] },
+  { key: "dietary_notes", label: "הערות תזונה", aliases: ["הערות תזונה", "הערות"] },
+  { key: "seating_table", label: "שולחן הושבה", aliases: ["שולחן", "שולחן הושבה", "מספר שולחן"] },
 ];
+
+// The guest-list template is reused as-is every time, so once the headers
+// match known aliases there's no need to make the user re-pick the same
+// columns on every import - just pre-fill the mapping and let them review it.
+function guessMapping(headers: string[]): Partial<GuestColumnMapping> {
+  const mapping: Partial<GuestColumnMapping> = {};
+  for (const field of FIELDS) {
+    const match = headers.find((header) => field.aliases.includes(header.trim()));
+    if (match) mapping[field.key] = match;
+  }
+  return mapping;
+}
 
 export default function GuestCsvImport({ eventId }: { eventId: string }) {
   const [step, setStep] = useState<"upload" | "map" | "done">("upload");
@@ -34,8 +46,9 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
     const formData = new FormData(event.currentTarget);
     setIsPending(true);
     try {
-      const result = await parseGuestCsv(formData);
+      const result = await parseGuestFile(formData);
       setParsed(result);
+      setMapping(guessMapping(result.headers));
       setStep("map");
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בעיבוד הקובץ");
@@ -158,8 +171,14 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
       onSubmit={handleUpload}
       className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
     >
-      <p className="text-sm font-medium">ייבוא רשימת אורחים מ-iPlan (CSV)</p>
-      <input type="file" name="file" accept=".csv,text/csv" required className="text-sm" />
+      <p className="text-sm font-medium">ייבוא רשימת אורחים (CSV / Excel)</p>
+      <input
+        type="file"
+        name="file"
+        accept=".csv,text/csv,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        required
+        className="text-sm"
+      />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="submit"

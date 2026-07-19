@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { parseCsvBuffer, type ParsedCsv } from "@/lib/csv-import";
+import { parseCsvBuffer, parseExcelBuffer, type ParsedCsv } from "@/lib/csv-import";
 import type { RsvpStatus } from "@/lib/types";
 
 export interface GuestColumnMapping {
@@ -15,13 +15,14 @@ export interface GuestColumnMapping {
   seating_table?: string;
 }
 
-export async function parseGuestCsv(formData: FormData): Promise<ParsedCsv> {
+export async function parseGuestFile(formData: FormData): Promise<ParsedCsv> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    throw new Error("יש לבחור קובץ CSV");
+    throw new Error("יש לבחור קובץ");
   }
   const buffer = Buffer.from(await file.arrayBuffer());
-  return parseCsvBuffer(buffer);
+  const isExcel = /\.xlsx?$/i.test(file.name);
+  return isExcel ? parseExcelBuffer(buffer) : parseCsvBuffer(buffer);
 }
 
 function mapRsvpStatus(raw: string | undefined): RsvpStatus {
