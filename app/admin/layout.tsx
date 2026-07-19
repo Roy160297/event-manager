@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentStaff } from "@/lib/auth";
-import { canWrite } from "@/lib/permissions";
+import { canRead } from "@/lib/permissions";
 import { AdminNav } from "./AdminNav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const staff = await getCurrentStaff();
-  if (!staff || !canWrite(staff.permissions, "admin")) redirect("/");
+  if (!staff || !canRead(staff.permissions, "admin")) redirect("/");
 
   return (
     <div className="flex flex-col gap-6">

@@ -3,8 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { LOCATION_TYPE_LABELS, WAITER_ROLE_LABELS } from "@/lib/labels";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
+import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import TableSketchImportWizard from "./TableSketchImportWizard";
 import TableSketchPhoto from "./TableSketchPhoto";
+import { getCurrentStaff } from "@/lib/auth";
+import { canRead, canWrite } from "@/lib/permissions";
 import type {
   EventRow,
   GuestRow,
@@ -24,7 +27,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
   const { id: eventId } = await params;
   const supabase = await createClient();
 
-  const [{ data: locationsRaw }, { data: guests }, { data: waiters }, { data: assignments }, { data: event }] =
+  const [{ data: locationsRaw }, { data: guests }, { data: waiters }, { data: assignments }, { data: event }, currentStaff] =
     await Promise.all([
       supabase
         .from("locations")
@@ -50,7 +53,13 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
         .eq("id", eventId)
         .single()
         .returns<Pick<EventRow, "table_sketch_path">>(),
+      getCurrentStaff(),
     ]);
+
+  const canReadStaffing = !!currentStaff && canRead(currentStaff.permissions, "staffing");
+  const canWriteStaffing = !!currentStaff && canWrite(currentStaff.permissions, "staffing");
+
+  if (!canReadStaffing) return <NoPermissionNotice />;
 
   // Table labels are numbers ("1".."19") but come back from the DB sorted as
   // text (1, 10, 11, ..., 2, 20, ...); sort numerically within each type so
@@ -87,56 +96,60 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="flex flex-col gap-6">
-      <TableSketchPhoto eventId={eventId} sketchUrl={sketchUrl} isPdf={isSketchPdf} />
+      <TableSketchPhoto eventId={eventId} sketchUrl={sketchUrl} isPdf={isSketchPdf} canWrite={canWriteStaffing} />
 
-      <div className="flex justify-end rounded-lg border border-border-classic bg-surface p-4">
-        <TableSketchImportWizard eventId={eventId} />
-      </div>
+      {canWriteStaffing && (
+        <div className="flex justify-end rounded-lg border border-border-classic bg-surface p-4">
+          <TableSketchImportWizard eventId={eventId} />
+        </div>
+      )}
 
-      <form
-        action={addLocation}
-        className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4 sm:flex-row sm:items-end"
-      >
-        <label className="flex flex-col gap-1 text-sm">
-          <span>סוג</span>
-          <select
-            name="location_type"
-            defaultValue="table"
-            className="rounded-md border border-border-classic bg-surface px-3 py-2"
-          >
-            {LOCATION_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {LOCATION_TYPE_LABELS[type]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-1 flex-col gap-1 text-sm">
-          <span>שם</span>
-          <input
-            name="label"
-            required
-            placeholder='לדוגמה: שולחן 5, "עמדת סושי"'
-            className="rounded-md border border-border-classic bg-surface px-3 py-2"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span>קיבולת</span>
-          <input
-            type="number"
-            name="capacity"
-            min={0}
-            defaultValue={0}
-            className="w-24 rounded-md border border-border-classic bg-surface px-3 py-2"
-          />
-        </label>
-        <button
-          type="submit"
-          className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+      {canWriteStaffing && (
+        <form
+          action={addLocation}
+          className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4 sm:flex-row sm:items-end"
         >
-          הוסף
-        </button>
-      </form>
+          <label className="flex flex-col gap-1 text-sm">
+            <span>סוג</span>
+            <select
+              name="location_type"
+              defaultValue="table"
+              className="rounded-md border border-border-classic bg-surface px-3 py-2"
+            >
+              {LOCATION_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {LOCATION_TYPE_LABELS[type]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-1 flex-col gap-1 text-sm">
+            <span>שם</span>
+            <input
+              name="label"
+              required
+              placeholder='לדוגמה: שולחן 5, "עמדת סושי"'
+              className="rounded-md border border-border-classic bg-surface px-3 py-2"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span>קיבולת</span>
+            <input
+              type="number"
+              name="capacity"
+              min={0}
+              defaultValue={0}
+              className="w-24 rounded-md border border-border-classic bg-surface px-3 py-2"
+            />
+          </label>
+          <button
+            type="submit"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+          >
+            הוסף
+          </button>
+        </form>
+      )}
 
       {(!locations || locations.length === 0) && (
         <p className="text-foreground/60">עדיין לא הוגדרו שולחנות או עמדות אוכל.</p>
@@ -195,16 +208,18 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                     </p>
                   )}
                 </div>
-                <form action={removeLocation}>
-                  <button
-                    type="submit"
-                    title="מחק"
-                    className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                    <span className="sr-only">מחק</span>
-                  </button>
-                </form>
+                {canWriteStaffing && (
+                  <form action={removeLocation}>
+                    <button
+                      type="submit"
+                      title="מחק"
+                      className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      <span className="sr-only">מחק</span>
+                    </button>
+                  </form>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -213,7 +228,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                     "use server";
                     await unassignWaiter(eventId, assignment.id);
                   }
-                  return (
+                  return canWriteStaffing ? (
                     <form key={assignment.id} action={remove}>
                       <button
                         type="submit"
@@ -224,10 +239,15 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                         {assignment.role === "runner" ? ` (${WAITER_ROLE_LABELS.runner})` : ""} ✕
                       </button>
                     </form>
+                  ) : (
+                    <span key={assignment.id} className="rounded-full bg-accent-soft px-3 py-1 text-sm">
+                      {assignment.waiters?.name}
+                      {assignment.role === "runner" ? ` (${WAITER_ROLE_LABELS.runner})` : ""}
+                    </span>
                   );
                 })}
 
-                {availableWaiters.length > 0 && (
+                {canWriteStaffing && availableWaiters.length > 0 && (
                   <form action={addAssignment} className="flex items-center gap-2">
                     <select
                       name="waiter_id"
@@ -264,50 +284,52 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                 )}
               </div>
 
-              <details>
-                <summary className="cursor-pointer text-xs font-medium text-foreground/60">ערוך פרטים</summary>
-                <SaveDetailsForm action={saveLocationEdit} className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end">
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span>סוג</span>
-                    <select
-                      name="location_type"
-                      defaultValue={location.location_type}
-                      className="rounded-md border border-border-classic bg-surface px-3 py-2"
+              {canWriteStaffing && (
+                <details>
+                  <summary className="cursor-pointer text-xs font-medium text-foreground/60">ערוך פרטים</summary>
+                  <SaveDetailsForm action={saveLocationEdit} className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <label className="flex flex-col gap-1 text-sm">
+                      <span>סוג</span>
+                      <select
+                        name="location_type"
+                        defaultValue={location.location_type}
+                        className="rounded-md border border-border-classic bg-surface px-3 py-2"
+                      >
+                        {LOCATION_TYPES.map((type) => (
+                          <option key={type} value={type}>
+                            {LOCATION_TYPE_LABELS[type]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="flex flex-1 flex-col gap-1 text-sm">
+                      <span>שם</span>
+                      <input
+                        name="label"
+                        defaultValue={location.label}
+                        required
+                        className="rounded-md border border-border-classic bg-surface px-3 py-2"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-sm">
+                      <span>קיבולת</span>
+                      <input
+                        type="number"
+                        name="capacity"
+                        min={0}
+                        defaultValue={location.capacity}
+                        className="w-24 rounded-md border border-border-classic bg-surface px-3 py-2"
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
                     >
-                      {LOCATION_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {LOCATION_TYPE_LABELS[type]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="flex flex-1 flex-col gap-1 text-sm">
-                    <span>שם</span>
-                    <input
-                      name="label"
-                      defaultValue={location.label}
-                      required
-                      className="rounded-md border border-border-classic bg-surface px-3 py-2"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span>קיבולת</span>
-                    <input
-                      type="number"
-                      name="capacity"
-                      min={0}
-                      defaultValue={location.capacity}
-                      className="w-24 rounded-md border border-border-classic bg-surface px-3 py-2"
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
-                  >
-                    שמור
-                  </button>
-                </SaveDetailsForm>
-              </details>
+                      שמור
+                    </button>
+                  </SaveDetailsForm>
+                </details>
+              )}
             </li>
           );
         })}

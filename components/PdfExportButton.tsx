@@ -90,18 +90,18 @@ export function PdfExportButton({
         </div>
         <div ref={footerRef} dir="rtl" className="w-[780px]" style={{ backgroundColor: "#ffffff" }}>
           <div
-            className="flex items-end justify-between px-8 py-3 text-[11px]"
+            className="flex items-end justify-between px-8 py-4 text-[13px]"
             style={{ borderTop: "1px solid #999999", color: "#555555" }}
           >
-            <div className="flex flex-col items-start gap-1">
+            <div className="flex flex-col items-start gap-1.5">
               {signature && (
                 // eslint-disable-next-line @next/next/no-img-element -- captured by html2canvas, not rendered to the user
-                <img src={signature} alt="" className="h-10 object-contain" />
+                <img src={signature} alt="" className="h-16 object-contain" />
               )}
-              <div className="w-44 pt-1" style={{ borderTop: "1px solid #999999" }}>
+              <div className="w-56 pt-1" style={{ borderTop: "1px solid #999999" }}>
                 חתימה
               </div>
-              {signerName && <div>{signerName}</div>}
+              {signerName && <div className="font-medium">מנהל אירוע: {signerName}</div>}
             </div>
             <div>{eventLabel}</div>
           </div>

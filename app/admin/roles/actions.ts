@@ -38,6 +38,13 @@ export async function deleteRole(roleId: string) {
   revalidatePath("/admin/users");
 }
 
+export async function setRoleEventManagerFlag(roleId: string, value: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("roles").update({ can_be_event_manager: value }).eq("id", roleId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/roles");
+}
+
 export async function setRolePermission(
   roleId: string,
   resource: string,

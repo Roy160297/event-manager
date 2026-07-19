@@ -2,17 +2,24 @@ import { createClient } from "@/lib/supabase/server";
 import { addDefaultSchedule, addTimelineItem, deleteTimelineItem, updateTimelineItem } from "./actions";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
+import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { TimeField } from "@/components/TimeField";
+import { getCurrentStaff } from "@/lib/auth";
+import { canRead, canWrite } from "@/lib/permissions";
 
 export default async function TimelinePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = await params;
   const supabase = await createClient();
 
-  const { data: rawItems } = await supabase
-    .from("timeline_items")
-    .select("*")
-    .eq("event_id", eventId)
-    .order("sort_order", { ascending: true });
+  const [{ data: rawItems }, currentStaff] = await Promise.all([
+    supabase.from("timeline_items").select("*").eq("event_id", eventId).order("sort_order", { ascending: true }),
+    getCurrentStaff(),
+  ]);
+
+  const canReadTimeline = !!currentStaff && canRead(currentStaff.permissions, "timeline");
+  const canWriteTimeline = !!currentStaff && canWrite(currentStaff.permissions, "timeline");
+
+  if (!canReadTimeline) return <NoPermissionNotice />;
 
   // Wedding schedules run past midnight, so a plain time comparison would sort
   // "00:30" before "19:30". Times before 6am are treated as a continuation of
@@ -42,46 +49,50 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-classic bg-surface p-4">
-        <p className="text-sm text-foreground/60">
-          יוצרים לוח זמנים סטנדרטי לחתונה (קבלת פנים, חופה, מזנונים ועוד) ואז אפשר להתאים אישית.
-        </p>
-        <SaveDetailsForm action={addDefault} message="לוח הזמנים נוצר בהצלחה">
+      {canWriteTimeline && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-classic bg-surface p-4">
+          <p className="text-sm text-foreground/60">
+            יוצרים לוח זמנים סטנדרטי לחתונה (קבלת פנים, חופה, מזנונים ועוד) ואז אפשר להתאים אישית.
+          </p>
+          <SaveDetailsForm action={addDefault} message="לוח הזמנים נוצר בהצלחה">
+            <button
+              type="submit"
+              className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+            >
+              צור לוח זמנים ברירת מחדל
+            </button>
+          </SaveDetailsForm>
+        </div>
+      )}
+
+      {canWriteTimeline && (
+        <form
+          action={addItem}
+          className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
+        >
+          <p className="text-sm font-medium">שלב חדש בלוח הזמנים</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <input
+              name="label"
+              placeholder="לדוגמה: קבלת פנים"
+              required
+              className="rounded-md border border-border-classic bg-surface px-3 py-2 sm:col-span-2"
+            />
+            <TimeField name="approx_time" />
+            <input
+              name="notes"
+              placeholder="הערות (לא חובה)"
+              className="rounded-md border border-border-classic bg-surface px-3 py-2 sm:col-span-3"
+            />
+          </div>
           <button
             type="submit"
-            className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+            className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
           >
-            צור לוח זמנים ברירת מחדל
+            הוסף ללוח הזמנים
           </button>
-        </SaveDetailsForm>
-      </div>
-
-      <form
-        action={addItem}
-        className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
-      >
-        <p className="text-sm font-medium">שלב חדש בלוח הזמנים</p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <input
-            name="label"
-            placeholder="לדוגמה: קבלת פנים"
-            required
-            className="rounded-md border border-border-classic bg-surface px-3 py-2 sm:col-span-2"
-          />
-          <TimeField name="approx_time" />
-          <input
-            name="notes"
-            placeholder="הערות (לא חובה)"
-            className="rounded-md border border-border-classic bg-surface px-3 py-2 sm:col-span-3"
-          />
-        </div>
-        <button
-          type="submit"
-          className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-        >
-          הוסף ללוח הזמנים
-        </button>
-      </form>
+        </form>
+      )}
 
       {(!items || items.length === 0) && (
         <p className="text-foreground/60">עדיין לא הוגדר לוח זמנים לאירוע זה.</p>
@@ -116,42 +127,46 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
                     {item.notes && <p className="text-sm text-foreground/60">{item.notes}</p>}
                   </div>
                 </div>
-                <form action={remove}>
-                  <button
-                    type="submit"
-                    title="מחק שלב"
-                    className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                    <span className="sr-only">מחק</span>
-                  </button>
-                </form>
+                {canWriteTimeline && (
+                  <form action={remove}>
+                    <button
+                      type="submit"
+                      title="מחק שלב"
+                      className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      <span className="sr-only">מחק</span>
+                    </button>
+                  </form>
+                )}
               </div>
 
-              <details className="border-t border-border-classic pt-2">
-                <summary className="cursor-pointer text-xs font-medium text-accent">ערוך שלב</summary>
-                <SaveDetailsForm action={saveEdit} className="mt-2 grid gap-2 sm:grid-cols-3">
-                  <input
-                    name="label"
-                    defaultValue={item.label}
-                    required
-                    className={`${inputClass} sm:col-span-2`}
-                  />
-                  <TimeField name="approx_time" defaultValue={item.approx_time ?? ""} />
-                  <input
-                    name="notes"
-                    defaultValue={item.notes ?? ""}
-                    placeholder="הערות (לא חובה)"
-                    className={`${inputClass} sm:col-span-3`}
-                  />
-                  <button
-                    type="submit"
-                    className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft sm:col-span-3"
-                  >
-                    שמור שינויים
-                  </button>
-                </SaveDetailsForm>
-              </details>
+              {canWriteTimeline && (
+                <details className="border-t border-border-classic pt-2">
+                  <summary className="cursor-pointer text-xs font-medium text-accent">ערוך שלב</summary>
+                  <SaveDetailsForm action={saveEdit} className="mt-2 grid gap-2 sm:grid-cols-3">
+                    <input
+                      name="label"
+                      defaultValue={item.label}
+                      required
+                      className={`${inputClass} sm:col-span-2`}
+                    />
+                    <TimeField name="approx_time" defaultValue={item.approx_time ?? ""} />
+                    <input
+                      name="notes"
+                      defaultValue={item.notes ?? ""}
+                      placeholder="הערות (לא חובה)"
+                      className={`${inputClass} sm:col-span-3`}
+                    />
+                    <button
+                      type="submit"
+                      className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft sm:col-span-3"
+                    >
+                      שמור שינויים
+                    </button>
+                  </SaveDetailsForm>
+                </details>
+              )}
             </li>
           );
         })}

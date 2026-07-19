@@ -3,43 +3,52 @@ import { createClient } from "@/lib/supabase/server";
 import { deleteEvent } from "@/app/events/actions";
 import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDate, getDisplayEventStatus } from "@/lib/labels";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
+import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { TrashIcon } from "@/components/icons";
+import { getCurrentStaff } from "@/lib/auth";
+import { canRead, canWrite } from "@/lib/permissions";
 import type { EventRow } from "@/lib/types";
 
 export default async function EventsDashboard() {
   const supabase = await createClient();
-  const { data: events, error } = await supabase
-    .from("events")
-    .select("*")
-    .order("event_date", { ascending: true })
-    .returns<EventRow[]>();
+  const [{ data: events, error }, currentStaff] = await Promise.all([
+    supabase.from("events").select("*").order("event_date", { ascending: true }).returns<EventRow[]>(),
+    getCurrentStaff(),
+  ]);
+
+  const canReadEvents = !!currentStaff && canRead(currentStaff.permissions, "events");
+  const canWriteEvents = !!currentStaff && canWrite(currentStaff.permissions, "events");
+
+  if (!canReadEvents) return <NoPermissionNotice />;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-serif text-2xl font-bold">אירועים</h1>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/events/import"
-            className="rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
-          >
-            ייבא טופס אירוע חתונה מiPlan
-          </Link>
-          <a
-            href="https://iplan.co.il/he-IL/corp/sign_in?"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
-          >
-            מעבר ל-iPlan
-          </a>
-          <Link
-            href="/events/new"
-            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-          >
-            + אירוע חדש
-          </Link>
-        </div>
+        {canWriteEvents && (
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/events/import"
+              className="rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
+            >
+              ייבא טופס אירוע חתונה מiPlan
+            </Link>
+            <a
+              href="https://iplan.co.il/he-IL/corp/sign_in?"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+            >
+              מעבר ל-iPlan
+            </a>
+            <Link
+              href="/events/new"
+              className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+            >
+              + אירוע חדש
+            </Link>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -80,16 +89,18 @@ export default async function EventsDashboard() {
                   {EVENT_STATUS_LABELS[displayStatus]}
                 </span>
               </Link>
-              <form action={remove} className="ms-3">
-                <ConfirmSubmitButton
-                  message={`למחוק את האירוע "${event.name}"? הפעולה בלתי הפיכה.`}
-                  title="מחק אירוע"
-                  className="rounded-md p-2 text-red-600 hover:bg-red-50"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                  <span className="sr-only">מחק</span>
-                </ConfirmSubmitButton>
-              </form>
+              {canWriteEvents && (
+                <form action={remove} className="ms-3">
+                  <ConfirmSubmitButton
+                    message={`למחוק את האירוע "${event.name}"? הפעולה בלתי הפיכה.`}
+                    title="מחק אירוע"
+                    className="rounded-md p-2 text-red-600 hover:bg-red-50"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                    <span className="sr-only">מחק</span>
+                  </ConfirmSubmitButton>
+                </form>
+              )}
             </li>
           );
         })}

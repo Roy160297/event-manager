@@ -23,9 +23,11 @@ function buildInitialState(roles: RoleRow[], permissionsByRole: Record<string, R
 export function PermissionGrid({
   roles,
   permissionsByRole,
+  readOnly = false,
 }: {
   roles: RoleRow[];
   permissionsByRole: Record<string, RolePermissionRow[]>;
+  readOnly?: boolean;
 }) {
   const [state, setState] = useState<PermissionsState>(() => buildInitialState(roles, permissionsByRole));
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +36,7 @@ export function PermissionGrid({
   // only touch the UI again if the save actually fails, so ticking through a
   // grid of checkboxes doesn't wait on a round-trip per click.
   function toggle(roleId: string, resource: Resource, field: "can_read" | "can_write", checked: boolean) {
+    if (readOnly) return;
     setError(null);
     setState((prev) => ({
       ...prev,
@@ -83,6 +86,7 @@ export function PermissionGrid({
                       <input
                         type="checkbox"
                         checked={state[role.id][resource].can_read}
+                        disabled={readOnly}
                         onChange={(e) => toggle(role.id, resource, "can_read", e.target.checked)}
                       />
                     </td>
@@ -90,6 +94,7 @@ export function PermissionGrid({
                       <input
                         type="checkbox"
                         checked={state[role.id][resource].can_write}
+                        disabled={readOnly}
                         onChange={(e) => toggle(role.id, resource, "can_write", e.target.checked)}
                       />
                     </td>

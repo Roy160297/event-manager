@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentStaff } from "@/lib/auth";
+import { canWrite } from "@/lib/permissions";
 import type { EventType } from "@/lib/types";
 
 export async function createEvent(formData: FormData) {
@@ -95,6 +97,15 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
 export async function updateEventSummaryReport(eventId: string, formData: FormData) {
   const supabase = await createClient();
 
+  // Summary-report fields live on the same `events` row as core event
+  // fields (gated by events:write via RLS), so RLS can't separate them -
+  // Postgres row-level security has no notion of "these specific columns."
+  // Enforce the dedicated event_summary_report permission here instead.
+  const staff = await getCurrentStaff();
+  if (!staff || !canWrite(staff.permissions, "event_summary_report")) {
+    throw new Error("אין לך הרשאה לערוך את דוח סיכום האירוע");
+  }
+
   const text = (key: string) => String(formData.get(key) ?? "").trim() || null;
   const num = (key: string) => {
     const raw = String(formData.get(key) ?? "").trim();
@@ -130,38 +141,6 @@ export async function updateEventSummaryReport(eventId: string, formData: FormDa
   if (error) throw new Error(error.message);
 
   revalidatePath(`/events/${eventId}/tasks`);
-}
-
-export async function addManager(formData: FormData) {
-  const supabase = await createClient();
-
-  const name = String(formData.get("manager_name") ?? "").trim();
-
-  if (!name) {
-    throw new Error("שם האחראי הוא שדה חובה");
-  }
-
-  const { error } = await supabase.from("staff").insert({ name });
-  if (error) throw new Error(error.message);
-}
-
-export async function deleteManager(staffId: string) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("staff").delete().eq("id", staffId);
-  if (error) throw new Error(error.message);
-}
-
-export async function updateManager(staffId: string, formData: FormData) {
-  const supabase = await createClient();
-
-  const name = String(formData.get("manager_name") ?? "").trim();
-
-  if (!name) {
-    throw new Error("שם האחראי הוא שדה חובה");
-  }
-
-  const { error } = await supabase.from("staff").update({ name }).eq("id", staffId);
-  if (error) throw new Error(error.message);
 }
 
 export async function addSupplier(eventId: string, formData: FormData) {

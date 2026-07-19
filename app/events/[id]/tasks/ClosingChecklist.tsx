@@ -73,7 +73,7 @@ export default function ClosingChecklist({
 
         <PdfExportButton
           filename={`צקליסט-סגירה-${eventName}.pdf`}
-          eventLabel={`${eventName} · ${formatDate(eventDate)}`}
+          eventLabel={`${eventName} · ${eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · ${formatDate(eventDate)}`}
           signerName={managerName}
         >
           <ChecklistPrintable eventName={eventName} eventType={eventType} eventDate={eventDate} checked={checked} />

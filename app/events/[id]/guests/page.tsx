@@ -4,7 +4,10 @@ import { deleteGuest, updateGuest } from "./actions";
 import GuestCsvImport from "./GuestCsvImport";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
+import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { RSVP_STATUS_LABELS } from "@/lib/labels";
+import { getCurrentStaff } from "@/lib/auth";
+import { canRead, canWrite } from "@/lib/permissions";
 import type { GuestRow, RsvpStatus } from "@/lib/types";
 
 const RSVP_STATUSES = Object.keys(RSVP_STATUS_LABELS) as RsvpStatus[];
@@ -13,12 +16,15 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
   const { id: eventId } = await params;
   const supabase = await createClient();
 
-  const { data: guests } = await supabase
-    .from("guests")
-    .select("*")
-    .eq("event_id", eventId)
-    .order("name")
-    .returns<GuestRow[]>();
+  const [{ data: guests }, currentStaff] = await Promise.all([
+    supabase.from("guests").select("*").eq("event_id", eventId).order("name").returns<GuestRow[]>(),
+    getCurrentStaff(),
+  ]);
+
+  const canReadGuests = !!currentStaff && canRead(currentStaff.permissions, "guests");
+  const canWriteGuests = !!currentStaff && canWrite(currentStaff.permissions, "guests");
+
+  if (!canReadGuests) return <NoPermissionNotice />;
 
   const confirmed = guests?.filter((g) => g.rsvp_status === "confirmed").length ?? 0;
   const declined = guests?.filter((g) => g.rsvp_status === "declined").length ?? 0;
@@ -26,7 +32,7 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="flex flex-col gap-6">
-      <GuestCsvImport eventId={eventId} />
+      {canWriteGuests && <GuestCsvImport eventId={eventId} />}
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border border-border-classic bg-surface p-4">
@@ -81,18 +87,21 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
                       <td className={cellClass}>{guest.party_size}</td>
                       <td className={cellClass}>{guest.seating_table ?? "—"}</td>
                       <td className={cellClass}>
-                        <form action={remove}>
-                          <button
-                            type="submit"
-                            title="מחק אורח"
-                            className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                            <span className="sr-only">מחק</span>
-                          </button>
-                        </form>
+                        {canWriteGuests && (
+                          <form action={remove}>
+                            <button
+                              type="submit"
+                              title="מחק אורח"
+                              className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                              <span className="sr-only">מחק</span>
+                            </button>
+                          </form>
+                        )}
                       </td>
                     </tr>
+                    {canWriteGuests && (
                     <tr>
                       <td colSpan={6} className={`${cellClass} bg-accent-soft/50`}>
                         <details>
@@ -140,6 +149,7 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
                         </details>
                       </td>
                     </tr>
+                    )}
                   </Fragment>
                 );
               })}

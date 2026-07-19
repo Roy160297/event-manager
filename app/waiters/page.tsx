@@ -2,13 +2,24 @@ import { createClient } from "@/lib/supabase/server";
 import { createWaiter, deleteWaiter, updateWaiter } from "./actions";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
+import { NoPermissionNotice } from "@/components/NoPermissionNotice";
+import { getCurrentStaff } from "@/lib/auth";
+import { canRead, canWrite } from "@/lib/permissions";
 import type { WaiterRow } from "@/lib/types";
 
 const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
 
 export default async function WaitersPage() {
   const supabase = await createClient();
-  const { data: waiters } = await supabase.from("waiters").select("*").order("name").returns<WaiterRow[]>();
+  const [{ data: waiters }, currentStaff] = await Promise.all([
+    supabase.from("waiters").select("*").order("name").returns<WaiterRow[]>(),
+    getCurrentStaff(),
+  ]);
+
+  const canReadWaiters = !!currentStaff && canRead(currentStaff.permissions, "waiters");
+  const canWriteWaiters = !!currentStaff && canWrite(currentStaff.permissions, "waiters");
+
+  if (!canReadWaiters) return <NoPermissionNotice />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -18,29 +29,31 @@ export default async function WaitersPage() {
         נבחר בעת השיבוץ לכל אירוע בנפרד.
       </p>
 
-      <form
-        action={createWaiter}
-        className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4 sm:flex-row sm:items-end"
-      >
-        <label className="flex flex-1 flex-col gap-1 text-sm">
-          <span>שם</span>
-          <input name="name" required className={inputClass} />
-        </label>
-        <label className="flex flex-1 flex-col gap-1 text-sm">
-          <span>טלפון</span>
-          <input name="phone" className={inputClass} />
-        </label>
-        <label className="flex flex-1 flex-col gap-1 text-sm">
-          <span>הערות</span>
-          <input name="notes" className={inputClass} />
-        </label>
-        <button
-          type="submit"
-          className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+      {canWriteWaiters && (
+        <form
+          action={createWaiter}
+          className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4 sm:flex-row sm:items-end"
         >
-          הוסף מלצר
-        </button>
-      </form>
+          <label className="flex flex-1 flex-col gap-1 text-sm">
+            <span>שם</span>
+            <input name="name" required className={inputClass} />
+          </label>
+          <label className="flex flex-1 flex-col gap-1 text-sm">
+            <span>טלפון</span>
+            <input name="phone" className={inputClass} />
+          </label>
+          <label className="flex flex-1 flex-col gap-1 text-sm">
+            <span>הערות</span>
+            <input name="notes" className={inputClass} />
+          </label>
+          <button
+            type="submit"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+          >
+            הוסף מלצר
+          </button>
+        </form>
+      )}
 
       {(!waiters || waiters.length === 0) && (
         <p className="text-foreground/60">עדיין לא נוספו מלצרים למאגר.</p>
@@ -73,40 +86,44 @@ export default async function WaitersPage() {
                     </p>
                   )}
                 </div>
-                <form action={remove}>
-                  <button
-                    type="submit"
-                    title="מחק מלצר"
-                    className="rounded-md p-2 text-red-600 hover:bg-red-50"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                    <span className="sr-only">מחק</span>
-                  </button>
-                </form>
+                {canWriteWaiters && (
+                  <form action={remove}>
+                    <button
+                      type="submit"
+                      title="מחק מלצר"
+                      className="rounded-md p-2 text-red-600 hover:bg-red-50"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      <span className="sr-only">מחק</span>
+                    </button>
+                  </form>
+                )}
               </div>
-              <details>
-                <summary className="cursor-pointer text-xs font-medium text-foreground/60">ערוך פרטים</summary>
-                <SaveDetailsForm action={saveEdit} className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end">
-                  <label className="flex flex-1 flex-col gap-1 text-sm">
-                    <span>שם</span>
-                    <input name="name" defaultValue={waiter.name} required className={inputClass} />
-                  </label>
-                  <label className="flex flex-1 flex-col gap-1 text-sm">
-                    <span>טלפון</span>
-                    <input name="phone" defaultValue={waiter.phone ?? ""} className={inputClass} />
-                  </label>
-                  <label className="flex flex-1 flex-col gap-1 text-sm">
-                    <span>הערות</span>
-                    <input name="notes" defaultValue={waiter.notes ?? ""} className={inputClass} />
-                  </label>
-                  <button
-                    type="submit"
-                    className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
-                  >
-                    שמור
-                  </button>
-                </SaveDetailsForm>
-              </details>
+              {canWriteWaiters && (
+                <details>
+                  <summary className="cursor-pointer text-xs font-medium text-foreground/60">ערוך פרטים</summary>
+                  <SaveDetailsForm action={saveEdit} className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <label className="flex flex-1 flex-col gap-1 text-sm">
+                      <span>שם</span>
+                      <input name="name" defaultValue={waiter.name} required className={inputClass} />
+                    </label>
+                    <label className="flex flex-1 flex-col gap-1 text-sm">
+                      <span>טלפון</span>
+                      <input name="phone" defaultValue={waiter.phone ?? ""} className={inputClass} />
+                    </label>
+                    <label className="flex flex-1 flex-col gap-1 text-sm">
+                      <span>הערות</span>
+                      <input name="notes" defaultValue={waiter.notes ?? ""} className={inputClass} />
+                    </label>
+                    <button
+                      type="submit"
+                      className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
+                    >
+                      שמור
+                    </button>
+                  </SaveDetailsForm>
+                </details>
+              )}
             </li>
           );
         })}

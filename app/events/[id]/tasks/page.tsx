@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
+import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { getCurrentStaff } from "@/lib/auth";
-import { canWrite } from "@/lib/permissions";
+import { canRead, canWrite } from "@/lib/permissions";
 import { createTask, deleteTask, updateTask, updateTaskStatus } from "./actions";
 import { updateEventSummaryReport } from "@/app/events/actions";
 import ClosingChecklist from "./ClosingChecklist";
@@ -43,7 +44,34 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       getCurrentStaff(),
     ]);
 
+  const canReadChecklist = !!currentStaff && canRead(currentStaff.permissions, "closing_checklist");
   const canEditChecklist = !!currentStaff && canWrite(currentStaff.permissions, "closing_checklist");
+  const canReadSummary = !!currentStaff && canRead(currentStaff.permissions, "event_summary_report");
+  const canWriteSummary = !!currentStaff && canWrite(currentStaff.permissions, "event_summary_report");
+  const canReadTasks = !!currentStaff && canRead(currentStaff.permissions, "tasks");
+  const canWriteTasks = !!currentStaff && canWrite(currentStaff.permissions, "tasks");
+
+  if (!canReadChecklist && !canReadSummary && !canReadTasks) return <NoPermissionNotice />;
+
+  const summaryFields: [string, string | number | null][] = [
+    ["חברת הפקה", event?.production_company ?? null],
+    ["שעת יציאה מהאולם", event?.exit_time ?? null],
+    ["כמות אורחים סופית - קאונטר", event?.final_guest_count_counter ?? null],
+    ["כמות אורחים סופית - אייפלן", event?.final_guest_count_iplan ?? null],
+    ["כמות רזרבה שנפתחו", event?.reserve_opened_count ?? null],
+    ["מנהל בר", event?.bar_manager_name ?? null],
+    ["כמות ברמנים", event?.bartender_count ?? null],
+    ["מנהל פלור", event?.floor_manager_name ?? null],
+    ["כמות מלצרים", event?.waiter_count ?? null],
+    ["כמות טבחים", event?.cook_count ?? null],
+    ["כמות שוטפי מטבח", event?.kitchen_dishwasher_count ?? null],
+    ["כמות שוטפי כלים", event?.dishwasher_count ?? null],
+    ["שעות מנקה אולם", event?.hall_cleaner_hours ?? null],
+    ["שעות מנקה שירותים", event?.restroom_cleaner_hours ?? null],
+    ["שעות שוטפי מטבח", event?.kitchen_dishwasher_hours ?? null],
+    ["שעות שוטפי כלים", event?.dishwasher_hours ?? null],
+    ["צלם וטלפון", event?.photographer_contact ?? null],
+  ];
 
   async function addTask(formData: FormData) {
     "use server";
@@ -66,16 +94,19 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="flex flex-col gap-6">
-      <ClosingChecklist
-        eventId={eventId}
-        eventName={event?.name ?? ""}
-        eventType={event?.event_type ?? null}
-        eventDate={event?.event_date ?? null}
-        managerName={managerName}
-        canEdit={canEditChecklist}
-        initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
-      />
+      {canReadChecklist && (
+        <ClosingChecklist
+          eventId={eventId}
+          eventName={event?.name ?? ""}
+          eventType={event?.event_type ?? null}
+          eventDate={event?.event_date ?? null}
+          managerName={managerName}
+          canEdit={canEditChecklist}
+          initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
+        />
+      )}
 
+      {canReadSummary && (
       <details className="rounded-lg border border-border-classic bg-surface p-4">
         <summary className="cursor-pointer text-sm font-medium">דוח סיכום אירוע</summary>
 
@@ -113,6 +144,18 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
             </p>
           </div>
 
+          {!canWriteSummary && (
+            <div className="grid gap-x-4 gap-y-1 rounded-md bg-accent-soft/50 p-3 text-sm sm:grid-cols-3">
+              {summaryFields.map(([label, value]) => (
+                <p key={label}>
+                  <span className="text-foreground/60">{label}: </span>
+                  {value ?? "—"}
+                </p>
+              ))}
+            </div>
+          )}
+
+          {canWriteSummary && (
           <SaveDetailsForm action={saveSummaryReport} message="הדוח נשמר בהצלחה" className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className={reportLabelClass}>
@@ -288,9 +331,12 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               שמור דוח
             </button>
           </SaveDetailsForm>
+          )}
         </div>
       </details>
+      )}
 
+      {canWriteTasks && (
       <form action={addTask} className="flex flex-col gap-2 rounded-lg border border-border-classic bg-surface p-3">
         <p className="text-sm font-medium">משימה חדשה</p>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -332,11 +378,13 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           הוסף משימה
         </button>
       </form>
+      )}
 
-      {(!tasks || tasks.length === 0) && (
+      {canReadTasks && (!tasks || tasks.length === 0) && (
         <p className="text-foreground/60">אין עדיין משימות לאירוע זה.</p>
       )}
 
+      {canReadTasks && (
       <ul className="flex flex-col gap-2">
         {tasks?.map((task) => {
           async function changeStatus(formData: FormData) {
@@ -373,34 +421,39 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                   <span className={`rounded-full px-2 py-1 text-xs font-medium ${TASK_STATUS_COLORS[task.status]}`}>
                     {TASK_STATUS_LABELS[task.status]}
                   </span>
-                  <SaveDetailsForm action={changeStatus} message="הסטטוס עודכן בהצלחה" className="flex items-center gap-1">
-                    <select name="status" defaultValue={task.status} className="rounded-md border border-border-classic bg-surface px-2 py-1 text-sm">
-                      {STATUSES.map((status) => (
-                        <option key={status} value={status}>
-                          {TASK_STATUS_LABELS[status]}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="submit"
-                      className="rounded-md border border-border-classic px-2 py-1 text-sm hover:bg-accent-soft"
-                    >
-                      עדכן
-                    </button>
-                  </SaveDetailsForm>
-                  <form action={remove}>
-                    <button
-                      type="submit"
-                      title="מחק משימה"
-                      className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                      <span className="sr-only">מחק</span>
-                    </button>
-                  </form>
+                  {canWriteTasks && (
+                    <SaveDetailsForm action={changeStatus} message="הסטטוס עודכן בהצלחה" className="flex items-center gap-1">
+                      <select name="status" defaultValue={task.status} className="rounded-md border border-border-classic bg-surface px-2 py-1 text-sm">
+                        {STATUSES.map((status) => (
+                          <option key={status} value={status}>
+                            {TASK_STATUS_LABELS[status]}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="submit"
+                        className="rounded-md border border-border-classic px-2 py-1 text-sm hover:bg-accent-soft"
+                      >
+                        עדכן
+                      </button>
+                    </SaveDetailsForm>
+                  )}
+                  {canWriteTasks && (
+                    <form action={remove}>
+                      <button
+                        type="submit"
+                        title="מחק משימה"
+                        className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        <span className="sr-only">מחק</span>
+                      </button>
+                    </form>
+                  )}
                 </div>
               </div>
 
+              {canWriteTasks && (
               <details className="border-t border-border-classic pt-2">
                 <summary className="cursor-pointer text-xs font-medium text-accent">ערוך משימה</summary>
                 <SaveDetailsForm action={saveEdit} className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -444,10 +497,12 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                   </button>
                 </SaveDetailsForm>
               </details>
+              )}
             </li>
           );
         })}
       </ul>
+      )}
     </div>
   );
 }
