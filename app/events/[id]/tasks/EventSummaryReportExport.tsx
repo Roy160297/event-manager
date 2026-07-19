@@ -52,7 +52,7 @@ export function EventSummaryReportExport({
         <div className="mb-1 flex items-baseline justify-between pb-2" style={{ borderBottom: "1px solid #d4d4d4" }}>
           <h1 className="font-serif text-xl font-bold">דוח סיכום אירוע</h1>
           <div className="text-sm" style={{ color: "#525252" }}>
-            {event.name} · {formatDate(event.event_date)}
+            {event.name} · {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
           </div>
         </div>
 

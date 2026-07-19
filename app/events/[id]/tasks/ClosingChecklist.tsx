@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
-import { formatDate } from "@/lib/labels";
+import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
+import type { EventType } from "@/lib/types";
 import { setClosingChecklistItem } from "./actions";
 
 const TOTAL_ITEMS = CLOSING_CHECKLIST.reduce((sum, category) => sum + category.items.length, 0);
@@ -11,14 +12,18 @@ const TOTAL_ITEMS = CLOSING_CHECKLIST.reduce((sum, category) => sum + category.i
 export default function ClosingChecklist({
   eventId,
   eventName,
+  eventType,
   eventDate,
   managerName,
+  canEdit,
   initialCheckedKeys,
 }: {
   eventId: string;
   eventName: string;
+  eventType: EventType | null;
   eventDate: string | null;
   managerName: string | null;
+  canEdit: boolean;
   initialCheckedKeys: string[];
 }) {
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
@@ -59,6 +64,11 @@ export default function ClosingChecklist({
       </summary>
 
       <div className="mt-4 flex flex-col gap-5">
+        {!canEdit && (
+          <p className="text-sm text-foreground/60">
+            אפשר לצפות בצ&apos;קליסט, אך רק מנהל/ת אירוע יכול/ה לסמן פריטים.
+          </p>
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <PdfExportButton
@@ -66,7 +76,7 @@ export default function ClosingChecklist({
           eventLabel={`${eventName} · ${formatDate(eventDate)}`}
           signerName={managerName}
         >
-          <ChecklistPrintable eventName={eventName} eventDate={eventDate} checked={checked} />
+          <ChecklistPrintable eventName={eventName} eventType={eventType} eventDate={eventDate} checked={checked} />
         </PdfExportButton>
 
         {CLOSING_CHECKLIST.map((category) => (
@@ -81,7 +91,7 @@ export default function ClosingChecklist({
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        disabled={pendingKey === item.key}
+                        disabled={!canEdit || pendingKey === item.key}
                         onChange={(e) => toggle(item.key, e.target.checked)}
                         className="mt-0.5 h-4 w-4 shrink-0"
                       />
@@ -100,10 +110,12 @@ export default function ClosingChecklist({
 
 function ChecklistPrintable({
   eventName,
+  eventType,
   eventDate,
   checked,
 }: {
   eventName: string;
+  eventType: EventType | null;
   eventDate: string | null;
   checked: Set<string>;
 }) {
@@ -112,7 +124,7 @@ function ChecklistPrintable({
       <div className="mb-1 flex items-baseline justify-between pb-2" style={{ borderBottom: "1px solid #d4d4d4" }}>
         <h1 className="font-serif text-xl font-bold">צ&apos;קליסט סגירה - מנהל אירוע</h1>
         <div className="text-sm" style={{ color: "#525252" }}>
-          {eventName} · {formatDate(eventDate)}
+          {eventName} · {eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · {formatDate(eventDate)}
         </div>
       </div>
       {CLOSING_CHECKLIST.map((category) => (

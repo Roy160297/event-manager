@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
+import { getCurrentStaff } from "@/lib/auth";
+import { canWrite } from "@/lib/permissions";
 import { createTask, deleteTask, updateTask, updateTaskStatus } from "./actions";
 import { updateEventSummaryReport } from "@/app/events/actions";
 import ClosingChecklist from "./ClosingChecklist";
@@ -27,17 +29,21 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
   const { id: eventId } = await params;
   const supabase = await createClient();
 
-  const [{ data: tasks }, { data: staff }, { data: event }, { data: closingChecklistChecks }] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("*, staff(name)")
-      .eq("event_id", eventId)
-      .order("due_date", { ascending: true, nullsFirst: false })
-      .returns<TaskWithAssignee[]>(),
-    supabase.from("staff").select("id, name").order("name").returns<Pick<StaffRow, "id" | "name">[]>(),
-    supabase.from("events").select("*").eq("id", eventId).returns<EventRow[]>().single(),
-    supabase.from("closing_checklist_checks").select("item_key").eq("event_id", eventId).returns<{ item_key: string }[]>(),
-  ]);
+  const [{ data: tasks }, { data: staff }, { data: event }, { data: closingChecklistChecks }, currentStaff] =
+    await Promise.all([
+      supabase
+        .from("tasks")
+        .select("*, staff(name)")
+        .eq("event_id", eventId)
+        .order("due_date", { ascending: true, nullsFirst: false })
+        .returns<TaskWithAssignee[]>(),
+      supabase.from("staff").select("id, name").order("name").returns<Pick<StaffRow, "id" | "name">[]>(),
+      supabase.from("events").select("*").eq("id", eventId).returns<EventRow[]>().single(),
+      supabase.from("closing_checklist_checks").select("item_key").eq("event_id", eventId).returns<{ item_key: string }[]>(),
+      getCurrentStaff(),
+    ]);
+
+  const canEditChecklist = !!currentStaff && canWrite(currentStaff.permissions, "closing_checklist");
 
   async function addTask(formData: FormData) {
     "use server";
@@ -63,8 +69,10 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       <ClosingChecklist
         eventId={eventId}
         eventName={event?.name ?? ""}
+        eventType={event?.event_type ?? null}
         eventDate={event?.event_date ?? null}
         managerName={managerName}
+        canEdit={canEditChecklist}
         initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
       />
 

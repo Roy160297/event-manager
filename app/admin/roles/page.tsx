@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
+import { SubmitButton } from "@/components/SubmitButton";
 import { TrashIcon } from "@/components/icons";
 import type { RolePermissionRow, RoleRow } from "@/lib/types";
 import { createRole, deleteRole, renameRole } from "./actions";
@@ -31,12 +32,9 @@ export default async function RolesPage() {
             className="rounded-md border border-border-classic bg-surface px-3 py-2"
           />
         </label>
-        <button
-          type="submit"
-          className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-        >
+        <SubmitButton className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-60">
           + תפקיד חדש
-        </button>
+        </SubmitButton>
       </form>
 
       {!roles || roles.length === 0 ? (

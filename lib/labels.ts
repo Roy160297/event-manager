@@ -1,7 +1,6 @@
 import type {
   EventDisplayStatus,
   EventRow,
-  EventStatus,
   EventType,
   LocationType,
   RsvpStatus,
@@ -34,9 +33,10 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   other: "אחר",
 };
 
-// Statuses a user can pick manually; "completed" is derived automatically once the event date has passed.
-export const EVENT_STATUS_OPTIONS: EventStatus[] = ["planning", "approved", "canceled"];
-
+// Status is no longer manually editable: new events start "approved" directly,
+// canceling means deleting the event, and "completed" is derived automatically
+// once the event date has passed. "planning"/"canceled" remain valid labels
+// only so any leftover historical data still renders correctly.
 export const EVENT_STATUS_LABELS: Record<EventDisplayStatus, string> = {
   planning: "תכנון",
   approved: "מאושר",

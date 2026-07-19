@@ -10,7 +10,7 @@ export async function createRole(formData: FormData) {
   if (!name) throw new Error("שם התפקיד הוא שדה חובה");
 
   const { data: role, error } = await supabase.from("roles").insert({ name }).select("id").single();
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(error.code === "23505" ? `כבר קיים תפקיד בשם "${name}"` : error.message);
 
   const { error: permError } = await supabase
     .from("role_permissions")

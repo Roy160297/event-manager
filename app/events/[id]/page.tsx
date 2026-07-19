@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
-  updateEventStatus,
   updateEventDetails,
   addManager,
   deleteManager,
@@ -10,13 +9,13 @@ import {
   updateSupplier,
   deleteSupplier,
 } from "@/app/events/actions";
-import { EVENT_STATUS_LABELS, EVENT_STATUS_OPTIONS, EVENT_TYPE_LABELS } from "@/lib/labels";
+import { EVENT_TYPE_LABELS } from "@/lib/labels";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
 import { DateField } from "@/components/DateField";
 import { TimeField } from "@/components/TimeField";
-import type { EventRow, EventStatus, EventSupplierRow, EventType, StaffRow } from "@/lib/types";
+import type { EventRow, EventSupplierRow, EventType, StaffRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
@@ -45,11 +44,6 @@ export default async function EventOverviewPage({
         .order("sort_order")
         .returns<EventSupplierRow[]>(),
     ]);
-
-  async function changeStatus(formData: FormData) {
-    "use server";
-    await updateEventStatus(id, formData.get("status") as EventStatus);
-  }
 
   async function saveDetails(formData: FormData) {
     "use server";
@@ -94,30 +88,6 @@ export default async function EventOverviewPage({
           <p className="text-2xl font-bold">{guestCount ?? 0}</p>
         </div>
       </div>
-
-      <SaveDetailsForm action={changeStatus} message="הסטטוס עודכן בהצלחה" className="flex items-center gap-2">
-        <label className="text-sm font-medium">סטטוס האירוע:</label>
-        <select
-          name="status"
-          defaultValue={event?.status}
-          className="rounded-md border border-border-classic bg-surface px-3 py-1 text-sm"
-        >
-          {EVENT_STATUS_OPTIONS.map((status) => (
-            <option key={status} value={status}>
-              {EVENT_STATUS_LABELS[status]}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="rounded-full border border-accent px-3 py-1 text-sm text-accent hover:bg-accent-soft"
-        >
-          עדכן
-        </button>
-        <span className="text-xs text-foreground/50">
-          (הסטטוס עובר אוטומטית ל&quot;הושלם&quot; ביום שאחרי מועד האירוע)
-        </span>
-      </SaveDetailsForm>
 
       <SaveDetailsForm action={saveDetails} className="flex flex-col gap-4 rounded-lg border border-border-classic bg-surface p-4">
         <p className="font-serif text-lg font-bold">פרטי האירוע</p>

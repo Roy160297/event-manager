@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { EventStatus, EventType } from "@/lib/types";
+import type { EventType } from "@/lib/types";
 
 export async function createEvent(formData: FormData) {
   const supabase = await createClient();
@@ -26,15 +26,6 @@ export async function createEvent(formData: FormData) {
 
   revalidatePath("/");
   redirect(`/events/${data.id}`);
-}
-
-export async function updateEventStatus(eventId: string, status: EventStatus) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("events").update({ status }).eq("id", eventId);
-  if (error) throw new Error(error.message);
-
-  revalidatePath("/");
-  revalidatePath(`/events/${eventId}`);
 }
 
 export async function deleteEvent(eventId: string) {
