@@ -92,7 +92,7 @@ export default async function RolesPage() {
                       </form>
                     )}
                   </div>
-                  {canManage ? (
+                  {role.name === "מנהל אירועים" ? null : canManage ? (
                     <EventManagerToggle roleId={role.id} initialValue={role.can_be_event_manager} />
                   ) : (
                     role.can_be_event_manager && (
