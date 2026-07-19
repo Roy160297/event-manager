@@ -23,48 +23,6 @@ export async function createLocation(eventId: string, formData: FormData) {
   revalidatePath(`/events/${eventId}/staffing`);
 }
 
-// Creates a "table" location for every distinct guests.seating_table value
-// that doesn't already have a matching location, so tables only need to be
-// entered once (via the guest CSV import) rather than duplicated here.
-export async function quickAddTablesFromGuests(eventId: string) {
-  const supabase = await createClient();
-
-  const [{ data: guests }, { data: existingLocations }] = await Promise.all([
-    supabase.from("guests").select("seating_table, party_size").eq("event_id", eventId),
-    supabase
-      .from("locations")
-      .select("label")
-      .eq("event_id", eventId)
-      .eq("location_type", "table"),
-  ]);
-
-  const existingLabels = new Set((existingLocations ?? []).map((loc) => loc.label));
-  const guestCountByTable = new Map<string, number>();
-
-  for (const guest of guests ?? []) {
-    if (!guest.seating_table) continue;
-    guestCountByTable.set(
-      guest.seating_table,
-      (guestCountByTable.get(guest.seating_table) ?? 0) + (guest.party_size || 1),
-    );
-  }
-
-  const toInsert = Array.from(guestCountByTable.entries())
-    .filter(([label]) => !existingLabels.has(label))
-    .map(([label, guestCount]) => ({
-      event_id: eventId,
-      location_type: "table" as const,
-      label,
-      capacity: guestCount,
-    }));
-
-  if (toInsert.length === 0) return;
-
-  const { error } = await supabase.from("locations").insert(toInsert);
-  if (error) throw new Error(error.message);
-  revalidatePath(`/events/${eventId}/staffing`);
-}
-
 export async function parseTableSketchImport(formData: FormData): Promise<TableSketchDraft> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("יש לבחור קובץ PDF");

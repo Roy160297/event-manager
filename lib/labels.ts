@@ -48,7 +48,7 @@ export const EVENT_STATUS_COLORS: Record<EventDisplayStatus, string> = {
   planning: "bg-neutral-200 text-neutral-700",
   approved: "bg-green-100 text-green-700",
   canceled: "bg-red-100 text-red-700",
-  completed: "bg-accent-soft text-accent",
+  completed: "bg-blue-100 text-blue-700",
 };
 
 export function getDisplayEventStatus(event: Pick<EventRow, "status" | "event_date">): EventDisplayStatus {

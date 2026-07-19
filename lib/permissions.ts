@@ -6,7 +6,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   guests: "אורחים",
   tasks: "משימות",
   timeline: "לוח זמנים",
-  staffing: "צוות הגשה",
+  staffing: "מלצרים (אירוע)",
   waiters: "מלצרים (רשימה כללית)",
   admin: "ניהול משתמשים והרשאות",
 };

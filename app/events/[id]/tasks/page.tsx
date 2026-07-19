@@ -4,6 +4,7 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { createTask, deleteTask, updateTask, updateTaskStatus } from "./actions";
 import { updateEventSummaryReport } from "@/app/events/actions";
 import ClosingChecklist from "./ClosingChecklist";
+import { EventSummaryReportExport } from "./EventSummaryReportExport";
 import {
   EVENT_TYPE_LABELS,
   TASK_PRIORITY_COLORS,
@@ -61,6 +62,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     <div className="flex flex-col gap-6">
       <ClosingChecklist
         eventId={eventId}
+        eventName={event?.name ?? ""}
+        eventDate={event?.event_date ?? null}
         initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
       />
 
@@ -68,6 +71,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         <summary className="cursor-pointer text-sm font-medium">דוח סיכום אירוע</summary>
 
         <div className="mt-4 flex flex-col gap-4">
+          <EventSummaryReportExport event={event ?? null} managerName={managerName} guestCommitment={guestCommitment} />
+
           <div className="grid gap-x-4 gap-y-1 rounded-md bg-accent-soft p-3 text-sm sm:grid-cols-3">
             <p>
               <span className="text-foreground/60">תאריך: </span>

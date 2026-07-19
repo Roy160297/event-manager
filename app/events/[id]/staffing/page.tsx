@@ -1,11 +1,4 @@
-import {
-  assignWaiter,
-  createLocation,
-  deleteLocation,
-  quickAddTablesFromGuests,
-  unassignWaiter,
-  updateLocation,
-} from "./actions";
+import { assignWaiter, createLocation, deleteLocation, unassignWaiter, updateLocation } from "./actions";
 import { createClient } from "@/lib/supabase/server";
 import { LOCATION_TYPE_LABELS, WAITER_ROLE_LABELS } from "@/lib/labels";
 import { TrashIcon } from "@/components/icons";
@@ -92,30 +85,12 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
     await createLocation(eventId, formData);
   }
 
-  async function quickAddTables() {
-    "use server";
-    await quickAddTablesFromGuests(eventId);
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <TableSketchPhoto eventId={eventId} sketchUrl={sketchUrl} isPdf={isSketchPdf} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-classic bg-surface p-4">
-        <p className="text-sm text-foreground/60">
-          צרו שולחנות אוטומטית מרשימת האורחים המיובאת, או הוסיפו שולחנות/עמדות אוכל ידנית.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <form action={quickAddTables}>
-            <button
-              type="submit"
-              className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
-            >
-              צור שולחנות מרשימת האורחים
-            </button>
-          </form>
-          <TableSketchImportWizard eventId={eventId} />
-        </div>
+      <div className="flex justify-end rounded-lg border border-border-classic bg-surface p-4">
+        <TableSketchImportWizard eventId={eventId} />
       </div>
 
       <form
