@@ -3,15 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseCsvBuffer, parseExcelBuffer, type ParsedCsv } from "@/lib/csv-import";
-import type { RsvpStatus } from "@/lib/types";
 
 export interface GuestColumnMapping {
   name: string;
-  email?: string;
-  phone?: string;
-  rsvp_status?: string;
   party_size?: string;
-  dietary_notes?: string;
   seating_table?: string;
 }
 
@@ -25,17 +20,6 @@ export async function parseGuestFile(formData: FormData): Promise<ParsedCsv> {
   return isExcel ? parseExcelBuffer(buffer) : parseCsvBuffer(buffer);
 }
 
-function mapRsvpStatus(raw: string | undefined): RsvpStatus {
-  const value = (raw ?? "").trim().toLowerCase();
-  if (["מאשר", "מגיע", "confirmed", "yes", "כן"].some((v) => value.includes(v))) {
-    return "confirmed";
-  }
-  if (["לא מגיע", "מבטל", "declined", "no", "לא"].some((v) => value.includes(v))) {
-    return "declined";
-  }
-  return "pending";
-}
-
 export async function importGuests(
   eventId: string,
   rows: Record<string, string>[],
@@ -47,11 +31,7 @@ export async function importGuests(
     .map((row) => ({
       event_id: eventId,
       name: (mapping.name ? row[mapping.name] : "")?.trim(),
-      email: mapping.email ? row[mapping.email]?.trim() || null : null,
-      phone: mapping.phone ? row[mapping.phone]?.trim() || null : null,
-      rsvp_status: mapping.rsvp_status ? mapRsvpStatus(row[mapping.rsvp_status]) : "pending",
       party_size: mapping.party_size ? Number(row[mapping.party_size]) || 1 : 1,
-      dietary_notes: mapping.dietary_notes ? row[mapping.dietary_notes]?.trim() || null : null,
       seating_table: mapping.seating_table ? row[mapping.seating_table]?.trim() || null : null,
     }))
     .filter((guest) => guest.name);
@@ -77,8 +57,6 @@ export async function updateGuest(eventId: string, guestId: string, formData: Fo
   const supabase = await createClient();
 
   const name = String(formData.get("name") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim() || null;
-  const rsvpStatus = String(formData.get("rsvp_status") ?? "pending") as RsvpStatus;
   const partySize = Number(formData.get("party_size") ?? 1) || 1;
   const seatingTable = String(formData.get("seating_table") ?? "").trim() || null;
 
@@ -86,7 +64,7 @@ export async function updateGuest(eventId: string, guestId: string, formData: Fo
 
   const { error } = await supabase
     .from("guests")
-    .update({ name, phone, rsvp_status: rsvpStatus, party_size: partySize, seating_table: seatingTable })
+    .update({ name, party_size: partySize, seating_table: seatingTable })
     .eq("id", guestId);
 
   if (error) throw new Error(error.message);

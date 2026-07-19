@@ -6,11 +6,7 @@ import type { ParsedCsv } from "@/lib/csv-import";
 
 const FIELDS: { key: keyof GuestColumnMapping; label: string; required?: boolean; aliases: string[] }[] = [
   { key: "name", label: "שם האורח", required: true, aliases: ["שם פרטי+שם משפחה", "שם", "שם אורח", "שם מלא"] },
-  { key: "email", label: "אימייל", aliases: ["אימייל", "דוא\"ל", "email"] },
-  { key: "phone", label: "טלפון", aliases: ["טלפון", "נייד", "phone"] },
-  { key: "rsvp_status", label: "סטטוס הגעה", aliases: ["סטטוס הגעה", "סטטוס", "אישור הגעה"] },
   { key: "party_size", label: "מספר סועדים", aliases: ["הושבו בשולחן", "מספר סועדים", "סועדים", "כמות"] },
-  { key: "dietary_notes", label: "הערות תזונה", aliases: ["הערות תזונה", "הערות"] },
   { key: "seating_table", label: "שולחן הושבה", aliases: ["שולחן", "שולחן הושבה", "מספר שולחן"] },
 ];
 
@@ -30,6 +26,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
   const [step, setStep] = useState<"upload" | "map" | "done">("upload");
   const [parsed, setParsed] = useState<ParsedCsv | null>(null);
   const [mapping, setMapping] = useState<Partial<GuestColumnMapping>>({});
+  const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -37,6 +34,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
     setStep("upload");
     setParsed(null);
     setMapping({});
+    setFileName(null);
     setError(null);
   }
 
@@ -171,14 +169,21 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
       onSubmit={handleUpload}
       className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
     >
-      <p className="text-sm font-medium">ייבוא רשימת אורחים (CSV / Excel)</p>
-      <input
-        type="file"
-        name="file"
-        accept=".csv,text/csv,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        required
-        className="text-sm"
-      />
+      <p className="text-sm font-medium">ייבוא קובץ &quot;הזמנות (Excel)&quot; מ-iPlan</p>
+      <div className="flex items-center gap-3">
+        <label className="cursor-pointer rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft">
+          בחר קובץ
+          <input
+            type="file"
+            name="file"
+            accept=".csv,text/csv,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            required
+            className="hidden"
+            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+          />
+        </label>
+        <span className="text-sm text-foreground/60">{fileName ?? "לא נבחר קובץ"}</span>
+      </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="submit"
