@@ -54,9 +54,7 @@ export async function setRolePermission(
   const supabase = await createClient();
   const { error } = await supabase
     .from("role_permissions")
-    .update({ [field]: value })
-    .eq("role_id", roleId)
-    .eq("resource", resource);
+    .upsert({ role_id: roleId, resource, [field]: value }, { onConflict: "role_id,resource", ignoreDuplicates: false });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/roles");
 }
