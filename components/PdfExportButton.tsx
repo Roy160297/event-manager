@@ -7,11 +7,13 @@ export function PdfExportButton({
   label = "הורדת PDF",
   filename,
   eventLabel,
+  signerName,
   children,
 }: {
   label?: string;
   filename: string;
   eventLabel: string;
+  signerName?: string | null;
   children: React.ReactNode;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -77,6 +79,13 @@ export function PdfExportButton({
           className="w-[780px] p-8 text-[13px] leading-relaxed"
           style={{ backgroundColor: "#ffffff", color: "#000000" }}
         >
+          <div dir="ltr" className="mb-4 flex items-baseline justify-start gap-1.5">
+            <span className="text-lg font-black uppercase tracking-tight">House</span>
+            <span className="font-serif text-sm italic" style={{ color: "#525252" }}>
+              No.
+            </span>
+            <span className="text-lg font-black uppercase tracking-tight">Seven</span>
+          </div>
           {children}
         </div>
         <div ref={footerRef} dir="rtl" className="w-[780px]" style={{ backgroundColor: "#ffffff" }}>
@@ -92,6 +101,7 @@ export function PdfExportButton({
               <div className="w-44 pt-1" style={{ borderTop: "1px solid #999999" }}>
                 חתימה
               </div>
+              {signerName && <div>{signerName}</div>}
             </div>
             <div>{eventLabel}</div>
           </div>

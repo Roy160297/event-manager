@@ -64,6 +64,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         eventId={eventId}
         eventName={event?.name ?? ""}
         eventDate={event?.event_date ?? null}
+        managerName={managerName}
         initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
       />
 

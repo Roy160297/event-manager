@@ -35,7 +35,7 @@ export async function exportElementToPdf({
   const contentWidthMm = PAGE_WIDTH_MM - MARGIN_MM * 2;
   const pxPerMm = contentCanvas.width / contentWidthMm;
   const footerHeightMm = footerCanvas.height / (footerCanvas.width / contentWidthMm);
-  const bodyHeightMm = PAGE_HEIGHT_MM - MARGIN_MM * 2 - footerHeightMm - FOOTER_GAP_MM;
+  const bodyHeightMm = PAGE_HEIGHT_MM - MARGIN_MM * 2;
   const pageSlicePx = Math.max(1, Math.floor(bodyHeightMm * pxPerMm));
 
   const slice = document.createElement("canvas");
@@ -53,6 +53,7 @@ export async function exportElementToPdf({
 
   let renderedPx = 0;
   let pageIndex = 0;
+  let lastSliceHeightMm = 0;
   do {
     const sliceHeightPx = Math.min(pageSlicePx, contentCanvas.height - renderedPx);
     if (pageIndex > 0) pdf.addPage();
@@ -64,20 +65,28 @@ export async function exportElementToPdf({
       ctx.drawImage(contentCanvas, 0, renderedPx, contentCanvas.width, sliceHeightPx, 0, 0, contentCanvas.width, sliceHeightPx);
       const sliceHeightMm = sliceHeightPx / pxPerMm;
       pdf.addImage(slice.toDataURL("image/jpeg", 0.92), "JPEG", MARGIN_MM, MARGIN_MM, contentWidthMm, sliceHeightMm);
+      lastSliceHeightMm = sliceHeightMm;
     }
-
-    pdf.addImage(
-      footerImage,
-      "JPEG",
-      MARGIN_MM,
-      PAGE_HEIGHT_MM - MARGIN_MM - footerHeightMm,
-      contentWidthMm,
-      footerHeightMm,
-    );
 
     renderedPx += sliceHeightPx;
     pageIndex += 1;
   } while (renderedPx < contentCanvas.height);
+
+  // The signature footer belongs only at the very end of the document, not on
+  // every page: stamp it on the last content page if there's room left below
+  // the content, otherwise give it a trailing page of its own.
+  const remainingOnLastPageMm = PAGE_HEIGHT_MM - MARGIN_MM * 2 - lastSliceHeightMm;
+  if (remainingOnLastPageMm < footerHeightMm + FOOTER_GAP_MM) {
+    pdf.addPage();
+  }
+  pdf.addImage(
+    footerImage,
+    "JPEG",
+    MARGIN_MM,
+    PAGE_HEIGHT_MM - MARGIN_MM - footerHeightMm,
+    contentWidthMm,
+    footerHeightMm,
+  );
 
   pdf.save(filename);
 }

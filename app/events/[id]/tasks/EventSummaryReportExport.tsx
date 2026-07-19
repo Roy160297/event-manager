@@ -46,6 +46,7 @@ export function EventSummaryReportExport({
     <PdfExportButton
       filename={`דוח-סיכום-${event.name}.pdf`}
       eventLabel={`${event.name} · ${formatDate(event.event_date)}`}
+      signerName={managerName}
     >
       <div className="flex flex-col gap-4">
         <div className="mb-1 flex items-baseline justify-between pb-2" style={{ borderBottom: "1px solid #d4d4d4" }}>

@@ -12,11 +12,13 @@ export default function ClosingChecklist({
   eventId,
   eventName,
   eventDate,
+  managerName,
   initialCheckedKeys,
 }: {
   eventId: string;
   eventName: string;
   eventDate: string | null;
+  managerName: string | null;
   initialCheckedKeys: string[];
 }) {
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
@@ -62,6 +64,7 @@ export default function ClosingChecklist({
         <PdfExportButton
           filename={`צקליסט-סגירה-${eventName}.pdf`}
           eventLabel={`${eventName} · ${formatDate(eventDate)}`}
+          signerName={managerName}
         >
           <ChecklistPrintable eventName={eventName} eventDate={eventDate} checked={checked} />
         </PdfExportButton>
