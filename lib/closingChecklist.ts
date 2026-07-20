@@ -22,7 +22,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "yard-reception-cleanup", text: "ניקיון עמדות קבלת פנים: ניקיון של כל החלק העליון + בטן המזנון." },
       {
         key: "yard-reception-trash-pile",
-        text: "פינוי של העמדות קבלת פנים - מרוכזים בערימה בתוך האולם ליד המקרר קרח בעמדת פינויים.",
+        text: "פינוי של פחים עמדות קבלת הפנים - מרוכזים בערימה בתוך האולם ליד המקרר קרח בעמדת פינויים.",
       },
       {
         key: "yard-reception-leftover-equipment",
@@ -38,9 +38,9 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         text: "ניקיון עמדת מארחת + בטן העמדה + כיסאות + עמדות חבלול, ולהכניס אותה בסיום האירוע פנימה.",
       },
       { key: "yard-glasses-cigarettes", text: "פינוי כוסות וסיגריות מהיקף החצר וכל העציצים והאדניות." },
-      { key: "yard-ashtrays", text: "לנקות מאפרות אפורים ולרכז ליד שביל הפחים." },
-      { key: "yard-sidewalk-scan", text: "סריקה של המדרכה בצידי האולם, איסוף חפצים שנשארו מול כוסות וכלים." },
-      { key: "yard-trash-bins", text: "לוודא שפחי האשפה סגורים מול השקיות ואין דליפה על הרצפה." },
+      { key: "yard-ashtrays", text: "לנקות מאפרות אפורות (שטיפה במטבח) ולרכז ליד שביל הפחים." },
+      { key: "yard-sidewalk-scan", text: "סריקה של המדרכה בצידי האולם, איסוף חפצים שנשארו בחוץ (כוסות וכלים)." },
+      { key: "yard-trash-bins", text: "לוודא שפחי האשפה סגורים ואין דליפה על הרצפה." },
       { key: "yard-return-bins", text: "החזרת פחי הפינויים למקומם ולוודא שלמשאית יש גישה נוחה לפחים." },
     ],
   },
@@ -53,10 +53,6 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         text: 'ניקיון כל עמדות המזנונים באולם: חלק עליון + בטן במזנון. לא נשאר כלום (מלבד פק"ל מזנון). לוודא שאין שאריות אוכל - הזזת כל המזנונים לצורך ניקיון יסודי.',
       },
       { key: "hall-buffet-cables", text: "ניתוק כבלי חשמל מקירות עמדות המזנונים." },
-      {
-        key: "hall-buffet-trash-pile",
-        text: "פינוי המזנונים (כולל עמדות קבלת הפנים) - מרוכזים בערימה בתוך האולם ליד המקרר קרח בעמדת פינויים.",
-      },
       { key: "hall-black-bins", text: 'פחים שחורים באירועים חד"פ שעברו שטיפה - מתרכזים לפני חדר המלצרים.' },
       { key: "hall-after-equipment", text: "כלי הגשה וציוד האפטר - מנוקה ומוחזר לארגז ציוד." },
       {
@@ -66,10 +62,10 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "hall-chairs-cleaning", text: "ניקיון כסאות משאריות אוכל ופירורים, ולאחר מכן לערום אותם." },
       {
         key: "hall-gallery",
-        text: "מעבר על הגלריה (ניקוי שולחנות ווידוא שרצפת המזנון בגלריה נקייה ומסודרת).",
+        text: "מעבר על הגלריה (ניקוי שולחנות, כסאות, גרם מדרגות ווידוא שרצפת המזנון בגלריה נקייה ומסודרת).",
       },
       { key: "hall-ice-cream-fridge", text: "לוודא שמקרר הגלידה מחובר לחשמל." },
-      { key: "hall-full-scan", text: "סריקה כוללת: מטבחים (שוטף כלים שביצע את כל משימותיו), מזנונים, עמדות." },
+      { key: "hall-full-scan", text: "סריקת מטבחים כוללת: שוטף כלים שביצע את כל משימותיו, מזנונים, עמדות." },
       {
         key: "hall-radios",
         text: "החזרת מכשירי הקשר לארון בחדר מלצרים כבויים, ולוודא שהם טעונים כראוי (אור אדום).",
@@ -83,10 +79,10 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
     items: [
       { key: "office-kitchen-dishes", text: "פינוי כלים ממטבח המשרדים + ניקיון הכיור." },
       { key: "office-ac-off", text: "לכבות את המזגנים." },
-      { key: "office-photo-summary", text: 'צילום הדלפק ועמוד "הצטרפות אורחים" - ושליחת סיכום במייל.' },
+      { key: "office-photo-summary", text: 'צילום הקאונטרים ועמוד "הצטרפות אורחים" - ושליחת סיכום במייל.' },
       {
         key: "office-hostess-equipment",
-        text: "לוודא שהדברים מעמדת המארחות חזרו: 2 אייפדים, 2 קאונטר, 2 מטענים.",
+        text: "לוודא שהדברים מעמדת המארחות חזרו: 2 אייפדים, 2 קאונטרים, 2 מטענים.",
       },
       { key: "office-ipads-charging", text: "האייפדים מחוברים לטעינה." },
     ],
@@ -95,13 +91,12 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
     key: "electrical",
     label: "מערכות חשמליות",
     items: [
-      { key: "electrical-hall-power", text: "כיבוי החשמל באולם." },
-      { key: "electrical-hall-ac", text: "כיבוי מזגן אולם." },
+      { key: "electrical-hall-power", text: "כיבוי החשמל באולם (ארון חשמל מעל המטבח וארון חשמל במטבח החיצוני)." },
+      { key: "electrical-hall-ac", text: "כיבוי מזגנים באולם (ליד עמדת מגנטים ובכניסה למטבח)." },
       { key: "electrical-hall-hood", text: "כיבוי מנדף אולם." },
       { key: "electrical-stoves-off", text: "כיבוי כיריים." },
       { key: "electrical-kitchen-hood", text: "כיבוי מנדף מטבח יצרן." },
-      { key: "electrical-kitchen-ac", text: "כיבוי מזגנים מטבח יצרן." },
-      { key: "electrical-yard-fans", text: "כיבוי מאווררים וצילרים בחצר." },
+      { key: "electrical-yard-fans", text: "כיבוי מאווררים וצ'ילרים באולם ובחצר." },
     ],
   },
   {
