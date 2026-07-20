@@ -36,6 +36,13 @@ export async function deleteTimelineItem(eventId: string, itemId: string) {
   revalidatePath(`/events/${eventId}/timeline`);
 }
 
+export async function deleteAllTimelineItems(eventId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("timeline_items").delete().eq("event_id", eventId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/timeline`);
+}
+
 export async function updateTimelineItem(eventId: string, itemId: string, formData: FormData) {
   const supabase = await createClient();
 

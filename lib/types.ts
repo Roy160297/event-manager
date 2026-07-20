@@ -1,5 +1,6 @@
 export type EventType =
   | "wedding"
+  | "wedding_service"
   | "reverse_wedding"
   | "bat_mitzvah"
   | "bar_mitzvah"

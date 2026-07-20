@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { addDefaultSchedule, addTimelineItem, deleteTimelineItem, updateTimelineItem } from "./actions";
+import { addDefaultSchedule, addTimelineItem, deleteAllTimelineItems, deleteTimelineItem, updateTimelineItem } from "./actions";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
@@ -45,6 +46,11 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
     await addDefaultSchedule(eventId);
   }
 
+  async function removeAll() {
+    "use server";
+    await deleteAllTimelineItems(eventId);
+  }
+
   const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
 
   return (
@@ -54,14 +60,26 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
           <p className="text-sm text-foreground/60">
             יוצרים לוח זמנים סטנדרטי לחתונה (קבלת פנים, חופה, מזנונים ועוד) ואז אפשר להתאים אישית.
           </p>
-          <SaveDetailsForm action={addDefault} message="לוח הזמנים נוצר בהצלחה">
-            <button
-              type="submit"
-              className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
-            >
-              צור לוח זמנים ברירת מחדל
-            </button>
-          </SaveDetailsForm>
+          <div className="flex flex-wrap gap-2">
+            <SaveDetailsForm action={addDefault} message="לוח הזמנים נוצר בהצלחה">
+              <button
+                type="submit"
+                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+              >
+                צור לוח זמנים ברירת מחדל
+              </button>
+            </SaveDetailsForm>
+            {items && items.length > 0 && (
+              <form action={removeAll}>
+                <ConfirmSubmitButton
+                  message="למחוק את כל השלבים בלוח הזמנים? לא ניתן לשחזר פעולה זו."
+                  className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  מחק את כל השלבים
+                </ConfirmSubmitButton>
+              </form>
+            )}
+          </div>
         </div>
       )}
 

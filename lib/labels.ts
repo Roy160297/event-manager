@@ -26,6 +26,7 @@ export const MONTH_LABELS = [
 
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   wedding: "חתונה - מזנונים",
+  wedding_service: "חתונה - הגשה",
   reverse_wedding: "חתונה הפוכה",
   bat_mitzvah: "בת מצווה",
   bar_mitzvah: "בר מצווה",
