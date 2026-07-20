@@ -4,28 +4,27 @@ import { useState } from "react";
 import { importGuests, parseGuestFile, type GuestColumnMapping } from "./actions";
 import type { ParsedCsv } from "@/lib/csv-import";
 
-const FIELDS: { key: keyof GuestColumnMapping; label: string; required?: boolean; aliases: string[] }[] = [
-  { key: "name", label: "שם האורח", required: true, aliases: ["שם פרטי+שם משפחה", "שם", "שם אורח", "שם מלא"] },
-  { key: "party_size", label: "מספר סועדים", aliases: ["הושבו בשולחן", "מספר סועדים", "סועדים", "כמות"] },
-  { key: "seating_table", label: "שולחן הושבה", aliases: ["שולחן", "שולחן הושבה", "מספר שולחן"] },
-];
+// The guest-list template is fixed, so columns are always detected by these
+// known header aliases rather than asking the user to map them by hand.
+const ALIASES: Record<keyof GuestColumnMapping, string[]> = {
+  name: ["שם פרטי+שם משפחה", "שם", "שם אורח", "שם מלא"],
+  party_size: ["הושבו בשולחן", "מספר סועדים", "סועדים", "כמות"],
+  seating_table: ["שולחן", "שולחן הושבה", "מספר שולחן"],
+};
 
-// The guest-list template is reused as-is every time, so once the headers
-// match known aliases there's no need to make the user re-pick the same
-// columns on every import - just pre-fill the mapping and let them review it.
 function guessMapping(headers: string[]): Partial<GuestColumnMapping> {
   const mapping: Partial<GuestColumnMapping> = {};
-  for (const field of FIELDS) {
-    const match = headers.find((header) => field.aliases.includes(header.trim()));
-    if (match) mapping[field.key] = match;
+  for (const key of Object.keys(ALIASES) as (keyof GuestColumnMapping)[]) {
+    const match = headers.find((header) => ALIASES[key].includes(header.trim()));
+    if (match) mapping[key] = match;
   }
   return mapping;
 }
 
 export default function GuestCsvImport({ eventId }: { eventId: string }) {
-  const [step, setStep] = useState<"upload" | "map" | "done">("upload");
+  const [step, setStep] = useState<"upload" | "preview" | "done">("upload");
   const [parsed, setParsed] = useState<ParsedCsv | null>(null);
-  const [mapping, setMapping] = useState<Partial<GuestColumnMapping>>({});
+  const [mapping, setMapping] = useState<GuestColumnMapping | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -33,7 +32,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
   function reset() {
     setStep("upload");
     setParsed(null);
-    setMapping({});
+    setMapping(null);
     setFileName(null);
     setError(null);
   }
@@ -45,9 +44,14 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
     setIsPending(true);
     try {
       const result = await parseGuestFile(formData);
+      const guessed = guessMapping(result.headers);
+      if (!guessed.name) {
+        setError('לא זוהתה עמודת "שם האורח" בקובץ — ודאו שמדובר בקובץ בפורמט הרגיל.');
+        return;
+      }
       setParsed(result);
-      setMapping(guessMapping(result.headers));
-      setStep("map");
+      setMapping(guessed as GuestColumnMapping);
+      setStep("preview");
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בעיבוד הקובץ");
     } finally {
@@ -56,14 +60,11 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
   }
 
   async function handleImport() {
-    if (!parsed || !mapping.name) {
-      setError("יש לבחור עמודה לשם האורח");
-      return;
-    }
+    if (!parsed || !mapping) return;
     setIsPending(true);
     setError(null);
     try {
-      await importGuests(eventId, parsed.rows, mapping as GuestColumnMapping);
+      await importGuests(eventId, parsed.rows, mapping);
       setStep("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בייבוא האורחים");
@@ -83,59 +84,37 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
     );
   }
 
-  if (step === "map" && parsed) {
+  if (step === "preview" && parsed && mapping) {
+    const previewRows = parsed.rows.slice(0, 3).map((row) => ({
+      name: row[mapping.name],
+      party_size: mapping.party_size ? row[mapping.party_size] : "1",
+      seating_table: (mapping.seating_table ? row[mapping.seating_table] : "") || "—",
+    }));
+
     return (
       <div className="flex flex-col gap-4 rounded-lg border border-border-classic bg-surface p-4">
         <p className="text-sm text-foreground/60">
-          זוהה קידוד: {parsed.detectedEncoding} · נמצאו {parsed.rows.length} שורות. התאימו כל שדה
-          לעמודה המתאימה בקובץ.
+          זוהה קידוד: {parsed.detectedEncoding} · נמצאו {parsed.rows.length} אורחים בקובץ. הייבוא
+          יחליף את רשימת האורחים הקיימת באירוע זה.
         </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {FIELDS.map((field) => (
-            <label key={field.key} className="flex flex-col gap-1 text-sm">
-              <span>
-                {field.label}
-                {field.required && " *"}
-              </span>
-              <select
-                value={mapping[field.key] ?? ""}
-                onChange={(e) =>
-                  setMapping((current) => ({ ...current, [field.key]: e.target.value }))
-                }
-                className="rounded-md border border-border-classic bg-surface px-3 py-2"
-              >
-                <option value="">— לא לייבא —</option>
-                {parsed.headers.map((header) => (
-                  <option key={header} value={header}>
-                    {header}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
-        </div>
 
-        {parsed.rows.length > 0 && (
+        {previewRows.length > 0 && (
           <div className="overflow-x-auto">
             <p className="mb-1 text-sm font-medium">תצוגה מקדימה (3 שורות ראשונות)</p>
             <table className="w-full min-w-max border-collapse text-sm">
               <thead>
                 <tr>
-                  {parsed.headers.map((header) => (
-                    <th key={header} className="border-b border-border-classic p-2 text-right">
-                      {header}
-                    </th>
-                  ))}
+                  <th className="border-b border-border-classic p-2 text-right">שם האורח</th>
+                  <th className="border-b border-border-classic p-2 text-right">מספר סועדים</th>
+                  <th className="border-b border-border-classic p-2 text-right">שולחן</th>
                 </tr>
               </thead>
               <tbody>
-                {parsed.rows.slice(0, 3).map((row, index) => (
+                {previewRows.map((row, index) => (
                   <tr key={index}>
-                    {parsed.headers.map((header) => (
-                      <td key={header} className="border-b border-border-classic p-2">
-                        {row[header]}
-                      </td>
-                    ))}
+                    <td className="border-b border-border-classic p-2">{row.name}</td>
+                    <td className="border-b border-border-classic p-2">{row.party_size}</td>
+                    <td className="border-b border-border-classic p-2">{row.seating_table}</td>
                   </tr>
                 ))}
               </tbody>
@@ -169,7 +148,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
       onSubmit={handleUpload}
       className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
     >
-      <p className="text-sm font-medium">ייבוא קובץ &quot;הזמנות (Excel)&quot; מ-iPlan</p>
+      <p className="text-sm font-medium">ייבוא קובץ &quot;הזמנות&quot; (Excel) מ-iPlan</p>
       <div className="flex items-center gap-3">
         <label className="cursor-pointer rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft">
           בחר קובץ

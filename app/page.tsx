@@ -31,7 +31,7 @@ export default async function EventsDashboard() {
               href="/events/import"
               className="rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
             >
-              צור אירוע חדש מ&quot;טופס אירוע חתונה מ-iPlan&quot;
+              צור אירוע חדש מ&quot;טופס אירוע חתונה&quot; מ-iPlan
             </Link>
             <a
               href="https://iplan.co.il/he-IL/corp/sign_in?"

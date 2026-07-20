@@ -40,6 +40,12 @@ export async function importGuests(
     throw new Error("לא נמצאו אורחים תקינים לייבוא — ודאו שהוגדרה עמודת השם");
   }
 
+  // A new import always reflects the venue's latest full guest list, not an
+  // addition to it - replace the existing list rather than appending, so
+  // re-imports can't create duplicates or leave stale guests behind.
+  const { error: deleteError } = await supabase.from("guests").delete().eq("event_id", eventId);
+  if (deleteError) throw new Error(deleteError.message);
+
   const { error } = await supabase.from("guests").insert(guests);
   if (error) throw new Error(error.message);
 
@@ -49,6 +55,13 @@ export async function importGuests(
 export async function deleteGuest(eventId: string, guestId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("guests").delete().eq("id", guestId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/guests`);
+}
+
+export async function deleteAllGuests(eventId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("guests").delete().eq("event_id", eventId);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/guests`);
 }
