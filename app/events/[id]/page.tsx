@@ -105,9 +105,9 @@ export default async function EventOverviewPage({
               <label className={labelClass}>
                 <span className="font-medium">מספר אורחים - התחייבות</span>
                 <input
-                  type="number"
-                  min={0}
+                  type="text"
                   name="estimated_guests"
+                  placeholder='לדוגמה: 200+14'
                   defaultValue={event?.estimated_guests ?? ""}
                   className={inputClass}
                 />

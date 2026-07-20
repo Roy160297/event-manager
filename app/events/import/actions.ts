@@ -63,7 +63,7 @@ export async function createEventFromPdfImport(
       start_time: draft.start_time,
       end_time: draft.end_time,
       manager_id: draft.manager_id,
-      estimated_guests: estimatedGuests,
+      estimated_guests: estimatedGuests != null ? String(estimatedGuests) : null,
       bride_name: draft.bride_name,
       groom_name: draft.groom_name,
       sales_person_name: draft.sales_person_name,

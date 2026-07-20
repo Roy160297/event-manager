@@ -12,7 +12,12 @@ import type { EventRow } from "@/lib/types";
 export default async function EventsDashboard() {
   const supabase = await createClient();
   const [{ data: events, error }, currentStaff] = await Promise.all([
-    supabase.from("events").select("*").order("event_date", { ascending: true }).returns<EventRow[]>(),
+    supabase
+      .from("events")
+      .select("*")
+      .is("deleted_at", null)
+      .order("event_date", { ascending: true })
+      .returns<EventRow[]>(),
     getCurrentStaff(),
   ]);
 
@@ -46,6 +51,12 @@ export default async function EventsDashboard() {
               className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
             >
               + אירוע חדש
+            </Link>
+            <Link
+              href="/events/trash"
+              className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+            >
+              פח מיחזור
             </Link>
           </div>
         )}
@@ -92,7 +103,7 @@ export default async function EventsDashboard() {
               {canWriteEvents && (
                 <form action={remove} className="ms-3">
                   <ConfirmSubmitButton
-                    message={`למחוק את האירוע "${event.name}"? הפעולה בלתי הפיכה.`}
+                    message={`למחוק את האירוע "${event.name}"? ניתן לשחזר אותו מאוחר יותר מפח המיחזור.`}
                     title="מחק אירוע"
                     className="rounded-md p-2 text-red-600 hover:bg-red-50"
                   >

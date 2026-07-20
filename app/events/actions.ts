@@ -40,9 +40,28 @@ export async function createEvent(formData: FormData) {
 
 export async function deleteEvent(eventId: string) {
   const supabase = await createClient();
-  const { error } = await supabase.from("events").delete().eq("id", eventId);
+  const { error } = await supabase
+    .from("events")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", eventId);
   if (error) throw new Error(error.message);
   revalidatePath("/");
+  revalidatePath("/events/trash");
+}
+
+export async function restoreEvent(eventId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("events").update({ deleted_at: null }).eq("id", eventId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/");
+  revalidatePath("/events/trash");
+}
+
+export async function permanentlyDeleteEvent(eventId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("events").delete().eq("id", eventId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/events/trash");
 }
 
 export async function updateEventDetails(eventId: string, formData: FormData) {
@@ -58,8 +77,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
   const contactEmail2 = String(formData.get("contact_email_2") ?? "").trim() || null;
   const contactPhone = String(formData.get("contact_phone") ?? "").trim() || null;
   const contactPhone2 = String(formData.get("contact_phone_2") ?? "").trim() || null;
-  const estimatedGuestsRaw = String(formData.get("estimated_guests") ?? "").trim();
-  const estimatedGuests = estimatedGuestsRaw ? Number(estimatedGuestsRaw) : null;
+  const estimatedGuests = String(formData.get("estimated_guests") ?? "").trim() || null;
   const salesPersonName = String(formData.get("sales_person_name") ?? "").trim() || null;
   const brideParentsNames = String(formData.get("bride_parents_names") ?? "").trim() || null;
   const groomParentsNames = String(formData.get("groom_parents_names") ?? "").trim() || null;

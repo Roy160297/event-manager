@@ -30,13 +30,14 @@ export interface EventRow {
   event_date: string;
   status: EventStatus;
   notes: string | null;
+  deleted_at: string | null;
   start_time: string | null;
   manager_id: string | null;
   contact_email: string | null;
   contact_email_2: string | null;
   contact_phone: string | null;
   contact_phone_2: string | null;
-  estimated_guests: number | null;
+  estimated_guests: string | null;
   bride_name: string | null;
   groom_name: string | null;
   end_time: string | null;

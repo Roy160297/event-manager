@@ -56,11 +56,11 @@ export async function updateTimelineItem(eventId: string, itemId: string, formDa
 
 const DEFAULT_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
-  { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות המלצרית המשפחתית" },
+  { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "19:30" },
-  { label: "כתובה", time: "20:00", notes: "לוודא הגעת שני עדים - הגיעו עד השעה 20:00" },
+  { label: "כתובה", time: "20:00", notes: "לוודא הגעת שני עדים עד השעה 20:00" },
   { label: "מזנונים נסגרים", time: "20:40" },
-  { label: "הכנות לחופה והדרכה", time: "20:45", notes: "יצירת מסלול לחופה" },
+  { label: "הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
   { label: "חופה", time: "21:00" },
   { label: "מזנונים נפתחים (מנות עיקריות)", time: "21:15", notes: "15-20 דקות ריקודים" },
   { label: "מנות עיקריות", time: "21:45", notes: "הכלה מחליפה ללוק שני" },

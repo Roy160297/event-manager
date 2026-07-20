@@ -68,6 +68,7 @@ export default async function CalendarPage({
   const { data: events } = await supabase
     .from("events")
     .select("*, staff(name)")
+    .is("deleted_at", null)
     .gte("event_date", monthStart)
     .lt("event_date", nextMonthStart)
     .order("event_date", { ascending: true })

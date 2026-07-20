@@ -18,7 +18,7 @@ export interface CalendarEvent {
   displayStatus: EventDisplayStatus;
   managerName: string | null;
   salesPersonName: string | null;
-  estimatedGuests: number | null;
+  estimatedGuests: string | null;
 }
 
 export interface CalendarCell {
