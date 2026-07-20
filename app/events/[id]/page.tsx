@@ -168,11 +168,6 @@ export default async function EventOverviewPage({
             </label>
 
             <label className={labelClass}>
-              <span className="font-medium">סוג הגשה</span>
-              <input name="service_style" defaultValue={event?.service_style ?? ""} className={inputClass} />
-            </label>
-
-            <label className={labelClass}>
               <span className="font-medium">שמות הורי הכלה</span>
               <input name="bride_parents_names" defaultValue={event?.bride_parents_names ?? ""} className={inputClass} />
             </label>
@@ -191,11 +186,6 @@ export default async function EventOverviewPage({
           <label className={labelClass}>
             <span className="font-medium">הערות חניה</span>
             <textarea name="parking_notes" rows={2} defaultValue={event?.parking_notes ?? ""} className={inputClass} />
-          </label>
-
-          <label className={labelClass}>
-            <span className="font-medium">הערות</span>
-            <textarea name="notes" rows={3} defaultValue={event?.notes ?? ""} className={inputClass} />
           </label>
 
           <button

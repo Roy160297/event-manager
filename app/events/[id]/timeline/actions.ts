@@ -54,15 +54,19 @@ export async function updateTimelineItem(eventId: string, itemId: string, formDa
   revalidatePath(`/events/${eventId}/timeline`);
 }
 
-const DEFAULT_SCHEDULE: { label: string; time: string }[] = [
+const DEFAULT_SCHEDULE: { label: string; time: string; notes?: string }[] = [
+  { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
+  { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות המלצרית המשפחתית" },
   { label: "קבלת פנים", time: "19:30" },
-  { label: "כתובה", time: "20:00" },
-  { label: "הכנות לחופה והדרכה", time: "20:45" },
+  { label: "כתובה", time: "20:00", notes: "לוודא הגעת שני עדים - הגיעו עד השעה 20:00" },
+  { label: "מזנונים נסגרים", time: "20:40" },
+  { label: "הכנות לחופה והדרכה", time: "20:45", notes: "יצירת מסלול לחופה" },
   { label: "חופה", time: "21:00" },
-  { label: "מזנונים", time: "21:15" },
-  { label: "ריקודים", time: "22:00" },
-  { label: "קינוחים", time: "23:00" },
-  { label: "אפטר", time: "00:00" },
+  { label: "מזנונים נפתחים (מנות עיקריות)", time: "21:15", notes: "15-20 דקות ריקודים" },
+  { label: "מנות עיקריות", time: "21:45", notes: "הכלה מחליפה ללוק שני" },
+  { label: "ריקודים", time: "22:15" },
+  { label: "קינוחים", time: "22:45", notes: "קיפול המזנונים" },
+  { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];
 
 export async function addDefaultSchedule(eventId: string) {
@@ -77,7 +81,7 @@ export async function addDefaultSchedule(eventId: string) {
     event_id: eventId,
     label: step.label,
     approx_time: step.time,
-    notes: null,
+    notes: step.notes ?? null,
     sort_order: (count ?? 0) + index,
   }));
 

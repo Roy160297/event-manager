@@ -265,15 +265,6 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">סוג הגשה</span>
-          <input
-            value={draft.service_style ?? ""}
-            onChange={(e) => updateField("service_style", e.target.value || null)}
-            className={inputClass}
-          />
-        </label>
-
-        <label className={labelClass}>
           <span className="font-medium">אורחים בוגרים</span>
           <input
             type="number"

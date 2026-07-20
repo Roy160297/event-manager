@@ -9,6 +9,7 @@ import type { EventType } from "@/lib/types";
 
 export async function createEvent(formData: FormData) {
   const supabase = await createClient();
+  const currentStaff = await getCurrentStaff();
 
   const name = String(formData.get("name") ?? "").trim();
   const eventType = String(formData.get("event_type") ?? "other") as EventType;
@@ -20,7 +21,14 @@ export async function createEvent(formData: FormData) {
 
   const { data, error } = await supabase
     .from("events")
-    .insert({ name, event_type: eventType, event_date: eventDate })
+    .insert({
+      name,
+      event_type: eventType,
+      event_date: eventDate,
+      start_time: "19:30",
+      end_time: "03:00",
+      manager_id: currentStaff?.id ?? null,
+    })
     .select("id")
     .single();
 
@@ -53,12 +61,10 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
   const estimatedGuestsRaw = String(formData.get("estimated_guests") ?? "").trim();
   const estimatedGuests = estimatedGuestsRaw ? Number(estimatedGuestsRaw) : null;
   const salesPersonName = String(formData.get("sales_person_name") ?? "").trim() || null;
-  const serviceStyle = String(formData.get("service_style") ?? "").trim() || null;
   const brideParentsNames = String(formData.get("bride_parents_names") ?? "").trim() || null;
   const groomParentsNames = String(formData.get("groom_parents_names") ?? "").trim() || null;
   const menuNotes = String(formData.get("menu_notes") ?? "").trim() || null;
   const parkingNotes = String(formData.get("parking_notes") ?? "").trim() || null;
-  const notes = String(formData.get("notes") ?? "").trim() || null;
 
   if (!name || !eventType || !eventDate) {
     throw new Error("שם הלקוח, סוג האירוע ותאריך הם שדות חובה");
@@ -79,12 +85,10 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
       contact_phone_2: contactPhone2,
       estimated_guests: estimatedGuests,
       sales_person_name: salesPersonName,
-      service_style: serviceStyle,
       bride_parents_names: brideParentsNames,
       groom_parents_names: groomParentsNames,
       menu_notes: menuNotes,
       parking_notes: parkingNotes,
-      notes,
     })
     .eq("id", eventId);
 
