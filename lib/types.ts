@@ -9,7 +9,7 @@ export type EventType =
   | "other";
 export type EventStatus = "planning" | "approved" | "canceled";
 export type EventDisplayStatus = EventStatus | "completed";
-export type TaskStatus = "open" | "in_progress" | "done";
+export type TaskStatus = "open" | "done";
 export type TaskPriority = "low" | "normal" | "high";
 export type RsvpStatus = "pending" | "confirmed" | "declined";
 export type LocationType = "table" | "food_stand";

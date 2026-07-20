@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import { addDefaultSchedule, addTimelineItem, deleteAllTimelineItems, deleteTimelineItem, updateTimelineItem } from "./actions";
+import {
+  addEveningWeddingSchedule,
+  addFridayReverseWeddingSchedule,
+  addTimelineItem,
+  deleteAllTimelineItems,
+  deleteTimelineItem,
+  updateTimelineItem,
+} from "./actions";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
@@ -41,9 +48,14 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
     await addTimelineItem(eventId, formData);
   }
 
-  async function addDefault() {
+  async function addEveningDefault() {
     "use server";
-    await addDefaultSchedule(eventId);
+    await addEveningWeddingSchedule(eventId);
+  }
+
+  async function addFridayReverseDefault() {
+    "use server";
+    await addFridayReverseWeddingSchedule(eventId);
   }
 
   async function removeAll() {
@@ -58,15 +70,23 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
       {canWriteTimeline && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-classic bg-surface p-4">
           <p className="text-sm text-foreground/60">
-            יוצרים לוח זמנים סטנדרטי לחתונה (קבלת פנים, חופה, מזנונים ועוד) ואז אפשר להתאים אישית.
+            יוצרים לוח זמנים סטנדרטי (קבלת פנים, חופה, מזנונים ועוד) ואז אפשר להתאים אישית.
           </p>
           <div className="flex flex-wrap gap-2">
-            <SaveDetailsForm action={addDefault} message="לוח הזמנים נוצר בהצלחה">
+            <SaveDetailsForm action={addEveningDefault} message="לוח הזמנים נוצר בהצלחה">
               <button
                 type="submit"
                 className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
-                צור לוח זמנים ברירת מחדל
+                צור לוח זמנים ברירת מחדל - חתונת ערב
+              </button>
+            </SaveDetailsForm>
+            <SaveDetailsForm action={addFridayReverseDefault} message="לוח הזמנים נוצר בהצלחה">
+              <button
+                type="submit"
+                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+              >
+                צור לוח זמנים ברירת מחדל - חתונה הפוכה (יום שישי בצהריים)
               </button>
             </SaveDetailsForm>
             {items && items.length > 0 && (

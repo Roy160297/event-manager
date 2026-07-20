@@ -61,7 +61,7 @@ export async function updateTimelineItem(eventId: string, itemId: string, formDa
   revalidatePath(`/events/${eventId}/timeline`);
 }
 
-const DEFAULT_SCHEDULE: { label: string; time: string; notes?: string }[] = [
+const EVENING_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "19:30" },
@@ -76,7 +76,19 @@ const DEFAULT_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];
 
-export async function addDefaultSchedule(eventId: string) {
+const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
+  { label: "קבלת פנים ומזנונים", time: "12:00" },
+  { label: "חופה", time: "14:00" },
+  { label: "ריקודים", time: "14:15" },
+  { label: "החלפת לוק שני", time: "14:45" },
+  { label: "קינוחים", time: "16:00" },
+  { label: "אפטר", time: "17:30" },
+];
+
+async function insertSchedule(
+  eventId: string,
+  schedule: { label: string; time: string; notes?: string }[],
+) {
   const supabase = await createClient();
 
   const { count } = await supabase
@@ -84,7 +96,7 @@ export async function addDefaultSchedule(eventId: string) {
     .select("*", { count: "exact", head: true })
     .eq("event_id", eventId);
 
-  const rows = DEFAULT_SCHEDULE.map((step, index) => ({
+  const rows = schedule.map((step, index) => ({
     event_id: eventId,
     label: step.label,
     approx_time: step.time,
@@ -95,4 +107,12 @@ export async function addDefaultSchedule(eventId: string) {
   const { error } = await supabase.from("timeline_items").insert(rows);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/timeline`);
+}
+
+export async function addEveningWeddingSchedule(eventId: string) {
+  await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE);
+}
+
+export async function addFridayReverseWeddingSchedule(eventId: string) {
+  await insertSchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
 }

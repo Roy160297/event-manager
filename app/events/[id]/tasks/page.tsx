@@ -337,7 +337,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       )}
 
       {canWriteTasks && (
-      <form action={addTask} className="flex flex-col gap-2 rounded-lg border border-border-classic bg-surface p-3">
+      <SaveDetailsForm action={addTask} message="המשימה נוספה בהצלחה" className="flex flex-col gap-2 rounded-lg border border-border-classic bg-surface p-3">
         <p className="text-sm font-medium">משימה חדשה</p>
         <div className="grid gap-2 sm:grid-cols-2">
           <input name="title" placeholder="כותרת" required className={`${inputClass} sm:col-span-2`} />
@@ -377,7 +377,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         >
           הוסף משימה
         </button>
-      </form>
+      </SaveDetailsForm>
       )}
 
       {canReadTasks && (!tasks || tasks.length === 0) && (

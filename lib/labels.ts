@@ -62,13 +62,11 @@ export function getDisplayEventStatus(event: Pick<EventRow, "status" | "event_da
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   open: "פתוחה",
-  in_progress: "בתהליך",
   done: "הושלמה",
 };
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
   open: "bg-neutral-200 text-neutral-700",
-  in_progress: "bg-blue-100 text-blue-700",
   done: "bg-green-100 text-green-700",
 };
 
