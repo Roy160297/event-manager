@@ -74,7 +74,7 @@ export async function createEventFromImageImport(
   if (error) throw new Error(error.message);
   const eventId = data.id as string;
 
-  await applyDefaultSchedule(eventId, draft.event_type);
+  await applyDefaultSchedule(eventId, draft.event_type, draft.event_date);
 
   revalidatePath("/");
   return { eventId };

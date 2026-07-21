@@ -35,7 +35,7 @@ export async function createEvent(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  await applyDefaultSchedule(data.id, eventType);
+  await applyDefaultSchedule(data.id, eventType, eventDate);
 
   revalidatePath("/");
   redirect(`/events/${data.id}`);

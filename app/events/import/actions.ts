@@ -94,7 +94,7 @@ export async function createEventFromPdfImport(
     const { error: schedErr } = await supabase.from("timeline_items").insert(rows);
     if (schedErr) throw new Error(schedErr.message);
   } else {
-    await applyDefaultSchedule(eventId, draft.event_type);
+    await applyDefaultSchedule(eventId, draft.event_type, draft.event_date);
   }
 
   const validSuppliers = draft.suppliers.filter((s) => s.name.trim());
