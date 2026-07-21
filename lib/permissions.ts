@@ -13,6 +13,7 @@ export const RESOURCES = [
   "kitchen_checklist",
   "barista_checklist",
   "couple_meeting",
+  "event_management_dex",
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -31,6 +32,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   kitchen_checklist: "צ'קליסט סגירה - מטבח",
   barista_checklist: "צ'קליסט סגירה - בריסטה",
   couple_meeting: "פגישה עם זוג",
+  event_management_dex: "ניהול אירוע (Dex)",
 };
 
 export type PermissionMap = Record<Resource, { read: boolean; write: boolean }>;

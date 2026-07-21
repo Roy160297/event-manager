@@ -12,15 +12,18 @@ const NAV_LINKS = [
 export function MainNav({
   showAdmin = false,
   showCoupleMeeting = false,
+  showEventManagementDex = false,
 }: {
   showAdmin?: boolean;
   showCoupleMeeting?: boolean;
+  showEventManagementDex?: boolean;
 }) {
   const pathname = usePathname();
-  let links = NAV_LINKS;
-  if (showCoupleMeeting) {
-    links = [...links.slice(0, 2), { href: "/couple-meeting", label: "פגישה עם זוג" }, ...links.slice(2)];
-  }
+  const extraLinks = [];
+  if (showCoupleMeeting) extraLinks.push({ href: "/couple-meeting", label: "פגישה עם זוג" });
+  if (showEventManagementDex) extraLinks.push({ href: "/event-management-dex", label: "ניהול אירוע (Dex)" });
+
+  let links = [...NAV_LINKS.slice(0, 2), ...extraLinks, ...NAV_LINKS.slice(2)];
   if (showAdmin) links = [...links, { href: "/admin", label: "ניהול" }];
 
   return (
