@@ -23,7 +23,11 @@ export type PermissionResource =
   | "timeline"
   | "staffing"
   | "waiters"
-  | "admin";
+  | "admin"
+  | "floor_manager_checklist"
+  | "bar_checklist"
+  | "kitchen_checklist"
+  | "barista_checklist";
 
 export interface EventRow {
   id: string;

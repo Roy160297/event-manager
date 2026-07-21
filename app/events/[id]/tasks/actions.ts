@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { ALL_CLOSING_CHECKLIST_KEYS } from "@/lib/closingChecklist";
+import { ROLE_CHECKLIST_KEYS } from "@/lib/roleChecklists";
 import type { TaskPriority, TaskStatus } from "@/lib/types";
 
 export async function createTask(eventId: string, formData: FormData) {
@@ -94,6 +95,32 @@ export async function setClosingChecklistItem(eventId: string, itemKey: string, 
   const { error } = checked
     ? await supabase.from("closing_checklist_checks").upsert({ event_id: eventId, item_key: itemKey })
     : await supabase.from("closing_checklist_checks").delete().eq("event_id", eventId).eq("item_key", itemKey);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
+export async function setRoleChecklistItem(
+  eventId: string,
+  checklistKey: string,
+  itemKey: string,
+  checked: boolean,
+) {
+  if (!ROLE_CHECKLIST_KEYS[checklistKey]?.has(itemKey)) {
+    throw new Error("פריט צ'קליסט לא מוכר");
+  }
+
+  const supabase = await createClient();
+  const { error } = checked
+    ? await supabase
+        .from("role_checklist_checks")
+        .upsert({ event_id: eventId, checklist_key: checklistKey, item_key: itemKey })
+    : await supabase
+        .from("role_checklist_checks")
+        .delete()
+        .eq("event_id", eventId)
+        .eq("checklist_key", checklistKey)
+        .eq("item_key", itemKey);
 
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/tasks`);

@@ -7,6 +7,8 @@ import { canRead, canWrite } from "@/lib/permissions";
 import { createTask, deleteTask, updateTask, updateTaskStatus } from "./actions";
 import { updateEventSummaryReport } from "@/app/events/actions";
 import ClosingChecklist from "./ClosingChecklist";
+import RoleChecklist from "./RoleChecklist";
+import { ROLE_CHECKLISTS } from "@/lib/roleChecklists";
 import { EventSummaryReportExport } from "./EventSummaryReportExport";
 import {
   EVENT_TYPE_LABELS,
@@ -30,19 +32,30 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
   const { id: eventId } = await params;
   const supabase = await createClient();
 
-  const [{ data: tasks }, { data: staff }, { data: event }, { data: closingChecklistChecks }, currentStaff] =
-    await Promise.all([
-      supabase
-        .from("tasks")
-        .select("*, staff(name)")
-        .eq("event_id", eventId)
-        .order("due_date", { ascending: true, nullsFirst: false })
-        .returns<TaskWithAssignee[]>(),
-      supabase.from("staff").select("id, name").order("name").returns<Pick<StaffRow, "id" | "name">[]>(),
-      supabase.from("events").select("*").eq("id", eventId).returns<EventRow[]>().single(),
-      supabase.from("closing_checklist_checks").select("item_key").eq("event_id", eventId).returns<{ item_key: string }[]>(),
-      getCurrentStaff(),
-    ]);
+  const [
+    { data: tasks },
+    { data: staff },
+    { data: event },
+    { data: closingChecklistChecks },
+    { data: roleChecklistChecks },
+    currentStaff,
+  ] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("*, staff(name)")
+      .eq("event_id", eventId)
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .returns<TaskWithAssignee[]>(),
+    supabase.from("staff").select("id, name").order("name").returns<Pick<StaffRow, "id" | "name">[]>(),
+    supabase.from("events").select("*").eq("id", eventId).returns<EventRow[]>().single(),
+    supabase.from("closing_checklist_checks").select("item_key").eq("event_id", eventId).returns<{ item_key: string }[]>(),
+    supabase
+      .from("role_checklist_checks")
+      .select("checklist_key, item_key")
+      .eq("event_id", eventId)
+      .returns<{ checklist_key: string; item_key: string }[]>(),
+    getCurrentStaff(),
+  ]);
 
   const canReadChecklist = !!currentStaff && canRead(currentStaff.permissions, "closing_checklist");
   const canEditChecklist = !!currentStaff && canWrite(currentStaff.permissions, "closing_checklist");
@@ -51,7 +64,16 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
   const canReadTasks = !!currentStaff && canRead(currentStaff.permissions, "tasks");
   const canWriteTasks = !!currentStaff && canWrite(currentStaff.permissions, "tasks");
 
-  if (!canReadChecklist && !canReadSummary && !canReadTasks) return <NoPermissionNotice />;
+  const roleChecklistPermissions = ROLE_CHECKLISTS.map((definition) => ({
+    definition,
+    canRead: !!currentStaff && canRead(currentStaff.permissions, definition.key),
+    canWrite: !!currentStaff && canWrite(currentStaff.permissions, definition.key),
+    initialCheckedKeys:
+      roleChecklistChecks?.filter((row) => row.checklist_key === definition.key).map((row) => row.item_key) ?? [],
+  }));
+  const canReadAnyRoleChecklist = roleChecklistPermissions.some((entry) => entry.canRead);
+
+  if (!canReadChecklist && !canReadSummary && !canReadTasks && !canReadAnyRoleChecklist) return <NoPermissionNotice />;
 
   const summaryFields: [string, string | number | null][] = [
     ["חברת הפקה", event?.production_company ?? null],
@@ -104,6 +126,24 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           canEdit={canEditChecklist}
           initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
         />
+      )}
+
+      {roleChecklistPermissions.map(
+        ({ definition, canRead: canReadThis, canWrite: canWriteThis, initialCheckedKeys }) =>
+          canReadThis && (
+            <RoleChecklist
+              key={definition.key}
+              checklistKey={definition.key}
+              title={definition.label}
+              categories={definition.categories}
+              eventId={eventId}
+              eventName={event?.name ?? ""}
+              eventType={event?.event_type ?? null}
+              eventDate={event?.event_date ?? null}
+              canEdit={canWriteThis}
+              initialCheckedKeys={initialCheckedKeys}
+            />
+          ),
       )}
 
       {canReadSummary && (

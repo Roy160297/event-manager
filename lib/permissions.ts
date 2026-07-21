@@ -8,6 +8,10 @@ export const RESOURCES = [
   "staffing",
   "waiters",
   "admin",
+  "floor_manager_checklist",
+  "bar_checklist",
+  "kitchen_checklist",
+  "barista_checklist",
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -21,6 +25,10 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   staffing: "שיבוץ מלצרים",
   waiters: "מלצרים (רשימה כללית)",
   admin: "ניהול משתמשים והרשאות",
+  floor_manager_checklist: "צ'קליסט סגירה - מנהל פלור",
+  bar_checklist: "צ'קליסט סגירה - בר",
+  kitchen_checklist: "צ'קליסט סגירה - מטבח",
+  barista_checklist: "צ'קליסט סגירה - בריסטה",
 };
 
 export type PermissionMap = Record<Resource, { read: boolean; write: boolean }>;
