@@ -90,21 +90,21 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
   { label: "אפטר", time: "00:00" },
 ];
 
-// Same schedule as EVENING_REVERSE_WEDDING_SCHEDULE, shifted 5:30 earlier so
-// reception starts at 14:00 instead of 19:30 (Friday afternoon events end
+// Same schedule as EVENING_REVERSE_WEDDING_SCHEDULE, shifted 7:30 earlier so
+// reception starts at 12:00 instead of 19:30 (Friday afternoon events end
 // well before evening).
 const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
-  { label: "החתן והכלה מגיעים לאולם", time: "13:00" },
-  { label: "הבאת אוכל לזוג", time: "13:15", notes: "אחריות מלצרית משפחה" },
-  { label: "קבלת פנים", time: "14:00" },
-  { label: "פתיחת דלתות ומזנונים ראשיים", time: "14:20" },
-  { label: "כתובה", time: "15:00" },
-  { label: "סגירת מזנוני חצר", time: "15:30" },
-  { label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה", time: "15:45" },
-  { label: "חופה", time: "16:00" },
-  { label: "ריקודים", time: "16:15" },
-  { label: "קינוחים", time: "17:00" },
-  { label: "אפטר", time: "18:30" },
+  { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
+  { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
+  { label: "קבלת פנים", time: "12:00" },
+  { label: "פתיחת דלתות ומזנונים ראשיים", time: "12:20" },
+  { label: "כתובה", time: "13:00" },
+  { label: "סגירת מזנוני חצר", time: "13:30" },
+  { label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה", time: "13:45" },
+  { label: "חופה", time: "14:00" },
+  { label: "ריקודים", time: "14:15" },
+  { label: "קינוחים", time: "15:00" },
+  { label: "אפטר", time: "16:30" },
 ];
 
 async function insertSchedule(
