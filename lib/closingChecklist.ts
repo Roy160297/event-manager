@@ -32,12 +32,15 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "yard-sofa-cushions", text: "החזרת כריות ספות האירוח פנימה." },
       { key: "yard-tables-cover", text: "כיסוי שולחנות חצר." },
       { key: "yard-sweep", text: "מטאטא יסודי בחצר." },
-      { key: "yard-chuppah-cleanup", text: "ניקיון שולחן חופה ושברי זכוכית מהרצפה." },
+      { key: "yard-chuppah-cleanup", text: "ניקיון שולחן חופה ושברי זכוכית וזוהמה מהרצפה." },
       {
         key: "yard-hostess-station",
         text: "ניקיון עמדת מארחת + בטן העמדה + כיסאות + עמדות חבלול, ולהכניס אותה בסיום האירוע פנימה.",
       },
-      { key: "yard-glasses-cigarettes", text: "פינוי כוסות וסיגריות מהיקף החצר וכל העציצים והאדניות." },
+      {
+        key: "yard-glasses-cigarettes",
+        text: "פינוי כוסות וסיגריות מהיקף החצר, וכל העציצים והאדניות בחצר ובתוך האולם.",
+      },
       { key: "yard-ashtrays", text: "לנקות מאפרות אפורות (שטיפה במטבח) ולרכז ליד שביל הפחים." },
       { key: "yard-sidewalk-scan", text: "סריקה של המדרכה בצידי האולם, איסוף חפצים שנשארו בחוץ (כוסות וכלים)." },
       { key: "yard-trash-bins", text: "לוודא שפחי האשפה סגורים ואין דליפה על הרצפה." },
@@ -54,20 +57,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       },
       { key: "hall-buffet-cables", text: "ניתוק כבלי חשמל מקירות עמדות המזנונים." },
       { key: "hall-black-bins", text: 'פחים שחורים באירועים חד"פ שעברו שטיפה - מתרכזים לפני חדר המלצרים.' },
-      {
-        key: "hall-vegetables-fridge",
-        text: "לוודא שכל הירקות נאספו והוחזרו למקרר הירקות בקומה העליונה במטבח.",
-      },
-      {
-        key: "hall-bread-utensils",
-        text: "כלי הלחם נאספים מהשולחנות ומסודרים במדפי הנירוסטה במטבח (הכנות) אחרי שטיפה - ללא שאריות לחם.",
-      },
       { key: "hall-after-equipment", text: "כלי הגשה וציוד האפטר - מנוקה ומוחזר לארגז ציוד." },
-      {
-        key: "hall-candles",
-        text: "החזרת כלי הנרות באופן מסודר לארגז השחור, לוודא ניקיון ומצב הנרות, ולרוקן את הנרות המשומשים כך שיישאר רק הכלי.",
-      },
-      { key: "hall-table-numbers", text: "מספרי השולחנות בארגז שלהם." },
       {
         key: "hall-tables-cleaning",
         text: "ניקיון שולחנות עם סקוץ' וסבון ומים (לא להרטיב את הפלטת העץ) - מנהל צריך לפקח שלא שמים הרבה סבון.",
@@ -80,12 +70,8 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "hall-ice-cream-fridge", text: "לוודא שמקרר הגלידה מחובר לחשמל." },
       { key: "hall-full-scan", text: "סריקת מטבחים כוללת: שוטף כלים שביצע את כל משימותיו, מזנונים, עמדות." },
       {
-        key: "hall-waiters-cabinet-supplies",
-        text: "לוודא סדר בארון המלצרים: פנקסים, מגבונים, עטים, קיסמים וכפפות - כל אחד בתא שלו.",
-      },
-      {
-        key: "hall-waiters-room-shirts-aprons",
-        text: "חדר מלצרים ולוקרים - לוודא ניקיון וסדר, עם דגש על תליית כלל החולצות הנקיות על הקולבים ותיקון הסינרים, וסידור המדפים מעל הלוקרים.",
+        key: "hall-waiters-cabinet-and-room",
+        text: "לוודא סדר בארון המלצרים (פנקסים, מגבונים, עטים, קיסמים וכפפות - כל אחד בתא שלו), וכן ניקיון וסדר בחדר המלצרים והלוקרים - תלייה מסודרת של כל החולצות הנקיות על הקולבים, תיקון הסינרים, וסידור המדפים מעל הלוקרים.",
       },
       {
         key: "hall-shirts-sorting",
@@ -108,12 +94,12 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
     items: [
       { key: "office-kitchen-dishes", text: "פינוי כלים ממטבח המשרדים + ניקיון הכיור." },
       { key: "office-ac-off", text: "לכבות את המזגנים." },
-      { key: "office-photo-summary", text: 'צילום הקאונטרים ועמוד "הצטרפות אורחים" - ושליחת סיכום במייל.' },
       {
         key: "office-hostess-equipment",
         text: "לוודא שהדברים מעמדת המארחות חזרו: 2 אייפדים, 2 קאונטרים, 2 מטענים.",
       },
       { key: "office-ipads-charging", text: "האייפדים מחוברים לטעינה." },
+      { key: "office-photo-summary", text: 'צילום הקאונטרים ועמוד "הצטרפות אורחים" - ושליחת סיכום במייל.' },
     ],
   },
   {
@@ -137,14 +123,25 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
     label: "נעילות + אזעקה",
     items: [
       { key: "lock-offices", text: "נעילת משרדים." },
+      { key: "lock-liran-office", text: "נעילת משרד לירן." },
+      { key: "lock-tips-safe", text: "נעילת כספת מעטפות הטיפים (מלצרים ומטבח)." },
       { key: "lock-safe", text: "נעילת הכספת והחזרת המפתח למקומו." },
       { key: "lock-waiters-steel-door", text: "נעילת דלת פלדלת בחדר מלצרים." },
-      { key: "lock-briefing-door", text: "נעילת דלת בריף." },
+      { key: "lock-waiters-room-inner-door", text: "נעילת הדלת הפנימית בחדר המלצרים." },
+      { key: "lock-briefing-door", text: "נעילת דלת הבריף (מנעול עליון ותחתון)." },
+      { key: "lock-magnet-door", text: "נעילת דלת המגנטים (מנעול עליון ותחתון)." },
       { key: "lock-emergency-exit", text: "נעילת דלתות יציאת חירום." },
-      { key: "lock-hall-kitchen-disposal-door", text: "נעילת דלת מטבח פינויים אולם." },
+      { key: "lock-inner-kitchen-door", text: "נעילת דלת המטבח הפנימי." },
+      { key: "lock-hall-kitchen-disposal-door", text: "נעילת דלת היציאה לרחוב ממטבח הפינויים באולם." },
+      { key: "lock-outside-fridge-door", text: "נעילת דלת המקרר מחוץ למטבח." },
+      { key: "lock-outside-white-metal-door", text: "נעילת הדלת המתכתית הלבנה מחוץ למטבח." },
       { key: "lock-manufacturer-kitchen-doors", text: "נעילת כל דלתות המטבח יצרן - 2 דלתות." },
+      { key: "lock-office-kitchenette", text: "נעילת דלת מטבחון המשרדים." },
+      { key: "lock-downstairs-office-door", text: "נעילת דלת המשרד למטה." },
+      { key: "lock-cafe-door", text: "נעילת דלת המטבחון/קפיטריה." },
       { key: "lock-back-gate", text: "נעילת שער אחורי." },
-      { key: "lock-main-gate", text: "נעילת שער ראשי." },
+      { key: "lock-main-gate", text: "נעילת שער הכניסה לאולם." },
+      { key: "lock-alarm-activation", text: "הפעלת אזעקה (חברת אבטחה G1) בסיום האירוע." },
     ],
   },
 ];
