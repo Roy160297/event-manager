@@ -38,6 +38,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     { data: event },
     { data: closingChecklistChecks },
     { data: roleChecklistChecks },
+    { data: roleChecklistNotes },
     currentStaff,
   ] = await Promise.all([
     supabase
@@ -54,6 +55,11 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       .select("checklist_key, item_key")
       .eq("event_id", eventId)
       .returns<{ checklist_key: string; item_key: string }[]>(),
+    supabase
+      .from("role_checklist_notes")
+      .select("checklist_key, note")
+      .eq("event_id", eventId)
+      .returns<{ checklist_key: string; note: string | null }[]>(),
     getCurrentStaff(),
   ]);
 
@@ -70,6 +76,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     canWrite: !!currentStaff && canWrite(currentStaff.permissions, definition.key),
     initialCheckedKeys:
       roleChecklistChecks?.filter((row) => row.checklist_key === definition.key).map((row) => row.item_key) ?? [],
+    initialNote: roleChecklistNotes?.find((row) => row.checklist_key === definition.key)?.note ?? null,
   }));
   const canReadAnyRoleChecklist = roleChecklistPermissions.some((entry) => entry.canRead);
 
@@ -129,7 +136,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       )}
 
       {roleChecklistPermissions.map(
-        ({ definition, canRead: canReadThis, canWrite: canWriteThis, initialCheckedKeys }) =>
+        ({ definition, canRead: canReadThis, canWrite: canWriteThis, initialCheckedKeys, initialNote }) =>
           canReadThis && (
             <RoleChecklist
               key={definition.key}
@@ -142,6 +149,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               eventDate={event?.event_date ?? null}
               canEdit={canWriteThis}
               initialCheckedKeys={initialCheckedKeys}
+              hasDeficiencyNote={definition.hasDeficiencyNote}
+              initialNote={initialNote}
             />
           ),
       )}

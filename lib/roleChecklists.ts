@@ -9,6 +9,9 @@ export interface RoleChecklistDefinition {
   key: PermissionResource;
   label: string;
   categories: ClosingChecklistCategory[];
+  // Some paper checklists end in a free-text "deficiencies, if any" field
+  // rather than another checkable item - this renders that as a note box.
+  hasDeficiencyNote?: boolean;
 }
 
 export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
@@ -108,7 +111,6 @@ export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
         key: "kitchen",
         label: "צ'קליסט סגירה - מטבח",
         items: [
-          { key: "kitchen-briefing", text: "ביצוע בריף לצוות שנשאר לטבח האחרון לסגירת המטבח." },
           { key: "kitchen-ovens-off", text: "כיבוי תנורים + פלנצות + ציפסרים." },
           { key: "kitchen-gas-valve", text: "סגירת ברז גז ראשי." },
           { key: "kitchen-warming-cabinets-off", text: "כיבוי ארונות חימום." },
@@ -130,6 +132,7 @@ export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
   {
     key: "barista_checklist",
     label: "צ'קליסט סגירה - בריסטה",
+    hasDeficiencyNote: true,
     categories: [
       {
         key: "barista",

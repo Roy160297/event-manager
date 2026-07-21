@@ -125,3 +125,17 @@ export async function setRoleChecklistItem(
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/tasks`);
 }
+
+export async function setRoleChecklistNote(eventId: string, checklistKey: string, note: string) {
+  if (!ROLE_CHECKLIST_KEYS[checklistKey]) {
+    throw new Error("צ'קליסט לא מוכר");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("role_checklist_notes")
+    .upsert({ event_id: eventId, checklist_key: checklistKey, note: note.trim() || null });
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}

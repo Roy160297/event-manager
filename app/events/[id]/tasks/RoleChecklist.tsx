@@ -5,7 +5,7 @@ import type { ClosingChecklistCategory } from "@/lib/closingChecklist";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import type { EventType } from "@/lib/types";
-import { setRoleChecklistItem } from "./actions";
+import { setRoleChecklistItem, setRoleChecklistNote } from "./actions";
 
 export default function RoleChecklist({
   checklistKey,
@@ -17,6 +17,8 @@ export default function RoleChecklist({
   eventDate,
   canEdit,
   initialCheckedKeys,
+  hasDeficiencyNote,
+  initialNote,
 }: {
   checklistKey: string;
   title: string;
@@ -27,11 +29,16 @@ export default function RoleChecklist({
   eventDate: string | null;
   canEdit: boolean;
   initialCheckedKeys: string[];
+  hasDeficiencyNote?: boolean;
+  initialNote?: string | null;
 }) {
   const totalItems = categories.reduce((sum, category) => sum + category.items.length, 0);
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState(initialNote ?? "");
+  const [noteStatus, setNoteStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [noteError, setNoteError] = useState<string | null>(null);
 
   async function toggle(itemKey: string, next: boolean) {
     setError(null);
@@ -57,6 +64,18 @@ export default function RoleChecklist({
     }
   }
 
+  async function saveNote() {
+    setNoteError(null);
+    setNoteStatus("saving");
+    try {
+      await setRoleChecklistNote(eventId, checklistKey, note);
+      setNoteStatus("saved");
+    } catch (err) {
+      setNoteError(err instanceof Error ? err.message : "שגיאה בשמירה");
+      setNoteStatus("idle");
+    }
+  }
+
   return (
     <details className="rounded-lg border border-border-classic bg-surface p-4">
       <summary className="cursor-pointer text-sm font-medium">
@@ -73,7 +92,15 @@ export default function RoleChecklist({
           filename={`${title}-${eventName}.pdf`}
           eventLabel={`${eventName} · ${eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · ${formatDate(eventDate)}`}
         >
-          <ChecklistPrintable title={title} eventName={eventName} eventType={eventType} eventDate={eventDate} categories={categories} checked={checked} />
+          <ChecklistPrintable
+            title={title}
+            eventName={eventName}
+            eventType={eventType}
+            eventDate={eventDate}
+            categories={categories}
+            checked={checked}
+            note={hasDeficiencyNote ? note : null}
+          />
         </PdfExportButton>
 
         {categories.map((category) => (
@@ -99,6 +126,37 @@ export default function RoleChecklist({
             </ul>
           </div>
         ))}
+
+        {hasDeficiencyNote && (
+          <div className="flex flex-col gap-2 border-t border-border-classic pt-3">
+            <p className="text-sm font-medium">רשימת חוסרים</p>
+            <textarea
+              value={note}
+              onChange={(e) => {
+                setNote(e.target.value);
+                setNoteStatus("idle");
+              }}
+              disabled={!canEdit}
+              rows={3}
+              placeholder="אם יש חוסרים, יש לפרט כאן. אם אין - להשאיר ריק."
+              className="rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
+            />
+            {noteError && <p className="text-sm text-red-600">{noteError}</p>}
+            {canEdit && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={saveNote}
+                  disabled={noteStatus === "saving"}
+                  className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-50"
+                >
+                  {noteStatus === "saving" ? "שומר..." : "שמור"}
+                </button>
+                {noteStatus === "saved" && <span className="text-xs text-foreground/60">נשמר</span>}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </details>
   );
@@ -111,6 +169,7 @@ function ChecklistPrintable({
   eventDate,
   categories,
   checked,
+  note,
 }: {
   title: string;
   eventName: string;
@@ -118,6 +177,7 @@ function ChecklistPrintable({
   eventDate: string | null;
   categories: ClosingChecklistCategory[];
   checked: Set<string>;
+  note?: string | null;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -142,6 +202,14 @@ function ChecklistPrintable({
           ))}
         </ul>
       ))}
+      {note != null && (
+        <div className="flex flex-col gap-1 pt-1" style={{ borderTop: "1px solid #d4d4d4" }}>
+          <p className="text-sm font-bold">רשימת חוסרים</p>
+          <p className="text-[12.5px]" style={{ color: note ? "#000000" : "#737373" }}>
+            {note || "אין חוסרים"}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
