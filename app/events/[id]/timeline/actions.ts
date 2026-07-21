@@ -81,30 +81,39 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "19:30" },
   { label: "פתיחת דלתות ומזנונים ראשיים", time: "19:50" },
-  { label: "כתובה", time: "20:30" },
+  { label: "כתובה", time: "20:30", notes: "לוודא הגעת שני עדים עד השעה 20:30" },
   { label: "סגירת מזנוני חצר", time: "21:00" },
-  { label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה", time: "21:15" },
+  {
+    label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה",
+    time: "21:15",
+    notes: "יצירת שביל חופה",
+  },
   { label: "חופה", time: "21:30" },
   { label: "ריקודים", time: "21:45" },
-  { label: "קינוחים", time: "22:30" },
-  { label: "אפטר", time: "00:00" },
+  { label: "קינוחים", time: "22:30", notes: "קיפול המזנונים" },
+  { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];
 
-// Same schedule as EVENING_REVERSE_WEDDING_SCHEDULE, shifted 7:30 earlier so
+// Same schedule as EVENING_REVERSE_WEDDING_SCHEDULE, shifted earlier so
 // reception starts at 12:00 instead of 19:30 (Friday afternoon events end
-// well before evening).
+// well before evening). Desserts/after don't follow the same fixed offset as
+// the rest of the steps - corrected per venue's actual timing.
 const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
   { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "12:00" },
   { label: "פתיחת דלתות ומזנונים ראשיים", time: "12:20" },
-  { label: "כתובה", time: "13:00" },
+  { label: "כתובה", time: "13:00", notes: "לוודא הגעת שני עדים עד השעה 13:00" },
   { label: "סגירת מזנוני חצר", time: "13:30" },
-  { label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה", time: "13:45" },
+  {
+    label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה",
+    time: "13:45",
+    notes: "יצירת שביל חופה",
+  },
   { label: "חופה", time: "14:00" },
   { label: "ריקודים", time: "14:15" },
-  { label: "קינוחים", time: "15:00" },
-  { label: "אפטר", time: "16:30" },
+  { label: "קינוחים", time: "15:30", notes: "קיפול המזנונים" },
+  { label: "אפטר", time: "17:00", notes: "קיפול הקינוחים" },
 ];
 
 async function insertSchedule(
