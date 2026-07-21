@@ -42,7 +42,7 @@ export default async function EventsDashboard() {
               href="/events/import-image"
               className="rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
             >
-              יבוא מתמונת מסך מ-iPlan
+              ייבוא צילום מסך &quot;ענן&quot; מ-iPlan
             </Link>
             <a
               href="https://iplan.co.il/he-IL/corp/sign_in?"
