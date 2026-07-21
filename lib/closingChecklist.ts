@@ -144,7 +144,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         key: "electrical-niche-cleaning",
         text: "ניקיון נישת החשמל משאריות אוכל, קשים, לימונים, בדלי סיגריות וכל לכלוך אחר.",
       },
-      { key: "electrical-breaker-check", text: "לוודא שלא ירדו מפסיקים 3, 8, 10 (בלוח החשמל)." },
+      { key: "electrical-breaker-check", text: "לוודא שלא ירדו מפסקים 3, 8, 10 (בלוח החשמל)." },
     ],
   },
   {
