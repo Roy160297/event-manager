@@ -54,7 +54,20 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       },
       { key: "hall-buffet-cables", text: "ניתוק כבלי חשמל מקירות עמדות המזנונים." },
       { key: "hall-black-bins", text: 'פחים שחורים באירועים חד"פ שעברו שטיפה - מתרכזים לפני חדר המלצרים.' },
+      {
+        key: "hall-vegetables-fridge",
+        text: "לוודא שכל הירקות נאספו והוחזרו למקרר הירקות בקומה העליונה במטבח.",
+      },
+      {
+        key: "hall-bread-utensils",
+        text: "כלי הלחם נאספים מהשולחנות ומסודרים במדפי הנירוסטה במטבח (הכנות) אחרי שטיפה - ללא שאריות לחם.",
+      },
       { key: "hall-after-equipment", text: "כלי הגשה וציוד האפטר - מנוקה ומוחזר לארגז ציוד." },
+      {
+        key: "hall-candles",
+        text: "החזרת כלי הנרות באופן מסודר לארגז השחור, לוודא ניקיון ומצב הנרות, ולרוקן את הנרות המשומשים כך שיישאר רק הכלי.",
+      },
+      { key: "hall-table-numbers", text: "מספרי השולחנות בארגז שלהם." },
       {
         key: "hall-tables-cleaning",
         text: "ניקיון שולחנות עם סקוץ' וסבון ומים (לא להרטיב את הפלטת העץ) - מנהל צריך לפקח שלא שמים הרבה סבון.",
@@ -66,6 +79,22 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       },
       { key: "hall-ice-cream-fridge", text: "לוודא שמקרר הגלידה מחובר לחשמל." },
       { key: "hall-full-scan", text: "סריקת מטבחים כוללת: שוטף כלים שביצע את כל משימותיו, מזנונים, עמדות." },
+      {
+        key: "hall-waiters-cabinet-supplies",
+        text: "לוודא סדר בארון המלצרים: פנקסים, מגבונים, עטים, קיסמים וכפפות - כל אחד בתא שלו.",
+      },
+      {
+        key: "hall-waiters-room-shirts-aprons",
+        text: "חדר מלצרים ולוקרים - לוודא ניקיון וסדר, עם דגש על תליית כלל החולצות הנקיות על הקולבים ותיקון הסינרים, וסידור המדפים מעל הלוקרים.",
+      },
+      {
+        key: "hall-shirts-sorting",
+        text: "חולצות שחורות מלוכלכות בכניסה לחדר בשקית כתומה; חולצות נקיות חוזרות לקולב.",
+      },
+      {
+        key: "hall-aprons-sorting",
+        text: "סינרים שחורים (סינרי חצי וסינרי מזנונים) - ספורים ומחולקים לשתי שקיות כתומות: נקי / מלוכלך, עם פתק מספר הפריטים בכל שקית.",
+      },
       {
         key: "hall-radios",
         text: "החזרת מכשירי הקשר לארון בחדר מלצרים כבויים, ולוודא שהם טעונים כראוי (אור אדום).",
@@ -95,8 +124,12 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "electrical-hall-ac", text: "כיבוי מזגנים באולם (ליד עמדת מגנטים ובכניסה למטבח)." },
       { key: "electrical-hall-hood", text: "כיבוי מנדף אולם." },
       { key: "electrical-stoves-off", text: "כיבוי כיריים." },
+      { key: "electrical-warming-cabinets", text: "לוודא שארונות החימום כבויים ונקיים." },
       { key: "electrical-kitchen-hood", text: "כיבוי מנדף מטבח יצרן." },
       { key: "electrical-yard-fans", text: "כיבוי מאווררים וצ'ילרים באולם ובחצר." },
+      { key: "electrical-inner-bar-light", text: "כיבוי תאורה מאחורי הבר הפנימי." },
+      { key: "electrical-path-light", text: "כיבוי תאורת השביל." },
+      { key: "electrical-restroom-light", text: "כיבוי תאורת השירותים." },
     ],
   },
   {

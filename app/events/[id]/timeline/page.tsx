@@ -78,7 +78,7 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
                 type="submit"
                 className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
-                צור לוח זמנים ברירת מחדל - חתונת ערב
+                צור לוח זמנים ברירת מחדל - חתונת ערב (מזנונים)
               </button>
             </SaveDetailsForm>
             <SaveDetailsForm action={addFridayReverseDefault} message="לוח הזמנים נוצר בהצלחה">
