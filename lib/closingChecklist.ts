@@ -19,14 +19,26 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
     key: "yard",
     label: "חצר + חזיתות",
     items: [
+      {
+        key: "pre-breakdown-briefing",
+        text: "ביצוע בריף לצוות הפירוק עם חלוקת משימות ודגשים - לוודא התנהלות זהירה במיוחד בחלל האולם ובמטבחים.",
+      },
       { key: "yard-reception-cleanup", text: "ניקיון עמדות קבלת פנים: ניקיון של כל החלק העליון + בטן המזנון." },
       {
         key: "yard-reception-trash-pile",
         text: "פינוי של פחים עמדות קבלת הפנים - מרוכזים בערימה בתוך האולם ליד המקרר קרח בעמדת פינויים.",
       },
       {
+        key: "yard-ice-fridge-area",
+        text: "לוודא שאזור מקרר הקרח בעמדת הפינויים נקי ומסודר (כולל חיפוש מפיות, מגשים וציוד מאחורי המקרר).",
+      },
+      {
         key: "yard-reception-leftover-equipment",
         text: "נשאר בעמדות קבלת פנים: סטנדים, כלי הגשה כבדים (משטח אבן וקרמיקה מוגבהת). כבלים מאריכים מקופלים בפנים.",
+      },
+      {
+        key: "yard-bread-oven",
+        text: "ניקיון יסודי של תנור הלחם + מלקחי הוצאת הלחם ומקררי החצר.",
       },
       { key: "yard-furniture-cleaning", text: "ניקוי ריהוט חצר: ניקוי שולחנות קפה, כסאות, ספות + שולחן נלווה." },
       { key: "yard-sofa-cushions", text: "החזרת כריות ספות האירוח פנימה." },
@@ -36,6 +48,10 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       {
         key: "yard-hostess-station",
         text: "ניקיון עמדת מארחת + בטן העמדה + כיסאות + עמדות חבלול, ולהכניס אותה בסיום האירוע פנימה.",
+      },
+      {
+        key: "yard-tablecloths-sorting",
+        text: "לוודא שכל המפות והמפיות (לבנות/שמנת/שחורות) נכנסות לשקיות כתומות בסמוך לכניסה לאולם.",
       },
       {
         key: "yard-glasses-cigarettes",
@@ -67,6 +83,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         key: "hall-gallery",
         text: "מעבר על הגלריה (ניקוי שולחנות, כסאות, גרם מדרגות ווידוא שרצפת המזנון בגלריה נקייה ומסודרת).",
       },
+      { key: "hall-iron-stairs", text: "ניקיון מדרגות הברזל וסביבתן הקרובה." },
       { key: "hall-ice-cream-fridge", text: "לוודא שמקרר הגלידה מחובר לחשמל." },
       { key: "hall-full-scan", text: "סריקת מטבחים כוללת: שוטף כלים שביצע את כל משימותיו, מזנונים, עמדות." },
       {
@@ -82,10 +99,17 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         text: "סינרים שחורים (סינרי חצי וסינרי מזנונים) - ספורים ומחולקים לשתי שקיות כתומות: נקי / מלוכלך, עם פתק מספר הפריטים בכל שקית.",
       },
       {
+        key: "hall-faulty-equipment",
+        text: "ציוד או סינרים תקולים - לשים בשקית הייעודית לכך ולעדכן את שניר.",
+      },
+      {
         key: "hall-radios",
         text: "החזרת מכשירי הקשר לארון בחדר מלצרים כבויים, ולוודא שהם טעונים כראוי (אור אדום).",
       },
+      { key: "hall-dj-stations", text: "מעבר על פינוי וניקיון בשתי עמדות הדיג'יי." },
+      { key: "hall-bride-groom-room", text: "מעבר על פינוי בחדר החתן והכלה." },
       { key: "hall-waiters-floor-sweep", text: "מטאטא על רצפת אזור המלצרים - משאריות אוכל, בדלי סיגריות וכלים." },
+      { key: "hall-tools-gathered", text: "ריכוז מגבים, מטאטאים ויעים במסודר בסיום הפירוק." },
     ],
   },
   {
@@ -116,6 +140,12 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "electrical-inner-bar-light", text: "כיבוי תאורה מאחורי הבר הפנימי." },
       { key: "electrical-path-light", text: "כיבוי תאורת השביל." },
       { key: "electrical-restroom-light", text: "כיבוי תאורת השירותים." },
+      { key: "electrical-disposal-lights", text: "כיבוי אורות עמדת הפינויים." },
+      {
+        key: "electrical-niche-cleaning",
+        text: "ניקיון נישת החשמל משאריות אוכל, קשים, לימונים, בדלי סיגריות וכל לכלוך אחר.",
+      },
+      { key: "electrical-breaker-check", text: "לוודא שלא ירדו מפסיקים 3, 8, 10 (בלוח החשמל)." },
     ],
   },
   {
