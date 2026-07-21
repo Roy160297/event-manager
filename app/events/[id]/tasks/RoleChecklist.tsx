@@ -17,7 +17,7 @@ export default function RoleChecklist({
   eventDate,
   canEdit,
   initialCheckedKeys,
-  hasDeficiencyNote,
+  noteLabel,
   initialNote,
 }: {
   checklistKey: string;
@@ -29,7 +29,7 @@ export default function RoleChecklist({
   eventDate: string | null;
   canEdit: boolean;
   initialCheckedKeys: string[];
-  hasDeficiencyNote?: boolean;
+  noteLabel?: string;
   initialNote?: string | null;
 }) {
   const totalItems = categories.reduce((sum, category) => sum + category.items.length, 0);
@@ -99,7 +99,8 @@ export default function RoleChecklist({
             eventDate={eventDate}
             categories={categories}
             checked={checked}
-            note={hasDeficiencyNote ? note : null}
+            note={noteLabel ? note : null}
+            noteLabel={noteLabel}
           />
         </PdfExportButton>
 
@@ -127,9 +128,9 @@ export default function RoleChecklist({
           </div>
         ))}
 
-        {hasDeficiencyNote && (
+        {noteLabel && (
           <div className="flex flex-col gap-2 border-t border-border-classic pt-3">
-            <p className="text-sm font-medium">רשימת חוסרים</p>
+            <p className="text-sm font-medium">{noteLabel}</p>
             <textarea
               value={note}
               onChange={(e) => {
@@ -138,7 +139,7 @@ export default function RoleChecklist({
               }}
               disabled={!canEdit}
               rows={3}
-              placeholder="אם יש חוסרים, יש לפרט כאן. אם אין - להשאיר ריק."
+              placeholder="ניתן לפרט כאן. אם אין מה להוסיף - להשאיר ריק."
               className="rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
             />
             {noteError && <p className="text-sm text-red-600">{noteError}</p>}
@@ -170,6 +171,7 @@ function ChecklistPrintable({
   categories,
   checked,
   note,
+  noteLabel,
 }: {
   title: string;
   eventName: string;
@@ -178,6 +180,7 @@ function ChecklistPrintable({
   categories: ClosingChecklistCategory[];
   checked: Set<string>;
   note?: string | null;
+  noteLabel?: string;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -204,9 +207,9 @@ function ChecklistPrintable({
       ))}
       {note != null && (
         <div className="flex flex-col gap-1 pt-1" style={{ borderTop: "1px solid #d4d4d4" }}>
-          <p className="text-sm font-bold">רשימת חוסרים</p>
+          <p className="text-sm font-bold">{noteLabel}</p>
           <p className="text-[12.5px]" style={{ color: note ? "#000000" : "#737373" }}>
-            {note || "אין חוסרים"}
+            {note || (noteLabel === "רשימת חוסרים" ? "אין חוסרים" : "אין הערות")}
           </p>
         </div>
       )}

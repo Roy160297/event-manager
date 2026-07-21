@@ -5,7 +5,7 @@ import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import type { EventType } from "@/lib/types";
-import { setClosingChecklistItem } from "./actions";
+import { setClosingChecklistItem, setClosingChecklistNote } from "./actions";
 
 const TOTAL_ITEMS = CLOSING_CHECKLIST.reduce((sum, category) => sum + category.items.length, 0);
 
@@ -17,6 +17,7 @@ export default function ClosingChecklist({
   managerName,
   canEdit,
   initialCheckedKeys,
+  initialNote,
 }: {
   eventId: string;
   eventName: string;
@@ -25,10 +26,14 @@ export default function ClosingChecklist({
   managerName: string | null;
   canEdit: boolean;
   initialCheckedKeys: string[];
+  initialNote?: string | null;
 }) {
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState(initialNote ?? "");
+  const [noteStatus, setNoteStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [noteError, setNoteError] = useState<string | null>(null);
 
   async function toggle(itemKey: string, next: boolean) {
     setError(null);
@@ -54,6 +59,18 @@ export default function ClosingChecklist({
     }
   }
 
+  async function saveNote() {
+    setNoteError(null);
+    setNoteStatus("saving");
+    try {
+      await setClosingChecklistNote(eventId, note);
+      setNoteStatus("saved");
+    } catch (err) {
+      setNoteError(err instanceof Error ? err.message : "שגיאה בשמירה");
+      setNoteStatus("idle");
+    }
+  }
+
   return (
     <details className="rounded-lg border border-border-classic bg-surface p-4">
       <summary className="cursor-pointer text-sm font-medium">
@@ -76,7 +93,13 @@ export default function ClosingChecklist({
           eventLabel={`${eventName} · ${eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · ${formatDate(eventDate)}`}
           signerName={managerName}
         >
-          <ChecklistPrintable eventName={eventName} eventType={eventType} eventDate={eventDate} checked={checked} />
+          <ChecklistPrintable
+            eventName={eventName}
+            eventType={eventType}
+            eventDate={eventDate}
+            checked={checked}
+            note={note}
+          />
         </PdfExportButton>
 
         {CLOSING_CHECKLIST.map((category) => (
@@ -103,6 +126,35 @@ export default function ClosingChecklist({
             </ul>
           </div>
         ))}
+
+        <div className="flex flex-col gap-2 border-t border-border-classic pt-3">
+          <p className="text-sm font-medium">הערות</p>
+          <textarea
+            value={note}
+            onChange={(e) => {
+              setNote(e.target.value);
+              setNoteStatus("idle");
+            }}
+            disabled={!canEdit}
+            rows={3}
+            placeholder="ניתן לפרט כאן. אם אין מה להוסיף - להשאיר ריק."
+            className="rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
+          />
+          {noteError && <p className="text-sm text-red-600">{noteError}</p>}
+          {canEdit && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={saveNote}
+                disabled={noteStatus === "saving"}
+                className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-50"
+              >
+                {noteStatus === "saving" ? "שומר..." : "שמור"}
+              </button>
+              {noteStatus === "saved" && <span className="text-xs text-foreground/60">נשמר</span>}
+            </div>
+          )}
+        </div>
       </div>
     </details>
   );
@@ -113,11 +165,13 @@ function ChecklistPrintable({
   eventType,
   eventDate,
   checked,
+  note,
 }: {
   eventName: string;
   eventType: EventType | null;
   eventDate: string | null;
   checked: Set<string>;
+  note?: string;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -145,6 +199,14 @@ function ChecklistPrintable({
           </ul>
         </div>
       ))}
+      {note != null && (
+        <div className="flex flex-col gap-1 pt-1" style={{ borderTop: "1px solid #d4d4d4" }}>
+          <p className="text-sm font-bold">הערות</p>
+          <p className="text-[12.5px]" style={{ color: note ? "#000000" : "#737373" }}>
+            {note || "אין הערות"}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

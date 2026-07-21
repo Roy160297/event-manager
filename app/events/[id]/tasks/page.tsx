@@ -79,6 +79,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     initialNote: roleChecklistNotes?.find((row) => row.checklist_key === definition.key)?.note ?? null,
   }));
   const canReadAnyRoleChecklist = roleChecklistPermissions.some((entry) => entry.canRead);
+  const closingChecklistNote =
+    roleChecklistNotes?.find((row) => row.checklist_key === "closing_checklist")?.note ?? null;
 
   if (!canReadChecklist && !canReadSummary && !canReadTasks && !canReadAnyRoleChecklist) return <NoPermissionNotice />;
 
@@ -132,6 +134,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           managerName={managerName}
           canEdit={canEditChecklist}
           initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
+          initialNote={closingChecklistNote}
         />
       )}
 
@@ -149,7 +152,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               eventDate={event?.event_date ?? null}
               canEdit={canWriteThis}
               initialCheckedKeys={initialCheckedKeys}
-              hasDeficiencyNote={definition.hasDeficiencyNote}
+              noteLabel={definition.noteLabel}
               initialNote={initialNote}
             />
           ),

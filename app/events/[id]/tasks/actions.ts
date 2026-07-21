@@ -100,6 +100,16 @@ export async function setClosingChecklistItem(eventId: string, itemKey: string, 
   revalidatePath(`/events/${eventId}/tasks`);
 }
 
+export async function setClosingChecklistNote(eventId: string, note: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("role_checklist_notes")
+    .upsert({ event_id: eventId, checklist_key: "closing_checklist", note: note.trim() || null });
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
 export async function setRoleChecklistItem(
   eventId: string,
   checklistKey: string,
