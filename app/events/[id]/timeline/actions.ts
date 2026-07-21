@@ -76,6 +76,19 @@ const EVENING_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[
   { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];
 
+const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
+  { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
+  { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
+  { label: "קבלת פנים", time: "19:30" },
+  { label: "חופה", time: "21:00" },
+  { label: "ראשונות", time: "21:15" },
+  { label: "ריקודים", time: "21:35" },
+  { label: "עיקריות", time: "22:00", notes: "הכלה מחליפה ללוק שני" },
+  { label: "ריקודים", time: "22:30" },
+  { label: "קינוחים", time: "22:45" },
+  { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
+];
+
 const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
@@ -144,6 +157,10 @@ export async function addEveningWeddingSchedule(eventId: string) {
   await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE);
 }
 
+export async function addEveningWeddingServiceSchedule(eventId: string) {
+  await insertSchedule(eventId, EVENING_WEDDING_SERVICE_SCHEDULE);
+}
+
 export async function addFridayReverseWeddingSchedule(eventId: string) {
   await insertSchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
 }
@@ -153,8 +170,7 @@ export async function addEveningReverseWeddingSchedule(eventId: string) {
 }
 
 // Called right after a new event is created, so events of a type with a
-// known default schedule start with it pre-filled instead of empty. Only
-// wedding/reverse_wedding (buffets) have a default template today - other
+// known default schedule start with it pre-filled instead of empty. Other
 // event types are left as before, filled in manually on the timeline page.
 // reverse_wedding has two variants (evening vs. Friday afternoon) - picked by
 // whether the event date falls on a Friday, since that's what distinguishes
@@ -162,6 +178,8 @@ export async function addEveningReverseWeddingSchedule(eventId: string) {
 export async function applyDefaultSchedule(eventId: string, eventType: string, eventDate?: string | null) {
   if (eventType === "wedding") {
     await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE);
+  } else if (eventType === "wedding_service") {
+    await insertSchedule(eventId, EVENING_WEDDING_SERVICE_SCHEDULE);
   } else if (eventType === "reverse_wedding") {
     const isFriday = isFridayDate(eventDate);
     await insertSchedule(eventId, isFriday ? FRIDAY_REVERSE_WEDDING_SCHEDULE : EVENING_REVERSE_WEDDING_SCHEDULE);

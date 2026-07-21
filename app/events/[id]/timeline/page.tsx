@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   addEveningReverseWeddingSchedule,
   addEveningWeddingSchedule,
+  addEveningWeddingServiceSchedule,
   addFridayReverseWeddingSchedule,
   addTimelineItem,
   deleteAllTimelineItems,
@@ -59,6 +60,11 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
     await addFridayReverseWeddingSchedule(eventId);
   }
 
+  async function addEveningServiceDefault() {
+    "use server";
+    await addEveningWeddingServiceSchedule(eventId);
+  }
+
   async function addEveningReverseDefault() {
     "use server";
     await addEveningReverseWeddingSchedule(eventId);
@@ -85,6 +91,14 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
                 className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונת ערב (מזנונים)
+              </button>
+            </SaveDetailsForm>
+            <SaveDetailsForm action={addEveningServiceDefault} message="לוח הזמנים נוצר בהצלחה">
+              <button
+                type="submit"
+                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+              >
+                צור לוח זמנים ברירת מחדל - חתונת ערב (הגשה)
               </button>
             </SaveDetailsForm>
             <SaveDetailsForm action={addEveningReverseDefault} message="לוח הזמנים נוצר בהצלחה">
