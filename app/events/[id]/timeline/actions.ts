@@ -116,3 +116,12 @@ export async function addEveningWeddingSchedule(eventId: string) {
 export async function addFridayReverseWeddingSchedule(eventId: string) {
   await insertSchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
 }
+
+// Called right after a new event is created, so events of a type with a
+// known default schedule start with it pre-filled instead of empty. Only
+// wedding/reverse_wedding (buffets) have a default template today - other
+// event types are left as before, filled in manually on the timeline page.
+export async function applyDefaultSchedule(eventId: string, eventType: string) {
+  if (eventType === "wedding") await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE);
+  else if (eventType === "reverse_wedding") await insertSchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
+}

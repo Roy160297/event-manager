@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractEventDraftFromImage, type ImageImportDraft } from "@/lib/imageImport";
 import { getCurrentStaff } from "@/lib/auth";
+import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import type { StaffRow } from "@/lib/types";
 
 export async function parseImageImport(
@@ -72,6 +73,8 @@ export async function createEventFromImageImport(
 
   if (error) throw new Error(error.message);
   const eventId = data.id as string;
+
+  await applyDefaultSchedule(eventId, draft.event_type);
 
   revalidatePath("/");
   return { eventId };

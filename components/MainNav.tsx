@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const NAV_LINKS = [
   { href: "/", label: "אירועים" },
   { href: "/calendar", label: "יומן" },
+  { href: "/couple-meeting", label: "פגישה עם זוג" },
   { href: "/waiters", label: "מלצרים" },
 ];
 

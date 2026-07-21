@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText, parsePdfDraft, type PdfImportDraft } from "@/lib/pdfImport";
+import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import type { StaffRow } from "@/lib/types";
 
 export async function addManagerFromImport(name: string): Promise<StaffRow> {
@@ -92,6 +93,8 @@ export async function createEventFromPdfImport(
     }));
     const { error: schedErr } = await supabase.from("timeline_items").insert(rows);
     if (schedErr) throw new Error(schedErr.message);
+  } else {
+    await applyDefaultSchedule(eventId, draft.event_type);
   }
 
   const validSuppliers = draft.suppliers.filter((s) => s.name.trim());

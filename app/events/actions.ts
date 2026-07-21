@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
+import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import type { EventType } from "@/lib/types";
 
 export async function createEvent(formData: FormData) {
@@ -33,6 +34,8 @@ export async function createEvent(formData: FormData) {
     .single();
 
   if (error) throw new Error(error.message);
+
+  await applyDefaultSchedule(data.id, eventType);
 
   revalidatePath("/");
   redirect(`/events/${data.id}`);
