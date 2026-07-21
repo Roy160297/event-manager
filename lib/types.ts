@@ -27,7 +27,8 @@ export type PermissionResource =
   | "floor_manager_checklist"
   | "bar_checklist"
   | "kitchen_checklist"
-  | "barista_checklist";
+  | "barista_checklist"
+  | "couple_meeting";
 
 export interface EventRow {
   id: string;

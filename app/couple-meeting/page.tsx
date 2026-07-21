@@ -1,7 +1,16 @@
+import { NoPermissionNotice } from "@/components/NoPermissionNotice";
+import { getCurrentStaff } from "@/lib/auth";
+import { canRead } from "@/lib/permissions";
+
 const cardClass = "flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4";
 const listClass = "flex flex-col gap-1.5 text-sm";
 
-export default function CoupleMeetingPage() {
+export default async function CoupleMeetingPage() {
+  const currentStaff = await getCurrentStaff();
+  const canReadCoupleMeeting = !!currentStaff && canRead(currentStaff.permissions, "couple_meeting");
+
+  if (!canReadCoupleMeeting) return <NoPermissionNotice />;
+
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">פגישה עם זוג</h1>

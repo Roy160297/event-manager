@@ -6,13 +6,22 @@ import { usePathname } from "next/navigation";
 const NAV_LINKS = [
   { href: "/", label: "אירועים" },
   { href: "/calendar", label: "יומן" },
-  { href: "/couple-meeting", label: "פגישה עם זוג" },
   { href: "/waiters", label: "מלצרים" },
 ];
 
-export function MainNav({ showAdmin = false }: { showAdmin?: boolean }) {
+export function MainNav({
+  showAdmin = false,
+  showCoupleMeeting = false,
+}: {
+  showAdmin?: boolean;
+  showCoupleMeeting?: boolean;
+}) {
   const pathname = usePathname();
-  const links = showAdmin ? [...NAV_LINKS, { href: "/admin", label: "ניהול" }] : NAV_LINKS;
+  let links = NAV_LINKS;
+  if (showCoupleMeeting) {
+    links = [...links.slice(0, 2), { href: "/couple-meeting", label: "פגישה עם זוג" }, ...links.slice(2)];
+  }
+  if (showAdmin) links = [...links, { href: "/admin", label: "ניהול" }];
 
   return (
     <nav>

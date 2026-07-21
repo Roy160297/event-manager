@@ -40,7 +40,12 @@ export default async function RootLayout({
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <span className="font-serif text-lg font-bold text-accent">ניהול אירועים</span>
-              {staff && <MainNav showAdmin={canRead(staff.permissions, "admin")} />}
+              {staff && (
+                <MainNav
+                  showAdmin={canRead(staff.permissions, "admin")}
+                  showCoupleMeeting={canRead(staff.permissions, "couple_meeting")}
+                />
+              )}
             </div>
 
             <div className="flex items-center gap-4">
