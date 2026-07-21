@@ -84,6 +84,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         text: "מעבר על הגלריה (ניקוי שולחנות, כסאות, גרם מדרגות ווידוא שרצפת המזנון בגלריה נקייה ומסודרת).",
       },
       { key: "hall-iron-stairs", text: "ניקיון מדרגות הברזל וסביבתן הקרובה." },
+      { key: "hall-drainage-strip", text: "ניקיון פס הניקוז." },
       { key: "hall-ice-cream-fridge", text: "לוודא שמקרר הגלידה מחובר לחשמל." },
       { key: "hall-full-scan", text: "סריקת מטבחים כוללת: שוטף כלים שביצע את כל משימותיו, מזנונים, עמדות." },
       {
