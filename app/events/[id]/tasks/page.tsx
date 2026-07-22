@@ -462,7 +462,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <div className="flex flex-col gap-1">
                   <p className="font-medium">{task.title}</p>
                   {task.status === "done" && task.description && (
-                    <p className="text-sm text-foreground/70">{task.description}</p>
+                    <p className="text-sm italic text-green-700">{task.description}</p>
                   )}
                   <p className="text-sm text-foreground/60">
                     {task.staff?.name ? `אחראי: ${task.staff.name}` : "ללא אחראי"}
