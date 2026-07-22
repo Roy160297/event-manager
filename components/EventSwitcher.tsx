@@ -21,8 +21,13 @@ export function EventSwitcher({
   const base = `/events/${currentEventId}`;
   const subPath = pathname.startsWith(base) ? pathname.slice(base.length) : "";
 
-  const filtered = query.trim()
-    ? events.filter((event) => event.name.toLowerCase().includes(query.trim().toLowerCase()))
+  const normalizedQuery = query.trim().toLowerCase();
+  const filtered = normalizedQuery
+    ? events.filter((event) =>
+        `${event.name} ${formatDate(event.event_date)} ${event.event_date}`
+          .toLowerCase()
+          .includes(normalizedQuery),
+      )
     : events;
 
   return (
@@ -32,7 +37,7 @@ export function EventSwitcher({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="חיפוש אירוע..."
+          placeholder="חיפוש לפי שם או תאריך..."
           className="rounded-md border border-border-classic bg-background px-2 py-1.5 text-sm"
         />
         <ul className="flex flex-col gap-1">
