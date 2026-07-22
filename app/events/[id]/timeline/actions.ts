@@ -80,6 +80,8 @@ const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: s
   { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "19:30" },
+  { label: "כתובה", time: "20:00", notes: "לוודא הגעת שני עדים עד השעה 20:00" },
+  { label: "הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
   { label: "חופה", time: "21:00" },
   { label: "ראשונות", time: "21:15", notes: "30 דק' של אוכל (הריקודים מתחילים תוך כדי)" },
   { label: "ריקודים", time: "21:35" },
@@ -104,6 +106,34 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
   { label: "חופה", time: "21:30" },
   { label: "ריקודים", time: "21:45" },
   { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
+  { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
+];
+
+// Reverse + service combined: the "reverse" timing skeleton (food happens
+// before the chuppah, then it's just dancing+dessert after) with the
+// "service" seated-course concept instead of buffets - starters served in
+// the pre-chuppah window, mains served after (no reopening for a second
+// course, mirroring the reverse-buffet version).
+const EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
+  { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
+  { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
+  { label: "קבלת פנים", time: "19:30" },
+  {
+    label: "פתיחת דלתות והגשת ראשונות",
+    time: "19:50",
+    notes: "30 דק' של אוכל (הריקודים מתחילים תוך כדי)",
+  },
+  { label: "כתובה", time: "20:30", notes: "לוודא הגעת שני עדים עד השעה 20:30" },
+  {
+    label: "סיום הגשת ראשונות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
+    time: "21:15",
+    notes: "יצירת שביל חופה",
+  },
+  { label: "חופה", time: "21:30" },
+  { label: "ריקודים", time: "21:45" },
+  { label: "עיקריות", time: "22:00", notes: "הכלה מחליפה ללוק שני" },
+  { label: "ריקודים", time: "22:30" },
+  { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];
 
@@ -169,6 +199,10 @@ export async function addEveningReverseWeddingSchedule(eventId: string) {
   await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SCHEDULE);
 }
 
+export async function addEveningReverseWeddingServiceSchedule(eventId: string) {
+  await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE);
+}
+
 // Called right after a new event is created, so events of a type with a
 // known default schedule start with it pre-filled instead of empty. Other
 // event types are left as before, filled in manually on the timeline page.
@@ -183,6 +217,8 @@ export async function applyDefaultSchedule(eventId: string, eventType: string, e
   } else if (eventType === "reverse_wedding") {
     const isFriday = isFridayDate(eventDate);
     await insertSchedule(eventId, isFriday ? FRIDAY_REVERSE_WEDDING_SCHEDULE : EVENING_REVERSE_WEDDING_SCHEDULE);
+  } else if (eventType === "reverse_wedding_service") {
+    await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE);
   }
 }
 
