@@ -108,11 +108,11 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
           <p className="text-sm text-foreground/60">
             יוצרים לוח זמנים סטנדרטי (קבלת פנים, חופה, מזנונים ועוד) ואז אפשר להתאים אישית.
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <SaveDetailsForm action={addEveningDefault} message="לוח הזמנים נוצר בהצלחה">
               <button
                 type="submit"
-                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונת ערב (מזנונים)
               </button>
@@ -120,7 +120,7 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
             <SaveDetailsForm action={addFridayDefault} message="לוח הזמנים נוצר בהצלחה">
               <button
                 type="submit"
-                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונה שישי צהריים (מזנונים)
               </button>
@@ -128,7 +128,7 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
             <SaveDetailsForm action={addEveningServiceDefault} message="לוח הזמנים נוצר בהצלחה">
               <button
                 type="submit"
-                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונת ערב (הגשה)
               </button>
@@ -136,7 +136,7 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
             <SaveDetailsForm action={addFridayServiceDefault} message="לוח הזמנים נוצר בהצלחה">
               <button
                 type="submit"
-                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונה שישי צהריים (הגשה)
               </button>
@@ -144,15 +144,23 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
             <SaveDetailsForm action={addEveningReverseDefault} message="לוח הזמנים נוצר בהצלחה">
               <button
                 type="submit"
-                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונה הפוכה ערב (מזנונים)
+              </button>
+            </SaveDetailsForm>
+            <SaveDetailsForm action={addFridayReverseDefault} message="לוח הזמנים נוצר בהצלחה">
+              <button
+                type="submit"
+                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+              >
+                צור לוח זמנים ברירת מחדל - חתונה הפוכה שישי צהריים (מזנונים)
               </button>
             </SaveDetailsForm>
             <SaveDetailsForm action={addEveningReverseServiceDefault} message="לוח הזמנים נוצר בהצלחה">
               <button
                 type="submit"
-                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונה הפוכה ערב (הגשה)
               </button>
@@ -160,24 +168,16 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
             <SaveDetailsForm action={addFridayReverseServiceDefault} message="לוח הזמנים נוצר בהצלחה">
               <button
                 type="submit"
-                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונה הפוכה שישי צהריים (הגשה)
               </button>
             </SaveDetailsForm>
-            <SaveDetailsForm action={addFridayReverseDefault} message="לוח הזמנים נוצר בהצלחה">
-              <button
-                type="submit"
-                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
-              >
-                צור לוח זמנים ברירת מחדל - חתונה הפוכה שישי צהריים (מזנונים)
-              </button>
-            </SaveDetailsForm>
             {items && items.length > 0 && (
-              <form action={removeAll}>
+              <form action={removeAll} className="col-span-2">
                 <ConfirmSubmitButton
                   message="למחוק את כל השלבים בלוח הזמנים? לא ניתן לשחזר פעולה זו."
-                  className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  className="w-full rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                 >
                   מחק את כל השלבים
                 </ConfirmSubmitButton>
