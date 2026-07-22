@@ -8,12 +8,14 @@ export function PdfExportButton({
   filename,
   eventLabel,
   signerName,
+  showSignature = true,
   children,
 }: {
   label?: string;
   filename: string;
   eventLabel: string;
   signerName?: string | null;
+  showSignature?: boolean;
   children: React.ReactNode;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -45,13 +47,16 @@ export function PdfExportButton({
     <div className="flex flex-col items-start gap-2">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
+        onClick={showSignature ? () => setOpen((v) => !v) : download}
+        disabled={!showSignature && isExporting}
+        className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-60"
       >
-        {label}
+        {!showSignature && isExporting ? "מכין PDF..." : label}
       </button>
 
-      {open && (
+      {!showSignature && error && <p className="text-xs text-red-600">{error}</p>}
+
+      {showSignature && open && (
         <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-accent-soft/30 p-3">
           <p className="text-xs text-foreground/60">
             אפשר להוסיף חתימה שתופיע בתחתית כל עמוד ב-PDF, או להוריד ללא חתימה.
@@ -93,16 +98,20 @@ export function PdfExportButton({
             className="flex items-end justify-between px-8 py-4 text-[13px]"
             style={{ borderTop: "1px solid #999999", color: "#555555" }}
           >
-            <div className="flex flex-col items-start gap-1.5">
-              {signature && (
-                // eslint-disable-next-line @next/next/no-img-element -- captured by html2canvas, not rendered to the user
-                <img src={signature} alt="" className="h-16 object-contain" />
-              )}
-              <div className="w-56 pt-1" style={{ borderTop: "1px solid #999999" }}>
-                חתימה
+            {showSignature ? (
+              <div className="flex flex-col items-start gap-1.5">
+                {signature && (
+                  // eslint-disable-next-line @next/next/no-img-element -- captured by html2canvas, not rendered to the user
+                  <img src={signature} alt="" className="h-16 object-contain" />
+                )}
+                <div className="w-56 pt-1" style={{ borderTop: "1px solid #999999" }}>
+                  חתימה
+                </div>
+                {signerName && <div className="font-medium">מנהל אירוע: {signerName}</div>}
               </div>
-              {signerName && <div className="font-medium">מנהל אירוע: {signerName}</div>}
-            </div>
+            ) : (
+              <div />
+            )}
             <div>{eventLabel}</div>
           </div>
         </div>

@@ -40,6 +40,7 @@ export function EventFormExport({
       label="הורדת טופס אירוע"
       filename={`טופס-אירוע-${event.name}.pdf`}
       eventLabel={`${event.name} · ${EVENT_TYPE_LABELS[event.event_type]} · ${formatDate(event.event_date)}`}
+      showSignature={false}
     >
       <div className="flex flex-col gap-4">
         <div className="mb-1 flex items-baseline justify-between pb-2" style={{ borderBottom: "1px solid #d4d4d4" }}>
