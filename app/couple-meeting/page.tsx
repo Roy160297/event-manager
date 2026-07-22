@@ -33,7 +33,6 @@ export default async function CoupleMeetingPage() {
       <div className={cardClass}>
         <p className="text-sm font-semibold underline">לפני הפגישה</p>
         <ul className={listClass}>
-          <li>הכנת סקיצה ב-iPlan (לפי כמות ההתחייבות).</li>
           <li>שליחת דף הנחיות לזוג במייל, עד 3 ימים לפני הפגישה.</li>
         </ul>
       </div>
@@ -43,6 +42,8 @@ export default async function CoupleMeetingPage() {
         <ul className={listClass}>
           <li>פתיחת קבוצת וואטסאפ עם הזוג.</li>
           <li>שליחת הנקודות העיקריות מהפגישה, וכן נקודות להמשך, לקבוצה.</li>
+          <li>הכנת סקיצה ראשונית ב-iPlan (לפי כמות ההתחייבות).</li>
+          <li>העלאת סקיצה סופית לאתר - לאחר התחייבות סופית (כשבוע לפני).</li>
         </ul>
       </div>
     </div>
