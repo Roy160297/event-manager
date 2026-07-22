@@ -5,6 +5,7 @@ import {
   addEveningWeddingSchedule,
   addEveningWeddingServiceSchedule,
   addFridayReverseWeddingSchedule,
+  addFridayReverseWeddingServiceSchedule,
   addFridayWeddingSchedule,
   addFridayWeddingServiceSchedule,
   addTimelineItem,
@@ -88,6 +89,11 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
     await addEveningReverseWeddingServiceSchedule(eventId);
   }
 
+  async function addFridayReverseServiceDefault() {
+    "use server";
+    await addFridayReverseWeddingServiceSchedule(eventId);
+  }
+
   async function removeAll() {
     "use server";
     await deleteAllTimelineItems(eventId);
@@ -149,6 +155,14 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
                 className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונה הפוכה ערב (הגשה)
+              </button>
+            </SaveDetailsForm>
+            <SaveDetailsForm action={addFridayReverseServiceDefault} message="לוח הזמנים נוצר בהצלחה">
+              <button
+                type="submit"
+                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+              >
+                צור לוח זמנים ברירת מחדל - חתונה הפוכה שישי צהריים (הגשה)
               </button>
             </SaveDetailsForm>
             <SaveDetailsForm action={addFridayReverseDefault} message="לוח הזמנים נוצר בהצלחה">
