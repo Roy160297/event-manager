@@ -5,6 +5,8 @@ import {
   addEveningWeddingSchedule,
   addEveningWeddingServiceSchedule,
   addFridayReverseWeddingSchedule,
+  addFridayWeddingSchedule,
+  addFridayWeddingServiceSchedule,
   addTimelineItem,
   deleteAllTimelineItems,
   deleteTimelineItem,
@@ -66,6 +68,16 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
     await addEveningWeddingServiceSchedule(eventId);
   }
 
+  async function addFridayDefault() {
+    "use server";
+    await addFridayWeddingSchedule(eventId);
+  }
+
+  async function addFridayServiceDefault() {
+    "use server";
+    await addFridayWeddingServiceSchedule(eventId);
+  }
+
   async function addEveningReverseDefault() {
     "use server";
     await addEveningReverseWeddingSchedule(eventId);
@@ -99,12 +111,28 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
                 צור לוח זמנים ברירת מחדל - חתונת ערב (מזנונים)
               </button>
             </SaveDetailsForm>
+            <SaveDetailsForm action={addFridayDefault} message="לוח הזמנים נוצר בהצלחה">
+              <button
+                type="submit"
+                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+              >
+                צור לוח זמנים ברירת מחדל - חתונה שישי צהריים (מזנונים)
+              </button>
+            </SaveDetailsForm>
             <SaveDetailsForm action={addEveningServiceDefault} message="לוח הזמנים נוצר בהצלחה">
               <button
                 type="submit"
                 className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונת ערב (הגשה)
+              </button>
+            </SaveDetailsForm>
+            <SaveDetailsForm action={addFridayServiceDefault} message="לוח הזמנים נוצר בהצלחה">
+              <button
+                type="submit"
+                className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+              >
+                צור לוח זמנים ברירת מחדל - חתונה שישי צהריים (הגשה)
               </button>
             </SaveDetailsForm>
             <SaveDetailsForm action={addEveningReverseDefault} message="לוח הזמנים נוצר בהצלחה">
