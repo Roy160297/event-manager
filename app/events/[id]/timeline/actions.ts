@@ -72,7 +72,7 @@ const EVENING_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[
   { label: "מזנונים נפתחים (מנות עיקריות)", time: "21:15", notes: "15-20 דקות ריקודים" },
   { label: "מנות עיקריות", time: "21:45", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "22:15" },
-  { label: "קינוחים", time: "22:45", notes: "קיפול המזנונים" },
+  { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];
 
@@ -81,11 +81,11 @@ const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: s
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "19:30" },
   { label: "חופה", time: "21:00" },
-  { label: "ראשונות", time: "21:15" },
+  { label: "ראשונות", time: "21:15", notes: "30 דק' של אוכל (הריקודים מתחילים תוך כדי)" },
   { label: "ריקודים", time: "21:35" },
   { label: "עיקריות", time: "22:00", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "22:30" },
-  { label: "קינוחים", time: "22:45" },
+  { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];
 
@@ -103,7 +103,7 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
   },
   { label: "חופה", time: "21:30" },
   { label: "ריקודים", time: "21:45" },
-  { label: "קינוחים", time: "22:30", notes: "קיפול המזנונים" },
+  { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];
 
@@ -125,7 +125,7 @@ const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: st
   },
   { label: "חופה", time: "14:00" },
   { label: "ריקודים", time: "14:15" },
-  { label: "קינוחים", time: "15:30", notes: "קיפול המזנונים" },
+  { label: "קינוחים", time: "15:30", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "17:00", notes: "קיפול הקינוחים" },
 ];
 
