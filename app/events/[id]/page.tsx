@@ -8,7 +8,8 @@ import { DateField } from "@/components/DateField";
 import { TimeField } from "@/components/TimeField";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
-import type { EventRow, EventSupplierRow, EventType, StaffRow } from "@/lib/types";
+import { EventFormExport } from "./EventFormExport";
+import type { EventRow, EventSupplierRow, EventType, StaffRow, TimelineItemRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
@@ -20,34 +21,52 @@ export default async function EventOverviewPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: event }, { count: openTasks }, { count: guestCount }, { data: managers }, { data: suppliers }, currentStaff] =
-    await Promise.all([
-      supabase.from("events").select("*").eq("id", id).returns<EventRow[]>().single(),
-      supabase
-        .from("tasks")
-        .select("*", { count: "exact", head: true })
-        .eq("event_id", id)
-        .neq("status", "done"),
-      supabase.from("guests").select("*", { count: "exact", head: true }).eq("event_id", id),
-      supabase
-        .from("staff")
-        .select("*, roles!inner(can_be_event_manager)")
-        .eq("roles.can_be_event_manager", true)
-        .order("name")
-        .returns<StaffRow[]>(),
-      supabase
-        .from("event_suppliers")
-        .select("*")
-        .eq("event_id", id)
-        .order("sort_order")
-        .returns<EventSupplierRow[]>(),
-      getCurrentStaff(),
-    ]);
+  const [
+    { data: event },
+    { count: openTasks },
+    { count: guestCount },
+    { data: managers },
+    { data: suppliers },
+    { data: scheduleItems },
+    currentStaff,
+  ] = await Promise.all([
+    supabase.from("events").select("*").eq("id", id).returns<EventRow[]>().single(),
+    supabase
+      .from("tasks")
+      .select("*", { count: "exact", head: true })
+      .eq("event_id", id)
+      .neq("status", "done"),
+    supabase.from("guests").select("*", { count: "exact", head: true }).eq("event_id", id),
+    supabase
+      .from("staff")
+      .select("*, roles!inner(can_be_event_manager)")
+      .eq("roles.can_be_event_manager", true)
+      .order("name")
+      .returns<StaffRow[]>(),
+    supabase
+      .from("event_suppliers")
+      .select("*")
+      .eq("event_id", id)
+      .order("sort_order")
+      .returns<EventSupplierRow[]>(),
+    supabase
+      .from("timeline_items")
+      .select("label, approx_time, notes")
+      .eq("event_id", id)
+      .returns<Pick<TimelineItemRow, "label" | "approx_time" | "notes">[]>(),
+    getCurrentStaff(),
+  ]);
 
   const canReadEvents = !!currentStaff && canRead(currentStaff.permissions, "events");
   const canWriteEvents = !!currentStaff && canWrite(currentStaff.permissions, "events");
 
   if (!canReadEvents) return <NoPermissionNotice />;
+
+  const managerName = managers?.find((manager) => manager.id === event?.manager_id)?.name ?? null;
+  const sketchUrl = event?.table_sketch_path
+    ? ((await supabase.storage.from("event-sketches").createSignedUrl(event.table_sketch_path, 60 * 60)).data
+        ?.signedUrl ?? null)
+    : null;
 
   async function saveDetails(formData: FormData) {
     "use server";
@@ -74,6 +93,16 @@ export default async function EventOverviewPage({
           <p className="text-2xl font-bold">{guestCount ?? 0}</p>
         </div>
       </div>
+
+      {event && (
+        <EventFormExport
+          event={event}
+          managerName={managerName}
+          suppliers={suppliers ?? []}
+          scheduleItems={scheduleItems ?? []}
+          sketchUrl={sketchUrl}
+        />
+      )}
 
       {canWriteEvents ? (
         <SaveDetailsForm action={saveDetails} className="flex flex-col gap-4 rounded-lg border border-border-classic bg-surface p-4">
@@ -199,7 +228,7 @@ export default async function EventOverviewPage({
         <div className="grid gap-x-4 gap-y-1 rounded-lg border border-border-classic bg-surface p-4 text-sm sm:grid-cols-2">
           <p><span className="text-foreground/60">שם הלקוח / הזוג: </span>{event?.name ?? "—"}</p>
           <p><span className="text-foreground/60">סוג האירוע: </span>{event ? EVENT_TYPE_LABELS[event.event_type] : "—"}</p>
-          <p><span className="text-foreground/60">מנהל/ת אירוע אחראי/ת: </span>{managers?.find((m) => m.id === event?.manager_id)?.name ?? "—"}</p>
+          <p><span className="text-foreground/60">מנהל/ת אירוע אחראי/ת: </span>{managerName ?? "—"}</p>
         </div>
       )}
 

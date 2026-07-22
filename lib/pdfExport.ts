@@ -28,8 +28,8 @@ export async function exportElementToPdf({
   ]);
 
   const [contentCanvas, footerCanvas] = await Promise.all([
-    html2canvas(contentElement, { scale: 2, backgroundColor: "#ffffff" }),
-    html2canvas(footerElement, { scale: 2, backgroundColor: "#ffffff" }),
+    html2canvas(contentElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }),
+    html2canvas(footerElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }),
   ]);
 
   const contentWidthMm = PAGE_WIDTH_MM - MARGIN_MM * 2;

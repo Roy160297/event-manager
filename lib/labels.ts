@@ -109,3 +109,13 @@ export function formatTime(value: string | null): string {
   if (!value) return "—";
   return value.slice(0, 5);
 }
+
+// Wedding schedules run past midnight, so a plain time comparison would sort
+// "00:30" before "19:30". Times before 6am are treated as a continuation of
+// the previous night and pushed to the end of the day for sorting purposes.
+export function scheduleSortKey(time: string | null): number {
+  if (!time) return Infinity;
+  const [h, m] = time.split(":").map(Number);
+  const minutes = h * 60 + m;
+  return minutes < 6 * 60 ? minutes + 24 * 60 : minutes;
+}

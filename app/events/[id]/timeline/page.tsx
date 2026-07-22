@@ -20,6 +20,7 @@ import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { TimeField } from "@/components/TimeField";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
+import { scheduleSortKey } from "@/lib/labels";
 
 export default async function TimelinePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = await params;
@@ -34,16 +35,6 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
   const canWriteTimeline = !!currentStaff && canWrite(currentStaff.permissions, "timeline");
 
   if (!canReadTimeline) return <NoPermissionNotice />;
-
-  // Wedding schedules run past midnight, so a plain time comparison would sort
-  // "00:30" before "19:30". Times before 6am are treated as a continuation of
-  // the previous night and pushed to the end of the day for sorting purposes.
-  function scheduleSortKey(time: string | null): number {
-    if (!time) return Infinity;
-    const [h, m] = time.split(":").map(Number);
-    const minutes = h * 60 + m;
-    return minutes < 6 * 60 ? minutes + 24 * 60 : minutes;
-  }
 
   const items = rawItems
     ? [...rawItems].sort((a, b) => scheduleSortKey(a.approx_time) - scheduleSortKey(b.approx_time))
