@@ -19,6 +19,7 @@ export default function RoleChecklist({
   initialCheckedKeys,
   noteLabel,
   initialNote,
+  signerName,
 }: {
   checklistKey: string;
   title: string;
@@ -31,6 +32,7 @@ export default function RoleChecklist({
   initialCheckedKeys: string[];
   noteLabel?: string;
   initialNote?: string | null;
+  signerName?: string | null;
 }) {
   const totalItems = categories.reduce((sum, category) => sum + category.items.length, 0);
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
@@ -91,6 +93,8 @@ export default function RoleChecklist({
         <PdfExportButton
           filename={`${title}-${eventName}.pdf`}
           eventLabel={`${eventName} · ${eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · ${formatDate(eventDate)}`}
+          signerName={signerName}
+          signerLabel="נחתם על ידי"
         >
           <ChecklistPrintable
             title={title}

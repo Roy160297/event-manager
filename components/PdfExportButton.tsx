@@ -8,6 +8,7 @@ export function PdfExportButton({
   filename,
   eventLabel,
   signerName,
+  signerLabel = "מנהל אירוע",
   showSignature = true,
   children,
 }: {
@@ -15,6 +16,7 @@ export function PdfExportButton({
   filename: string;
   eventLabel: string;
   signerName?: string | null;
+  signerLabel?: string;
   showSignature?: boolean;
   children: React.ReactNode;
 }) {
@@ -107,7 +109,11 @@ export function PdfExportButton({
                 <div className="w-56 pt-1" style={{ borderTop: "1px solid #999999" }}>
                   חתימה
                 </div>
-                {signerName && <div className="font-medium">מנהל אירוע: {signerName}</div>}
+                {signerName && (
+                  <div className="font-medium">
+                    {signerLabel}: {signerName}
+                  </div>
+                )}
               </div>
             ) : (
               <div />

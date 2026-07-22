@@ -154,6 +154,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               initialCheckedKeys={initialCheckedKeys}
               noteLabel={definition.noteLabel}
               initialNote={initialNote}
+              signerName={currentStaff?.name ?? null}
             />
           ),
       )}
