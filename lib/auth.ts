@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { RESOURCES, type PermissionMap } from "@/lib/permissions";
 import type { RolePermissionRow } from "@/lib/types";
@@ -20,7 +21,12 @@ const NO_PERMISSIONS: PermissionMap = Object.fromEntries(
 // short-circuit before hitting the database. Not itself a security boundary —
 // RLS is what actually enforces access; this only exists to avoid rendering
 // controls a user's writes would fail against anyway.
-export async function getCurrentStaff(): Promise<CurrentStaff | null> {
+//
+// Wrapped in React's cache() because it's called from the root layout AND
+// from nearly every nested layout/page in the same request - without this,
+// each call re-ran its full auth + staff + role + permissions round trip
+// from scratch, multiplying an already-multi-query chain 2-3x per navigation.
+export const getCurrentStaff = cache(async (): Promise<CurrentStaff | null> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -60,4 +66,4 @@ export async function getCurrentStaff(): Promise<CurrentStaff | null> {
     roleName: role?.name ?? null,
     permissions,
   };
-}
+});
