@@ -1,12 +1,15 @@
 import nodemailer from "nodemailer";
-import { CHECKLIST_EMAIL_TO, CHECKLIST_EMAIL_CC } from "@/lib/checklistEmailRecipients";
 
 export async function sendChecklistsEmail({
+  to,
+  cc,
   subject,
   bodyText,
   replyTo,
   attachments,
 }: {
+  to: string[];
+  cc: string[];
   subject: string;
   bodyText: string;
   replyTo?: string | null;
@@ -17,6 +20,7 @@ export async function sendChecklistsEmail({
   if (!user || !appPassword) {
     throw new Error("שליחת מייל אינה מוגדרת (חסר GMAIL_USER/GMAIL_APP_PASSWORD)");
   }
+  if (to.length === 0) throw new Error("יש להזין לפחות נמען אחד");
 
   // Sends through Gmail's own SMTP, authenticated as a real personal Gmail
   // account (via an App Password) - not a transactional API - since the
@@ -31,8 +35,8 @@ export async function sendChecklistsEmail({
 
   await transporter.sendMail({
     from: `"House No. Seven" <${user}>`,
-    to: CHECKLIST_EMAIL_TO,
-    cc: CHECKLIST_EMAIL_CC,
+    to,
+    cc,
     replyTo: replyTo ?? undefined,
     subject,
     html: `<div dir="rtl">${bodyText}</div>`,

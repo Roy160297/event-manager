@@ -9,7 +9,9 @@ import { updateEventSummaryReport } from "@/app/events/actions";
 import ClosingChecklist from "./ClosingChecklist";
 import RoleChecklist from "./RoleChecklist";
 import { ROLE_CHECKLISTS } from "@/lib/roleChecklists";
+import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
 import { EventSummaryReportExport } from "./EventSummaryReportExport";
+import { SendChecklistsEmailButton, type ChecklistForEmail } from "./SendChecklistsEmailButton";
 import {
   EVENT_TYPE_LABELS,
   TASK_PRIORITY_COLORS,
@@ -47,7 +49,11 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       .eq("event_id", eventId)
       .order("due_date", { ascending: true, nullsFirst: false })
       .returns<TaskWithAssignee[]>(),
-    supabase.from("staff").select("id, name").order("name").returns<Pick<StaffRow, "id" | "name">[]>(),
+    supabase
+      .from("staff")
+      .select("id, name, email")
+      .order("name")
+      .returns<Pick<StaffRow, "id" | "name" | "email">[]>(),
     supabase.from("events").select("*").eq("id", eventId).returns<EventRow[]>().single(),
     supabase.from("closing_checklist_checks").select("item_key").eq("event_id", eventId).returns<{ item_key: string }[]>(),
     supabase
@@ -114,17 +120,50 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     await updateEventSummaryReport(eventId, formData);
   }
 
-  const managerName = staff?.find((member) => member.id === event?.manager_id)?.name ?? null;
+  const manager = staff?.find((member) => member.id === event?.manager_id) ?? null;
+  const managerName = manager?.name ?? null;
+  const managerEmail = manager?.email ?? null;
   const guestCommitment =
     event?.guests_adults != null || event?.guests_children != null
       ? `${event?.guests_adults ?? "-"}+${event?.guests_children ?? "-"}`
       : null;
+
+  const checklistsForEmail: ChecklistForEmail[] = [
+    {
+      key: "closing_checklist",
+      title: "צ'קליסט סגירה - מנהל אירוע",
+      categories: CLOSING_CHECKLIST,
+      checkedKeys: closingChecklistChecks?.map((row) => row.item_key) ?? [],
+      note: closingChecklistNote,
+      noteLabel: "הערות",
+      showCategoryLabels: true,
+    },
+    ...ROLE_CHECKLISTS.map((definition) => ({
+      key: definition.key,
+      title: definition.label,
+      categories: definition.categories,
+      checkedKeys:
+        roleChecklistChecks?.filter((row) => row.checklist_key === definition.key).map((row) => row.item_key) ?? [],
+      note: roleChecklistNotes?.find((row) => row.checklist_key === definition.key)?.note ?? null,
+      noteLabel: definition.noteLabel,
+    })),
+  ];
 
   const inputClass = "rounded-md border border-border-classic bg-surface px-2.5 py-1.5 text-sm";
   const reportLabelClass = "flex flex-col gap-1 text-sm";
 
   return (
     <div className="flex flex-col gap-6">
+      {canEditChecklist && event && (
+        <SendChecklistsEmailButton
+          event={event}
+          managerName={managerName}
+          managerEmail={managerEmail}
+          guestCommitment={guestCommitment}
+          checklists={checklistsForEmail}
+        />
+      )}
+
       {canReadChecklist && (
         <ClosingChecklist
           eventId={eventId}

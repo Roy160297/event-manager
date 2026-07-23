@@ -231,11 +231,15 @@ export async function parseSupplierImage(formData: FormData): Promise<SupplierIm
 }
 
 export async function sendAllChecklistsEmail({
+  to,
+  cc,
   subject,
   bodyText,
   replyTo,
   attachments,
 }: {
+  to: string[];
+  cc: string[];
   subject: string;
   bodyText: string;
   replyTo?: string | null;
@@ -247,7 +251,7 @@ export async function sendAllChecklistsEmail({
   }
   if (attachments.length === 0) throw new Error("אין צ'קליסטים לשליחה");
 
-  await sendChecklistsEmail({ subject, bodyText, replyTo, attachments });
+  await sendChecklistsEmail({ to, cc, subject, bodyText, replyTo, attachments });
 }
 
 export async function addSuppliersFromImport(eventId: string, suppliers: SupplierImportDraft[]) {
