@@ -13,14 +13,12 @@ const PAGE_HEIGHT_MM = 297;
 const MARGIN_MM = 10;
 const FOOTER_GAP_MM = 4;
 
-export async function exportElementToPdf({
+async function buildPdf({
   contentElement,
   footerElement,
-  filename,
 }: {
   contentElement: HTMLElement;
   footerElement: HTMLElement;
-  filename: string;
 }) {
   const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
     import("jspdf"),
@@ -88,5 +86,33 @@ export async function exportElementToPdf({
     footerHeightMm,
   );
 
+  return pdf;
+}
+
+export async function exportElementToPdf({
+  contentElement,
+  footerElement,
+  filename,
+}: {
+  contentElement: HTMLElement;
+  footerElement: HTMLElement;
+  filename: string;
+}) {
+  const pdf = await buildPdf({ contentElement, footerElement });
   pdf.save(filename);
+}
+
+// Same rendering as exportElementToPdf, but returns the PDF as a base64
+// string instead of triggering a browser download - used to bundle several
+// checklists as email attachments rather than saving each one to disk.
+export async function renderElementToPdfBase64({
+  contentElement,
+  footerElement,
+}: {
+  contentElement: HTMLElement;
+  footerElement: HTMLElement;
+}): Promise<string> {
+  const pdf = await buildPdf({ contentElement, footerElement });
+  const dataUri = pdf.output("datauristring");
+  return dataUri.slice(dataUri.indexOf("base64,") + "base64,".length);
 }

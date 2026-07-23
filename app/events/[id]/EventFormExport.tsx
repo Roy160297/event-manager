@@ -9,13 +9,11 @@ export function EventFormExport({
   managerName,
   suppliers,
   scheduleItems,
-  sketchUrl,
 }: {
   event: EventRow;
   managerName: string | null;
   suppliers: EventSupplierRow[];
   scheduleItems: Pick<TimelineItemRow, "label" | "approx_time" | "notes">[];
-  sketchUrl: string | null;
 }) {
   const fields: [string, string | number | null][] = [
     ["שעת התחלה", formatTime(event.start_time)],
@@ -108,14 +106,6 @@ export function EventFormExport({
                 </li>
               ))}
             </ul>
-          </div>
-        )}
-
-        {sketchUrl && (
-          <div className="flex flex-col gap-1.5">
-            <p className="text-sm font-bold underline">סקיצת שולחנות</p>
-            {/* eslint-disable-next-line @next/next/no-img-element -- captured by html2canvas, not rendered to the user */}
-            <img src={sketchUrl} alt="סקיצת שולחנות" className="max-w-full" crossOrigin="anonymous" />
           </div>
         )}
       </div>

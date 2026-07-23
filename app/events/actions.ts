@@ -7,6 +7,7 @@ import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
+import { sendChecklistsEmail } from "@/lib/checklistEmail";
 import type { EventType } from "@/lib/types";
 
 export async function createEvent(formData: FormData) {
@@ -227,6 +228,19 @@ export async function parseSupplierImage(formData: FormData): Promise<SupplierIm
 
   const buffer = Buffer.from(await file.arrayBuffer());
   return extractSuppliersFromImage(buffer, file.type);
+}
+
+export async function sendAllChecklistsEmail(
+  eventLabel: string,
+  attachments: { filename: string; base64: string }[],
+) {
+  const staff = await getCurrentStaff();
+  if (!staff || !canWrite(staff.permissions, "closing_checklist")) {
+    throw new Error("אין לך הרשאה לשלוח את הצ'קליסטים");
+  }
+  if (attachments.length === 0) throw new Error("אין צ'קליסטים לשליחה");
+
+  await sendChecklistsEmail({ eventLabel, attachments });
 }
 
 export async function addSuppliersFromImport(eventId: string, suppliers: SupplierImportDraft[]) {

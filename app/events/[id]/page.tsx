@@ -10,6 +10,9 @@ import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
 import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
+import { SendChecklistsEmailButton, type ChecklistForEmail } from "./SendChecklistsEmailButton";
+import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
+import { ROLE_CHECKLISTS } from "@/lib/roleChecklists";
 import type { EventRow, EventSupplierRow, EventType, StaffRow, TimelineItemRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -29,6 +32,9 @@ export default async function EventOverviewPage({
     { data: managers },
     { data: suppliers },
     { data: scheduleItems },
+    { data: closingChecklistChecks },
+    { data: roleChecklistChecks },
+    { data: roleChecklistNotes },
     currentStaff,
   ] = await Promise.all([
     supabase.from("events").select("*").eq("id", id).returns<EventRow[]>().single(),
@@ -55,19 +61,47 @@ export default async function EventOverviewPage({
       .select("label, approx_time, notes")
       .eq("event_id", id)
       .returns<Pick<TimelineItemRow, "label" | "approx_time" | "notes">[]>(),
+    supabase.from("closing_checklist_checks").select("item_key").eq("event_id", id).returns<{ item_key: string }[]>(),
+    supabase
+      .from("role_checklist_checks")
+      .select("checklist_key, item_key")
+      .eq("event_id", id)
+      .returns<{ checklist_key: string; item_key: string }[]>(),
+    supabase
+      .from("role_checklist_notes")
+      .select("checklist_key, note")
+      .eq("event_id", id)
+      .returns<{ checklist_key: string; note: string | null }[]>(),
     getCurrentStaff(),
   ]);
 
   const canReadEvents = !!currentStaff && canRead(currentStaff.permissions, "events");
   const canWriteEvents = !!currentStaff && canWrite(currentStaff.permissions, "events");
+  const canSendChecklists = !!currentStaff && canWrite(currentStaff.permissions, "closing_checklist");
 
   if (!canReadEvents) return <NoPermissionNotice />;
 
   const managerName = managers?.find((manager) => manager.id === event?.manager_id)?.name ?? null;
-  const sketchUrl = event?.table_sketch_path
-    ? ((await supabase.storage.from("event-sketches").createSignedUrl(event.table_sketch_path, 60 * 60)).data
-        ?.signedUrl ?? null)
-    : null;
+
+  const checklistsForEmail: ChecklistForEmail[] = [
+    {
+      key: "closing_checklist",
+      title: "צ'קליסט סגירה - מנהל אירוע",
+      categories: CLOSING_CHECKLIST,
+      checkedKeys: closingChecklistChecks?.map((row) => row.item_key) ?? [],
+      note: roleChecklistNotes?.find((row) => row.checklist_key === "closing_checklist")?.note ?? null,
+      noteLabel: "הערות",
+      showCategoryLabels: true,
+    },
+    ...ROLE_CHECKLISTS.map((definition) => ({
+      key: definition.key,
+      title: definition.label,
+      categories: definition.categories,
+      checkedKeys: roleChecklistChecks?.filter((row) => row.checklist_key === definition.key).map((row) => row.item_key) ?? [],
+      note: roleChecklistNotes?.find((row) => row.checklist_key === definition.key)?.note ?? null,
+      noteLabel: definition.noteLabel,
+    })),
+  ];
 
   async function saveDetails(formData: FormData) {
     "use server";
@@ -96,13 +130,22 @@ export default async function EventOverviewPage({
       </div>
 
       {event && (
-        <EventFormExport
-          event={event}
-          managerName={managerName}
-          suppliers={suppliers ?? []}
-          scheduleItems={scheduleItems ?? []}
-          sketchUrl={sketchUrl}
-        />
+        <div className="flex flex-wrap items-start gap-3">
+          <EventFormExport
+            event={event}
+            managerName={managerName}
+            suppliers={suppliers ?? []}
+            scheduleItems={scheduleItems ?? []}
+          />
+          {canSendChecklists && (
+            <SendChecklistsEmailButton
+              eventName={event.name}
+              eventType={event.event_type}
+              eventDate={event.event_date}
+              checklists={checklistsForEmail}
+            />
+          )}
+        </div>
       )}
 
       {canWriteEvents ? (
