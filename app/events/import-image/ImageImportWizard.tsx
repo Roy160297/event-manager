@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { createEventFromImageImport, parseImageImport } from "./actions";
 import { addManagerFromImport } from "@/app/events/import/actions";
+import { ImageDropZone } from "@/components/ImageDropZone";
 import type { ImageImportDraft } from "@/lib/imageImport";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
 import { DateInput } from "@/components/DateField";
@@ -85,25 +86,7 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
         className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
       >
         <p className="text-sm font-medium">העלאת צילום מסך מ-iPlan</p>
-        <input
-          ref={fileInputRef}
-          type="file"
-          name="file"
-          accept="image/png,image/jpeg,image/webp"
-          required
-          className="hidden"
-          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
-        />
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
-          >
-            בחר קובץ
-          </button>
-          <span className="text-sm text-foreground/60">{fileName ?? "לא נבחר קובץ"}</span>
-        </div>
+        <ImageDropZone fileInputRef={fileInputRef} fileName={fileName} onFileName={setFileName} />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
           type="submit"
