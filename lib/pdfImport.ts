@@ -234,13 +234,38 @@ export function parsePdfDraft(rawText: string): PdfImportDraft {
   const startTimeMatch = summaryLine.match(/תאריך האירוע:\s*(\d{2}:\d{2})/);
   const serviceStyleMatch = summaryLine.match(/סוג הגשה:\s*([^\s\t]+)/);
 
+  const service_style = serviceStyleMatch?.[1] ?? findValueBeforeLabel(lines, "תפריט");
+
+  // "סוג אירוע" only ever says "חתונה" / "חתונה הפוכה" - it never carries the
+  // מזנונים/הגשה distinction, which instead lives in the separate "תפריט"
+  // (a.k.a. "סוג הגשה") field. EVENT_TYPE_LABELS' wedding entries are compound
+  // ("חתונה - מזנונים" etc.), so for weddings the two fields must be combined;
+  // every other event type (בת/בר מצווה, אירוע עסקי...) matches directly.
   const eventTypeValue = findValueBeforeLabel(lines, "סוג אירוע") ?? headerEventTypeLabel;
-  const event_type =
-    (Object.entries(EVENT_TYPE_LABELS).find(([, label]) => label === eventTypeValue)?.[0] as
-      | EventType
-      | undefined) ?? "other";
-  if (eventTypeValue && event_type === "other" && eventTypeValue !== EVENT_TYPE_LABELS.other) {
-    warnings.push(`סוג האירוע "${eventTypeValue}" לא זוהה - נבחר "אחר" כברירת מחדל`);
+  const isWeddingFamily = !!eventTypeValue?.includes("חתונה");
+  const isReverse = !!eventTypeValue?.includes("הפוכה");
+  const isServiceStyle = service_style === "הגשה";
+
+  let event_type: EventType;
+  if (isWeddingFamily) {
+    event_type = isReverse
+      ? isServiceStyle
+        ? "reverse_wedding_service"
+        : "reverse_wedding"
+      : isServiceStyle
+        ? "wedding_service"
+        : "wedding";
+    if (service_style && service_style !== "מזנונים" && service_style !== "הגשה") {
+      warnings.push(`סוג הגשה "${service_style}" אינו "מזנונים" או "הגשה" - נבחרה ברירת המחדל "מזנונים"`);
+    }
+  } else {
+    event_type =
+      (Object.entries(EVENT_TYPE_LABELS).find(([, label]) => label === eventTypeValue)?.[0] as
+        | EventType
+        | undefined) ?? "other";
+    if (eventTypeValue && event_type === "other" && eventTypeValue !== EVENT_TYPE_LABELS.other) {
+      warnings.push(`סוג האירוע "${eventTypeValue}" לא זוהה - נבחר "אחר" כברירת מחדל`);
+    }
   }
 
   const eventDateRaw = findValueBeforeLabel(lines, "תאריך אירוע");
@@ -257,7 +282,6 @@ export function parsePdfDraft(rawText: string): PdfImportDraft {
 
   const start_time = startTimeMatch?.[1] ?? schedule[0]?.approx_time ?? null;
   if (!start_time) warnings.push("לא נמצאה שעת התחלה - יש להזין ידנית");
-  const service_style = serviceStyleMatch?.[1] ?? null;
 
   const commitmentLine = findValueBeforeLabel(lines, "התחייבות סופית") ? lines.find((l) => l.includes("התחייבות סופית")) : null;
   const adultsMatch = commitmentLine?.match(/(\d+)\s*אורחים\s*מבוגרים\s*:/);
