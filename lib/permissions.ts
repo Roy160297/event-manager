@@ -1,38 +1,38 @@
 export const RESOURCES = [
   "events",
-  "guests",
   "tasks",
+  "timeline",
+  "guests",
+  "staffing",
   "closing_checklist",
   "event_summary_report",
-  "timeline",
-  "staffing",
-  "waiters",
-  "admin",
   "floor_manager_checklist",
   "bar_checklist",
   "kitchen_checklist",
   "barista_checklist",
   "couple_meeting",
   "event_management_dex",
+  "waiters",
+  "admin",
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
 export const RESOURCE_LABELS: Record<Resource, string> = {
   events: "סקירה",
-  guests: "אורחים",
   tasks: "משימות",
+  timeline: "לוח זמנים",
+  guests: "אורחים",
+  staffing: "שיבוץ מלצרים",
   closing_checklist: "צ'קליסט סגירה - מנהל אירוע",
   event_summary_report: "דוח סיכום אירוע - מנהל אירוע",
-  timeline: "לוח זמנים",
-  staffing: "שיבוץ מלצרים",
-  waiters: "מלצרים (רשימה כללית)",
-  admin: "ניהול משתמשים והרשאות",
   floor_manager_checklist: "צ'קליסט סגירה - מנהל פלור",
   bar_checklist: "צ'קליסט סגירה - בר",
   kitchen_checklist: "צ'קליסט סגירה - מטבח",
   barista_checklist: "צ'קליסט סגירה - בריסטה",
   couple_meeting: "פגישה עם זוג",
   event_management_dex: "ניהול אירוע (Dex)",
+  waiters: "מלצרים (רשימה כללית)",
+  admin: "ניהול משתמשים והרשאות",
 };
 
 export type PermissionMap = Record<Resource, { read: boolean; write: boolean }>;
