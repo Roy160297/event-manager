@@ -28,7 +28,7 @@ export function MainNav({
 
   return (
     <nav>
-      <ul className="flex gap-2">
+      <ul className="flex flex-wrap gap-2">
         {links.map((link) => {
           const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
           return (
@@ -38,8 +38,8 @@ export function MainNav({
                 aria-current={isActive ? "page" : undefined}
                 className={
                   isActive
-                    ? "rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-foreground"
-                    : "rounded-full px-4 py-1.5 text-sm text-foreground/70 hover:bg-accent-soft hover:text-foreground"
+                    ? "whitespace-nowrap rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-foreground"
+                    : "whitespace-nowrap rounded-full px-4 py-1.5 text-sm text-foreground/70 hover:bg-accent-soft hover:text-foreground"
                 }
               >
                 {link.label}
