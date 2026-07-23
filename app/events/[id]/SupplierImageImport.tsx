@@ -16,6 +16,22 @@ export function SupplierImageImport({ eventId }: { eventId: string }) {
   const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  function handlePaste(e: React.ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items || !fileInputRef.current) return;
+    for (const item of items) {
+      if (!item.type.startsWith("image/")) continue;
+      const file = item.getAsFile();
+      if (!file) continue;
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInputRef.current.files = dataTransfer.files;
+      setFileName(file.name || `תמונה-מודבקת.${file.type.split("/")[1] ?? "png"}`);
+      e.preventDefault();
+      break;
+    }
+  }
+
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -92,15 +108,24 @@ export function SupplierImageImport({ eventId }: { eventId: string }) {
           className="hidden"
           onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
         />
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
-          >
-            בחר קובץ
-          </button>
-          <span className="text-sm text-foreground/60">{fileName ?? "לא נבחר קובץ"}</span>
+        <div
+          tabIndex={0}
+          onPaste={handlePaste}
+          className="flex flex-col items-center gap-2 rounded-md border-2 border-dashed border-border-classic px-4 py-5 text-center focus:border-accent focus:outline-none"
+        >
+          <p className="text-sm text-foreground/60">
+            לחצו כאן והדביקו (Ctrl+V) תמונה שהעתקתם, או שצילמתם עם כלי הגזירה (Alt+Shift+S)
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
+            >
+              או בחרו קובץ
+            </button>
+            <span className="text-sm text-foreground/60">{fileName ?? "לא נבחרה תמונה"}</span>
+          </div>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex items-center gap-3">
