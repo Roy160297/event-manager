@@ -230,17 +230,24 @@ export async function parseSupplierImage(formData: FormData): Promise<SupplierIm
   return extractSuppliersFromImage(buffer, file.type);
 }
 
-export async function sendAllChecklistsEmail(
-  eventLabel: string,
-  attachments: { filename: string; base64: string }[],
-) {
+export async function sendAllChecklistsEmail({
+  subject,
+  bodyText,
+  replyTo,
+  attachments,
+}: {
+  subject: string;
+  bodyText: string;
+  replyTo?: string | null;
+  attachments: { filename: string; base64: string }[];
+}) {
   const staff = await getCurrentStaff();
   if (!staff || !canWrite(staff.permissions, "closing_checklist")) {
     throw new Error("אין לך הרשאה לשלוח את הצ'קליסטים");
   }
   if (attachments.length === 0) throw new Error("אין צ'קליסטים לשליחה");
 
-  await sendChecklistsEmail({ eventLabel, attachments });
+  await sendChecklistsEmail({ subject, bodyText, replyTo, attachments });
 }
 
 export async function addSuppliersFromImport(eventId: string, suppliers: SupplierImportDraft[]) {

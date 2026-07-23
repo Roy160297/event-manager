@@ -81,7 +81,9 @@ export default async function EventOverviewPage({
 
   if (!canReadEvents) return <NoPermissionNotice />;
 
-  const managerName = managers?.find((manager) => manager.id === event?.manager_id)?.name ?? null;
+  const manager = managers?.find((m) => m.id === event?.manager_id) ?? null;
+  const managerName = manager?.name ?? null;
+  const managerEmail = manager?.email ?? null;
 
   const checklistsForEmail: ChecklistForEmail[] = [
     {
@@ -142,6 +144,8 @@ export default async function EventOverviewPage({
               eventName={event.name}
               eventType={event.event_type}
               eventDate={event.event_date}
+              managerName={managerName}
+              managerEmail={managerEmail}
               checklists={checklistsForEmail}
             />
           )}
