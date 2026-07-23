@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 // Fixed distribution list for the "send all closing checklists" email -
 // deliberately not the event's own contact_email/contact_email_2 fields
@@ -23,14 +23,23 @@ export async function sendChecklistsEmail({
   eventLabel: string;
   attachments: { filename: string; base64: string }[];
 }) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("שליחת מייל אינה מוגדרת (חסר RESEND_API_KEY)");
+  const user = process.env.GMAIL_USER;
+  const appPassword = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !appPassword) {
+    throw new Error("שליחת מייל אינה מוגדרת (חסר GMAIL_USER/GMAIL_APP_PASSWORD)");
+  }
 
-  const resend = new Resend(apiKey);
-  const from = process.env.CHECKLIST_EMAIL_FROM ?? "checklists@house7.co.il";
+  // Sends through Gmail's own SMTP, authenticated as a real personal Gmail
+  // account (via an App Password) - not a transactional API - since the
+  // recipient domain isn't one we control and can't verify with a service
+  // like Resend.
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass: appPassword },
+  });
 
-  const { error } = await resend.emails.send({
-    from: `House No. Seven <${from}>`,
+  await transporter.sendMail({
+    from: `"House No. Seven" <${user}>`,
     to: TO,
     cc: CC,
     subject: `צ'קליסטים לסגירת אירוע - ${eventLabel}`,
@@ -38,8 +47,7 @@ export async function sendChecklistsEmail({
     attachments: attachments.map((attachment) => ({
       filename: attachment.filename,
       content: attachment.base64,
+      encoding: "base64",
     })),
   });
-
-  if (error) throw new Error(error.message);
 }
