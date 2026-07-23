@@ -143,13 +143,13 @@ export function SendChecklistsEmailButton({
       ? `${event.groom_name} ו${event.bride_name}`
       : (event.groom_name ?? event.bride_name ?? null);
   const dayMonth = shortDayMonth(event.event_date);
+  // Same name shown in the PDF filenames - falls back to the client/event
+  // name when the couple's own names aren't filled in on the event.
+  const nameLabel = coupleLabel ?? event.name;
   const subject =
-    "דוח סיכום אירוע" +
-    (coupleLabel ? ` - ${coupleLabel}` : "") +
-    (dayMonth ? `.${dayMonth}` : "") +
-    (managerName ? ` - ${managerName}` : "");
+    `דוח סיכום אירוע - ${nameLabel}` + (dayMonth ? `.${dayMonth}` : "") + (managerName ? ` - ${managerName}` : "");
   const dateForFilename = fileDate(event.event_date);
-  const filenameBase = `${coupleLabel ?? event.name}${dateForFilename ? `-${dateForFilename}` : ""}`;
+  const filenameBase = `${nameLabel}${dateForFilename ? `-${dateForFilename}` : ""}`;
   const bodyText = `מצורפים כל צ&apos;קליסטי הסגירה ודוח סיכום האירוע עבור ${eventLabel}.${
     managerName ? `<br/>נשלח על ידי: ${managerName}` : ""
   }`;
@@ -265,13 +265,32 @@ export function SendChecklistsEmailButton({
             <span className="text-foreground/60">מענה לכתובת (Reply-To): </span>
             {managerEmail ?? "—"}
           </p>
-          <div className="text-xs">
+          <div className="flex flex-col gap-1 text-xs">
             <p className="text-foreground/60">קבצים מצורפים:</p>
-            <ul className="list-inside list-disc">
-              {attachments.map((a) => (
-                <li key={a.filename}>{a.filename}</li>
-              ))}
-            </ul>
+            {step === "sent" ? (
+              <ul className="list-inside list-disc">
+                {attachments.map((a) => (
+                  <li key={a.filename}>{a.filename}</li>
+                ))}
+              </ul>
+            ) : (
+              <ul className="flex flex-col gap-1">
+                {attachments.map((a) => (
+                  <li key={a.filename} className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setAttachments((prev) => prev?.filter((x) => x.filename !== a.filename) ?? prev)}
+                      className="text-foreground/50 hover:text-red-600"
+                      aria-label={`הסר ${a.filename}`}
+                    >
+                      ✕
+                    </button>
+                    {a.filename}
+                  </li>
+                ))}
+                {attachments.length === 0 && <li className="text-foreground/50">אין קבצים מצורפים</li>}
+              </ul>
+            )}
           </div>
 
           {step === "sent" ? (
@@ -281,7 +300,7 @@ export function SendChecklistsEmailButton({
               <button
                 type="button"
                 onClick={confirmSend}
-                disabled={step === "sending" || toList.length === 0}
+                disabled={step === "sending" || toList.length === 0 || attachments.length === 0}
                 className="rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-60"
               >
                 {step === "sending" ? "שולח..." : "אישור ושליחה"}
