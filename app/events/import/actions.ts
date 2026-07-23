@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText, parsePdfDraft, type PdfImportDraft } from "@/lib/pdfImport";
-import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import type { StaffRow } from "@/lib/types";
 
 export async function addManagerFromImport(name: string): Promise<StaffRow> {
@@ -83,6 +82,11 @@ export async function createEventFromPdfImport(
   if (error) throw new Error(error.message);
   const eventId = data.id as string;
 
+  // Never auto-generate a default schedule here, even when the PDF didn't
+  // extract one - creating one automatically risked ending up with two
+  // schedules (the PDF's own plus the generated one). If the PDF has no
+  // schedule, the manager can add one manually via the timeline page's own
+  // "צור לוח זמנים ברירת מחדל" buttons.
   if (draft.schedule.length > 0) {
     const rows = draft.schedule.map((item, index) => ({
       event_id: eventId,
@@ -93,8 +97,6 @@ export async function createEventFromPdfImport(
     }));
     const { error: schedErr } = await supabase.from("timeline_items").insert(rows);
     if (schedErr) throw new Error(schedErr.message);
-  } else {
-    await applyDefaultSchedule(eventId, draft.event_type, draft.event_date);
   }
 
   const validSuppliers = draft.suppliers.filter((s) => s.name.trim());

@@ -84,6 +84,21 @@ function parseScheduleLine(line: string): ScheduleItemDraft | null {
 // two physical lines, leaving a role-line's name with no phone yet - that case
 // is tracked via `awaitingPhoneFor` so the phone on the very next line is
 // attributed to that name rather than to whatever name follows it.
+// A trailing qualifier word can also land in front of a role+phone that share
+// one line ("צלם: ג'ובל 0526561221 סטילס" - "stills", clarifying this
+// photographer isn't the video one - ends up glued before the role due to
+// this exporter's line reversal); that's split off into a parenthetical on
+// the role rather than swallowed into it. And a second supplier can share the
+// previous role-line's phone-then-two-words shape with no colon of its own
+// at all ("0522431984 וידאו יעל") - only split those into role+name when the
+// first word is a recognized role term, so an ordinary two-word name doesn't
+// get incorrectly split.
+const KNOWN_SUPPLIER_ROLES = new Set([
+  "צלם", "צלמת", "וידאו", "דיג'י", "די ג'י", "רב", "רבנית", "מעצב", "מעצבת",
+  "מגנטים", "קייטרינג", "מוזיקה", "להקה", "בר", "קונדיטורית", "פיירוטכניקה",
+  "מפיק", "מפיקה", "שף", "טבח", "סטייג'ר",
+]);
+
 function parseSupplierSection(lines: string[]): SupplierDraft[] {
   const result: SupplierDraft[] = [];
   let currentRole: string | null = null;
@@ -105,8 +120,35 @@ function parseSupplierSection(lines: string[]): SupplierDraft[] {
     if (roleMatch) {
       flushAwaiting(null);
       leadingPhone = roleMatch[1] ?? null;
-      currentRole = roleMatch[2].trim();
+      let roleText = roleMatch[2].trim();
+
+      if (!leadingPhone) {
+        const embeddedPhoneMatch = roleText.match(/^(.*?)\s*(\d{9,10})\s+(.+)$/);
+        if (embeddedPhoneMatch) {
+          const [, qualifier, phone, realRole] = embeddedPhoneMatch;
+          leadingPhone = phone;
+          roleText = qualifier.trim() ? `${realRole.trim()} (${qualifier.trim()})` : realRole.trim();
+        }
+      }
+
+      currentRole = roleText;
       line = roleMatch[3].trim();
+    } else if (/^\S+-\s+\S/.test(line)) {
+      // Role marked with a dash glued directly to the word instead of a
+      // colon ("מעצבת- שירה") - same shape as the colon case, just a
+      // different marker.
+      flushAwaiting(null);
+      const dashRoleName = line.match(/^(\S+)-\s+(.+)$/)!;
+      currentRole = dashRoleName[1].trim();
+      result.push({ role: currentRole, name: dashRoleName[2].trim(), phone: null });
+      continue;
+    } else if (/^\d{9,10}\s+\S+-\s*$/.test(line)) {
+      // Same dash-marked role, but with only a phone and no person name
+      // (e.g. a vendor represented just by a category and a number).
+      flushAwaiting(null);
+      const dashRolePhoneOnly = line.match(/^(\d{9,10})\s+(\S+)-\s*$/)!;
+      result.push({ role: null, name: dashRolePhoneOnly[2].trim(), phone: dashRolePhoneOnly[1] });
+      continue;
     } else if (awaitingPhoneFor) {
       const wrappedSegments = line
         .split(/\s*-\s*/)
@@ -129,9 +171,19 @@ function parseSupplierSection(lines: string[]): SupplierDraft[] {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    // "role name" with no colon and no phone (e.g. "מעצב שלומי") - the first
-    // word is the role, the second is the name.
+    // "role name" with no colon (e.g. "מעצב שלומי"), optionally preceded by a
+    // phone number (e.g. "0522431984 וידאו יעל") - the first word is the
+    // role, the second is the name. Only split the phone-prefixed form when
+    // the first word is a recognized role term, so an ordinary two-word name
+    // after a phone number isn't incorrectly split in two.
     if (!roleMatch && segments.length === 1) {
+      const withPhone = segments[0].match(/^(\d{9,10})\s+(\S+)\s+(\S+)$/);
+      if (withPhone && KNOWN_SUPPLIER_ROLES.has(withPhone[2])) {
+        currentRole = withPhone[2];
+        result.push({ role: currentRole, name: withPhone[3], phone: withPhone[1] });
+        continue;
+      }
+
       const twoTokens = segments[0].match(/^(\S+)\s+(\S+)$/);
       if (twoTokens && !/\d{9,10}/.test(segments[0])) {
         currentRole = twoTokens[1];
