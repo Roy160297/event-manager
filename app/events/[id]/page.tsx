@@ -9,6 +9,7 @@ import { TimeField } from "@/components/TimeField";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
 import { EventFormExport } from "./EventFormExport";
+import { SupplierImageImport } from "./SupplierImageImport";
 import type { EventRow, EventSupplierRow, EventType, StaffRow, TimelineItemRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -300,10 +301,16 @@ export default async function EventOverviewPage({
         )}
 
         {canWriteEvents && (
+          <div className="mt-4 border-t border-border-classic pt-3">
+            <SupplierImageImport eventId={id} />
+          </div>
+        )}
+
+        {canWriteEvents && (
           <SaveDetailsForm
             action={addSupplierAction}
             message="הספק נוסף בהצלחה"
-            className="mt-4 flex flex-col gap-3 border-t border-border-classic pt-3 sm:flex-row sm:items-end"
+            className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end"
           >
             <label className="flex flex-1 flex-col gap-1 text-sm">
               <span>תפקיד</span>

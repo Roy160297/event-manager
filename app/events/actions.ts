@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
+import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import type { EventType } from "@/lib/types";
 
 export async function createEvent(formData: FormData) {
@@ -212,5 +213,42 @@ export async function deleteSupplier(eventId: string, supplierId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("event_suppliers").delete().eq("id", supplierId);
   if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}`);
+}
+
+export async function parseSupplierImage(formData: FormData): Promise<SupplierImportDraft[]> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("יש לבחור קובץ תמונה");
+  }
+  if (!file.type.startsWith("image/")) {
+    throw new Error("הקובץ שנבחר אינו תמונה");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return extractSuppliersFromImage(buffer, file.type);
+}
+
+export async function addSuppliersFromImport(eventId: string, suppliers: SupplierImportDraft[]) {
+  const validSuppliers = suppliers.filter((supplier) => supplier.name.trim());
+  if (validSuppliers.length === 0) throw new Error("אין ספקים תקינים להוספה");
+
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("event_suppliers")
+    .select("*", { count: "exact", head: true })
+    .eq("event_id", eventId);
+
+  const { error } = await supabase.from("event_suppliers").insert(
+    validSuppliers.map((supplier, index) => ({
+      event_id: eventId,
+      name: supplier.name.trim(),
+      role: supplier.role?.trim() || null,
+      phone: supplier.phone?.trim() || null,
+      sort_order: (count ?? 0) + index,
+    })),
+  );
+  if (error) throw new Error(error.message);
+
   revalidatePath(`/events/${eventId}`);
 }
