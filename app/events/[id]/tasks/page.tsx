@@ -264,7 +264,10 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
 
       {canReadSummary && (
       <details className="rounded-lg border border-border-classic bg-surface p-4">
-        <summary className="cursor-pointer text-sm font-medium">דוח סיכום אירוע - מנהל אירוע</summary>
+        <summary className="cursor-pointer text-sm font-medium">
+          דוח סיכום אירוע - מנהל אירוע
+          {summaryReportSignature && <span className="text-green-700"> · נחתם</span>}
+        </summary>
 
         <div className="mt-4 flex flex-col gap-4">
           {summaryReportSignature && (
