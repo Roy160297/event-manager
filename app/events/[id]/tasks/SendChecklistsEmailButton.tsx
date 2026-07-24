@@ -126,17 +126,21 @@ export function SendChecklistsEmailButton({
   checklists,
   canSend,
   blockedReasons,
+  summaryReportSignedByName,
+  summaryReportSignatureData,
 }: {
   event: EventRow;
   managerName: string | null;
   managerEmail: string | null;
   guestCommitment: string | null;
   checklists: ChecklistForEmail[];
-  // Gated on the event manager's own checklist being signed and the summary
-  // report being filled in - he can send with whichever role checklists
-  // happen to be ready, no need to wait for every role holder to sign theirs.
+  // Gated on the event manager's own checklist and the event summary report
+  // both being signed - he can send with whichever role checklists happen to
+  // be ready, no need to wait for every role holder to sign theirs.
   canSend: boolean;
   blockedReasons: string[];
+  summaryReportSignedByName: string | null;
+  summaryReportSignatureData: string | null;
 }) {
   const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
   const footerRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -186,8 +190,8 @@ export function SendChecklistsEmailButton({
     {
       key: "event_summary_report",
       filenameTitle: "דוח סיכום אירוע - מנהל אירוע",
-      signedByName: null,
-      signatureData: null,
+      signedByName: summaryReportSignedByName,
+      signatureData: summaryReportSignatureData,
       body: <EventSummaryReportPrintable event={event} managerName={managerName} guestCommitment={guestCommitment} />,
     },
   ];

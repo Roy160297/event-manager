@@ -12,6 +12,8 @@ import { ROLE_CHECKLISTS } from "@/lib/roleChecklists";
 import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
 import { EventSummaryReportExport } from "./EventSummaryReportExport";
 import { SendChecklistsEmailButton, type ChecklistForEmail } from "./SendChecklistsEmailButton";
+import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
+import { signChecklist, unsignChecklist } from "./actions";
 import {
   EVENT_TYPE_LABELS,
   TASK_PRIORITY_COLORS,
@@ -130,6 +132,16 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     await updateEventSummaryReport(eventId, formData);
   }
 
+  async function signSummaryReport(name: string, signature: string) {
+    "use server";
+    await signChecklist(eventId, "event_summary_report", name, signature);
+  }
+
+  async function unsignSummaryReport() {
+    "use server";
+    await unsignChecklist(eventId, "event_summary_report");
+  }
+
   const manager = staff?.find((member) => member.id === event?.manager_id) ?? null;
   const managerName = manager?.name ?? null;
   const managerEmail = manager?.email ?? null;
@@ -140,6 +152,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
   const guestCommitment = event?.estimated_guests ?? null;
 
   const closingChecklistSignature = signatureFor("closing_checklist");
+  const summaryReportSignature = signatureFor("event_summary_report");
 
   const checklistsForEmail: ChecklistForEmail[] = [
     {
@@ -169,12 +182,13 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     }),
   ];
 
-  // Only the event manager's own checklist gates sending - he can send with
-  // whichever role checklists are ready (even just one or two signed), no
-  // need to wait on everyone else. No field on the summary report is
-  // mandatory - it's always attached as-is, whatever state it's in.
+  // The event manager's own checklist and the event summary report both need
+  // to be signed - no specific field on either is mandatory, just the sign-
+  // off itself. He can still send with whichever role checklists are ready
+  // (even just one or two signed), no need to wait on everyone else.
   const sendBlockedReasons: string[] = [];
   if (!closingChecklistSignature) sendBlockedReasons.push("יש לחתום על הצ'קליסט של מנהל האירוע");
+  if (!summaryReportSignature) sendBlockedReasons.push("יש לחתום על דוח סיכום אירוע");
   const canSendChecklistEmail = sendBlockedReasons.length === 0;
 
   const inputClass = "rounded-md border border-border-classic bg-surface px-2.5 py-1.5 text-sm";
@@ -191,6 +205,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           checklists={checklistsForEmail}
           canSend={canSendChecklistEmail}
           blockedReasons={sendBlockedReasons}
+          summaryReportSignedByName={summaryReportSignature?.signed_by_name ?? null}
+          summaryReportSignatureData={summaryReportSignature?.signature_data ?? null}
         />
       )}
 
@@ -245,7 +261,16 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         <summary className="cursor-pointer text-sm font-medium">דוח סיכום אירוע - מנהל אירוע</summary>
 
         <div className="mt-4 flex flex-col gap-4">
-          <EventSummaryReportExport event={event ?? null} managerName={managerName} guestCommitment={guestCommitment} />
+          {summaryReportSignature && (
+            <p className="text-sm text-foreground/60">הדוח נחתם ונעול לעריכה.</p>
+          )}
+          <EventSummaryReportExport
+            event={event ?? null}
+            managerName={managerName}
+            guestCommitment={guestCommitment}
+            signedByName={summaryReportSignature?.signed_by_name}
+            signatureData={summaryReportSignature?.signature_data}
+          />
 
           <div className="grid gap-x-4 gap-y-1 rounded-md bg-accent-soft p-3 text-sm sm:grid-cols-3">
             <p>
@@ -278,7 +303,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
             </p>
           </div>
 
-          {!canWriteSummary && (
+          {(!canWriteSummary || !!summaryReportSignature) && (
             <div className="grid gap-x-4 gap-y-1 rounded-md bg-accent-soft/50 p-3 text-sm sm:grid-cols-3">
               {summaryFields.map(([label, value]) => (
                 <p key={label}>
@@ -289,7 +314,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
 
-          {canWriteSummary && (
+          {canWriteSummary && !summaryReportSignature && (
           <SaveDetailsForm action={saveSummaryReport} message="הדוח נשמר בהצלחה" className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className={reportLabelClass}>
@@ -466,6 +491,19 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
             </button>
           </SaveDetailsForm>
           )}
+
+          <div className="border-t border-border-classic pt-3">
+            <ChecklistSignBlock
+              isSigned={!!summaryReportSignature}
+              signedByName={summaryReportSignature?.signed_by_name}
+              signedAt={summaryReportSignature?.signed_at}
+              signatureData={summaryReportSignature?.signature_data}
+              canEdit={canWriteSummary}
+              defaultSignerName={currentStaff?.name ?? managerName}
+              onSign={signSummaryReport}
+              onUnsign={unsignSummaryReport}
+            />
+          </div>
         </div>
       </details>
       )}
