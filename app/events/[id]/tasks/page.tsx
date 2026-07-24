@@ -168,10 +168,15 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     }),
   ];
 
-  // Only the event manager's own checklist gates sending - he can send with
-  // whichever role checklists are ready (even just one or two signed), no
-  // need to wait on everyone else.
-  const canSendChecklistEmail = !!closingChecklistSignature;
+  // Sending is gated on the event manager's own checklist being signed and
+  // the event summary report having its written summary filled in - he can
+  // still send with whichever role checklists are ready (even just one or
+  // two signed), no need to wait on everyone else.
+  const summaryReportFilled = !!event?.report_summary?.trim();
+  const sendBlockedReasons: string[] = [];
+  if (!closingChecklistSignature) sendBlockedReasons.push("יש לחתום על הצ'קליסט של מנהל האירוע");
+  if (!summaryReportFilled) sendBlockedReasons.push("יש למלא את סיכום האירוע בדוח סיכום אירוע");
+  const canSendChecklistEmail = sendBlockedReasons.length === 0;
 
   const inputClass = "rounded-md border border-border-classic bg-surface px-2.5 py-1.5 text-sm";
   const reportLabelClass = "flex flex-col gap-1 text-sm";
@@ -186,6 +191,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           guestCommitment={guestCommitment}
           checklists={checklistsForEmail}
           canSend={canSendChecklistEmail}
+          blockedReasons={sendBlockedReasons}
         />
       )}
 

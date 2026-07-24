@@ -125,16 +125,18 @@ export function SendChecklistsEmailButton({
   guestCommitment,
   checklists,
   canSend,
+  blockedReasons,
 }: {
   event: EventRow;
   managerName: string | null;
   managerEmail: string | null;
   guestCommitment: string | null;
   checklists: ChecklistForEmail[];
-  // Gated only on the event manager's own checklist being signed - he can
-  // send with whichever role checklists happen to be ready, no need to wait
-  // for every role holder to sign theirs first.
+  // Gated on the event manager's own checklist being signed and the summary
+  // report being filled in - he can send with whichever role checklists
+  // happen to be ready, no need to wait for every role holder to sign theirs.
   canSend: boolean;
+  blockedReasons: string[];
 }) {
   const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
   const footerRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -230,7 +232,12 @@ export function SendChecklistsEmailButton({
     <div className="flex flex-col items-start gap-2">
       {step === "idle" && !canSend && (
         <div className="flex flex-col gap-1 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
-          <p className="font-medium">יש לחתום על הצ&apos;קליסט של מנהל האירוע לפני השליחה</p>
+          <p className="font-medium">לפני השליחה:</p>
+          <ul className="list-inside list-disc">
+            {blockedReasons.map((reason) => (
+              <li key={reason}>{reason}</li>
+            ))}
+          </ul>
         </div>
       )}
 
