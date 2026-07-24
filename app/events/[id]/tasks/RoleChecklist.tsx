@@ -6,8 +6,16 @@ import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
 import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
+import { ChecklistCosignBlock } from "@/components/ChecklistCosignBlock";
 import type { EventType } from "@/lib/types";
-import { setRoleChecklistItem, setRoleChecklistNote, signChecklist, unsignChecklist } from "./actions";
+import {
+  setRoleChecklistItem,
+  setRoleChecklistNote,
+  signChecklist,
+  unsignChecklist,
+  cosignChecklistAsManager,
+  uncosignChecklistAsManager,
+} from "./actions";
 
 export default function RoleChecklist({
   checklistKey,
@@ -26,6 +34,10 @@ export default function RoleChecklist({
   signedAt,
   signatureData,
   currentStaffName,
+  canManagerCosign,
+  managerSignedByName,
+  managerSignedAt,
+  managerSignatureData,
 }: {
   checklistKey: string;
   title: string;
@@ -43,6 +55,13 @@ export default function RoleChecklist({
   signedAt?: string | null;
   signatureData?: string | null;
   currentStaffName?: string | null;
+  // Second sign-off, done by the event manager after the role holder signs -
+  // canManagerCosign mirrors closing_checklist:write, not this checklist's
+  // own write permission.
+  canManagerCosign: boolean;
+  managerSignedByName?: string | null;
+  managerSignedAt?: string | null;
+  managerSignatureData?: string | null;
 }) {
   const totalItems = categories.reduce((sum, category) => sum + category.items.length, 0);
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
@@ -94,7 +113,8 @@ export default function RoleChecklist({
     <details className="rounded-lg border border-border-classic bg-surface p-4">
       <summary className="cursor-pointer text-sm font-medium">
         {title} <span className="text-foreground/60">({checked.size}/{totalItems})</span>
-        {isSigned && <span className="text-green-700"> · נחתם</span>}
+        {isSigned && !managerSignatureData && <span className="text-amber-700"> · ממתין לאישור מנהל/ת אירוע</span>}
+        {isSigned && managerSignatureData && <span className="text-green-700"> · נחתם</span>}
       </summary>
 
       <div className="mt-4 flex flex-col gap-5">
@@ -190,6 +210,21 @@ export default function RoleChecklist({
             onUnsign={() => unsignChecklist(eventId, checklistKey)}
           />
         </div>
+
+        {isSigned && (
+          <div className="border-t border-border-classic pt-3">
+            <ChecklistCosignBlock
+              isCosigned={!!managerSignatureData}
+              cosignedByName={managerSignedByName}
+              cosignedAt={managerSignedAt}
+              cosignatureData={managerSignatureData}
+              canCosign={canManagerCosign}
+              defaultSignerName={currentStaffName}
+              onCosign={(name, signature) => cosignChecklistAsManager(eventId, checklistKey, name, signature)}
+              onUncosign={() => uncosignChecklistAsManager(eventId, checklistKey)}
+            />
+          </div>
+        )}
       </div>
     </details>
   );

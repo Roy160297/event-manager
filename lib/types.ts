@@ -180,4 +180,7 @@ export interface ChecklistSignatureRow {
   signed_at: string;
   signed_by_name: string;
   signature_data: string;
+  manager_signed_at: string | null;
+  manager_signed_by_name: string | null;
+  manager_signature_data: string | null;
 }

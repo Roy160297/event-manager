@@ -178,6 +178,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         noteLabel: definition.noteLabel,
         signedByName: signature?.signed_by_name ?? null,
         signatureData: signature?.signature_data ?? null,
+        managerCosignedByName: signature?.manager_signed_by_name ?? null,
+        managerCosignatureData: signature?.manager_signature_data ?? null,
       };
     }),
   ];
@@ -251,6 +253,10 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               signedAt={signature?.signed_at}
               signatureData={signature?.signature_data}
               currentStaffName={currentStaff?.name}
+              canManagerCosign={canEditChecklist}
+              managerSignedByName={signature?.manager_signed_by_name}
+              managerSignedAt={signature?.manager_signed_at}
+              managerSignatureData={signature?.manager_signature_data}
             />
           );
         },

@@ -182,3 +182,40 @@ export async function unsignChecklist(eventId: string, checklistKey: string) {
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/tasks`);
 }
+
+// Second signature on top of the role holder's own, for the 4 role
+// checklists: the event manager reviews and co-signs after the role holder
+// has already filled in and signed. Requires an existing signed row (RLS
+// also restricts this to closing_checklist:write, not the role's own
+// permission, so a bar/kitchen/etc. staff member can't co-sign as manager).
+export async function cosignChecklistAsManager(
+  eventId: string,
+  checklistKey: string,
+  signedByName: string,
+  signatureData: string,
+) {
+  const name = signedByName.trim();
+  if (!name) throw new Error("יש להזין שם החותם/ת");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("checklist_signatures")
+    .update({ manager_signed_by_name: name, manager_signature_data: signatureData, manager_signed_at: new Date().toISOString() })
+    .eq("event_id", eventId)
+    .eq("checklist_key", checklistKey);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
+export async function uncosignChecklistAsManager(eventId: string, checklistKey: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("checklist_signatures")
+    .update({ manager_signed_by_name: null, manager_signature_data: null, manager_signed_at: null })
+    .eq("event_id", eventId)
+    .eq("checklist_key", checklistKey);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}

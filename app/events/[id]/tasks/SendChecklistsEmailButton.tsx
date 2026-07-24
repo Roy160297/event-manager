@@ -19,6 +19,8 @@ export interface ChecklistForEmail {
   showCategoryLabels?: boolean;
   signedByName?: string | null;
   signatureData?: string | null;
+  managerCosignedByName?: string | null;
+  managerCosignatureData?: string | null;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -173,6 +175,8 @@ export function SendChecklistsEmailButton({
       filenameTitle: checklist.title,
       signedByName: checklist.signedByName ?? null,
       signatureData: checklist.signatureData ?? null,
+      managerCosignedByName: checklist.managerCosignedByName ?? null,
+      managerCosignatureData: checklist.managerCosignatureData ?? null,
       body: (
         <ChecklistPrintable
           title={checklist.title}
@@ -192,6 +196,8 @@ export function SendChecklistsEmailButton({
       filenameTitle: "דוח סיכום אירוע - מנהל אירוע",
       signedByName: summaryReportSignedByName,
       signatureData: summaryReportSignatureData,
+      managerCosignedByName: null,
+      managerCosignatureData: null,
       body: <EventSummaryReportPrintable event={event} managerName={managerName} guestCommitment={guestCommitment} />,
     },
   ];
@@ -394,13 +400,27 @@ export function SendChecklistsEmailButton({
                 style={{ borderTop: "1px solid #999999", color: "#555555" }}
               >
                 {printable.signatureData ? (
-                  <div className="flex flex-col items-start gap-1.5">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- captured by html2canvas, not rendered to the user */}
-                    <img src={printable.signatureData} alt="" className="h-16 object-contain" />
-                    <div className="w-56 pt-1" style={{ borderTop: "1px solid #999999" }}>
-                      חתימה
+                  <div className="flex flex-col items-start gap-2.5">
+                    <div className="flex flex-col items-start gap-1.5">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- captured by html2canvas, not rendered to the user */}
+                      <img src={printable.signatureData} alt="" className="h-16 object-contain" />
+                      <div className="w-56 pt-1" style={{ borderTop: "1px solid #999999" }}>
+                        חתימה
+                      </div>
+                      {printable.signedByName && <div className="font-medium">נחתם על ידי: {printable.signedByName}</div>}
                     </div>
-                    {printable.signedByName && <div className="font-medium">נחתם על ידי: {printable.signedByName}</div>}
+                    {printable.managerCosignatureData && (
+                      <div className="flex flex-col items-start gap-1.5">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- captured by html2canvas, not rendered to the user */}
+                        <img src={printable.managerCosignatureData} alt="" className="h-16 object-contain" />
+                        <div className="w-56 pt-1" style={{ borderTop: "1px solid #999999" }}>
+                          אישור מנהל/ת אירוע
+                        </div>
+                        {printable.managerCosignedByName && (
+                          <div className="font-medium">אושר על ידי: {printable.managerCosignedByName}</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div />
