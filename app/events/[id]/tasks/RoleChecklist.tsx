@@ -5,8 +5,9 @@ import type { ClosingChecklistCategory } from "@/lib/closingChecklist";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
+import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
 import type { EventType } from "@/lib/types";
-import { setRoleChecklistItem, setRoleChecklistNote } from "./actions";
+import { setRoleChecklistItem, setRoleChecklistNote, signChecklist, unsignChecklist } from "./actions";
 
 export default function RoleChecklist({
   checklistKey,
@@ -20,7 +21,11 @@ export default function RoleChecklist({
   initialCheckedKeys,
   noteLabel,
   initialNote,
-  signerName,
+  isSigned,
+  signedByName,
+  signedAt,
+  signatureData,
+  currentStaffName,
 }: {
   checklistKey: string;
   title: string;
@@ -33,7 +38,11 @@ export default function RoleChecklist({
   initialCheckedKeys: string[];
   noteLabel?: string;
   initialNote?: string | null;
-  signerName?: string | null;
+  isSigned: boolean;
+  signedByName?: string | null;
+  signedAt?: string | null;
+  signatureData?: string | null;
+  currentStaffName?: string | null;
 }) {
   const totalItems = categories.reduce((sum, category) => sum + category.items.length, 0);
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
@@ -42,6 +51,8 @@ export default function RoleChecklist({
   const [note, setNote] = useState(initialNote ?? "");
   const [noteStatus, setNoteStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [noteError, setNoteError] = useState<string | null>(null);
+
+  const canEditNow = canEdit && !isSigned;
 
   async function toggle(itemKey: string, next: boolean) {
     setError(null);
@@ -83,19 +94,22 @@ export default function RoleChecklist({
     <details className="rounded-lg border border-border-classic bg-surface p-4">
       <summary className="cursor-pointer text-sm font-medium">
         {title} <span className="text-foreground/60">({checked.size}/{totalItems})</span>
+        {isSigned && <span className="text-green-700"> · נחתם</span>}
       </summary>
 
       <div className="mt-4 flex flex-col gap-5">
-        {!canEdit && (
+        {!canEdit && !isSigned && (
           <p className="text-sm text-foreground/60">אפשר לצפות בצ&apos;קליסט, אך רק מי שיש לו/ה הרשאת כתיבה יכול/ה לסמן פריטים.</p>
         )}
+        {isSigned && <p className="text-sm text-foreground/60">הצ&apos;קליסט נחתם ונעול לעריכה.</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <PdfExportButton
           filename={`${title}-${eventName}.pdf`}
           eventLabel={`${eventName} · ${eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · ${formatDate(eventDate)}`}
-          signerName={signerName}
+          signerName={signedByName}
           signerLabel="נחתם על ידי"
+          storedSignature={signatureData ?? null}
         >
           <ChecklistPrintable
             title={title}
@@ -109,7 +123,6 @@ export default function RoleChecklist({
           />
         </PdfExportButton>
 
-
         {categories.map((category) => (
           <div key={category.key} className="flex flex-col gap-2">
             <ul className="flex flex-col gap-1.5">
@@ -121,7 +134,7 @@ export default function RoleChecklist({
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        disabled={!canEdit || pendingKey === item.key}
+                        disabled={!canEditNow || pendingKey === item.key}
                         onChange={(e) => toggle(item.key, e.target.checked)}
                         className="mt-0.5 h-4 w-4 shrink-0"
                       />
@@ -143,13 +156,13 @@ export default function RoleChecklist({
                 setNote(e.target.value);
                 setNoteStatus("idle");
               }}
-              disabled={!canEdit}
+              disabled={!canEditNow}
               rows={3}
               placeholder="ניתן לפרט כאן. אם אין מה להוסיף - להשאיר ריק."
               className="rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
             />
             {noteError && <p className="text-sm text-red-600">{noteError}</p>}
-            {canEdit && (
+            {canEditNow && (
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -164,6 +177,19 @@ export default function RoleChecklist({
             )}
           </div>
         )}
+
+        <div className="border-t border-border-classic pt-3">
+          <ChecklistSignBlock
+            isSigned={isSigned}
+            signedByName={signedByName}
+            signedAt={signedAt}
+            signatureData={signatureData}
+            canEdit={canEdit}
+            defaultSignerName={currentStaffName}
+            onSign={(name, signature) => signChecklist(eventId, checklistKey, name, signature)}
+            onUnsign={() => unsignChecklist(eventId, checklistKey)}
+          />
+        </div>
       </div>
     </details>
   );

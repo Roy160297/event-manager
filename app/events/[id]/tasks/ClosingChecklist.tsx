@@ -5,8 +5,9 @@ import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
+import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
 import type { EventType } from "@/lib/types";
-import { setClosingChecklistItem, setClosingChecklistNote } from "./actions";
+import { setClosingChecklistItem, setClosingChecklistNote, signChecklist, unsignChecklist } from "./actions";
 
 const TOTAL_ITEMS = CLOSING_CHECKLIST.reduce((sum, category) => sum + category.items.length, 0);
 
@@ -19,6 +20,11 @@ export default function ClosingChecklist({
   canEdit,
   initialCheckedKeys,
   initialNote,
+  isSigned,
+  signedByName,
+  signedAt,
+  signatureData,
+  currentStaffName,
 }: {
   eventId: string;
   eventName: string;
@@ -28,6 +34,11 @@ export default function ClosingChecklist({
   canEdit: boolean;
   initialCheckedKeys: string[];
   initialNote?: string | null;
+  isSigned: boolean;
+  signedByName?: string | null;
+  signedAt?: string | null;
+  signatureData?: string | null;
+  currentStaffName?: string | null;
 }) {
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
@@ -35,6 +46,8 @@ export default function ClosingChecklist({
   const [note, setNote] = useState(initialNote ?? "");
   const [noteStatus, setNoteStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [noteError, setNoteError] = useState<string | null>(null);
+
+  const canEditNow = canEdit && !isSigned;
 
   async function toggle(itemKey: string, next: boolean) {
     setError(null);
@@ -79,20 +92,23 @@ export default function ClosingChecklist({
         <span className="text-foreground/60">
           ({checked.size}/{TOTAL_ITEMS})
         </span>
+        {isSigned && <span className="text-green-700"> · נחתם</span>}
       </summary>
 
       <div className="mt-4 flex flex-col gap-5">
-        {!canEdit && (
+        {!canEdit && !isSigned && (
           <p className="text-sm text-foreground/60">
             אפשר לצפות בצ&apos;קליסט, אך רק מנהל/ת אירוע יכול/ה לסמן פריטים.
           </p>
         )}
+        {isSigned && <p className="text-sm text-foreground/60">הצ&apos;קליסט נחתם ונעול לעריכה.</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <PdfExportButton
           filename={`צקליסט-סגירה-${eventName}.pdf`}
           eventLabel={`${eventName} · ${eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · ${formatDate(eventDate)}`}
           signerName={managerName}
+          storedSignature={signatureData ?? null}
         >
           <ChecklistPrintable
             title="צ'קליסט סגירה - מנהל אירוע"
@@ -119,7 +135,7 @@ export default function ClosingChecklist({
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        disabled={!canEdit || pendingKey === item.key}
+                        disabled={!canEditNow || pendingKey === item.key}
                         onChange={(e) => toggle(item.key, e.target.checked)}
                         className="mt-0.5 h-4 w-4 shrink-0"
                       />
@@ -140,13 +156,13 @@ export default function ClosingChecklist({
               setNote(e.target.value);
               setNoteStatus("idle");
             }}
-            disabled={!canEdit}
+            disabled={!canEditNow}
             rows={3}
             placeholder="ניתן לפרט כאן. אם אין מה להוסיף - להשאיר ריק."
             className="rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
           />
           {noteError && <p className="text-sm text-red-600">{noteError}</p>}
-          {canEdit && (
+          {canEditNow && (
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -159,6 +175,19 @@ export default function ClosingChecklist({
               {noteStatus === "saved" && <span className="text-xs text-foreground/60">נשמר</span>}
             </div>
           )}
+        </div>
+
+        <div className="border-t border-border-classic pt-3">
+          <ChecklistSignBlock
+            isSigned={isSigned}
+            signedByName={signedByName}
+            signedAt={signedAt}
+            signatureData={signatureData}
+            canEdit={canEdit}
+            defaultSignerName={currentStaffName ?? managerName}
+            onSign={(name, signature) => signChecklist(eventId, "closing_checklist", name, signature)}
+            onUnsign={() => unsignChecklist(eventId, "closing_checklist")}
+          />
         </div>
       </div>
     </details>

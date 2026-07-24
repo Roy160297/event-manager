@@ -17,6 +17,8 @@ export interface ChecklistForEmail {
   note?: string | null;
   noteLabel?: string;
   showCategoryLabels?: boolean;
+  signedByName?: string | null;
+  signatureData?: string | null;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -122,12 +124,14 @@ export function SendChecklistsEmailButton({
   managerEmail,
   guestCommitment,
   checklists,
+  allSigned,
 }: {
   event: EventRow;
   managerName: string | null;
   managerEmail: string | null;
   guestCommitment: string | null;
   checklists: ChecklistForEmail[];
+  allSigned: boolean;
 }) {
   const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
   const footerRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -158,6 +162,8 @@ export function SendChecklistsEmailButton({
     ...checklists.map((checklist) => ({
       key: checklist.key,
       filenameTitle: checklist.title,
+      signedByName: checklist.signedByName ?? null,
+      signatureData: checklist.signatureData ?? null,
       body: (
         <ChecklistPrintable
           title={checklist.title}
@@ -175,9 +181,13 @@ export function SendChecklistsEmailButton({
     {
       key: "event_summary_report",
       filenameTitle: "דוח סיכום אירוע - מנהל אירוע",
+      signedByName: null,
+      signatureData: null,
       body: <EventSummaryReportPrintable event={event} managerName={managerName} guestCommitment={guestCommitment} />,
     },
   ];
+
+  const unsignedTitles = checklists.filter((c) => !c.signatureData).map((c) => c.title);
 
   async function prepare() {
     setStep("preparing");
@@ -215,7 +225,14 @@ export function SendChecklistsEmailButton({
 
   return (
     <div className="flex flex-col items-start gap-2">
-      {step === "idle" && (
+      {step === "idle" && !allSigned && (
+        <div className="flex flex-col gap-1 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+          <p className="font-medium">יש לחתום על כל הצ&apos;קליסטים לפני השליחה</p>
+          <p className="text-xs">עדיין לא נחתמו: {unsignedTitles.join(", ")}</p>
+        </div>
+      )}
+
+      {step === "idle" && allSigned && (
         <button
           type="button"
           onClick={prepare}
@@ -356,7 +373,18 @@ export function SendChecklistsEmailButton({
                 className="flex items-end justify-between px-8 py-4 text-[13px]"
                 style={{ borderTop: "1px solid #999999", color: "#555555" }}
               >
-                <div />
+                {printable.signatureData ? (
+                  <div className="flex flex-col items-start gap-1.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- captured by html2canvas, not rendered to the user */}
+                    <img src={printable.signatureData} alt="" className="h-16 object-contain" />
+                    <div className="w-56 pt-1" style={{ borderTop: "1px solid #999999" }}>
+                      חתימה
+                    </div>
+                    {printable.signedByName && <div className="font-medium">נחתם על ידי: {printable.signedByName}</div>}
+                  </div>
+                ) : (
+                  <div />
+                )}
                 <div>{eventLabel}</div>
               </div>
             </div>

@@ -173,3 +173,11 @@ export interface WaiterAssignmentRow {
   location_id: string;
   role: WaiterRole;
 }
+
+export interface ChecklistSignatureRow {
+  event_id: string;
+  checklist_key: string;
+  signed_at: string;
+  signed_by_name: string;
+  signature_data: string;
+}

@@ -10,6 +10,7 @@ export function PdfExportButton({
   signerName,
   signerLabel = "מנהל אירוע",
   showSignature = true,
+  storedSignature = null,
   children,
 }: {
   label?: string;
@@ -18,6 +19,10 @@ export function PdfExportButton({
   signerName?: string | null;
   signerLabel?: string;
   showSignature?: boolean;
+  // Once a checklist has a formal signature on file, use it directly instead
+  // of prompting to draw a new one each download - keeps every downloaded
+  // copy consistent with what was actually signed.
+  storedSignature?: string | null;
   children: React.ReactNode;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -26,6 +31,9 @@ export function PdfExportButton({
   const [signature, setSignature] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isInteractive = showSignature && storedSignature == null;
+  const effectiveSignature = storedSignature ?? signature;
 
   async function download() {
     if (!contentRef.current || !footerRef.current) return;
@@ -49,16 +57,16 @@ export function PdfExportButton({
     <div className="flex flex-col items-start gap-2">
       <button
         type="button"
-        onClick={showSignature ? () => setOpen((v) => !v) : download}
-        disabled={!showSignature && isExporting}
+        onClick={isInteractive ? () => setOpen((v) => !v) : download}
+        disabled={!isInteractive && isExporting}
         className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-60"
       >
-        {!showSignature && isExporting ? "מכין PDF..." : label}
+        {!isInteractive && isExporting ? "מכין PDF..." : label}
       </button>
 
-      {!showSignature && error && <p className="text-xs text-red-600">{error}</p>}
+      {!isInteractive && error && <p className="text-xs text-red-600">{error}</p>}
 
-      {showSignature && open && (
+      {isInteractive && open && (
         <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-accent-soft/30 p-3">
           <p className="text-xs text-foreground/60">
             אפשר להוסיף חתימה שתופיע בתחתית כל עמוד ב-PDF, או להוריד ללא חתימה.
@@ -102,9 +110,9 @@ export function PdfExportButton({
           >
             {showSignature ? (
               <div className="flex flex-col items-start gap-1.5">
-                {signature && (
+                {effectiveSignature && (
                   // eslint-disable-next-line @next/next/no-img-element -- captured by html2canvas, not rendered to the user
-                  <img src={signature} alt="" className="h-16 object-contain" />
+                  <img src={effectiveSignature} alt="" className="h-16 object-contain" />
                 )}
                 <div className="w-56 pt-1" style={{ borderTop: "1px solid #999999" }}>
                   חתימה

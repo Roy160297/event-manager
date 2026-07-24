@@ -149,3 +149,36 @@ export async function setRoleChecklistNote(eventId: string, checklistKey: string
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/tasks`);
 }
+
+export async function signChecklist(
+  eventId: string,
+  checklistKey: string,
+  signedByName: string,
+  signatureData: string,
+) {
+  const name = signedByName.trim();
+  if (!name) throw new Error("יש להזין שם החותם/ת");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("checklist_signatures")
+    .insert({ event_id: eventId, checklist_key: checklistKey, signed_by_name: name, signature_data: signatureData });
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
+// "Unsigning" is a delete rather than an update - lets the same checklist be
+// re-signed cleanly after a mistake instead of mutating a signature someone
+// already relied on (e.g. it was already emailed out).
+export async function unsignChecklist(eventId: string, checklistKey: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("checklist_signatures")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("checklist_key", checklistKey);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}

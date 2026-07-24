@@ -21,7 +21,7 @@ import {
   formatDate,
   formatTime,
 } from "@/lib/labels";
-import type { EventRow, StaffRow, TaskRow, TaskStatus } from "@/lib/types";
+import type { ChecklistSignatureRow, EventRow, StaffRow, TaskRow, TaskStatus } from "@/lib/types";
 import { DateField } from "@/components/DateField";
 import { TimeField } from "@/components/TimeField";
 
@@ -41,6 +41,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     { data: closingChecklistChecks },
     { data: roleChecklistChecks },
     { data: roleChecklistNotes },
+    { data: checklistSignatures },
     currentStaff,
   ] = await Promise.all([
     supabase
@@ -66,8 +67,17 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       .select("checklist_key, note")
       .eq("event_id", eventId)
       .returns<{ checklist_key: string; note: string | null }[]>(),
+    supabase
+      .from("checklist_signatures")
+      .select("*")
+      .eq("event_id", eventId)
+      .returns<ChecklistSignatureRow[]>(),
     getCurrentStaff(),
   ]);
+
+  function signatureFor(checklistKey: string) {
+    return checklistSignatures?.find((row) => row.checklist_key === checklistKey) ?? null;
+  }
 
   const canReadChecklist = !!currentStaff && canRead(currentStaff.permissions, "closing_checklist");
   const canEditChecklist = !!currentStaff && canWrite(currentStaff.permissions, "closing_checklist");
@@ -128,6 +138,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       ? `${event?.guests_adults ?? "-"}+${event?.guests_children ?? "-"}`
       : null;
 
+  const closingChecklistSignature = signatureFor("closing_checklist");
+
   const checklistsForEmail: ChecklistForEmail[] = [
     {
       key: "closing_checklist",
@@ -137,17 +149,26 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       note: closingChecklistNote,
       noteLabel: "הערות",
       showCategoryLabels: true,
+      signedByName: closingChecklistSignature?.signed_by_name ?? null,
+      signatureData: closingChecklistSignature?.signature_data ?? null,
     },
-    ...ROLE_CHECKLISTS.map((definition) => ({
-      key: definition.key,
-      title: definition.label,
-      categories: definition.categories,
-      checkedKeys:
-        roleChecklistChecks?.filter((row) => row.checklist_key === definition.key).map((row) => row.item_key) ?? [],
-      note: roleChecklistNotes?.find((row) => row.checklist_key === definition.key)?.note ?? null,
-      noteLabel: definition.noteLabel,
-    })),
+    ...ROLE_CHECKLISTS.map((definition) => {
+      const signature = signatureFor(definition.key);
+      return {
+        key: definition.key,
+        title: definition.label,
+        categories: definition.categories,
+        checkedKeys:
+          roleChecklistChecks?.filter((row) => row.checklist_key === definition.key).map((row) => row.item_key) ?? [],
+        note: roleChecklistNotes?.find((row) => row.checklist_key === definition.key)?.note ?? null,
+        noteLabel: definition.noteLabel,
+        signedByName: signature?.signed_by_name ?? null,
+        signatureData: signature?.signature_data ?? null,
+      };
+    }),
   ];
+
+  const allChecklistsSigned = checklistsForEmail.every((c) => !!c.signatureData);
 
   const inputClass = "rounded-md border border-border-classic bg-surface px-2.5 py-1.5 text-sm";
   const reportLabelClass = "flex flex-col gap-1 text-sm";
@@ -161,6 +182,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           managerEmail={managerEmail}
           guestCommitment={guestCommitment}
           checklists={checklistsForEmail}
+          allSigned={allChecklistsSigned}
         />
       )}
 
@@ -174,12 +196,19 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           canEdit={canEditChecklist}
           initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
           initialNote={closingChecklistNote}
+          isSigned={!!closingChecklistSignature}
+          signedByName={closingChecklistSignature?.signed_by_name}
+          signedAt={closingChecklistSignature?.signed_at}
+          signatureData={closingChecklistSignature?.signature_data}
+          currentStaffName={currentStaff?.name}
         />
       )}
 
       {roleChecklistPermissions.map(
-        ({ definition, canRead: canReadThis, canWrite: canWriteThis, initialCheckedKeys, initialNote }) =>
-          canReadThis && (
+        ({ definition, canRead: canReadThis, canWrite: canWriteThis, initialCheckedKeys, initialNote }) => {
+          if (!canReadThis) return null;
+          const signature = signatureFor(definition.key);
+          return (
             <RoleChecklist
               key={definition.key}
               checklistKey={definition.key}
@@ -193,9 +222,14 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               initialCheckedKeys={initialCheckedKeys}
               noteLabel={definition.noteLabel}
               initialNote={initialNote}
-              signerName={currentStaff?.name ?? null}
+              isSigned={!!signature}
+              signedByName={signature?.signed_by_name}
+              signedAt={signature?.signed_at}
+              signatureData={signature?.signature_data}
+              currentStaffName={currentStaff?.name}
             />
-          ),
+          );
+        },
       )}
 
       {canReadSummary && (
