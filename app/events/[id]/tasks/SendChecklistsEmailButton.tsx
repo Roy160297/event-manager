@@ -173,6 +173,9 @@ export function SendChecklistsEmailButton({
     ...checklists.map((checklist) => ({
       key: checklist.key,
       filenameTitle: checklist.title,
+      // "צ'קליסט סגירה - מנהל אירוע" -> "מנהל אירוע", "...- מנהל פלור" ->
+      // "מנהל פלור" - the signer's role/title shown under their signature.
+      signerLabel: checklist.title.replace("צ'קליסט סגירה - ", ""),
       signedByName: checklist.signedByName ?? null,
       signatureData: checklist.signatureData ?? null,
       managerCosignedByName: checklist.managerCosignedByName ?? null,
@@ -194,6 +197,7 @@ export function SendChecklistsEmailButton({
     {
       key: "event_summary_report",
       filenameTitle: "דוח סיכום אירוע - מנהל אירוע",
+      signerLabel: "מנהל אירוע",
       signedByName: summaryReportSignedByName,
       signatureData: summaryReportSignatureData,
       managerCosignedByName: null,
@@ -407,7 +411,11 @@ export function SendChecklistsEmailButton({
                       <div className="w-56 pt-1" style={{ borderTop: "1px solid #999999" }}>
                         חתימה
                       </div>
-                      {printable.signedByName && <div className="font-medium">נחתם על ידי: {printable.signedByName}</div>}
+                      {printable.signedByName && (
+                        <div className="font-medium">
+                          {printable.signerLabel}: {printable.signedByName}
+                        </div>
+                      )}
                     </div>
                     {printable.managerCosignatureData && (
                       <div className="flex flex-col items-start gap-1.5">

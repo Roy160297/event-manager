@@ -63,6 +63,9 @@ export default function RoleChecklist({
   managerSignedAt?: string | null;
   managerSignatureData?: string | null;
 }) {
+  // e.g. "צ'קליסט סגירה - מנהל פלור" -> "מנהל פלור" - shown as the signer's
+  // role/title under their signature, instead of a generic "נחתם על ידי".
+  const roleTitle = title.replace("צ'קליסט סגירה - ", "");
   const totalItems = categories.reduce((sum, category) => sum + category.items.length, 0);
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
@@ -128,7 +131,7 @@ export default function RoleChecklist({
           filename={`${title}-${eventName}.pdf`}
           eventLabel={`${eventName} · ${eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · ${formatDate(eventDate)}`}
           signerName={signedByName}
-          signerLabel="נחתם על ידי"
+          signerLabel={roleTitle}
           storedSignature={signatureData ?? null}
         >
           <ChecklistPrintable
