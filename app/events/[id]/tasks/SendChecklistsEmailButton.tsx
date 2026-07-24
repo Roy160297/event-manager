@@ -124,14 +124,17 @@ export function SendChecklistsEmailButton({
   managerEmail,
   guestCommitment,
   checklists,
-  allSigned,
+  canSend,
 }: {
   event: EventRow;
   managerName: string | null;
   managerEmail: string | null;
   guestCommitment: string | null;
   checklists: ChecklistForEmail[];
-  allSigned: boolean;
+  // Gated only on the event manager's own checklist being signed - he can
+  // send with whichever role checklists happen to be ready, no need to wait
+  // for every role holder to sign theirs first.
+  canSend: boolean;
 }) {
   const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
   const footerRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -225,21 +228,27 @@ export function SendChecklistsEmailButton({
 
   return (
     <div className="flex flex-col items-start gap-2">
-      {step === "idle" && !allSigned && (
+      {step === "idle" && !canSend && (
         <div className="flex flex-col gap-1 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
-          <p className="font-medium">יש לחתום על כל הצ&apos;קליסטים לפני השליחה</p>
-          <p className="text-xs">עדיין לא נחתמו: {unsignedTitles.join(", ")}</p>
+          <p className="font-medium">יש לחתום על הצ&apos;קליסט של מנהל האירוע לפני השליחה</p>
         </div>
       )}
 
-      {step === "idle" && allSigned && (
-        <button
-          type="button"
-          onClick={prepare}
-          className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
-        >
-          שליחת כל הצ&apos;קליסטים במייל
-        </button>
+      {step === "idle" && canSend && (
+        <>
+          {unsignedTitles.length > 0 && (
+            <p className="text-xs text-foreground/60">
+              עדיין לא נחתמו (יישלחו כפי שהם): {unsignedTitles.join(", ")}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={prepare}
+            className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
+          >
+            שליחת כל הצ&apos;קליסטים במייל
+          </button>
+        </>
       )}
 
       {step === "preparing" && (

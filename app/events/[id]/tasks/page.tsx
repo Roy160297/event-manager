@@ -168,7 +168,10 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     }),
   ];
 
-  const allChecklistsSigned = checklistsForEmail.every((c) => !!c.signatureData);
+  // Only the event manager's own checklist gates sending - he can send with
+  // whichever role checklists are ready (even just one or two signed), no
+  // need to wait on everyone else.
+  const canSendChecklistEmail = !!closingChecklistSignature;
 
   const inputClass = "rounded-md border border-border-classic bg-surface px-2.5 py-1.5 text-sm";
   const reportLabelClass = "flex flex-col gap-1 text-sm";
@@ -182,7 +185,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           managerEmail={managerEmail}
           guestCommitment={guestCommitment}
           checklists={checklistsForEmail}
-          allSigned={allChecklistsSigned}
+          canSend={canSendChecklistEmail}
         />
       )}
 
