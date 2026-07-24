@@ -133,10 +133,11 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
   const manager = staff?.find((member) => member.id === event?.manager_id) ?? null;
   const managerName = manager?.name ?? null;
   const managerEmail = manager?.email ?? null;
-  const guestCommitment =
-    event?.guests_adults != null || event?.guests_children != null
-      ? `${event?.guests_adults ?? "-"}+${event?.guests_children ?? "-"}`
-      : null;
+  // Same field as "מספר אורחים - התחייבות" on the overview (סקירה) tab -
+  // guests_adults/guests_children are separate PDF-import-only fields that
+  // are usually empty for manually-created events, which was silently
+  // leaving this blank on the summary report.
+  const guestCommitment = event?.estimated_guests ?? null;
 
   const closingChecklistSignature = signatureFor("closing_checklist");
 
