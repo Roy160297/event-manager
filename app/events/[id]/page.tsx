@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { updateEventDetails, addSupplier, updateSupplier, deleteSupplier } from "@/app/events/actions";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { EVENT_TYPE_LABELS, formatDate, formatTime } from "@/lib/labels";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { TrashIcon } from "@/components/icons";
@@ -221,10 +221,47 @@ export default async function EventOverviewPage({
           </button>
         </SaveDetailsForm>
       ) : (
-        <div className="grid gap-x-4 gap-y-1 rounded-lg border border-border-classic bg-surface p-4 text-sm sm:grid-cols-2">
-          <p><span className="text-foreground/60">שם הלקוח / הזוג: </span>{event?.name ?? "—"}</p>
-          <p><span className="text-foreground/60">סוג האירוע: </span>{event ? EVENT_TYPE_LABELS[event.event_type] : "—"}</p>
-          <p><span className="text-foreground/60">מנהל/ת אירוע אחראי/ת: </span>{managerName ?? "—"}</p>
+        <div className="flex flex-col gap-4 rounded-lg border border-border-classic bg-surface p-4">
+          <p className="font-serif text-lg font-bold">פרטי האירוע</p>
+          <div className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
+            {(
+              [
+                ["שם הלקוח / הזוג", event?.name ?? null],
+                ["סוג האירוע", event ? EVENT_TYPE_LABELS[event.event_type] : null],
+                ["תאריך", event ? formatDate(event.event_date) : null],
+                ["מספר אורחים - התחייבות", event?.estimated_guests ?? null],
+                ["שעת התחלה", event ? formatTime(event.start_time) : null],
+                ["שעת סיום", event ? formatTime(event.end_time) : null],
+                ["אימייל 1", event?.contact_email ?? null],
+                ["טלפון 1", event?.contact_phone ?? null],
+                ["אימייל 2", event?.contact_email_2 ?? null],
+                ["טלפון 2", event?.contact_phone_2 ?? null],
+                ["מנהל/ת אירוע אחראי/ת", managerName],
+                ["איש/ת מכירות", event?.sales_person_name ?? null],
+                ["שמות הורי הכלה", event?.bride_parents_names ?? null],
+                ["שמות הורי החתן", event?.groom_parents_names ?? null],
+              ] as [string, string | null][]
+            ).map(([label, value]) => (
+              <p key={label}>
+                <span className="text-foreground/60">{label}: </span>
+                {value || "—"}
+              </p>
+            ))}
+          </div>
+
+          {event?.menu_notes && (
+            <div className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">מידע נוסף</span>
+              <p className="whitespace-pre-wrap">{event.menu_notes}</p>
+            </div>
+          )}
+
+          {event?.parking_notes && (
+            <div className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">הערות חניה</span>
+              <p className="whitespace-pre-wrap">{event.parking_notes}</p>
+            </div>
+          )}
         </div>
       )}
 
