@@ -86,7 +86,6 @@ export function CalendarGrid({
                   <span className="w-full break-words text-[11px] font-semibold">{event.name}</span>
                   <span className="w-full truncate text-[10px] opacity-80">
                     {EVENT_TYPE_LABELS[event.eventType]}
-                    {event.startTime ? ` · ${formatTime(event.startTime)}` : ""}
                   </span>
                 </button>
               ))}
