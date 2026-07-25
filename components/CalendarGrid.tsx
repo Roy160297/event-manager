@@ -83,7 +83,7 @@ export function CalendarGrid({
                   className={`flex flex-col items-start rounded-md px-1.5 py-1 text-start leading-tight ${EVENT_STATUS_COLORS[event.displayStatus]}`}
                   title={event.name}
                 >
-                  <span className="w-full truncate text-[11px] font-semibold">{event.name}</span>
+                  <span className="w-full break-words text-[11px] font-semibold">{event.name}</span>
                   <span className="w-full truncate text-[10px] opacity-80">
                     {EVENT_TYPE_LABELS[event.eventType]}
                     {event.startTime ? ` · ${formatTime(event.startTime)}` : ""}

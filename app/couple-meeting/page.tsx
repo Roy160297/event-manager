@@ -19,6 +19,13 @@ export default async function CoupleMeetingPage() {
       </p>
 
       <div className={cardClass}>
+        <p className="text-sm font-semibold underline">לפני הפגישה</p>
+        <ul className={listClass}>
+          <li>שליחת דף הנחיות לזוג במייל, עד 3 ימים לפני הפגישה.</li>
+        </ul>
+      </div>
+
+      <div className={cardClass}>
         <p className="text-sm font-semibold underline">נושאים לעבור עליהם בפגישה</p>
         <ul className={listClass}>
           <li>הכרות כללית - פרטים עליהם, על ההורים, ועל העיסוקים שלהם.</li>
@@ -27,13 +34,6 @@ export default async function CoupleMeetingPage() {
           <li>לעבור על הסקיצה.</li>
           <li>הסבר על ההתחייבות + הרזרבה.</li>
           <li>הסבר על מזומן לטיפים ולתשלומים לספקים.</li>
-        </ul>
-      </div>
-
-      <div className={cardClass}>
-        <p className="text-sm font-semibold underline">לפני הפגישה</p>
-        <ul className={listClass}>
-          <li>שליחת דף הנחיות לזוג במייל, עד 3 ימים לפני הפגישה.</li>
         </ul>
       </div>
 
