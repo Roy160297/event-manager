@@ -62,14 +62,6 @@ export default async function EventsDashboard({
             >
               ייבוא צילום מסך &quot;ענן&quot; מ-iPlan
             </Link>
-            <a
-              href="https://iplan.co.il/he-IL/corp/sign_in?"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
-            >
-              מעבר ל-iPlan
-            </a>
             <Link
               href="/events/new"
               className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
@@ -82,6 +74,14 @@ export default async function EventsDashboard({
             >
               פח מיחזור
             </Link>
+            <a
+              href="https://iplan.co.il/he-IL/corp/sign_in?"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+            >
+              מעבר ל-iPlan
+            </a>
           </div>
         )}
       </div>
