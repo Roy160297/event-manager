@@ -4,20 +4,32 @@ import { deleteEvent } from "@/app/events/actions";
 import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDate, getDisplayEventStatus } from "@/lib/labels";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
+import { EventManagerFilter } from "@/components/EventManagerFilter";
 import { TrashIcon } from "@/components/icons";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
-import type { EventRow } from "@/lib/types";
+import type { EventRow, StaffRow } from "@/lib/types";
 
-export default async function EventsDashboard() {
+export default async function EventsDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ manager?: string }>;
+}) {
+  const { manager: managerFilter } = await searchParams;
   const supabase = await createClient();
-  const [{ data: events, error }, currentStaff] = await Promise.all([
+  const [{ data: events, error }, { data: managers }, currentStaff] = await Promise.all([
     supabase
       .from("events")
       .select("*")
       .is("deleted_at", null)
       .order("event_date", { ascending: true })
       .returns<EventRow[]>(),
+    supabase
+      .from("staff")
+      .select("*, roles!inner(can_be_event_manager)")
+      .eq("roles.can_be_event_manager", true)
+      .order("name")
+      .returns<StaffRow[]>(),
     getCurrentStaff(),
   ]);
 
@@ -26,10 +38,16 @@ export default async function EventsDashboard() {
 
   if (!canReadEvents) return <NoPermissionNotice />;
 
+  const filteredEvents = managerFilter ? events?.filter((event) => event.manager_id === managerFilter) : events;
+  const managerName = (id: string | null) => managers?.find((manager) => manager.id === id)?.name ?? null;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="font-serif text-2xl font-bold">אירועים</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-serif text-2xl font-bold">אירועים</h1>
+          <EventManagerFilter managers={managers ?? []} />
+        </div>
         {canWriteEvents && (
           <div className="flex flex-wrap gap-2">
             <Link
@@ -78,8 +96,12 @@ export default async function EventsDashboard() {
         <p className="text-foreground/60">אין עדיין אירועים. לחצו על &quot;אירוע חדש&quot; כדי להתחיל.</p>
       )}
 
+      {!error && events && events.length > 0 && filteredEvents?.length === 0 && (
+        <p className="text-foreground/60">אין אירועים למנהל/ת הנבחר/ת.</p>
+      )}
+
       <ul className="flex flex-col gap-3">
-        {events?.map((event) => {
+        {filteredEvents?.map((event) => {
           const displayStatus = getDisplayEventStatus(event);
 
           async function remove() {
@@ -100,6 +122,7 @@ export default async function EventsDashboard() {
                   <p className="truncate font-medium">{event.name}</p>
                   <p className="text-sm text-foreground/60">
                     {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+                    {managerName(event.manager_id) && ` · ${managerName(event.manager_id)}`}
                   </p>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${EVENT_STATUS_COLORS[displayStatus]}`}>

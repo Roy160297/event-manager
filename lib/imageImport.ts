@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { isFriday, fridayEndTime } from "@/lib/scheduleTime";
 import type { EventType } from "@/lib/types";
 
 export interface ImageImportDraft {
@@ -46,8 +47,18 @@ interface GeminiExtraction {
 const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
-    bride_name: { type: Type.STRING, nullable: true, description: "שם הכלה בלבד" },
-    groom_name: { type: Type.STRING, nullable: true, description: "שם החתן בלבד" },
+    bride_name: {
+      type: Type.STRING,
+      nullable: true,
+      description:
+        'שם הכלה בלבד. אם שני הצדדים מתויגים "חתן" (זוג חתנים) - השאר null כאן ושים את שני השמות בשדה groom_name.',
+    },
+    groom_name: {
+      type: Type.STRING,
+      nullable: true,
+      description:
+        'שם החתן בלבד. אם שני הצדדים מתויגים "חתן" (זוג חתנים) - שים כאן את שני השמות יחד (למשל "שם1 ושם2"). אם שני הצדדים מתויגים "כלה" (זוג כלות) - שים את שני השמות יחד בשדה bride_name במקום, והשאר שדה זה null.',
+    },
     event_type: {
       type: Type.STRING,
       enum: EVENT_TYPE_KEYS,
@@ -79,7 +90,7 @@ const PROMPT = `זהו צילום מסך של עמוד אירוע ממערכת i
 
 הנחיות חשובות:
 - אם שדה אינו מופיע בבירור בתמונה, החזר null עבורו - לעולם אל תמציא ערך.
-- שם הזוג בדרך כלל מופיע כ"שם פרטי+שם משפחה" עבור כל אחד מבני הזוג באזור "משתמשים באירוע" - זהה מי מהם חתן ומי כלה.
+- שם הזוג בדרך כלל מופיע כ"שם פרטי+שם משפחה" עבור כל אחד מבני הזוג באזור "משתמשים באירוע" - שים לב לתווית שמופיעה ליד כל שם (חתן/כלה). ייתכן זוג מאותו מין - שני הצדדים מתויגים "חתן" (זוג חתנים) או ששניהם מתויגים "כלה" (זוג כלות). במקרה כזה אל תכריח התאמה של חתן אחד וכלה אחת - חלץ את שני השמות יחד לפי ההנחיות בשדות bride_name/groom_name.
 - שדה "event_type" חייב להיות אחד מהערכים המותרים בסכמה בלבד. קבע אותו לפי שילוב תווית סוג האירוע הראשית (למשל "חתונה") עם שדה "סוג הגשה" (למשל "מזנונים" או "הגשה") באזור ההתחייבות/פרטי האירוע.
 - "מינימום אורחים" ו"רזרבה מקסימלי %" הם שני שדות נפרדים באזור ההתחייבות - אל תחשב ביניהם, החזר את שני המספרים הגולמיים בלבד.
 - תאריכים בתמונה מופיעים לרוב כ-DD/MM/YYYY - המר לפורמט YYYY-MM-DD.`;
@@ -134,6 +145,15 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
       ? `${guests_min}+${Math.round((guests_min * guests_reserve_percent) / 100)}`
       : null;
 
+  // Friday weddings end ~6.5h after the reception starts (Shabbat) rather
+  // than the usual late finish - fill this in only when iPlan itself didn't
+  // give an explicit end time, never override a real extracted value.
+  let end_time = extraction.end_time ?? null;
+  if (!end_time && extraction.start_time && isFriday(extraction.event_date ?? null)) {
+    end_time = fridayEndTime(extraction.start_time);
+    if (end_time) warnings.push('שעת הסיום לא זוהתה - חושבה אוטומטית לפי כלל יום שישי (6.5 שעות מקבלת הפנים)');
+  }
+
   return {
     name,
     bride_name,
@@ -141,7 +161,7 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
     event_type: EVENT_TYPE_KEYS.includes(extraction.event_type) ? extraction.event_type : "other",
     event_date: extraction.event_date ?? null,
     start_time: extraction.start_time ?? null,
-    end_time: extraction.end_time ?? null,
+    end_time,
     event_manager_name: extraction.event_manager_name?.trim() || null,
     sales_person_name: extraction.sales_person_name?.trim() || null,
     service_style: extraction.service_style?.trim() || null,
