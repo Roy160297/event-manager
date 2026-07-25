@@ -43,13 +43,13 @@ export default async function EventsDashboard({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
           <h1 className="font-serif text-2xl font-bold">אירועים</h1>
           <EventManagerFilter managers={managers ?? []} />
         </div>
         {canWriteEvents && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex shrink-0 flex-wrap gap-2">
             <Link
               href="/events/import"
               className="rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
