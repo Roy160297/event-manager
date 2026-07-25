@@ -4,7 +4,12 @@ import PdfImportWizard from "./PdfImportWizard";
 
 export default async function ImportFromPdfPage() {
   const supabase = await createClient();
-  const { data: managers } = await supabase.from("staff").select("*").order("name").returns<StaffRow[]>();
+  const { data: managers } = await supabase
+    .from("staff")
+    .select("*, roles!inner(can_be_event_manager)")
+    .eq("roles.can_be_event_manager", true)
+    .order("name")
+    .returns<StaffRow[]>();
 
   return (
     <div className="flex flex-col gap-6">
