@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText, parsePdfDraft, type PdfImportDraft } from "@/lib/pdfImport";
+import { getCurrentStaff } from "@/lib/auth";
 import type { StaffRow } from "@/lib/types";
 
 export async function addManagerFromImport(name: string): Promise<StaffRow> {
@@ -49,6 +50,12 @@ export async function createEventFromPdfImport(
     throw new Error("שם, סוג אירוע ותאריך הם שדות חובה");
   }
 
+  let managerId = draft.manager_id;
+  if (!managerId) {
+    const currentStaff = await getCurrentStaff();
+    managerId = currentStaff?.id ?? null;
+  }
+
   const estimatedGuests =
     draft.guests_adults != null || draft.guests_children != null || draft.guests_reserve != null
       ? (draft.guests_adults ?? 0) + (draft.guests_children ?? 0) + (draft.guests_reserve ?? 0)
@@ -62,7 +69,7 @@ export async function createEventFromPdfImport(
       event_date: draft.event_date,
       start_time: draft.start_time,
       end_time: draft.end_time,
-      manager_id: draft.manager_id,
+      manager_id: managerId,
       estimated_guests: estimatedGuests != null ? String(estimatedGuests) : null,
       bride_name: draft.bride_name,
       groom_name: draft.groom_name,
