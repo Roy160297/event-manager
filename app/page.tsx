@@ -68,20 +68,22 @@ export default async function EventsDashboard({
             >
               + אירוע חדש
             </Link>
-            <Link
-              href="/events/trash"
-              className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
-            >
-              פח מיחזור
-            </Link>
-            <a
-              href="https://iplan.co.il/he-IL/corp/sign_in?"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
-            >
-              מעבר ל-iPlan
-            </a>
+            <div className="flex gap-2">
+              <Link
+                href="/events/trash"
+                className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+              >
+                פח מיחזור
+              </Link>
+              <a
+                href="https://iplan.co.il/he-IL/corp/sign_in?"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+              >
+                מעבר ל-iPlan
+              </a>
+            </div>
           </div>
         )}
       </div>
