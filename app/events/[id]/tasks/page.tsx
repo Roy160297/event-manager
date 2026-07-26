@@ -640,7 +640,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               {canWriteTasks && (
               <details className="border-t border-border-classic pt-2">
                 <summary className="cursor-pointer text-xs font-medium text-accent">ערוך משימה</summary>
-                <SaveDetailsForm action={saveEdit} className="mt-2 grid gap-2 sm:grid-cols-2">
+                <SaveDetailsForm action={saveEdit} closeDetailsOnSave className="mt-2 grid gap-2 sm:grid-cols-2">
                   <input
                     name="title"
                     defaultValue={task.title}
