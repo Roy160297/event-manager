@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
+import { createCoupleMeetingTasks } from "@/lib/coupleMeetingTasks";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
 import type { EventType } from "@/lib/types";
@@ -22,6 +23,8 @@ export async function createEvent(formData: FormData) {
     throw new Error("שם הלקוח, סוג האירוע ותאריך הם שדות חובה");
   }
 
+  const managerId = currentStaff?.id ?? null;
+
   const { data, error } = await supabase
     .from("events")
     .insert({
@@ -30,7 +33,7 @@ export async function createEvent(formData: FormData) {
       event_date: eventDate,
       start_time: "19:30",
       end_time: "03:00",
-      manager_id: currentStaff?.id ?? null,
+      manager_id: managerId,
     })
     .select("id")
     .single();
@@ -38,6 +41,7 @@ export async function createEvent(formData: FormData) {
   if (error) throw new Error(error.message);
 
   await applyDefaultSchedule(data.id, eventType, eventDate);
+  await createCoupleMeetingTasks(data.id, managerId);
 
   revalidatePath("/");
   redirect(`/events/${data.id}`);
