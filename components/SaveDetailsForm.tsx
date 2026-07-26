@@ -13,7 +13,11 @@ export function SaveDetailsForm({
   className?: string;
   children: React.ReactNode;
   message?: string;
-  /** Collapse the nearest ancestor <details> once the save succeeds. */
+  /**
+   * Collapse any open <details> once the save succeeds - the nearest ancestor
+   * <li> (e.g. a list row with its own "edit" toggle) if there is one,
+   * otherwise the nearest ancestor <details> itself.
+   */
   closeDetailsOnSave?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -27,7 +31,14 @@ export function SaveDetailsForm({
     if (savedCount === 0) return;
     setShowToast(true);
     const timeout = setTimeout(() => setShowToast(false), 2500);
-    if (closeDetailsOnSave) formRef.current?.closest("details")?.removeAttribute("open");
+    if (closeDetailsOnSave) {
+      const row = formRef.current?.closest("li");
+      if (row) {
+        row.querySelectorAll("details[open]").forEach((details) => details.removeAttribute("open"));
+      } else {
+        formRef.current?.closest("details")?.removeAttribute("open");
+      }
+    }
     return () => clearTimeout(timeout);
   }, [savedCount, closeDetailsOnSave]);
 

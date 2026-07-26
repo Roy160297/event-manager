@@ -606,7 +606,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                     {TASK_STATUS_LABELS[task.status]}
                   </span>
                   {canWriteTasks && (
-                    <SaveDetailsForm action={changeStatus} message="הסטטוס עודכן בהצלחה" className="flex items-center gap-1">
+                    <SaveDetailsForm action={changeStatus} message="הסטטוס עודכן בהצלחה" closeDetailsOnSave className="flex items-center gap-1">
                       <select name="status" defaultValue={task.status} className="rounded-md border border-border-classic bg-surface px-2 py-1 text-sm">
                         {STATUSES.map((status) => (
                           <option key={status} value={status}>
