@@ -104,7 +104,7 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
     notes: "יצירת שביל חופה",
   },
   { label: "חופה", time: "21:30" },
-  { label: "ריקודים", time: "21:45" },
+  { label: "ריקודים", time: "21:45", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
   { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];

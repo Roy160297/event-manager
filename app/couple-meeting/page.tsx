@@ -22,6 +22,7 @@ export default async function CoupleMeetingPage() {
         <p className="text-sm font-semibold underline">לפני הפגישה</p>
         <ul className={listClass}>
           <li>שליחת דף הנחיות לזוג במייל, עד 3 ימים לפני הפגישה.</li>
+          <li>ווידוא הגעה בזמן לפגישה מול הזוג.</li>
         </ul>
       </div>
 
