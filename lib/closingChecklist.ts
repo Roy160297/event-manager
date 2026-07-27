@@ -19,10 +19,6 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
     key: "yard",
     label: "חצר + חזיתות",
     items: [
-      {
-        key: "pre-breakdown-briefing",
-        text: "ביצוע בריף לצוות הפירוק עם חלוקת משימות ודגשים - לוודא התנהלות זהירה במיוחד בחלל האולם ובמטבחים.",
-      },
       { key: "yard-reception-cleanup", text: "ניקיון עמדות קבלת פנים: ניקיון של כל החלק העליון + בטן המזנון." },
       {
         key: "yard-reception-trash-pile",
@@ -83,9 +79,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         key: "hall-gallery",
         text: "מעבר על הגלריה (ניקוי שולחנות, כסאות, גרם מדרגות ווידוא שרצפת המזנון בגלריה נקייה ומסודרת).",
       },
-      { key: "hall-drainage-strip", text: "ניקיון פס הניקוז." },
       { key: "hall-ice-cream-fridge", text: "לוודא שמקרר הגלידה מחובר לחשמל." },
-      { key: "hall-full-scan", text: "סריקת מטבחים כוללת: שוטף כלים שביצע את כל משימותיו, מזנונים, עמדות." },
       {
         key: "hall-waiters-cabinet-and-room",
         text: "לוודא סדר בארון המלצרים (פנקסים, מגבונים, עטים, קיסמים וכפפות - כל אחד בתא שלו), וכן ניקיון וסדר בחדר המלצרים והלוקרים - תלייה מסודרת של כל החולצות הנקיות על הקולבים, תיקון הסינרים, וסידור המדפים מעל הלוקרים.",
@@ -173,6 +167,10 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "lock-outside-white-metal-door", text: "נעילת דלת חדר הקירור במטבח החיצוני." },
       { key: "lock-hall-kitchen-disposal-door", text: "נעילת דלת היציאה לרחוב ממטבח הפינויים באולם." },
       { key: "lock-alarm-activation", text: "הפעלת אזעקה בסיום האירוע." },
+      {
+        key: "hall-full-scan",
+        text: 'סריקת מטבחים כוללת: שוטף כלים שביצע את כל משימותיו לפי "צ\'קליסט סגירה - מטבח".',
+      },
     ],
   },
 ];
