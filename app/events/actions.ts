@@ -79,6 +79,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const eventType = String(formData.get("event_type") ?? "other") as EventType;
   const eventDate = String(formData.get("event_date") ?? "");
+  const coupleMeetingDate = String(formData.get("couple_meeting_date") ?? "").trim() || null;
   const startTime = String(formData.get("start_time") ?? "").trim() || null;
   const endTime = String(formData.get("end_time") ?? "").trim() || null;
   const managerId = String(formData.get("manager_id") ?? "").trim() || null;
@@ -103,6 +104,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
       name,
       event_type: eventType,
       event_date: eventDate,
+      couple_meeting_date: coupleMeetingDate,
       start_time: startTime,
       end_time: endTime,
       manager_id: managerId,

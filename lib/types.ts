@@ -36,6 +36,7 @@ export interface EventRow {
   name: string;
   event_type: EventType;
   event_date: string;
+  couple_meeting_date: string | null;
   status: EventStatus;
   notes: string | null;
   deleted_at: string | null;
