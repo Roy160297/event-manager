@@ -128,11 +128,6 @@ export default async function EventOverviewPage({
               </label>
 
               <label className={labelClass}>
-                <span className="font-medium">תאריך פגישת זוג</span>
-                <DateField name="couple_meeting_date" defaultValue={event?.couple_meeting_date ?? ""} />
-              </label>
-
-              <label className={labelClass}>
                 <span className="font-medium">מספר אורחים - התחייבות</span>
                 <input
                   type="text"
@@ -234,7 +229,6 @@ export default async function EventOverviewPage({
                 ["שם הלקוח / הזוג", event?.name ?? null],
                 ["סוג האירוע", event ? EVENT_TYPE_LABELS[event.event_type] : null],
                 ["תאריך", event ? formatDate(event.event_date) : null],
-                ["תאריך פגישת זוג", event?.couple_meeting_date ? formatDate(event.couple_meeting_date) : null],
                 ["מספר אורחים - התחייבות", event?.estimated_guests ?? null],
                 ["שעת התחלה", event ? formatTime(event.start_time) : null],
                 ["שעת סיום", event ? formatTime(event.end_time) : null],
