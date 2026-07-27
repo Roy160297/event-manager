@@ -56,5 +56,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  // Excludes /api - route handlers there (e.g. the cron reminders endpoint)
+  // authenticate themselves (a shared secret, not a user session) and must
+  // stay reachable with no logged-in user, unlike every page route.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };
