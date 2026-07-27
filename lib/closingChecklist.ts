@@ -103,6 +103,10 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "hall-dj-stations", text: "מעבר על פינוי וניקיון בשתי עמדות הדיג'יי." },
       { key: "hall-bride-groom-room", text: "מעבר על פינוי וניקיון בחדר החתן והכלה." },
       { key: "hall-tools-gathered", text: "ריכוז מגבים, מטאטאים ויעים במסודר בסיום הפירוק." },
+      {
+        key: "hall-full-scan",
+        text: 'סריקת מטבחים כוללת: שוטף כלים שביצע את כל משימותיו לפי "צ\'קליסט סגירה - מטבח".',
+      },
     ],
   },
   {
@@ -167,10 +171,6 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "lock-outside-white-metal-door", text: "נעילת דלת חדר הקירור במטבח החיצוני." },
       { key: "lock-hall-kitchen-disposal-door", text: "נעילת דלת היציאה לרחוב ממטבח הפינויים באולם." },
       { key: "lock-alarm-activation", text: "הפעלת אזעקה בסיום האירוע." },
-      {
-        key: "hall-full-scan",
-        text: 'סריקת מטבחים כוללת: שוטף כלים שביצע את כל משימותיו לפי "צ\'קליסט סגירה - מטבח".',
-      },
     ],
   },
 ];
