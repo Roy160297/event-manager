@@ -7,7 +7,13 @@ import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
 import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
 import type { EventType } from "@/lib/types";
-import { setClosingChecklistItem, setClosingChecklistNote, signChecklist, unsignChecklist } from "./actions";
+import {
+  setClosingChecklistItem,
+  setClosingChecklistNote,
+  clearClosingChecklist,
+  signChecklist,
+  unsignChecklist,
+} from "./actions";
 
 const TOTAL_ITEMS = CLOSING_CHECKLIST.reduce((sum, category) => sum + category.items.length, 0);
 
@@ -42,6 +48,7 @@ export default function ClosingChecklist({
 }) {
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState(initialNote ?? "");
   const [noteStatus, setNoteStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -70,6 +77,23 @@ export default function ClosingChecklist({
       setError(err instanceof Error ? err.message : "שגיאה בשמירה");
     } finally {
       setPendingKey(null);
+    }
+  }
+
+  async function clearAll() {
+    if (checked.size === 0) return;
+    if (!window.confirm("לנקות את כל הסימונים בצ'קליסט?")) return;
+    const previous = checked;
+    setError(null);
+    setChecked(new Set());
+    setClearing(true);
+    try {
+      await clearClosingChecklist(eventId);
+    } catch (err) {
+      setChecked(previous);
+      setError(err instanceof Error ? err.message : "שגיאה בניקוי");
+    } finally {
+      setClearing(false);
     }
   }
 
@@ -103,6 +127,17 @@ export default function ClosingChecklist({
         )}
         {isSigned && <p className="text-sm text-foreground/60">הצ&apos;קליסט נחתם ונעול לעריכה.</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
+
+        {canEditNow && (
+          <button
+            type="button"
+            onClick={clearAll}
+            disabled={clearing || checked.size === 0}
+            className="self-start rounded-full border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+          >
+            נקה את כל הסימונים
+          </button>
+        )}
 
         <PdfExportButton
           filename={`צקליסט-סגירה-${eventName}.pdf`}

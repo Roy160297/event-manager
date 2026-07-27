@@ -11,6 +11,7 @@ import type { EventType } from "@/lib/types";
 import {
   setRoleChecklistItem,
   setRoleChecklistNote,
+  clearRoleChecklistItems,
   signChecklist,
   unsignChecklist,
   cosignChecklistAsManager,
@@ -69,6 +70,7 @@ export default function RoleChecklist({
   const totalItems = categories.reduce((sum, category) => sum + category.items.length, 0);
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState(initialNote ?? "");
   const [noteStatus, setNoteStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -100,6 +102,23 @@ export default function RoleChecklist({
     }
   }
 
+  async function clearAll() {
+    if (checked.size === 0) return;
+    if (!window.confirm("לנקות את כל הסימונים בצ'קליסט?")) return;
+    const previous = checked;
+    setError(null);
+    setChecked(new Set());
+    setClearing(true);
+    try {
+      await clearRoleChecklistItems(eventId, checklistKey);
+    } catch (err) {
+      setChecked(previous);
+      setError(err instanceof Error ? err.message : "שגיאה בניקוי");
+    } finally {
+      setClearing(false);
+    }
+  }
+
   async function saveNote() {
     setNoteError(null);
     setNoteStatus("saving");
@@ -126,6 +145,17 @@ export default function RoleChecklist({
         )}
         {isSigned && <p className="text-sm text-foreground/60">הצ&apos;קליסט נחתם ונעול לעריכה.</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
+
+        {canEditNow && (
+          <button
+            type="button"
+            onClick={clearAll}
+            disabled={clearing || checked.size === 0}
+            className="self-start rounded-full border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+          >
+            נקה את כל הסימונים
+          </button>
+        )}
 
         <PdfExportButton
           filename={`${title}-${eventName}.pdf`}
