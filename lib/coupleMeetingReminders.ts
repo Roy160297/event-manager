@@ -1,3 +1,5 @@
+import { formatDate } from "@/lib/labels";
+
 // Automated email reminders for the couple-meeting checklist items whose
 // timing is computable from a date the app already tracks (event_date or
 // couple_meeting_date) - see app/couple-meeting/page.tsx for the full guide
@@ -10,7 +12,7 @@ export interface CoupleMeetingReminderRule {
   anchor: ReminderAnchor;
   offsetDays: number;
   subject: string;
-  body: (eventName: string) => string;
+  body: (eventName: string, eventDate: string) => string;
 }
 
 export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
@@ -19,32 +21,32 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     anchor: "couple_meeting_date",
     offsetDays: -3,
     subject: "תזכורת: שליחת דף הנחיות לזוג",
-    body: (eventName) =>
-      `תזכורת לגבי האירוע של <strong>${eventName}</strong>: היום התאריך לשליחת דף ההנחיות לזוג במייל (3 ימים לפני הפגישה).`,
+    body: (eventName, eventDate) =>
+      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום התאריך לשליחת דף ההנחיות לזוג במייל (3 ימים לפני הפגישה).`,
   },
   {
     key: "final-commitment-update",
     anchor: "event_date",
     offsetDays: -7,
     subject: "תזכורת: עדכון התחייבות סופית ו-iPlan",
-    body: (eventName) =>
-      `תזכורת לגבי האירוע של <strong>${eventName}</strong>: היום התאריך לעדכון ההתחייבות הסופית בפרטי האירוע ולהעלאת טופס אירוע סופי ל-iPlan (שבוע לפני האירוע).`,
+    body: (eventName, eventDate) =>
+      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום התאריך לעדכון ההתחייבות הסופית בפרטי האירוע ולהעלאת טופס אירוע סופי ל-iPlan (שבוע לפני האירוע).`,
   },
   {
     key: "final-sketch-upload",
     anchor: "event_date",
     offsetDays: -7,
     subject: "תזכורת: העלאת סקיצה סופית לאתר",
-    body: (eventName) =>
-      `תזכורת לגבי האירוע של <strong>${eventName}</strong>: היום התאריך להעלאת הסקיצה הסופית לאתר, לאחר ההתחייבות הסופית (שבוע לפני האירוע).`,
+    body: (eventName, eventDate) =>
+      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום התאריך להעלאת הסקיצה הסופית לאתר, לאחר ההתחייבות הסופית (שבוע לפני האירוע).`,
   },
   {
     key: "guest-invitation-file-upload",
     anchor: "event_date",
     offsetDays: -1,
     subject: "תזכורת: העלאת קובץ הזמנות אורחים לאתר",
-    body: (eventName) =>
-      `תזכורת לגבי האירוע של <strong>${eventName}</strong>: היום התאריך להעלאת קובץ ההזמנות (אורחים) לאתר (יום לפני האירוע).`,
+    body: (eventName, eventDate) =>
+      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום התאריך להעלאת קובץ ההזמנות (אורחים) לאתר (יום לפני האירוע).`,
   },
 ];
 

@@ -42,7 +42,7 @@ export async function GET(request: Request) {
         await sendReminderEmail({
           to: managerEmail,
           subject: rule.subject,
-          bodyText: rule.body(event.name),
+          bodyText: rule.body(event.name, event.event_date),
         });
         sent++;
       }
