@@ -30,6 +30,22 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     body: (eventName) =>
       `תזכורת לגבי האירוע של <strong>${eventName}</strong>: היום התאריך לעדכון ההתחייבות הסופית בפרטי האירוע ולהעלאת טופס אירוע סופי ל-iPlan (שבוע לפני האירוע).`,
   },
+  {
+    key: "final-sketch-upload",
+    anchor: "event_date",
+    offsetDays: -7,
+    subject: "תזכורת: העלאת סקיצה סופית לאתר",
+    body: (eventName) =>
+      `תזכורת לגבי האירוע של <strong>${eventName}</strong>: היום התאריך להעלאת הסקיצה הסופית לאתר, לאחר ההתחייבות הסופית (שבוע לפני האירוע).`,
+  },
+  {
+    key: "guest-invitation-file-upload",
+    anchor: "event_date",
+    offsetDays: -1,
+    subject: "תזכורת: העלאת קובץ הזמנות אורחים לאתר",
+    body: (eventName) =>
+      `תזכורת לגבי האירוע של <strong>${eventName}</strong>: היום התאריך להעלאת קובץ ההזמנות (אורחים) לאתר (יום לפני האירוע).`,
+  },
 ];
 
 export function addDaysToDate(dateStr: string, days: number): string {
