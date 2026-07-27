@@ -15,37 +15,41 @@ export async function GET(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const supabase = createAdminClient();
-  const { data: events, error } = await supabase
-    .from("events")
-    .select("*, staff(email)")
-    .is("deleted_at", null)
-    .returns<EventWithManager[]>();
+  try {
+    const supabase = createAdminClient();
+    const { data: events, error } = await supabase
+      .from("events")
+      .select("*, staff(email)")
+      .is("deleted_at", null)
+      .returns<EventWithManager[]>();
 
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
-
-  const today = todayInIsrael();
-  let sent = 0;
-
-  for (const event of events ?? []) {
-    const managerEmail = event.staff?.email;
-    if (!managerEmail) continue;
-
-    for (const rule of COUPLE_MEETING_REMINDER_RULES) {
-      const anchorDate = rule.anchor === "couple_meeting_date" ? event.couple_meeting_date : event.event_date;
-      if (!anchorDate) continue;
-      if (addDaysToDate(anchorDate, rule.offsetDays) !== today) continue;
-
-      await sendReminderEmail({
-        to: managerEmail,
-        subject: rule.subject,
-        bodyText: rule.body(event.name),
-      });
-      sent++;
+    if (error) {
+      return Response.json({ error: error.message }, { status: 500 });
     }
-  }
 
-  return Response.json({ ok: true, sent });
+    const today = todayInIsrael();
+    let sent = 0;
+
+    for (const event of events ?? []) {
+      const managerEmail = event.staff?.email;
+      if (!managerEmail) continue;
+
+      for (const rule of COUPLE_MEETING_REMINDER_RULES) {
+        const anchorDate = rule.anchor === "couple_meeting_date" ? event.couple_meeting_date : event.event_date;
+        if (!anchorDate) continue;
+        if (addDaysToDate(anchorDate, rule.offsetDays) !== today) continue;
+
+        await sendReminderEmail({
+          to: managerEmail,
+          subject: rule.subject,
+          bodyText: rule.body(event.name),
+        });
+        sent++;
+      }
+    }
+
+    return Response.json({ ok: true, sent });
+  } catch (err) {
+    return Response.json({ error: err instanceof Error ? err.message : "שגיאה לא צפויה" }, { status: 500 });
+  }
 }
