@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { EVENT_MANAGERS_CACHE_TAG } from "@/lib/staff";
 
 export async function addStaff(formData: FormData) {
   const supabase = await createClient();
@@ -18,6 +19,7 @@ export async function addStaff(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/users");
+  updateTag(EVENT_MANAGERS_CACHE_TAG);
 }
 
 export async function updateStaffDetails(staffId: string, formData: FormData) {
@@ -34,6 +36,7 @@ export async function updateStaffDetails(staffId: string, formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/users");
+  updateTag(EVENT_MANAGERS_CACHE_TAG);
 }
 
 export async function updateStaffRole(staffId: string, roleId: string) {
@@ -44,6 +47,7 @@ export async function updateStaffRole(staffId: string, roleId: string) {
     .eq("id", staffId);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/users");
+  updateTag(EVENT_MANAGERS_CACHE_TAG);
 }
 
 export async function removeStaff(staffId: string) {
@@ -51,4 +55,5 @@ export async function removeStaff(staffId: string) {
   const { error } = await supabase.from("staff").delete().eq("id", staffId);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/users");
+  updateTag(EVENT_MANAGERS_CACHE_TAG);
 }

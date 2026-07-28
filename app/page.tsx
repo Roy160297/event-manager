@@ -7,8 +7,9 @@ import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { EventManagerFilter } from "@/components/EventManagerFilter";
 import { TrashIcon } from "@/components/icons";
 import { getCurrentStaff } from "@/lib/auth";
+import { getEventManagerCandidates } from "@/lib/staff";
 import { canRead, canWrite } from "@/lib/permissions";
-import type { EventRow, StaffRow } from "@/lib/types";
+import type { EventRow } from "@/lib/types";
 
 export default async function EventsDashboard({
   searchParams,
@@ -17,19 +18,14 @@ export default async function EventsDashboard({
 }) {
   const { manager: managerFilter } = await searchParams;
   const supabase = await createClient();
-  const [{ data: events, error }, { data: managers }, currentStaff] = await Promise.all([
+  const [{ data: events, error }, managers, currentStaff] = await Promise.all([
     supabase
       .from("events")
       .select("*")
       .is("deleted_at", null)
       .order("event_date", { ascending: true })
       .returns<EventRow[]>(),
-    supabase
-      .from("staff")
-      .select("*, roles!inner(can_be_event_manager)")
-      .eq("roles.can_be_event_manager", true)
-      .order("name")
-      .returns<StaffRow[]>(),
+    getEventManagerCandidates(),
     getCurrentStaff(),
   ]);
 

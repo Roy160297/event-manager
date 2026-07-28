@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { RESOURCES } from "@/lib/permissions";
+import { EVENT_MANAGERS_CACHE_TAG } from "@/lib/staff";
 
 export async function createRole(formData: FormData) {
   const supabase = await createClient();
@@ -36,6 +37,7 @@ export async function deleteRole(roleId: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/admin/roles");
   revalidatePath("/admin/users");
+  updateTag(EVENT_MANAGERS_CACHE_TAG);
 }
 
 export async function setRoleEventManagerFlag(roleId: string, value: boolean) {
@@ -43,6 +45,7 @@ export async function setRoleEventManagerFlag(roleId: string, value: boolean) {
   const { error } = await supabase.from("roles").update({ can_be_event_manager: value }).eq("id", roleId);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/roles");
+  updateTag(EVENT_MANAGERS_CACHE_TAG);
 }
 
 export async function setRolePermission(

@@ -7,10 +7,11 @@ import { TrashIcon } from "@/components/icons";
 import { DateField } from "@/components/DateField";
 import { TimeField } from "@/components/TimeField";
 import { getCurrentStaff } from "@/lib/auth";
+import { getEventManagerCandidates } from "@/lib/staff";
 import { canRead, canWrite } from "@/lib/permissions";
 import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
-import type { EventRow, EventSupplierRow, EventType, StaffRow, TimelineItemRow } from "@/lib/types";
+import type { EventRow, EventSupplierRow, EventType, TimelineItemRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
@@ -26,7 +27,7 @@ export default async function EventOverviewPage({
     { data: event },
     { count: openTasks },
     { count: guestCount },
-    { data: managers },
+    managers,
     { data: suppliers },
     { data: scheduleItems },
     currentStaff,
@@ -38,12 +39,7 @@ export default async function EventOverviewPage({
       .eq("event_id", id)
       .neq("status", "done"),
     supabase.from("guests").select("*", { count: "exact", head: true }).eq("event_id", id),
-    supabase
-      .from("staff")
-      .select("*, roles!inner(can_be_event_manager)")
-      .eq("roles.can_be_event_manager", true)
-      .order("name")
-      .returns<StaffRow[]>(),
+    getEventManagerCandidates(),
     supabase
       .from("event_suppliers")
       .select("*")
