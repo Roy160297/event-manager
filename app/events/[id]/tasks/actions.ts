@@ -46,6 +46,7 @@ export async function updateTaskStatus(eventId: string, taskId: string, status: 
   const { error } = await supabase.from("tasks").update({ status }).eq("id", taskId);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/tasks`);
+  revalidatePath("/my-tasks");
 }
 
 export async function updateTask(eventId: string, taskId: string, formData: FormData) {

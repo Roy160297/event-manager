@@ -45,6 +45,7 @@ export default async function RootLayout({
                   showAdmin={canRead(staff.permissions, "admin")}
                   showCoupleMeeting={canRead(staff.permissions, "couple_meeting")}
                   showEventManagementDex={canRead(staff.permissions, "event_management_dex")}
+                  showMyTasks={canRead(staff.permissions, "tasks")}
                 />
               )}
             </div>

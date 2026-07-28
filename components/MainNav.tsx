@@ -13,13 +13,16 @@ export function MainNav({
   showAdmin = false,
   showCoupleMeeting = false,
   showEventManagementDex = false,
+  showMyTasks = false,
 }: {
   showAdmin?: boolean;
   showCoupleMeeting?: boolean;
   showEventManagementDex?: boolean;
+  showMyTasks?: boolean;
 }) {
   const pathname = usePathname();
   const extraLinks = [];
+  if (showMyTasks) extraLinks.push({ href: "/my-tasks", label: "המשימות שלי" });
   if (showCoupleMeeting) extraLinks.push({ href: "/couple-meeting", label: "פגישה עם זוג" });
   if (showEventManagementDex) extraLinks.push({ href: "/event-management-dex", label: "ניהול אירוע (Dex)" });
 
