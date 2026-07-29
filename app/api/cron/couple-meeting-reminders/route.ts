@@ -29,6 +29,7 @@ export async function GET(request: Request) {
 
     const today = todayInIsrael();
     let sent = 0;
+    let skippedAlreadySent = 0;
 
     for (const event of events ?? []) {
       const managerEmail = event.staff?.email;
@@ -39,6 +40,19 @@ export async function GET(request: Request) {
         if (!anchorDate) continue;
         if (addDaysToDate(anchorDate, rule.offsetDays) !== today) continue;
 
+        // Claim this (event, rule, day) before sending - the unique
+        // constraint on reminder_log makes this atomic, so a second trigger
+        // the same day (manual check + schedule, a retry, etc) can't
+        // double-send even if it races this one.
+        const { error: claimError } = await supabase
+          .from("reminder_log")
+          .insert({ event_id: event.id, rule_key: rule.key, sent_date: today });
+
+        if (claimError) {
+          if (claimError.code === "23505") skippedAlreadySent++;
+          continue;
+        }
+
         await sendReminderEmail({
           to: managerEmail,
           subject: rule.subject,
@@ -48,7 +62,7 @@ export async function GET(request: Request) {
       }
     }
 
-    return Response.json({ ok: true, sent });
+    return Response.json({ ok: true, sent, skippedAlreadySent });
   } catch (err) {
     return Response.json({ error: err instanceof Error ? err.message : "שגיאה לא צפויה" }, { status: 500 });
   }
