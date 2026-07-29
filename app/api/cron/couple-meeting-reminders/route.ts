@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const supabase = createAdminClient();
     const { data: events, error } = await supabase
       .from("events")
-      .select("*, staff(email)")
+      .select("*, staff!manager_id(email)")
       .is("deleted_at", null)
       .returns<EventWithManager[]>();
 

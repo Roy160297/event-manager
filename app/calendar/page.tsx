@@ -67,7 +67,7 @@ export default async function CalendarPage({
   const supabase = await createClient();
   const { data: events } = await supabase
     .from("events")
-    .select("*, staff(name)")
+    .select("*, staff!manager_id(name)")
     .is("deleted_at", null)
     .gte("event_date", monthStart)
     .lt("event_date", nextMonthStart)

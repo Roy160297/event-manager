@@ -109,7 +109,6 @@ export interface RoleRow {
   id: string;
   name: string;
   can_be_event_manager: boolean;
-  can_be_floor_manager: boolean;
   created_at: string;
 }
 

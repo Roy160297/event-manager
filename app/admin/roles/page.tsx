@@ -8,7 +8,6 @@ import { canWrite } from "@/lib/permissions";
 import type { RolePermissionRow, RoleRow } from "@/lib/types";
 import { createRole, deleteRole, renameRole } from "./actions";
 import { EventManagerToggle } from "./EventManagerToggle";
-import { FloorManagerToggle } from "./FloorManagerToggle";
 import { PermissionGrid } from "./PermissionGrid";
 
 export default async function RolesPage() {
@@ -98,13 +97,6 @@ export default async function RolesPage() {
                   ) : (
                     role.can_be_event_manager && (
                       <p className="text-xs text-foreground/60">יכול/ה להיות מנהל/ת אירוע אחראי/ת</p>
-                    )
-                  )}
-                  {canManage ? (
-                    <FloorManagerToggle roleId={role.id} initialValue={role.can_be_floor_manager} />
-                  ) : (
-                    role.can_be_floor_manager && (
-                      <p className="text-xs text-foreground/60">יכול/ה להיות מנהל/ת פלור</p>
                     )
                   )}
                 </li>
