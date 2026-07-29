@@ -41,20 +41,12 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
       `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום יום אחרי פגישת הזוג - יש לוודא ביצוע המשימות הבאות:<ul><li>פתיחת קבוצת וואטסאפ עם הזוג.</li><li>שליחת הנקודות העיקריות מהפגישה, וכן נקודות להמשך, לקבוצה.</li><li>העלאת טופס אירוע (עד יום אחרי הפגישה).</li><li>הכנת סקיצה ראשונית ב-iPlan (לפי כמות ההתחייבות).</li></ul>`,
   },
   {
-    key: "final-commitment-update",
+    key: "final-commitment-and-sketch-update",
     anchor: "event_date",
     offsetDays: -7,
-    subject: "תזכורת: עדכון התחייבות סופית ו-iPlan",
+    subject: "תזכורת: התחייבות סופית, iPlan וסקיצה",
     body: (eventName, eventDate) =>
-      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום התאריך לעדכון ההתחייבות הסופית בפרטי האירוע ולהעלאת טופס אירוע סופי ל-iPlan (שבוע לפני האירוע).`,
-  },
-  {
-    key: "final-sketch-upload",
-    anchor: "event_date",
-    offsetDays: -7,
-    subject: "תזכורת: העלאת סקיצה סופית לאתר",
-    body: (eventName, eventDate) =>
-      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום התאריך להעלאת הסקיצה הסופית לאתר, לאחר ההתחייבות הסופית (שבוע לפני האירוע).`,
+      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום התאריך (שבוע לפני האירוע) לביצוע המשימות הבאות:<ul><li>עדכון התחייבות סופית בפרטי האירוע והעלאת טופס אירוע סופי ל-iPlan.</li><li>העלאת סקיצה סופית לאתר, לאחר ההתחייבות הסופית.</li></ul>`,
   },
   {
     key: "guest-invitation-file-upload",
