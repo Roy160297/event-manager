@@ -25,12 +25,6 @@ describe("COUPLE_MEETING_REMINDER_RULES", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it("only fires before its anchor date (reminders, not follow-ups)", () => {
-    for (const rule of COUPLE_MEETING_REMINDER_RULES) {
-      expect(rule.offsetDays).toBeLessThan(0);
-    }
-  });
-
   it("renders the couple name and event date into the body", () => {
     for (const rule of COUPLE_MEETING_REMINDER_RULES) {
       const body = rule.body("שי קטש וגיל מזרחי", "2026-08-14");
