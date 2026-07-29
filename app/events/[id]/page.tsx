@@ -7,7 +7,7 @@ import { TrashIcon } from "@/components/icons";
 import { DateField } from "@/components/DateField";
 import { TimeField } from "@/components/TimeField";
 import { getCurrentStaff } from "@/lib/auth";
-import { getEventManagerCandidates } from "@/lib/staff";
+import { getEventManagerCandidates, getFloorManagerCandidates } from "@/lib/staff";
 import { canRead, canWrite } from "@/lib/permissions";
 import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
@@ -28,6 +28,7 @@ export default async function EventOverviewPage({
     { count: openTasks },
     { count: guestCount },
     managers,
+    floorManagers,
     { data: suppliers },
     { data: scheduleItems },
     currentStaff,
@@ -40,6 +41,7 @@ export default async function EventOverviewPage({
       .neq("status", "done"),
     supabase.from("guests").select("*", { count: "exact", head: true }).eq("event_id", id),
     getEventManagerCandidates(),
+    getFloorManagerCandidates(),
     supabase
       .from("event_suppliers")
       .select("*")
@@ -60,6 +62,7 @@ export default async function EventOverviewPage({
   if (!canReadEvents) return <NoPermissionNotice />;
 
   const managerName = managers?.find((manager) => manager.id === event?.manager_id)?.name ?? null;
+  const floorManagerName = floorManagers?.find((manager) => manager.id === event?.floor_manager_id)?.name ?? null;
 
   async function saveDetails(formData: FormData) {
     "use server";
@@ -91,6 +94,7 @@ export default async function EventOverviewPage({
         <EventFormExport
           event={event}
           managerName={managerName}
+          floorManagerName={floorManagerName}
           suppliers={suppliers ?? []}
           scheduleItems={scheduleItems ?? []}
         />
@@ -189,6 +193,18 @@ export default async function EventOverviewPage({
             </label>
 
             <label className={labelClass}>
+              <span className="font-medium">מנהל/ת פלור</span>
+              <select name="floor_manager_id" defaultValue={event?.floor_manager_id ?? ""} className={inputClass}>
+                <option value="">ללא אחראי</option>
+                {floorManagers?.map((manager) => (
+                  <option key={manager.id} value={manager.id}>
+                    {manager.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className={labelClass}>
               <span className="font-medium">איש/ת מכירות</span>
               <input name="sales_person_name" defaultValue={event?.sales_person_name ?? ""} className={inputClass} />
             </label>
@@ -239,6 +255,7 @@ export default async function EventOverviewPage({
                 ["אימייל 2", event?.contact_email_2 ?? null],
                 ["טלפון 2", event?.contact_phone_2 ?? null],
                 ["מנהל/ת אירוע אחראי/ת", managerName],
+                ["מנהל/ת פלור", floorManagerName],
                 ["איש/ת מכירות", event?.sales_person_name ?? null],
                 ["שמות הורי הכלה", event?.bride_parents_names ?? null],
                 ["שמות הורי החתן", event?.groom_parents_names ?? null],

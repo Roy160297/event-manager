@@ -28,3 +28,22 @@ export const getEventManagerCandidates = unstable_cache(
   ["event-manager-candidates"],
   { tags: [EVENT_MANAGERS_CACHE_TAG] },
 );
+
+export const FLOOR_MANAGERS_CACHE_TAG = "floor-managers";
+
+// Same pattern as getEventManagerCandidates, for the "מנהל/ת פלור" dropdown
+// on the event overview page.
+export const getFloorManagerCandidates = unstable_cache(
+  async (): Promise<StaffRow[]> => {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("staff")
+      .select("*, roles!inner(can_be_floor_manager)")
+      .eq("roles.can_be_floor_manager", true)
+      .order("name")
+      .returns<StaffRow[]>();
+    return data ?? [];
+  },
+  ["floor-manager-candidates"],
+  { tags: [FLOOR_MANAGERS_CACHE_TAG] },
+);

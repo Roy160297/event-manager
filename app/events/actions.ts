@@ -83,6 +83,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
   const startTime = String(formData.get("start_time") ?? "").trim() || null;
   const endTime = String(formData.get("end_time") ?? "").trim() || null;
   const managerId = String(formData.get("manager_id") ?? "").trim() || null;
+  const floorManagerId = String(formData.get("floor_manager_id") ?? "").trim() || null;
   const contactEmail = String(formData.get("contact_email") ?? "").trim() || null;
   const contactEmail2 = String(formData.get("contact_email_2") ?? "").trim() || null;
   const contactPhone = String(formData.get("contact_phone") ?? "").trim() || null;
@@ -108,6 +109,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
       start_time: startTime,
       end_time: endTime,
       manager_id: managerId,
+      floor_manager_id: floorManagerId,
       contact_email: contactEmail,
       contact_email_2: contactEmail2,
       contact_phone: contactPhone,

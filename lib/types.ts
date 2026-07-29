@@ -43,6 +43,7 @@ export interface EventRow {
   deleted_at: string | null;
   start_time: string | null;
   manager_id: string | null;
+  floor_manager_id: string | null;
   contact_email: string | null;
   contact_email_2: string | null;
   contact_phone: string | null;
@@ -108,6 +109,7 @@ export interface RoleRow {
   id: string;
   name: string;
   can_be_event_manager: boolean;
+  can_be_floor_manager: boolean;
   created_at: string;
 }
 
