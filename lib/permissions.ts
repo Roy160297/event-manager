@@ -14,6 +14,7 @@ export const RESOURCES = [
   "event_management_dex",
   "waiters",
   "admin",
+  "my_tasks",
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -33,6 +34,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   event_management_dex: "ניהול אירוע (Dex)",
   waiters: "מלצרים (רשימה כללית)",
   admin: "ניהול משתמשים והרשאות",
+  my_tasks: "המשימות שלי",
 };
 
 export type PermissionMap = Record<Resource, { read: boolean; write: boolean }>;

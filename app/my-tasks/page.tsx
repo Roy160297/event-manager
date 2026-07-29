@@ -18,9 +18,9 @@ type TaskWithEvent = TaskRow & {
 
 export default async function MyTasksPage() {
   const currentStaff = await getCurrentStaff();
-  const canReadTasks = !!currentStaff && canRead(currentStaff.permissions, "tasks");
+  const canReadMyTasks = !!currentStaff && canRead(currentStaff.permissions, "my_tasks");
 
-  if (!canReadTasks) return <NoPermissionNotice />;
+  if (!canReadMyTasks) return <NoPermissionNotice />;
 
   const supabase = await createClient();
   const { data: tasks, error } = await supabase
