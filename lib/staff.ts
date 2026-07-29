@@ -28,3 +28,24 @@ export const getEventManagerCandidates = unstable_cache(
   ["event-manager-candidates"],
   { tags: [EVENT_MANAGERS_CACHE_TAG] },
 );
+
+export const FLOOR_MANAGERS_CACHE_TAG = "floor-managers";
+
+// The "מנהל/ת פלור" dropdown: staff whose assigned role is literally named
+// "מנהל פלור" (an admin-managed role, same as bar/kitchen/barista roles),
+// rather than a separate boolean flag - simpler since this role doesn't
+// carry any other permission meaning.
+export const getFloorManagerCandidates = unstable_cache(
+  async (): Promise<StaffRow[]> => {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("staff")
+      .select("*, roles!inner(name)")
+      .eq("roles.name", "מנהל פלור")
+      .order("name")
+      .returns<StaffRow[]>();
+    return data ?? [];
+  },
+  ["floor-manager-candidates"],
+  { tags: [FLOOR_MANAGERS_CACHE_TAG] },
+);

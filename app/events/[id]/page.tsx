@@ -7,7 +7,7 @@ import { TrashIcon } from "@/components/icons";
 import { DateField } from "@/components/DateField";
 import { TimeField } from "@/components/TimeField";
 import { getCurrentStaff } from "@/lib/auth";
-import { getEventManagerCandidates } from "@/lib/staff";
+import { getEventManagerCandidates, getFloorManagerCandidates } from "@/lib/staff";
 import { canRead, canWrite } from "@/lib/permissions";
 import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
@@ -28,6 +28,7 @@ export default async function EventOverviewPage({
     { count: openTasks },
     { count: guestCount },
     managers,
+    floorManagers,
     { data: suppliers },
     { data: scheduleItems },
     currentStaff,
@@ -40,6 +41,7 @@ export default async function EventOverviewPage({
       .neq("status", "done"),
     supabase.from("guests").select("*", { count: "exact", head: true }).eq("event_id", id),
     getEventManagerCandidates(),
+    getFloorManagerCandidates(),
     supabase
       .from("event_suppliers")
       .select("*")
@@ -60,7 +62,7 @@ export default async function EventOverviewPage({
   if (!canReadEvents) return <NoPermissionNotice />;
 
   const managerName = managers?.find((manager) => manager.id === event?.manager_id)?.name ?? null;
-  const floorManagerName = managers?.find((manager) => manager.id === event?.floor_manager_id)?.name ?? null;
+  const floorManagerName = floorManagers?.find((manager) => manager.id === event?.floor_manager_id)?.name ?? null;
 
   async function saveDetails(formData: FormData) {
     "use server";
@@ -194,7 +196,7 @@ export default async function EventOverviewPage({
               <span className="font-medium">מנהל/ת פלור</span>
               <select name="floor_manager_id" defaultValue={event?.floor_manager_id ?? ""} className={inputClass}>
                 <option value="">ללא אחראי</option>
-                {managers?.map((manager) => (
+                {floorManagers?.map((manager) => (
                   <option key={manager.id} value={manager.id}>
                     {manager.name}
                   </option>
