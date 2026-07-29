@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText, parsePdfDraft, type PdfImportDraft } from "@/lib/pdfImport";
 import { getCurrentStaff } from "@/lib/auth";
-import { createCoupleMeetingTasks } from "@/lib/coupleMeetingTasks";
 import type { StaffRow } from "@/lib/types";
 
 export async function addManagerFromImport(name: string): Promise<StaffRow> {
@@ -89,8 +88,6 @@ export async function createEventFromPdfImport(
 
   if (error) throw new Error(error.message);
   const eventId = data.id as string;
-
-  await createCoupleMeetingTasks(eventId, managerId);
 
   // Never auto-generate a default schedule here, even when the PDF didn't
   // extract one - creating one automatically risked ending up with two

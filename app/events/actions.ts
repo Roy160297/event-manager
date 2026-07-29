@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
-import { createCoupleMeetingTasks } from "@/lib/coupleMeetingTasks";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
 import type { EventType } from "@/lib/types";
@@ -41,7 +40,6 @@ export async function createEvent(formData: FormData) {
   if (error) throw new Error(error.message);
 
   await applyDefaultSchedule(data.id, eventType, eventDate);
-  await createCoupleMeetingTasks(data.id, managerId);
 
   revalidatePath("/");
   redirect(`/events/${data.id}`);

@@ -25,12 +25,20 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
       `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום התאריך לשליחת דף ההנחיות לזוג במייל (3 ימים לפני הפגישה).`,
   },
   {
+    key: "meeting-day-arrival-confirmation",
+    anchor: "couple_meeting_date",
+    offsetDays: 0,
+    subject: "תזכורת: פגישת זוג היום",
+    body: (eventName, eventDate) =>
+      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום פגישת הזוג - יש לוודא הגעה בזמן לפגישה מול הזוג.`,
+  },
+  {
     key: "post-meeting-followup-tasks",
     anchor: "couple_meeting_date",
     offsetDays: 1,
     subject: "תזכורת: משימות לאחר פגישת הזוג",
     body: (eventName, eventDate) =>
-      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום יום אחרי פגישת הזוג - יש לוודא ביצוע המשימות הבאות:<ul><li>פתיחת קבוצת וואטסאפ עם הזוג.</li><li>שליחת הנקודות העיקריות מהפגישה, וכן נקודות להמשך, לקבוצה.</li><li>העלאת טופס אירוע (עד יום אחרי הפגישה).</li></ul>`,
+      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום יום אחרי פגישת הזוג - יש לוודא ביצוע המשימות הבאות:<ul><li>פתיחת קבוצת וואטסאפ עם הזוג.</li><li>שליחת הנקודות העיקריות מהפגישה, וכן נקודות להמשך, לקבוצה.</li><li>העלאת טופס אירוע (עד יום אחרי הפגישה).</li><li>הכנת סקיצה ראשונית ב-iPlan (לפי כמות ההתחייבות).</li></ul>`,
   },
   {
     key: "final-commitment-update",

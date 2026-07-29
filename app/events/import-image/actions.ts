@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { extractEventDraftFromImage, type ImageImportDraft } from "@/lib/imageImport";
 import { getCurrentStaff } from "@/lib/auth";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
-import { createCoupleMeetingTasks } from "@/lib/coupleMeetingTasks";
 import type { StaffRow } from "@/lib/types";
 
 export async function parseImageImport(
@@ -76,7 +75,6 @@ export async function createEventFromImageImport(
   const eventId = data.id as string;
 
   await applyDefaultSchedule(eventId, draft.event_type, draft.event_date);
-  await createCoupleMeetingTasks(eventId, managerId);
 
   revalidatePath("/");
   return { eventId };
