@@ -19,6 +19,7 @@ export function EventFormExport({
     ["שעת התחלה", formatTime(event.start_time)],
     ["שעת סיום", formatTime(event.end_time)],
     ["מספר אורחים - התחייבות", event.estimated_guests],
+    ["תאריך פגישת זוג", formatDate(event.couple_meeting_date)],
     ["מנהל/ת אירוע אחראי/ת", managerName],
     ["איש/ת מכירות", event.sales_person_name],
     ["שמות הורי הכלה", event.bride_parents_names],
