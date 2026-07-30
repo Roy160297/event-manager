@@ -100,6 +100,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
   const contactPhone = String(formData.get("contact_phone") ?? "").trim() || null;
   const contactPhone2 = String(formData.get("contact_phone_2") ?? "").trim() || null;
   const estimatedGuests = String(formData.get("estimated_guests") ?? "").trim() || null;
+  const kidsMealCount = String(formData.get("kids_meal_count") ?? "").trim() || null;
   const salesPersonId = String(formData.get("sales_person_id") ?? "").trim() || null;
   const brideParentsNames = String(formData.get("bride_parents_names") ?? "").trim() || null;
   const groomParentsNames = String(formData.get("groom_parents_names") ?? "").trim() || null;
@@ -127,6 +128,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
       contact_phone: contactPhone,
       contact_phone_2: contactPhone2,
       estimated_guests: estimatedGuests,
+      kids_meal_count: kidsMealCount,
       sales_person_id: salesPersonId,
       bride_parents_names: brideParentsNames,
       groom_parents_names: groomParentsNames,

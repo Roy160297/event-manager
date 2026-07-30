@@ -49,6 +49,7 @@ export interface EventRow {
   contact_phone: string | null;
   contact_phone_2: string | null;
   estimated_guests: string | null;
+  kids_meal_count: string | null;
   bride_name: string | null;
   groom_name: string | null;
   end_time: string | null;

@@ -22,8 +22,9 @@ export function EventFormExport({
   const fields: [string, string | number | null][] = [
     ["שעת התחלה", formatTime(event.start_time)],
     ["שעת סיום", formatTime(event.end_time)],
-    ["מספר אורחים - התחייבות", event.estimated_guests],
     ["תאריך פגישת זוג", formatDate(event.couple_meeting_date)],
+    ["מספר אורחים - התחייבות", event.estimated_guests],
+    ["מספר מנות ילדים", event.kids_meal_count],
     ["מנהל/ת אירוע אחראי/ת", managerName],
     ["מנהל/ת פלור", floorManagerName],
     ["איש/ת מכירות", salespersonName],

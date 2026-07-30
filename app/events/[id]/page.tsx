@@ -141,6 +141,11 @@ export default async function EventOverviewPage({
               </label>
 
               <label className={labelClass}>
+                <span className="font-medium">תאריך פגישת זוג</span>
+                <DateField name="couple_meeting_date" defaultValue={event?.couple_meeting_date ?? ""} />
+              </label>
+
+              <label className={labelClass}>
                 <span className="font-medium">מספר אורחים - התחייבות</span>
                 <input
                   type="text"
@@ -149,11 +154,6 @@ export default async function EventOverviewPage({
                   defaultValue={event?.estimated_guests ?? ""}
                   className={inputClass}
                 />
-              </label>
-
-              <label className={labelClass}>
-                <span className="font-medium">תאריך פגישת זוג</span>
-                <DateField name="couple_meeting_date" defaultValue={event?.couple_meeting_date ?? ""} />
               </label>
             </div>
 
@@ -166,6 +166,16 @@ export default async function EventOverviewPage({
               <label className={labelClass}>
                 <span className="font-medium">שעת סיום</span>
                 <TimeField name="end_time" defaultValue={event?.end_time ?? ""} />
+              </label>
+
+              <label className={labelClass}>
+                <span className="font-medium">מספר מנות ילדים</span>
+                <input
+                  type="text"
+                  name="kids_meal_count"
+                  defaultValue={event?.kids_meal_count ?? ""}
+                  className={inputClass}
+                />
               </label>
             </div>
 
@@ -266,10 +276,11 @@ export default async function EventOverviewPage({
                 ["שם הלקוח / הזוג", event?.name ?? null],
                 ["סוג האירוע", event ? EVENT_TYPE_LABELS[event.event_type] : null],
                 ["תאריך", event ? formatDate(event.event_date) : null],
-                ["מספר אורחים - התחייבות", event?.estimated_guests ?? null],
                 ["תאריך פגישת זוג", event ? formatDate(event.couple_meeting_date) : null],
+                ["מספר אורחים - התחייבות", event?.estimated_guests ?? null],
                 ["שעת התחלה", event ? formatTime(event.start_time) : null],
                 ["שעת סיום", event ? formatTime(event.end_time) : null],
+                ["מספר מנות ילדים", event?.kids_meal_count ?? null],
                 ["אימייל 1", event?.contact_email ?? null],
                 ["טלפון 1", event?.contact_phone ?? null],
                 ["אימייל 2", event?.contact_email_2 ?? null],
