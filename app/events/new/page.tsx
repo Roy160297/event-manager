@@ -1,3 +1,5 @@
+"use client";
+
 import { createEvent } from "@/app/events/actions";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
 import type { EventType } from "@/lib/types";
