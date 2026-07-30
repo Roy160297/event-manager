@@ -10,14 +10,15 @@ export async function assertNoDuplicateEventDate(
 ) {
   let query = supabase
     .from("events")
-    .select("id", { count: "exact", head: true })
+    .select("name")
     .eq("event_date", eventDate)
-    .is("deleted_at", null);
+    .is("deleted_at", null)
+    .limit(1);
   if (excludeEventId) query = query.neq("id", excludeEventId);
 
-  const { count, error } = await query;
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
-  if ((count ?? 0) > 0) {
-    throw new Error("כבר קיים אירוע בתאריך זה.");
+  if (data && data.length > 0) {
+    throw new Error(`כבר קיים אירוע בתאריך זה. - ${data[0].name}`);
   }
 }

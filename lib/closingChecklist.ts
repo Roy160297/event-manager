@@ -114,7 +114,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
     label: "משרדים",
     items: [
       { key: "office-kitchen-dishes", text: "פינוי כלים ממטבח המשרדים + ניקיון הכיור." },
-      { key: "office-ac-off", text: "לכבות את המזגנים." },
+      { key: "office-ac-off", text: "לכבות אורות (שני מתגים) ומזגנים." },
       {
         key: "office-hostess-equipment",
         text: "לוודא שהדברים מעמדת המארחות חזרו: 2 אייפדים, 2 קאונטרים, 2 מטענים.",
