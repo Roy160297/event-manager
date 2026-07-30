@@ -8,12 +8,14 @@ export function EventFormExport({
   event,
   managerName,
   floorManagerName,
+  salespersonName,
   suppliers,
   scheduleItems,
 }: {
   event: EventRow;
   managerName: string | null;
   floorManagerName: string | null;
+  salespersonName: string | null;
   suppliers: EventSupplierRow[];
   scheduleItems: Pick<TimelineItemRow, "label" | "approx_time" | "notes">[];
 }) {
@@ -24,7 +26,7 @@ export function EventFormExport({
     ["תאריך פגישת זוג", formatDate(event.couple_meeting_date)],
     ["מנהל/ת אירוע אחראי/ת", managerName],
     ["מנהל/ת פלור", floorManagerName],
-    ["איש/ת מכירות", event.sales_person_name],
+    ["איש/ת מכירות", salespersonName],
     ["שמות הורי הכלה", event.bride_parents_names],
     ["שמות הורי החתן", event.groom_parents_names],
     ["אימייל 1", event.contact_email],

@@ -7,7 +7,7 @@ import { TrashIcon } from "@/components/icons";
 import { DateField } from "@/components/DateField";
 import { TimeField } from "@/components/TimeField";
 import { getCurrentStaff } from "@/lib/auth";
-import { getEventManagerCandidates, getFloorManagerCandidates } from "@/lib/staff";
+import { getEventManagerCandidates, getFloorManagerCandidates, getSalespersonCandidates } from "@/lib/staff";
 import { canRead, canWrite } from "@/lib/permissions";
 import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
@@ -29,6 +29,7 @@ export default async function EventOverviewPage({
     { count: guestCount },
     managers,
     floorManagers,
+    salespeople,
     { data: suppliers },
     { data: scheduleItems },
     currentStaff,
@@ -42,6 +43,7 @@ export default async function EventOverviewPage({
     supabase.from("guests").select("*", { count: "exact", head: true }).eq("event_id", id),
     getEventManagerCandidates(),
     getFloorManagerCandidates(),
+    getSalespersonCandidates(),
     supabase
       .from("event_suppliers")
       .select("*")
@@ -63,6 +65,7 @@ export default async function EventOverviewPage({
 
   const managerName = managers?.find((manager) => manager.id === event?.manager_id)?.name ?? null;
   const floorManagerName = floorManagers?.find((manager) => manager.id === event?.floor_manager_id)?.name ?? null;
+  const salespersonName = salespeople?.find((person) => person.id === event?.sales_person_id)?.name ?? null;
 
   async function saveDetails(formData: FormData) {
     "use server";
@@ -95,6 +98,7 @@ export default async function EventOverviewPage({
           event={event}
           managerName={managerName}
           floorManagerName={floorManagerName}
+          salespersonName={salespersonName}
           suppliers={suppliers ?? []}
           scheduleItems={scheduleItems ?? []}
         />
@@ -206,7 +210,14 @@ export default async function EventOverviewPage({
 
             <label className={labelClass}>
               <span className="font-medium">איש/ת מכירות</span>
-              <input name="sales_person_name" defaultValue={event?.sales_person_name ?? ""} className={inputClass} />
+              <select name="sales_person_id" defaultValue={event?.sales_person_id ?? ""} className={inputClass}>
+                <option value="">ללא אחראי</option>
+                {salespeople?.map((person) => (
+                  <option key={person.id} value={person.id}>
+                    {person.name}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label className={labelClass}>
@@ -256,7 +267,7 @@ export default async function EventOverviewPage({
                 ["טלפון 2", event?.contact_phone_2 ?? null],
                 ["מנהל/ת אירוע אחראי/ת", managerName],
                 ["מנהל/ת פלור", floorManagerName],
-                ["איש/ת מכירות", event?.sales_person_name ?? null],
+                ["איש/ת מכירות", salespersonName],
                 ["שמות הורי הכלה", event?.bride_parents_names ?? null],
                 ["שמות הורי החתן", event?.groom_parents_names ?? null],
               ] as [string, string | null][]

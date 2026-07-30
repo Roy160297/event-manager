@@ -7,6 +7,7 @@ import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
+import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
 import type { EventType } from "@/lib/types";
@@ -42,6 +43,7 @@ export async function createEvent(formData: FormData) {
   if (error) throw new Error(error.message);
 
   await applyDefaultSchedule(data.id, eventType, eventDate);
+  await checkRemindersForEvent(data.id);
 
   revalidatePath("/");
   redirect(`/events/${data.id}`);
@@ -89,7 +91,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
   const contactPhone = String(formData.get("contact_phone") ?? "").trim() || null;
   const contactPhone2 = String(formData.get("contact_phone_2") ?? "").trim() || null;
   const estimatedGuests = String(formData.get("estimated_guests") ?? "").trim() || null;
-  const salesPersonName = String(formData.get("sales_person_name") ?? "").trim() || null;
+  const salesPersonId = String(formData.get("sales_person_id") ?? "").trim() || null;
   const brideParentsNames = String(formData.get("bride_parents_names") ?? "").trim() || null;
   const groomParentsNames = String(formData.get("groom_parents_names") ?? "").trim() || null;
   const menuNotes = String(formData.get("menu_notes") ?? "").trim() || null;
@@ -116,7 +118,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
       contact_phone: contactPhone,
       contact_phone_2: contactPhone2,
       estimated_guests: estimatedGuests,
-      sales_person_name: salesPersonName,
+      sales_person_id: salesPersonId,
       bride_parents_names: brideParentsNames,
       groom_parents_names: groomParentsNames,
       menu_notes: menuNotes,
@@ -125,6 +127,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
     .eq("id", eventId);
 
   if (error) throw new Error(error.message);
+  await checkRemindersForEvent(eventId);
 
   revalidatePath("/");
   revalidatePath(`/events/${eventId}`);
@@ -170,7 +173,6 @@ export async function updateEventSummaryReport(eventId: string, formData: FormDa
       restroom_cleaner_hours: text("restroom_cleaner_hours"),
       kitchen_dishwasher_hours: text("kitchen_dishwasher_hours"),
       dishwasher_hours: text("dishwasher_hours"),
-      photographer_contact: text("photographer_contact"),
     })
     .eq("id", eventId);
 

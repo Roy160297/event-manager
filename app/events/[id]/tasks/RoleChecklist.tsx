@@ -5,6 +5,7 @@ import type { ClosingChecklistCategory } from "@/lib/closingChecklist";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
+import { ChecklistPhotos, type ChecklistPhoto } from "@/components/ChecklistPhotos";
 import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
 import { ChecklistCosignBlock } from "@/components/ChecklistCosignBlock";
 import type { EventType } from "@/lib/types";
@@ -39,6 +40,7 @@ export default function RoleChecklist({
   managerSignedByName,
   managerSignedAt,
   managerSignatureData,
+  photos,
 }: {
   checklistKey: string;
   title: string;
@@ -63,6 +65,7 @@ export default function RoleChecklist({
   managerSignedByName?: string | null;
   managerSignedAt?: string | null;
   managerSignatureData?: string | null;
+  photos: ChecklistPhoto[];
 }) {
   // e.g. "צ'קליסט סגירה - מנהל פלור" -> "מנהל פלור" - shown as the signer's
   // role/title under their signature, instead of a generic "נחתם על ידי".
@@ -173,6 +176,7 @@ export default function RoleChecklist({
             checked={checked}
             note={noteLabel ? note : null}
             noteLabel={noteLabel}
+            photoUrls={photos.map((photo) => photo.url)}
           />
         </PdfExportButton>
 
@@ -230,6 +234,8 @@ export default function RoleChecklist({
             )}
           </div>
         )}
+
+        <ChecklistPhotos eventId={eventId} checklistKey={checklistKey} photos={photos} canEdit={canEditNow} />
 
         <div className="border-t border-border-classic pt-3">
           <ChecklistSignBlock

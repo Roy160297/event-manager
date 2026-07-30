@@ -26,7 +26,6 @@ export type PermissionResource =
   | "admin"
   | "floor_manager_checklist"
   | "bar_checklist"
-  | "kitchen_checklist"
   | "barista_checklist"
   | "couple_meeting"
   | "event_management_dex"
@@ -44,6 +43,7 @@ export interface EventRow {
   start_time: string | null;
   manager_id: string | null;
   floor_manager_id: string | null;
+  sales_person_id: string | null;
   contact_email: string | null;
   contact_email_2: string | null;
   contact_phone: string | null;
@@ -81,7 +81,6 @@ export interface EventRow {
   restroom_cleaner_hours: string | null;
   kitchen_dishwasher_hours: string | null;
   dishwasher_hours: string | null;
-  photographer_contact: string | null;
   created_at: string;
 }
 
@@ -128,6 +127,14 @@ export interface TaskRow {
   due_date: string | null;
   status: TaskStatus;
   priority: TaskPriority;
+  created_at: string;
+}
+
+export interface ChecklistPhotoRow {
+  id: string;
+  event_id: string;
+  checklist_key: string;
+  storage_path: string;
   created_at: string;
 }
 

@@ -28,13 +28,12 @@ export function EventSummaryReportPrintable({
     ["מנהל פלור", event.floor_manager_name],
     ["כמות מלצרים", event.waiter_count],
     ["כמות טבחים", event.cook_count],
-    ["כמות שוטפי מטבח", event.kitchen_dishwasher_count],
+    ["כמות מנקי מטבח", event.kitchen_dishwasher_count],
     ["כמות שוטפי כלים", event.dishwasher_count],
     ["שעות מנקה אולם", event.hall_cleaner_hours],
     ["שעות מנקה שירותים", event.restroom_cleaner_hours],
-    ["שעות שוטפי מטבח", event.kitchen_dishwasher_hours],
+    ["שעות מנקי מטבח", event.kitchen_dishwasher_hours],
     ["שעות שוטפי כלים", event.dishwasher_hours],
-    ["צלם וטלפון", event.photographer_contact],
   ];
 
   return (

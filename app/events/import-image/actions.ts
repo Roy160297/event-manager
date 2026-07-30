@@ -6,6 +6,7 @@ import { extractEventDraftFromImage, type ImageImportDraft } from "@/lib/imageIm
 import { getCurrentStaff } from "@/lib/auth";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
+import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import type { StaffRow } from "@/lib/types";
 
 export async function parseImageImport(
@@ -77,6 +78,7 @@ export async function createEventFromImageImport(
   const eventId = data.id as string;
 
   await applyDefaultSchedule(eventId, draft.event_type, draft.event_date);
+  await checkRemindersForEvent(eventId);
 
   revalidatePath("/");
   return { eventId };

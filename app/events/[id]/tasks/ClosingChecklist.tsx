@@ -5,6 +5,7 @@ import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
+import { ChecklistPhotos, type ChecklistPhoto } from "@/components/ChecklistPhotos";
 import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
 import type { EventType } from "@/lib/types";
 import {
@@ -31,6 +32,7 @@ export default function ClosingChecklist({
   signedAt,
   signatureData,
   currentStaffName,
+  photos,
 }: {
   eventId: string;
   eventName: string;
@@ -45,6 +47,7 @@ export default function ClosingChecklist({
   signedAt?: string | null;
   signatureData?: string | null;
   currentStaffName?: string | null;
+  photos: ChecklistPhoto[];
 }) {
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
@@ -155,6 +158,7 @@ export default function ClosingChecklist({
             note={note}
             noteLabel="הערות"
             showCategoryLabels
+            photoUrls={photos.map((photo) => photo.url)}
           />
         </PdfExportButton>
 
@@ -211,6 +215,8 @@ export default function ClosingChecklist({
             </div>
           )}
         </div>
+
+        <ChecklistPhotos eventId={eventId} checklistKey="closing_checklist" photos={photos} canEdit={canEditNow} />
 
         <div className="border-t border-border-classic pt-3">
           <ChecklistSignBlock

@@ -1,10 +1,12 @@
 import type { ClosingChecklistCategory } from "@/lib/closingChecklist";
 import type { PermissionResource } from "@/lib/types";
 
-// Four more of the venue's paper closing checklists, each signed by a
-// different role (Floor Manager, Bar Manager, Cook, Barista), separate from
+// Three more of the venue's paper closing checklists, each signed by a
+// different role (Floor Manager, Bar Manager, Barista), separate from
 // the event-manager one in lib/closingChecklist.ts. Each is a single flat
 // category since the paper sheets aren't subdivided like the general one.
+// (The kitchen checklist that used to live here was removed - its ground
+// is covered by the general checklist's own kitchen-related items.)
 export interface RoleChecklistDefinition {
   key: PermissionResource;
   label: string;
@@ -93,32 +95,6 @@ export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
             key: "bar-glasses-removal",
             text: "פינוי כל הכוסות מהברים במידה ואין אירוע עד 3 ימים אחרי.",
           },
-        ],
-      },
-    ],
-  },
-  {
-    key: "kitchen_checklist",
-    label: "צ'קליסט סגירה - מטבח",
-    noteLabel: "הערות",
-    categories: [
-      {
-        key: "kitchen",
-        label: "צ'קליסט סגירה - מטבח",
-        items: [
-          { key: "kitchen-ovens-off", text: "כיבוי תנורים + פלנצות + ציפסרים." },
-          { key: "kitchen-gas-valve", text: "סגירת ברז גז ראשי." },
-          { key: "kitchen-warming-cabinets-off", text: "כיבוי ארונות חימום." },
-          { key: "kitchen-drainage-channels", text: "ניקיון תעלות ניקוז." },
-          { key: "kitchen-floor-cleaning", text: "ניקיון ושטיפת רצפה." },
-          { key: "kitchen-carts", text: "פינוי עגלות, גדולות וקטנות." },
-          { key: "kitchen-equipment", text: "פינוי ציודים שקשורים למטבח." },
-          { key: "kitchen-fridges", text: "ריקון מקררים וניקיונם." },
-          {
-            key: "kitchen-general-cleaning",
-            text: "ניקיון כללי - מקררים, מנדפים, ארונות, מדפים, שולחנות, ארונות עליונים ומדפים תחתונים.",
-          },
-          { key: "kitchen-full-wash", text: "שטיפת מטבח מלאה." },
         ],
       },
     ],

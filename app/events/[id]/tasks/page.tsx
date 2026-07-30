@@ -23,7 +23,7 @@ import {
   formatDate,
   formatTime,
 } from "@/lib/labels";
-import type { ChecklistSignatureRow, EventRow, StaffRow, TaskRow, TaskStatus } from "@/lib/types";
+import type { ChecklistPhotoRow, ChecklistSignatureRow, EventRow, StaffRow, TaskRow, TaskStatus } from "@/lib/types";
 import { DateField } from "@/components/DateField";
 import { TimeField } from "@/components/TimeField";
 
@@ -44,6 +44,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     { data: roleChecklistChecks },
     { data: roleChecklistNotes },
     { data: checklistSignatures },
+    { data: checklistPhotos },
     currentStaff,
   ] = await Promise.all([
     supabase
@@ -77,11 +78,27 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       .select("*")
       .eq("event_id", eventId)
       .returns<ChecklistSignatureRow[]>(),
+    supabase
+      .from("checklist_photos")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: true })
+      .returns<ChecklistPhotoRow[]>(),
     getCurrentStaff(),
   ]);
 
   function signatureFor(checklistKey: string) {
     return checklistSignatures?.find((row) => row.checklist_key === checklistKey) ?? null;
+  }
+
+  function photosFor(checklistKey: string) {
+    return (checklistPhotos ?? [])
+      .filter((row) => row.checklist_key === checklistKey)
+      .map((row) => ({
+        id: row.id,
+        storagePath: row.storage_path,
+        url: supabase.storage.from("checklist-photos").getPublicUrl(row.storage_path).data.publicUrl,
+      }));
   }
 
   const canReadChecklist = !!currentStaff && canRead(currentStaff.permissions, "closing_checklist");
@@ -116,13 +133,12 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     ["מנהל פלור", event?.floor_manager_name ?? null],
     ["כמות מלצרים", event?.waiter_count ?? null],
     ["כמות טבחים", event?.cook_count ?? null],
-    ["כמות שוטפי מטבח", event?.kitchen_dishwasher_count ?? null],
+    ["כמות מנקי מטבח", event?.kitchen_dishwasher_count ?? null],
     ["כמות שוטפי כלים", event?.dishwasher_count ?? null],
     ["שעות מנקה אולם", event?.hall_cleaner_hours ?? null],
     ["שעות מנקה שירותים", event?.restroom_cleaner_hours ?? null],
-    ["שעות שוטפי מטבח", event?.kitchen_dishwasher_hours ?? null],
+    ["שעות מנקי מטבח", event?.kitchen_dishwasher_hours ?? null],
     ["שעות שוטפי כלים", event?.dishwasher_hours ?? null],
-    ["צלם וטלפון", event?.photographer_contact ?? null],
   ];
 
   async function addTask(formData: FormData) {
@@ -230,6 +246,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           signedAt={closingChecklistSignature?.signed_at}
           signatureData={closingChecklistSignature?.signature_data}
           currentStaffName={currentStaff?.name}
+          photos={photosFor("closing_checklist")}
         />
       )}
 
@@ -260,6 +277,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               managerSignedByName={signature?.manager_signed_by_name}
               managerSignedAt={signature?.manager_signed_at}
               managerSignatureData={signature?.manager_signature_data}
+              photos={photosFor(definition.key)}
             />
           );
         },
@@ -399,7 +417,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 />
               </label>
               <label className={reportLabelClass}>
-                <span>כמות שוטפי מטבח</span>
+                <span>כמות מנקי מטבח</span>
                 <input
                   type="number"
                   min={0}
@@ -437,7 +455,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 />
               </label>
               <label className={reportLabelClass}>
-                <span>שעות שוטפי מטבח</span>
+                <span>שעות מנקי מטבח</span>
                 <input
                   name="kitchen_dishwasher_hours"
                   placeholder="לדוגמה: 15-3"
@@ -451,14 +469,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                   name="dishwasher_hours"
                   placeholder="לדוגמה: 18-3:15"
                   defaultValue={event?.dishwasher_hours ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>צלם וטלפון</span>
-                <input
-                  name="photographer_contact"
-                  defaultValue={event?.photographer_contact ?? ""}
                   className={inputClass}
                 />
               </label>

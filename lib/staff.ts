@@ -49,3 +49,22 @@ export const getFloorManagerCandidates = unstable_cache(
   ["floor-manager-candidates"],
   { tags: [FLOOR_MANAGERS_CACHE_TAG] },
 );
+
+export const SALESPEOPLE_CACHE_TAG = "salespeople";
+
+// The "איש/ת מכירות" dropdown: same role-name-matching pattern as floor
+// manager, matching staff whose assigned role is named "איש/ת מכירות".
+export const getSalespersonCandidates = unstable_cache(
+  async (): Promise<StaffRow[]> => {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("staff")
+      .select("*, roles!inner(name)")
+      .eq("roles.name", "איש/ת מכירות")
+      .order("name")
+      .returns<StaffRow[]>();
+    return data ?? [];
+  },
+  ["salesperson-candidates"],
+  { tags: [SALESPEOPLE_CACHE_TAG] },
+);

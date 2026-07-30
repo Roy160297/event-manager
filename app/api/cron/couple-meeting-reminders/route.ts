@@ -1,6 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendReminderEmail } from "@/lib/reminderEmail";
-import { COUPLE_MEETING_REMINDER_RULES, addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
+import { sendDueReminders } from "@/lib/reminderRunner";
 import type { EventRow, StaffRow } from "@/lib/types";
 
 type EventWithManager = EventRow & { staff: Pick<StaffRow, "email"> | null };
@@ -8,6 +7,10 @@ type EventWithManager = EventRow & { staff: Pick<StaffRow, "email"> | null };
 // Triggered daily by Vercel Cron (see vercel.json) - runs with no logged-in
 // user/session, so it needs the service-role admin client (RLS has nothing
 // to authenticate against here) rather than the normal cookie-based one.
+// This is the backstop for reminders: creating/saving an event also checks
+// immediately (see lib/reminderRunner.ts's checkRemindersForEvent), but this
+// daily sweep still catches the "day before"/"week before" rules that anchor
+// on event_date and become due long after the event was created.
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");
@@ -27,39 +30,13 @@ export async function GET(request: Request) {
       return Response.json({ error: error.message }, { status: 500 });
     }
 
-    const today = todayInIsrael();
     let sent = 0;
     let skippedAlreadySent = 0;
 
     for (const event of events ?? []) {
-      const managerEmail = event.staff?.email;
-      if (!managerEmail) continue;
-
-      for (const rule of COUPLE_MEETING_REMINDER_RULES) {
-        const anchorDate = rule.anchor === "couple_meeting_date" ? event.couple_meeting_date : event.event_date;
-        if (!anchorDate) continue;
-        if (addDaysToDate(anchorDate, rule.offsetDays) !== today) continue;
-
-        // Claim this (event, rule, day) before sending - the unique
-        // constraint on reminder_log makes this atomic, so a second trigger
-        // the same day (manual check + schedule, a retry, etc) can't
-        // double-send even if it races this one.
-        const { error: claimError } = await supabase
-          .from("reminder_log")
-          .insert({ event_id: event.id, rule_key: rule.key, sent_date: today });
-
-        if (claimError) {
-          if (claimError.code === "23505") skippedAlreadySent++;
-          continue;
-        }
-
-        await sendReminderEmail({
-          to: managerEmail,
-          subject: rule.subject,
-          bodyText: rule.body(event.name, event.event_date),
-        });
-        sent++;
-      }
+      const result = await sendDueReminders(supabase, event, event.staff?.email);
+      sent += result.sent;
+      skippedAlreadySent += result.skippedAlreadySent;
     }
 
     return Response.json({ ok: true, sent, skippedAlreadySent });

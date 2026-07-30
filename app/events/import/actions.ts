@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { extractPdfText, parsePdfDraft, type PdfImportDraft } from "@/lib/pdfImport";
 import { getCurrentStaff } from "@/lib/auth";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
+import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import type { StaffRow } from "@/lib/types";
 
 export async function addManagerFromImport(name: string): Promise<StaffRow> {
@@ -120,6 +121,8 @@ export async function createEventFromPdfImport(
     const { error: supErr } = await supabase.from("event_suppliers").insert(rows);
     if (supErr) throw new Error(supErr.message);
   }
+
+  await checkRemindersForEvent(eventId);
 
   revalidatePath("/");
   return { eventId };

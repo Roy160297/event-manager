@@ -205,6 +205,42 @@ export async function unsignChecklist(eventId: string, checklistKey: string) {
   revalidatePath(`/events/${eventId}/tasks`);
 }
 
+const CHECKLIST_PHOTOS_BUCKET = "checklist-photos";
+const VALID_PHOTO_CHECKLIST_KEYS = new Set(["closing_checklist", ...Object.keys(ROLE_CHECKLIST_KEYS)]);
+
+export async function uploadChecklistPhoto(eventId: string, checklistKey: string, formData: FormData) {
+  if (!VALID_PHOTO_CHECKLIST_KEYS.has(checklistKey)) throw new Error("צ'קליסט לא מוכר");
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) throw new Error("יש לבחור תמונה");
+
+  const supabase = await createClient();
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${eventId}/${checklistKey}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const { error: uploadError } = await supabase.storage
+    .from(CHECKLIST_PHOTOS_BUCKET)
+    .upload(path, buffer, { contentType: file.type || undefined });
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { error } = await supabase
+    .from("checklist_photos")
+    .insert({ event_id: eventId, checklist_key: checklistKey, storage_path: path });
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
+export async function deleteChecklistPhoto(eventId: string, photoId: string, storagePath: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("checklist_photos").delete().eq("id", photoId);
+  if (error) throw new Error(error.message);
+
+  await supabase.storage.from(CHECKLIST_PHOTOS_BUCKET).remove([storagePath]);
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
 // Second signature on top of the role holder's own, for the 4 role
 // checklists: the event manager reviews and co-signs after the role holder
 // has already filled in and signed. Requires an existing signed row (RLS

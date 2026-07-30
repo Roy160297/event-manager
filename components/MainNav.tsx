@@ -14,17 +14,20 @@ export function MainNav({
   showCoupleMeeting = false,
   showEventManagementDex = false,
   showMyTasks = false,
+  showChecklistNotes = false,
 }: {
   showAdmin?: boolean;
   showCoupleMeeting?: boolean;
   showEventManagementDex?: boolean;
   showMyTasks?: boolean;
+  showChecklistNotes?: boolean;
 }) {
   const pathname = usePathname();
   const extraLinks = [];
   if (showMyTasks) extraLinks.push({ href: "/my-tasks", label: "המשימות שלי" });
+  if (showChecklistNotes) extraLinks.push({ href: "/checklist-notes", label: "הערות וסיכומים" });
   if (showCoupleMeeting) extraLinks.push({ href: "/couple-meeting", label: "פגישה עם זוג" });
-  if (showEventManagementDex) extraLinks.push({ href: "/event-management-dex", label: "ניהול אירוע (Dex)" });
+  if (showEventManagementDex) extraLinks.push({ href: "/event-management-dex", label: 'ניהול אירוע סד"פ' });
 
   let links = [...NAV_LINKS.slice(0, 2), ...extraLinks, ...NAV_LINKS.slice(2)];
   if (showAdmin) links = [...links, { href: "/admin", label: "ניהול" }];
