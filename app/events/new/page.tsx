@@ -9,7 +9,11 @@ export default function NewEventPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="font-serif text-2xl font-bold">אירוע חדש</h1>
-      <form action={createEvent} className="flex max-w-md flex-col gap-4">
+      <form
+        action={createEvent}
+        onReset={(e) => e.preventDefault()}
+        className="flex max-w-md flex-col gap-4"
+      >
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">שם הלקוח / הזוג</span>
           <input

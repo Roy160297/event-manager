@@ -43,7 +43,19 @@ export function SaveDetailsForm({
   }, [savedCount, closeDetailsOnSave]);
 
   return (
-    <form ref={formRef} action={formAction} className={className}>
+    <form
+      ref={formRef}
+      action={formAction}
+      // React 19 form actions call the form's native reset() on every
+      // submit (see requestFormReset in react-dom). Our custom select-based
+      // DateField/TimeField pickers have no HTML `selected` attribute on any
+      // <option>, so a native reset snaps them to the first option (e.g.
+      // 01/01 and year-3, or 00:00) instead of leaving the real value alone.
+      // Cancelling the reset event stops this entirely - these are all
+      // edit-and-save forms, never "clear after submit" forms.
+      onReset={(e) => e.preventDefault()}
+      className={className}
+    >
       {children}
       {showToast && (
         <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground shadow-lg">

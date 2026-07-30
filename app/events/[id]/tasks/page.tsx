@@ -50,6 +50,9 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       .from("tasks")
       .select("*, staff(name)")
       .eq("event_id", eventId)
+      // Open tasks above done ones ("open" > "done" alphabetically, so
+      // descending puts open first), due date breaks ties within each group.
+      .order("status", { ascending: false })
       .order("due_date", { ascending: true, nullsFirst: false })
       .returns<TaskWithAssignee[]>(),
     supabase

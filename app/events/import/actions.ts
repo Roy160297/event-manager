@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText, parsePdfDraft, type PdfImportDraft } from "@/lib/pdfImport";
 import { getCurrentStaff } from "@/lib/auth";
+import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import type { StaffRow } from "@/lib/types";
 
 export async function addManagerFromImport(name: string): Promise<StaffRow> {
@@ -49,6 +50,7 @@ export async function createEventFromPdfImport(
   if (!name || !draft.event_type || !draft.event_date) {
     throw new Error("שם, סוג אירוע ותאריך הם שדות חובה");
   }
+  await assertNoDuplicateEventDate(supabase, draft.event_date);
 
   let managerId = draft.manager_id;
   if (!managerId) {

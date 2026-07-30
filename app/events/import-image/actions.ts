@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { extractEventDraftFromImage, type ImageImportDraft } from "@/lib/imageImport";
 import { getCurrentStaff } from "@/lib/auth";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
+import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import type { StaffRow } from "@/lib/types";
 
 export async function parseImageImport(
@@ -42,6 +43,7 @@ export async function createEventFromImageImport(
   if (!name || !draft.event_type || !draft.event_date) {
     throw new Error("שם, סוג אירוע ותאריך הם שדות חובה");
   }
+  await assertNoDuplicateEventDate(supabase, draft.event_date);
 
   let managerId = draft.manager_id;
   if (!managerId) {

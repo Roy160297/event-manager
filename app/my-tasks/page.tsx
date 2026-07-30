@@ -3,18 +3,23 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
-import { updateTaskStatus } from "@/app/events/[id]/tasks/actions";
+import { SaveDetailsForm } from "@/components/SaveDetailsForm";
+import { DateField } from "@/components/DateField";
+import { updateTask, updateTaskStatus } from "@/app/events/[id]/tasks/actions";
 import {
   EVENT_TYPE_LABELS,
   TASK_PRIORITY_COLORS,
   TASK_PRIORITY_LABELS,
   formatDate,
 } from "@/lib/labels";
-import type { EventType, TaskRow } from "@/lib/types";
+import type { EventType, TaskPriority, TaskRow } from "@/lib/types";
 
 type TaskWithEvent = TaskRow & {
   events: { name: string; event_type: EventType; event_date: string } | null;
 };
+
+const PRIORITIES = Object.keys(TASK_PRIORITY_LABELS) as TaskPriority[];
+const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2 text-sm";
 
 export default async function MyTasksPage() {
   const currentStaff = await getCurrentStaff();
@@ -56,39 +61,79 @@ export default async function MyTasksPage() {
             await updateTaskStatus(task.event_id, task.id, "done");
           }
 
+          async function saveEdit(formData: FormData) {
+            "use server";
+            formData.set("assignee_id", task.assignee_id ?? "");
+            await updateTask(task.event_id, task.id, formData);
+          }
+
           return (
             <li
               key={task.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-classic bg-surface p-4"
+              className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
             >
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{task.title}</p>
-                {task.description && <p className="text-sm text-foreground/70">{task.description}</p>}
-                <p className="mt-1 text-sm text-foreground/60">
-                  <Link href={`/events/${task.event_id}`} className="text-accent hover:underline">
-                    {task.events?.name ?? "אירוע"}
-                  </Link>
-                  {task.events && ` · ${EVENT_TYPE_LABELS[task.events.event_type]} · ${formatDate(task.events.event_date)}`}
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TASK_PRIORITY_COLORS[task.priority]}`}>
-                    עדיפות {TASK_PRIORITY_LABELS[task.priority]}
-                  </span>
-                  <span className={`text-xs ${isOverdue ? "font-medium text-red-600" : "text-foreground/60"}`}>
-                    יעד: {formatDate(task.due_date)}
-                    {isOverdue && " (באיחור)"}
-                  </span>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{task.title}</p>
+                  {task.description && <p className="text-sm text-foreground/70">{task.description}</p>}
+                  <p className="mt-1 text-sm text-foreground/60">
+                    <Link href={`/events/${task.event_id}`} className="text-accent hover:underline">
+                      {task.events?.name ?? "אירוע"}
+                    </Link>
+                    {task.events && ` · ${EVENT_TYPE_LABELS[task.events.event_type]} · ${formatDate(task.events.event_date)}`}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TASK_PRIORITY_COLORS[task.priority]}`}>
+                      עדיפות {TASK_PRIORITY_LABELS[task.priority]}
+                    </span>
+                    <span className={`text-xs ${isOverdue ? "font-medium text-red-600" : "text-foreground/60"}`}>
+                      יעד: {formatDate(task.due_date)}
+                      {isOverdue && " (באיחור)"}
+                    </span>
+                  </div>
                 </div>
+
+                <form action={markDone}>
+                  <button
+                    type="submit"
+                    className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
+                  >
+                    סמן כהושלם
+                  </button>
+                </form>
               </div>
 
-              <form action={markDone}>
-                <button
-                  type="submit"
-                  className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
-                >
-                  סמן כהושלם
-                </button>
-              </form>
+              <details className="border-t border-border-classic pt-2">
+                <summary className="cursor-pointer text-xs font-medium text-accent">ערוך משימה</summary>
+                <SaveDetailsForm action={saveEdit} closeDetailsOnSave className="mt-2 grid gap-2 sm:grid-cols-2">
+                  <input
+                    name="title"
+                    defaultValue={task.title}
+                    required
+                    className={`${inputClass} sm:col-span-2`}
+                  />
+                  <textarea
+                    name="description"
+                    defaultValue={task.description ?? ""}
+                    rows={1}
+                    className={`${inputClass} sm:col-span-2`}
+                  />
+                  <select name="priority" defaultValue={task.priority} className={inputClass}>
+                    {PRIORITIES.map((priority) => (
+                      <option key={priority} value={priority}>
+                        עדיפות {TASK_PRIORITY_LABELS[priority]}
+                      </option>
+                    ))}
+                  </select>
+                  <DateField name="due_date" defaultValue={task.due_date ?? ""} />
+                  <button
+                    type="submit"
+                    className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft sm:col-span-2"
+                  >
+                    שמור שינויים
+                  </button>
+                </SaveDetailsForm>
+              </details>
             </li>
           );
         })}

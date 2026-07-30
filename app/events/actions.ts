@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
+import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
 import type { EventType } from "@/lib/types";
@@ -21,6 +22,7 @@ export async function createEvent(formData: FormData) {
   if (!name || !eventType || !eventDate) {
     throw new Error("שם הלקוח, סוג האירוע ותאריך הם שדות חובה");
   }
+  await assertNoDuplicateEventDate(supabase, eventDate);
 
   const managerId = currentStaff?.id ?? null;
 
@@ -96,6 +98,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
   if (!name || !eventType || !eventDate) {
     throw new Error("שם הלקוח, סוג האירוע ותאריך הם שדות חובה");
   }
+  await assertNoDuplicateEventDate(supabase, eventDate, eventId);
 
   const { error } = await supabase
     .from("events")
