@@ -1,6 +1,12 @@
 "use client";
 
+import { unstable_rethrow } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
+
+interface SaveState {
+  count: number;
+  error: string | null;
+}
 
 export function SaveDetailsForm({
   action,
@@ -21,14 +27,29 @@ export function SaveDetailsForm({
   closeDetailsOnSave?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [savedCount, formAction] = useActionState(async (prevCount: number, formData: FormData) => {
-    await action(formData);
-    return prevCount + 1;
-  }, 0);
+  // Errors thrown by `action` (validation, duplicate-date checks, etc.) must
+  // be caught here rather than left to bubble up to the nearest error
+  // boundary: Next.js redacts thrown-error messages to a generic "something
+  // went wrong" string in production regardless of where the throw happens,
+  // so surfacing them ourselves is the only way the real message reaches the
+  // user. unstable_rethrow lets Next's own control-flow signals (redirect,
+  // notFound) pass through undisturbed for actions that use them.
+  const [state, formAction] = useActionState<SaveState, FormData>(
+    async (prevState, formData) => {
+      try {
+        await action(formData);
+        return { count: prevState.count + 1, error: null };
+      } catch (err) {
+        unstable_rethrow(err);
+        return { count: prevState.count, error: err instanceof Error ? err.message : "שגיאה בשמירה" };
+      }
+    },
+    { count: 0, error: null },
+  );
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    if (savedCount === 0) return;
+    if (state.count === 0) return;
     setShowToast(true);
     const timeout = setTimeout(() => setShowToast(false), 2500);
     if (closeDetailsOnSave) {
@@ -40,7 +61,7 @@ export function SaveDetailsForm({
       }
     }
     return () => clearTimeout(timeout);
-  }, [savedCount, closeDetailsOnSave]);
+  }, [state.count, closeDetailsOnSave]);
 
   return (
     <form
@@ -57,6 +78,7 @@ export function SaveDetailsForm({
       className={className}
     >
       {children}
+      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
       {showToast && (
         <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground shadow-lg">
           {message}
