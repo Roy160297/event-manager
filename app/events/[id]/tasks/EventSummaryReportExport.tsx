@@ -11,12 +11,14 @@ export function EventSummaryReportExport({
   guestCommitment,
   signedByName,
   signatureData,
+  photoUrls,
 }: {
   event: EventRow | null;
   managerName: string | null;
   guestCommitment: string | null;
   signedByName?: string | null;
   signatureData?: string | null;
+  photoUrls?: string[];
 }) {
   if (!event) return null;
 
@@ -27,7 +29,12 @@ export function EventSummaryReportExport({
       signerName={signedByName ?? managerName}
       storedSignature={signatureData ?? null}
     >
-      <EventSummaryReportPrintable event={event} managerName={managerName} guestCommitment={guestCommitment} />
+      <EventSummaryReportPrintable
+        event={event}
+        managerName={managerName}
+        guestCommitment={guestCommitment}
+        photoUrls={photoUrls}
+      />
     </PdfExportButton>
   );
 }

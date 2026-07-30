@@ -29,7 +29,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   bar_checklist: "צ'קליסט סגירה - בר",
   barista_checklist: "צ'קליסט סגירה - בריסטה",
   couple_meeting: "פגישה עם זוג",
-  event_management_dex: 'ניהול אירוע סד"פ',
+  event_management_dex: 'סד"פ ניהול אירוע',
   waiters: "מלצרים (רשימה כללית)",
   admin: "ניהול משתמשים והרשאות",
   my_tasks: "המשימות שלי",

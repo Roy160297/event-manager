@@ -27,7 +27,7 @@ export function MainNav({
   if (showMyTasks) extraLinks.push({ href: "/my-tasks", label: "המשימות שלי" });
   if (showChecklistNotes) extraLinks.push({ href: "/checklist-notes", label: "הערות וסיכומים" });
   if (showCoupleMeeting) extraLinks.push({ href: "/couple-meeting", label: "פגישה עם זוג" });
-  if (showEventManagementDex) extraLinks.push({ href: "/event-management-dex", label: 'ניהול אירוע סד"פ' });
+  if (showEventManagementDex) extraLinks.push({ href: "/event-management-dex", label: 'סד"פ ניהול אירוע' });
 
   let links = [...NAV_LINKS.slice(0, 2), ...extraLinks, ...NAV_LINKS.slice(2)];
   if (showAdmin) links = [...links, { href: "/admin", label: "ניהול" }];

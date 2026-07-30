@@ -14,6 +14,7 @@ import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
 import { EventSummaryReportExport } from "./EventSummaryReportExport";
 import { SendChecklistsEmailButton, type ChecklistForEmail } from "./SendChecklistsEmailButton";
 import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
+import { ChecklistPhotos } from "@/components/ChecklistPhotos";
 import { signChecklist, unsignChecklist } from "./actions";
 import {
   EVENT_TYPE_LABELS,
@@ -309,6 +310,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
             guestCommitment={guestCommitment}
             signedByName={summaryReportSignature?.signed_by_name}
             signatureData={summaryReportSignature?.signature_data}
+            photoUrls={photosFor("event_summary_report").map((photo) => photo.url)}
           />
 
           <div className="grid gap-x-4 gap-y-1 rounded-md bg-accent-soft p-3 text-sm sm:grid-cols-3">
@@ -522,6 +524,13 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
             </button>
           </SaveDetailsForm>
           )}
+
+          <ChecklistPhotos
+            eventId={eventId}
+            checklistKey="event_summary_report"
+            photos={photosFor("event_summary_report")}
+            canEdit={canWriteSummary && !summaryReportSignature}
+          />
 
           <div className="border-t border-border-classic pt-3">
             <ChecklistSignBlock

@@ -206,7 +206,11 @@ export async function unsignChecklist(eventId: string, checklistKey: string) {
 }
 
 const CHECKLIST_PHOTOS_BUCKET = "checklist-photos";
-const VALID_PHOTO_CHECKLIST_KEYS = new Set(["closing_checklist", ...Object.keys(ROLE_CHECKLIST_KEYS)]);
+const VALID_PHOTO_CHECKLIST_KEYS = new Set([
+  "closing_checklist",
+  "event_summary_report",
+  ...Object.keys(ROLE_CHECKLIST_KEYS),
+]);
 
 export async function uploadChecklistPhoto(eventId: string, checklistKey: string, formData: FormData) {
   if (!VALID_PHOTO_CHECKLIST_KEYS.has(checklistKey)) throw new Error("צ'קליסט לא מוכר");

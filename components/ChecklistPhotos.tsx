@@ -11,8 +11,12 @@ export interface ChecklistPhoto {
 }
 
 // Shared "attach photos" section for the end of every checklist (after its
-// notes field): a thumbnail grid plus an upload button, backed by the
-// checklist_photos table + the checklist-photos storage bucket.
+// notes field): a thumbnail grid plus upload buttons, backed by the
+// checklist_photos table + the checklist-photos storage bucket. Two separate
+// file inputs (rather than one) since a plain <input type="file"> doesn't
+// reliably offer a camera option on mobile once `capture` isn't set - the
+// `capture="environment"` input opens the camera directly, the plain one
+// opens the gallery/file picker.
 export function ChecklistPhotos({
   eventId,
   checklistKey,
@@ -28,10 +32,12 @@ export function ChecklistPhotos({
   const [isUploading, setIsUploading] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    const input = e.target;
     if (!file) return;
     setError(null);
     setIsUploading(true);
@@ -44,7 +50,7 @@ export function ChecklistPhotos({
       setError(err instanceof Error ? err.message : "שגיאה בהעלאת התמונה");
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      input.value = "";
     }
   }
 
@@ -98,9 +104,17 @@ export function ChecklistPhotos({
       )}
 
       {canEdit && (
-        <div>
+        <div className="flex flex-wrap gap-2">
           <input
-            ref={fileInputRef}
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleFileSelected}
+          />
+          <input
+            ref={galleryInputRef}
             type="file"
             accept="image/*"
             className="hidden"
@@ -108,11 +122,19 @@ export function ChecklistPhotos({
           />
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => cameraInputRef.current?.click()}
             disabled={isUploading}
             className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-50"
           >
-            {isUploading ? "מעלה..." : "הוספת תמונה"}
+            {isUploading ? "מעלה..." : "צילום תמונה"}
+          </button>
+          <button
+            type="button"
+            onClick={() => galleryInputRef.current?.click()}
+            disabled={isUploading}
+            className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-50"
+          >
+            {isUploading ? "מעלה..." : "בחירה מהגלריה"}
           </button>
         </div>
       )}
