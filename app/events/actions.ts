@@ -12,7 +12,12 @@ import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/suppl
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
 import type { EventType } from "@/lib/types";
 
-export async function createEvent(formData: FormData) {
+// Returns an error message on failure instead of throwing (except for
+// redirect(), whose internal control-flow signal is never caught here) -
+// Next.js redacts thrown Server Action error messages to a generic string
+// in production, so a returned value is the only way the caller's
+// useActionState sees the real text.
+export async function createEvent(formData: FormData): Promise<string | void> {
   const supabase = await createClient();
   const currentStaff = await getCurrentStaff();
 
@@ -21,9 +26,13 @@ export async function createEvent(formData: FormData) {
   const eventDate = String(formData.get("event_date") ?? "");
 
   if (!name || !eventType || !eventDate) {
-    throw new Error("שם הלקוח, סוג האירוע ותאריך הם שדות חובה");
+    return "שם הלקוח, סוג האירוע ותאריך הם שדות חובה";
   }
-  await assertNoDuplicateEventDate(supabase, eventDate);
+  try {
+    await assertNoDuplicateEventDate(supabase, eventDate);
+  } catch (err) {
+    return err instanceof Error ? err.message : "שגיאה ביצירת האירוע";
+  }
 
   const managerId = currentStaff?.id ?? null;
 
@@ -40,7 +49,7 @@ export async function createEvent(formData: FormData) {
     .select("id")
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) return error.message;
 
   await applyDefaultSchedule(data.id, eventType, eventDate);
   await checkRemindersForEvent(data.id);

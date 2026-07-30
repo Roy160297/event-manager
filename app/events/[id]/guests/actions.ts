@@ -66,20 +66,25 @@ export async function deleteAllGuests(eventId: string) {
   revalidatePath(`/events/${eventId}/guests`);
 }
 
-export async function updateGuest(eventId: string, guestId: string, formData: FormData) {
+// Returns an error message on failure instead of throwing - called directly
+// from a Client Component (GuestList.tsx), so there's no per-call "use
+// server" wrapper to catch-and-return in; Next.js redacts thrown Server
+// Action error messages in production regardless of where the throw is
+// caught, so the function itself must return the message.
+export async function updateGuest(eventId: string, guestId: string, formData: FormData): Promise<string | void> {
   const supabase = await createClient();
 
   const name = String(formData.get("name") ?? "").trim();
   const partySize = Number(formData.get("party_size") ?? 1) || 1;
   const seatingTable = String(formData.get("seating_table") ?? "").trim() || null;
 
-  if (!name) throw new Error("שם האורח הוא שדה חובה");
+  if (!name) return "שם האורח הוא שדה חובה";
 
   const { error } = await supabase
     .from("guests")
     .update({ name, party_size: partySize, seating_table: seatingTable })
     .eq("id", guestId);
 
-  if (error) throw new Error(error.message);
+  if (error) return error.message;
   revalidatePath(`/events/${eventId}/guests`);
 }

@@ -7,6 +7,7 @@ import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import type { RolePermissionRow, RoleRow } from "@/lib/types";
 import { createRole, deleteRole, renameRole } from "./actions";
+import { actionErrorMessage } from "@/lib/actionError";
 import { EventManagerToggle } from "./EventManagerToggle";
 import { PermissionGrid } from "./PermissionGrid";
 
@@ -55,7 +56,11 @@ export default async function RolesPage() {
             {roles.map((role) => {
               async function save(formData: FormData) {
                 "use server";
-                await renameRole(role.id, formData);
+                try {
+                  await renameRole(role.id, formData);
+                } catch (err) {
+                  return actionErrorMessage(err);
+                }
               }
               async function remove() {
                 "use server";

@@ -6,6 +6,7 @@ import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { DateField } from "@/components/DateField";
 import { updateTask, updateTaskStatus } from "@/app/events/[id]/tasks/actions";
+import { actionErrorMessage } from "@/lib/actionError";
 import {
   EVENT_TYPE_LABELS,
   TASK_PRIORITY_COLORS,
@@ -64,7 +65,11 @@ export default async function MyTasksPage() {
           async function saveEdit(formData: FormData) {
             "use server";
             formData.set("assignee_id", task.assignee_id ?? "");
-            await updateTask(task.event_id, task.id, formData);
+            try {
+              await updateTask(task.event_id, task.id, formData);
+            } catch (err) {
+              return actionErrorMessage(err);
+            }
           }
 
           return (

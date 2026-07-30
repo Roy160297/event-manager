@@ -1,5 +1,6 @@
 import { assignWaiter, createLocation, deleteLocation, unassignWaiter, updateLocation } from "./actions";
 import { createClient } from "@/lib/supabase/server";
+import { actionErrorMessage } from "@/lib/actionError";
 import { LOCATION_TYPE_LABELS, WAITER_ROLE_LABELS } from "@/lib/labels";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
@@ -179,7 +180,11 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
           }
           async function saveLocationEdit(formData: FormData) {
             "use server";
-            await updateLocation(eventId, location.id, formData);
+            try {
+              await updateLocation(eventId, location.id, formData);
+            } catch (err) {
+              return actionErrorMessage(err);
+            }
           }
 
           return (

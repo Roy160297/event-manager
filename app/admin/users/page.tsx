@@ -6,6 +6,7 @@ import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import type { RoleRow, StaffRow } from "@/lib/types";
 import { addStaff, removeStaff, updateStaffDetails } from "./actions";
+import { actionErrorMessage } from "@/lib/actionError";
 import { RoleSelect } from "./RoleSelect";
 
 export default async function UsersPage() {
@@ -75,7 +76,11 @@ export default async function UsersPage() {
           {staff.map((member) => {
             async function save(formData: FormData) {
               "use server";
-              await updateStaffDetails(member.id, formData);
+              try {
+                await updateStaffDetails(member.id, formData);
+              } catch (err) {
+                return actionErrorMessage(err);
+              }
             }
             async function remove() {
               "use server";

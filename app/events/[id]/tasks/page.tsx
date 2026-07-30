@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { actionErrorMessage } from "@/lib/actionError";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
@@ -143,12 +144,20 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
 
   async function addTask(formData: FormData) {
     "use server";
-    await createTask(eventId, formData);
+    try {
+      await createTask(eventId, formData);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function saveSummaryReport(formData: FormData) {
     "use server";
-    await updateEventSummaryReport(eventId, formData);
+    try {
+      await updateEventSummaryReport(eventId, formData);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function signSummaryReport(name: string, signature: string) {
@@ -583,11 +592,19 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         {tasks?.map((task) => {
           async function changeStatus(formData: FormData) {
             "use server";
-            await updateTaskStatus(eventId, task.id, formData.get("status") as TaskStatus);
+            try {
+              await updateTaskStatus(eventId, task.id, formData.get("status") as TaskStatus);
+            } catch (err) {
+              return actionErrorMessage(err);
+            }
           }
           async function saveEdit(formData: FormData) {
             "use server";
-            await updateTask(eventId, task.id, formData);
+            try {
+              await updateTask(eventId, task.id, formData);
+            } catch (err) {
+              return actionErrorMessage(err);
+            }
           }
           async function remove() {
             "use server";

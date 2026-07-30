@@ -1,6 +1,5 @@
 "use client";
 
-import { unstable_rethrow } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 
 interface SaveState {
@@ -15,7 +14,13 @@ export function SaveDetailsForm({
   message = "הפרטים נשמרו בהצלחה",
   closeDetailsOnSave = false,
 }: {
-  action: (formData: FormData) => Promise<void>;
+  // Return an error message to show it inline instead of saving. This must
+  // be a *returned* string, not a thrown Error: Next.js redacts thrown-error
+  // messages to a generic "something went wrong" string in production for
+  // any Server Action invoked this way, no matter where the throw is caught
+  // on the client - returning the message is the only way the real text
+  // reaches the user.
+  action: (formData: FormData) => Promise<string | void>;
   className?: string;
   children: React.ReactNode;
   message?: string;
@@ -27,22 +32,11 @@ export function SaveDetailsForm({
   closeDetailsOnSave?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  // Errors thrown by `action` (validation, duplicate-date checks, etc.) must
-  // be caught here rather than left to bubble up to the nearest error
-  // boundary: Next.js redacts thrown-error messages to a generic "something
-  // went wrong" string in production regardless of where the throw happens,
-  // so surfacing them ourselves is the only way the real message reaches the
-  // user. unstable_rethrow lets Next's own control-flow signals (redirect,
-  // notFound) pass through undisturbed for actions that use them.
   const [state, formAction] = useActionState<SaveState, FormData>(
     async (prevState, formData) => {
-      try {
-        await action(formData);
-        return { count: prevState.count + 1, error: null };
-      } catch (err) {
-        unstable_rethrow(err);
-        return { count: prevState.count, error: err instanceof Error ? err.message : "שגיאה בשמירה" };
-      }
+      const error = await action(formData);
+      if (error) return { count: prevState.count, error };
+      return { count: prevState.count + 1, error: null };
     },
     { count: 0, error: null },
   );

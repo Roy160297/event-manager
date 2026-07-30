@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { updateEventDetails, addSupplier, updateSupplier, deleteSupplier } from "@/app/events/actions";
+import { actionErrorMessage } from "@/lib/actionError";
 import { EVENT_TYPE_LABELS, formatDate, formatTime } from "@/lib/labels";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
@@ -69,12 +70,20 @@ export default async function EventOverviewPage({
 
   async function saveDetails(formData: FormData) {
     "use server";
-    await updateEventDetails(id, formData);
+    try {
+      await updateEventDetails(id, formData);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function addSupplierAction(formData: FormData) {
     "use server";
-    await addSupplier(id, formData);
+    try {
+      await addSupplier(id, formData);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
@@ -307,7 +316,11 @@ export default async function EventOverviewPage({
               }
               async function saveSupplierEdit(formData: FormData) {
                 "use server";
-                await updateSupplier(id, supplier.id, formData);
+                try {
+                  await updateSupplier(id, supplier.id, formData);
+                } catch (err) {
+                  return actionErrorMessage(err);
+                }
               }
 
               return (

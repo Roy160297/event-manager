@@ -21,6 +21,7 @@ import { TimeField } from "@/components/TimeField";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
 import { scheduleSortKey } from "@/lib/labels";
+import { actionErrorMessage } from "@/lib/actionError";
 
 export default async function TimelinePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = await params;
@@ -42,47 +43,83 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
 
   async function addItem(formData: FormData) {
     "use server";
-    await addTimelineItem(eventId, formData);
+    try {
+      await addTimelineItem(eventId, formData);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function addEveningDefault() {
     "use server";
-    await addEveningWeddingSchedule(eventId);
+    try {
+      await addEveningWeddingSchedule(eventId);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function addFridayReverseDefault() {
     "use server";
-    await addFridayReverseWeddingSchedule(eventId);
+    try {
+      await addFridayReverseWeddingSchedule(eventId);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function addEveningServiceDefault() {
     "use server";
-    await addEveningWeddingServiceSchedule(eventId);
+    try {
+      await addEveningWeddingServiceSchedule(eventId);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function addFridayDefault() {
     "use server";
-    await addFridayWeddingSchedule(eventId);
+    try {
+      await addFridayWeddingSchedule(eventId);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function addFridayServiceDefault() {
     "use server";
-    await addFridayWeddingServiceSchedule(eventId);
+    try {
+      await addFridayWeddingServiceSchedule(eventId);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function addEveningReverseDefault() {
     "use server";
-    await addEveningReverseWeddingSchedule(eventId);
+    try {
+      await addEveningReverseWeddingSchedule(eventId);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function addEveningReverseServiceDefault() {
     "use server";
-    await addEveningReverseWeddingServiceSchedule(eventId);
+    try {
+      await addEveningReverseWeddingServiceSchedule(eventId);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function addFridayReverseServiceDefault() {
     "use server";
-    await addFridayReverseWeddingServiceSchedule(eventId);
+    try {
+      await addFridayReverseWeddingServiceSchedule(eventId);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   async function removeAll() {
@@ -179,8 +216,9 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
       )}
 
       {canWriteTimeline && (
-        <form
+        <SaveDetailsForm
           action={addItem}
+          message="השלב נוסף בהצלחה"
           className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
         >
           <p className="text-sm font-medium">שלב חדש בלוח הזמנים</p>
@@ -204,7 +242,7 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
           >
             הוסף ללוח הזמנים
           </button>
-        </form>
+        </SaveDetailsForm>
       )}
 
       {(!items || items.length === 0) && (
@@ -219,7 +257,11 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
           }
           async function saveEdit(formData: FormData) {
             "use server";
-            await updateTimelineItem(eventId, item.id, formData);
+            try {
+              await updateTimelineItem(eventId, item.id, formData);
+            } catch (err) {
+              return actionErrorMessage(err);
+            }
           }
 
           return (

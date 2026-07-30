@@ -1,6 +1,5 @@
 "use client";
 
-import { unstable_rethrow } from "next/navigation";
 import { useActionState } from "react";
 import { createEvent } from "@/app/events/actions";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
@@ -10,19 +9,12 @@ import { DateField } from "@/components/DateField";
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
 export default function NewEventPage() {
-  // createEvent redirects on success (a thrown Next.js control-flow signal,
-  // not a real error) and throws a real Error on failure (e.g. duplicate
-  // date) - unstable_rethrow lets the former pass through to actually
-  // navigate, while the latter is caught here and shown instead of falling
-  // through to the generic redacted-message error page.
+  // createEvent returns an error message on failure, or redirects (a Next.js
+  // control-flow signal, not a real error/return value) on success - nothing
+  // to catch here either way.
   const [error, formAction] = useActionState<string | null, FormData>(async (_prevError, formData) => {
-    try {
-      await createEvent(formData);
-      return null;
-    } catch (err) {
-      unstable_rethrow(err);
-      return err instanceof Error ? err.message : "שגיאה ביצירת האירוע";
-    }
+    const result = await createEvent(formData);
+    return result ?? null;
   }, null);
 
   return (

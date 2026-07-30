@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createWaiter, deleteWaiter, updateWaiter } from "./actions";
+import { actionErrorMessage } from "@/lib/actionError";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
@@ -67,7 +68,11 @@ export default async function WaitersPage() {
           }
           async function saveEdit(formData: FormData) {
             "use server";
-            await updateWaiter(waiter.id, formData);
+            try {
+              await updateWaiter(waiter.id, formData);
+            } catch (err) {
+              return actionErrorMessage(err);
+            }
           }
           return (
             <li
