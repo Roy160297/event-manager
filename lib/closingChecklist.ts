@@ -133,7 +133,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "electrical-stoves-off", text: "כיבוי כיריים." },
       { key: "electrical-warming-cabinets", text: "לוודא שארונות החימום כבויים ונקיים." },
       { key: "electrical-kitchen-hood", text: "כיבוי מנדף מטבח יצרן." },
-      { key: "electrical-kitchen-lights", text: "כיבוי אורות פנימיים במטבח." },
+      { key: "electrical-kitchen-lights", text: "כיבוי אורות במטבח חיצוני." },
       { key: "electrical-yard-fans", text: "כיבוי מאווררים וצ'ילרים באולם ובחצר." },
       { key: "electrical-inner-bar-light", text: "כיבוי תאורה מאחורי הבר הפנימי." },
       { key: "electrical-path-light", text: "כיבוי תאורת השביל." },
