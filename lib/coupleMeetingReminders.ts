@@ -11,6 +11,13 @@ export interface CoupleMeetingReminderRule {
   key: string;
   anchor: ReminderAnchor;
   offsetDays: number;
+  // "exact" (default): fires only on the single day today === anchor+offset -
+  // if that day has already passed (e.g. the event was created/edited with
+  // fewer days left than the offset), it's missed for good.
+  // "onOrAfter": fires the first day today is on or past anchor+offset, and
+  // at most once ever for that event - catches events entering the window
+  // "already late" instead of silently skipping them.
+  matchMode?: "exact" | "onOrAfter";
   subject: string;
   body: (eventName: string, eventDate: string) => string;
 }
@@ -44,6 +51,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     key: "final-commitment-and-sketch-update",
     anchor: "event_date",
     offsetDays: -7,
+    matchMode: "onOrAfter",
     subject: "תזכורת: התחייבות סופית, iPlan וסקיצה",
     body: (eventName, eventDate) =>
       `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום התאריך (שבוע לפני האירוע) לביצוע המשימות הבאות:<ul><li>עדכון התחייבות סופית בפרטי האירוע והעלאת טופס אירוע סופי ל-iPlan.</li><li>העלאת סקיצה סופית לאתר, לאחר ההתחייבות הסופית.</li></ul>`,

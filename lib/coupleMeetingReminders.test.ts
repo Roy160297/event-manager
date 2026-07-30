@@ -32,4 +32,9 @@ describe("COUPLE_MEETING_REMINDER_RULES", () => {
       expect(body).toContain("14/08/2026");
     }
   });
+
+  it("marks the final-commitment rule as onOrAfter, so an event created/edited with fewer days left than the offset still fires", () => {
+    const rule = COUPLE_MEETING_REMINDER_RULES.find((r) => r.key === "final-commitment-and-sketch-update");
+    expect(rule?.matchMode).toBe("onOrAfter");
+  });
 });

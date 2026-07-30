@@ -23,7 +23,27 @@ export async function sendDueReminders(
   for (const rule of COUPLE_MEETING_REMINDER_RULES) {
     const anchorDate = rule.anchor === "couple_meeting_date" ? event.couple_meeting_date : event.event_date;
     if (!anchorDate) continue;
-    if (addDaysToDate(anchorDate, rule.offsetDays) !== today) continue;
+
+    const targetDate = addDaysToDate(anchorDate, rule.offsetDays);
+    const isDue = rule.matchMode === "onOrAfter" ? today >= targetDate : today === targetDate;
+    if (!isDue) continue;
+
+    // "onOrAfter" rules (e.g. an event created/edited with fewer days left
+    // than the offset, so the exact target day already passed) fire at most
+    // once ever per event - checked separately since the reminder_log unique
+    // constraint below only catches same-day duplicates, not "already sent
+    // on some earlier day."
+    if (rule.matchMode === "onOrAfter") {
+      const { count } = await supabase
+        .from("reminder_log")
+        .select("*", { count: "exact", head: true })
+        .eq("event_id", event.id)
+        .eq("rule_key", rule.key);
+      if ((count ?? 0) > 0) {
+        skippedAlreadySent++;
+        continue;
+      }
+    }
 
     // Claim this (event, rule, day) before sending - the unique constraint on
     // reminder_log makes this atomic, so a same-day cron run and an
