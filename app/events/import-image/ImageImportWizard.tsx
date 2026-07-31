@@ -138,24 +138,6 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">שם הכלה</span>
-          <input
-            value={draft.bride_name ?? ""}
-            onChange={(e) => updateField("bride_name", e.target.value || null)}
-            className={inputClass}
-          />
-        </label>
-
-        <label className={labelClass}>
-          <span className="font-medium">שם החתן</span>
-          <input
-            value={draft.groom_name ?? ""}
-            onChange={(e) => updateField("groom_name", e.target.value || null)}
-            className={inputClass}
-          />
-        </label>
-
-        <label className={labelClass}>
           <span className="font-medium">תאריך</span>
           <DateInput value={draft.event_date ?? ""} onChange={(v) => updateField("event_date", v || null)} />
         </label>
