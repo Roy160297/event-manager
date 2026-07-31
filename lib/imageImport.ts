@@ -42,6 +42,7 @@ interface GeminiExtraction {
   contact_email_2: string | null;
   guests_secure: number | null;
   guests_reserve: number | null;
+  guests_reserve_percent: number | null;
   kids_meals: number | null;
   glat_meals: number | null;
   vegetarian_meals: number | null;
@@ -82,7 +83,16 @@ const RESPONSE_SCHEMA = {
     contact_email: { type: Type.STRING, nullable: true, description: "אימייל איש הקשר הראשון" },
     contact_email_2: { type: Type.STRING, nullable: true, description: "אימייל איש הקשר השני" },
     guests_secure: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "אורחים בטוחים"' },
-    guests_reserve: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "אורחים רזרבה"' },
+    guests_reserve: {
+      type: Type.NUMBER,
+      nullable: true,
+      description: 'המספר הגולמי משדה "אורחים רזרבה", רק אם הוא מוצג כמספר אורחים ולא כאחוז',
+    },
+    guests_reserve_percent: {
+      type: Type.NUMBER,
+      nullable: true,
+      description: 'האחוז הגולמי משדה הרזרבה (לדוגמה "% רזרבה מקסימלי"), רק אם הוא מוצג כאחוז ולא כמספר אורחים',
+    },
     kids_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות ילדים"' },
     glat_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות גלאט"' },
     vegetarian_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות צמחוניות"' },
@@ -100,7 +110,8 @@ const PROMPT = `זהו צילום מסך של עמוד אירוע ממסך "ענ
 - שמות בני הזוג (וכל שם אחר שאתה מחלץ) חייבים להיות בעברית בלבד, לעולם לא באנגלית/אותיות לועזיות. אם שם מופיע באנגלית באזור "משתמשים באירוע" (למשל שם משתמש), בעוד שאותו אדם מופיע בעברית בכותרת הראשית של העמוד - יש להשתמש תמיד בגרסה העברית מהכותרת ולהתעלם לחלוטין מהגרסה האנגלית.
 - תאריך, שעת התחלה ושעת סיום מופיעים בתיבות הכחולות בפינה השמאלית העליונה של העמוד.
 - שדה "event_type" חייב להיות אחד מהערכים המותרים בסכמה בלבד. קבע אותו לפי תווית סוג האירוע המוצגת (למשל "חתונה"). אם מופיע גם פירוט "סוג הגשה" (מזנונים/הגשה) שלב אותו; אחרת בחר בגרסת "מזנונים" הרגילה כברירת מחדל.
-- באזור "התחייבות חתומה התקבלה" (או אזור דומה של פרטי ההתחייבות) מופיעים מספר שדות נפרדים - "אורחים בטוחים", "אורחים רזרבה", "מנות ילדים", "מנות גלאט", "מנות צמחוניות", "מנות טבעוניות" ו"ילדים מתחת לגיל 2". אלו שדות מספריים נפרדים - אל תחשב ביניהם, החזר את הערך הגולמי שמופיע ליד כל תווית בלבד (0 אם כתוב במפורש 0, null אם השדה לא מופיע כלל).
+- באזור "התחייבות חתומה התקבלה" (או אזור דומה של פרטי ההתחייבות) מופיעים מספר שדות נפרדים - "אורחים בטוחים", "מנות ילדים", "מנות גלאט", "מנות צמחוניות", "מנות טבעוניות" ו"ילדים מתחת לגיל 2". אלו שדות מספריים נפרדים - אל תחשב ביניהם, החזר את הערך הגולמי שמופיע ליד כל תווית בלבד (0 אם כתוב במפורש 0, null אם השדה לא מופיע כלל).
+- שדה הרזרבה יכול להופיע בשני פורמטים שונים בהתאם לגרסת המסך - לפעמים כמספר אורחים ("אורחים רזרבה: 20") ולפעמים כאחוז ("% רזרבה מקסימלי: 5"). זהה איזה משני הפורמטים מופיע בתמונה והחזר את הערך הגולמי בשדה guests_reserve (מספר) או guests_reserve_percent (אחוז) בהתאם - לעולם לא בשניהם יחד.
 - טלפון ואימייל של איש/אשת הקשר: אם אזור "משתמשים באירוע" ריק (כתוב בו "אין") או לא מכיל טלפון/אימייל, חפש אותם ברשימת "הזמנות להצטרף לאירוע" - כל שורה שם מציגה טלפון או אימייל עם תיוג (חתן)/(כלה) ליד שם איש הקשר; שייך כל טלפון/אימייל לפי התיוג הזה (חתן -> contact_phone/contact_email, כלה -> contact_phone_2/contact_email_2, או להפך אם רק צד אחד מופיע - חשוב על עצמך כדי לשייך נכון בין השניים).
 - תאריכים בתמונה מופיעים לרוב כ-DD/MM/YYYY - המר לפורמט YYYY-MM-DD.`;
 
@@ -148,15 +159,21 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
   }
 
   // "אורחים בטוחים" plus the three meal-type headcounts (גלאט/צמחוני/טבעוני)
-  // together make up the guaranteed-guests figure; "אורחים רזרבה" is a
-  // separate, already-computed number on this screen (not a percentage to
-  // derive it from, unlike the older iPlan commitment page).
+  // together make up the guaranteed-guests figure. The reserve on top of
+  // that can appear either as a direct headcount ("אורחים רזרבה") or as a
+  // percentage ("% רזרבה מקסימלי") depending on the screen version - when
+  // it's a percentage, round the resulting fraction of a guest UP (5% of
+  // 270 is 13.5, i.e. 14 reserve guests), never down.
   const guestsSecure = extraction.guests_secure ?? null;
-  const guestsReserve = extraction.guests_reserve ?? null;
   const totalSecure =
     guestsSecure != null
       ? guestsSecure + (extraction.glat_meals ?? 0) + (extraction.vegetarian_meals ?? 0) + (extraction.vegan_meals ?? 0)
       : null;
+  const guestsReserve =
+    extraction.guests_reserve ??
+    (totalSecure != null && extraction.guests_reserve_percent != null
+      ? Math.ceil((totalSecure * extraction.guests_reserve_percent) / 100)
+      : null);
   const estimated_guests =
     totalSecure != null && guestsReserve != null
       ? `${totalSecure}+${guestsReserve}`

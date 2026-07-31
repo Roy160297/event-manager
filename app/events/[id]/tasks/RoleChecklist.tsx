@@ -274,7 +274,7 @@ export default function RoleChecklist({
             signedAt={signedAt}
             signatureData={signatureData}
             canEdit={canEdit}
-            defaultSignerName={currentStaffName}
+            defaultSignerName={managerName ?? currentStaffName}
             onSign={(name, signature) => signChecklist(eventId, checklistKey, name, signature)}
             onUnsign={() => unsignChecklist(eventId, checklistKey)}
           />
