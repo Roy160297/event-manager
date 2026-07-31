@@ -18,9 +18,9 @@ export interface ImageImportDraft {
   contact_phone_2: string | null;
   contact_email: string | null;
   contact_email_2: string | null;
-  guests_min: number | null;
-  guests_reserve_percent: number | null;
   estimated_guests: string | null;
+  kids_meal_count: string | null;
+  menu_notes: string | null;
   warnings: string[];
 }
 
@@ -40,8 +40,13 @@ interface GeminiExtraction {
   contact_phone_2: string | null;
   contact_email: string | null;
   contact_email_2: string | null;
-  guests_min: number | null;
-  guests_reserve_percent: number | null;
+  guests_secure: number | null;
+  guests_reserve: number | null;
+  kids_meals: number | null;
+  glat_meals: number | null;
+  vegetarian_meals: number | null;
+  vegan_meals: number | null;
+  toddlers_under_2: number | null;
 }
 
 const RESPONSE_SCHEMA = {
@@ -76,24 +81,27 @@ const RESPONSE_SCHEMA = {
     contact_phone_2: { type: Type.STRING, nullable: true, description: "טלפון איש הקשר השני (למשל הכלה)" },
     contact_email: { type: Type.STRING, nullable: true, description: "אימייל איש הקשר הראשון" },
     contact_email_2: { type: Type.STRING, nullable: true, description: "אימייל איש הקשר השני" },
-    guests_min: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מינימום אורחים"' },
-    guests_reserve_percent: {
-      type: Type.NUMBER,
-      nullable: true,
-      description: 'האחוז משדה "רזרבה מקסימלי %"',
-    },
+    guests_secure: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "אורחים בטוחים"' },
+    guests_reserve: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "אורחים רזרבה"' },
+    kids_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות ילדים"' },
+    glat_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות גלאט"' },
+    vegetarian_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות צמחוניות"' },
+    vegan_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות טבעוניות"' },
+    toddlers_under_2: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "ילדים מתחת לגיל 2"' },
   },
   required: ["event_type"],
 };
 
-const PROMPT = `זהו צילום מסך של עמוד אירוע ממערכת iPlan. חלץ ממנו את הנתונים הבאים והחזר JSON בלבד לפי הסכמה שסופקה.
+const PROMPT = `זהו צילום מסך של עמוד אירוע ממסך "ענן" במערכת iPlan. חלץ ממנו את הנתונים הבאים והחזר JSON בלבד לפי הסכמה שסופקה.
 
 הנחיות חשובות:
 - אם שדה אינו מופיע בבירור בתמונה, החזר null עבורו - לעולם אל תמציא ערך.
-- שם הזוג בדרך כלל מופיע כ"שם פרטי+שם משפחה" עבור כל אחד מבני הזוג באזור "משתמשים באירוע" - שים לב לתווית שמופיעה ליד כל שם (חתן/כלה). ייתכן זוג מאותו מין - שני הצדדים מתויגים "חתן" (זוג חתנים) או ששניהם מתויגים "כלה" (זוג כלות). במקרה כזה אל תכריח התאמה של חתן אחד וכלה אחת - חלץ את שני השמות יחד לפי ההנחיות בשדות bride_name/groom_name.
-- שמות בני הזוג (וכל שם אחר שאתה מחלץ) חייבים להיות בעברית בלבד, לעולם לא באנגלית/אותיות לועזיות. לעיתים שם של משתתף מופיע באזור "משתמשים באירוע" באנגלית (למשל שם המשתמש בחשבון), בעוד שאותו שם מופיע בעברית בכותרת הראשית של העמוד (למעלה, לרוב משלבת את שמות שני בני הזוג יחד) - במקרה כזה יש להשתמש תמיד בגרסה העברית מהכותרת ולהתעלם לחלוטין מהגרסה האנגלית.
-- שדה "event_type" חייב להיות אחד מהערכים המותרים בסכמה בלבד. קבע אותו לפי שילוב תווית סוג האירוע הראשית (למשל "חתונה") עם שדה "סוג הגשה" (למשל "מזנונים" או "הגשה") באזור ההתחייבות/פרטי האירוע.
-- "מינימום אורחים" ו"רזרבה מקסימלי %" הם שני שדות נפרדים באזור ההתחייבות - אל תחשב ביניהם, החזר את שני המספרים הגולמיים בלבד.
+- שם הזוג מופיע בכותרת הראשית של העמוד (למשל "יובל ורדי ואיילון אלקיים") ולעיתים גם באזור "משתמשים באירוע" או ברשימת "הזמנות להצטרף לאירוע", שם כל איש קשר מתויג בסוגריים (חתן)/(כלה). ייתכן זוג מאותו מין - שני הצדדים מתויגים "חתן" (זוג חתנים) או ששניהם מתויגים "כלה" (זוג כלות). במקרה כזה אל תכריח התאמה של חתן אחד וכלה אחת - חלץ את שני השמות יחד לפי ההנחיות בשדות bride_name/groom_name.
+- שמות בני הזוג (וכל שם אחר שאתה מחלץ) חייבים להיות בעברית בלבד, לעולם לא באנגלית/אותיות לועזיות. אם שם מופיע באנגלית באזור "משתמשים באירוע" (למשל שם משתמש), בעוד שאותו אדם מופיע בעברית בכותרת הראשית של העמוד - יש להשתמש תמיד בגרסה העברית מהכותרת ולהתעלם לחלוטין מהגרסה האנגלית.
+- תאריך, שעת התחלה ושעת סיום מופיעים בתיבות הכחולות בפינה השמאלית העליונה של העמוד.
+- שדה "event_type" חייב להיות אחד מהערכים המותרים בסכמה בלבד. קבע אותו לפי תווית סוג האירוע המוצגת (למשל "חתונה"). אם מופיע גם פירוט "סוג הגשה" (מזנונים/הגשה) שלב אותו; אחרת בחר בגרסת "מזנונים" הרגילה כברירת מחדל.
+- באזור "התחייבות חתומה התקבלה" (או אזור דומה של פרטי ההתחייבות) מופיעים מספר שדות נפרדים - "אורחים בטוחים", "אורחים רזרבה", "מנות ילדים", "מנות גלאט", "מנות צמחוניות", "מנות טבעוניות" ו"ילדים מתחת לגיל 2". אלו שדות מספריים נפרדים - אל תחשב ביניהם, החזר את הערך הגולמי שמופיע ליד כל תווית בלבד (0 אם כתוב במפורש 0, null אם השדה לא מופיע כלל).
+- טלפון ואימייל של איש/אשת הקשר: אם אזור "משתמשים באירוע" ריק (כתוב בו "אין") או לא מכיל טלפון/אימייל, חפש אותם ברשימת "הזמנות להצטרף לאירוע" - כל שורה שם מציגה טלפון או אימייל עם תיוג (חתן)/(כלה) ליד שם איש הקשר; שייך כל טלפון/אימייל לפי התיוג הזה (חתן -> contact_phone/contact_email, כלה -> contact_phone_2/contact_email_2, או להפך אם רק צד אחד מופיע - חשוב על עצמך כדי לשייך נכון בין השניים).
 - תאריכים בתמונה מופיעים לרוב כ-DD/MM/YYYY - המר לפורמט YYYY-MM-DD.`;
 
 export async function extractEventDraftFromImage(buffer: Buffer, mimeType: string): Promise<ImageImportDraft> {
@@ -139,12 +147,30 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
     warnings.push('סוג האירוע שזוהה אינו תקין - נבחר "אחר" כברירת מחדל');
   }
 
-  const guests_min = extraction.guests_min ?? null;
-  const guests_reserve_percent = extraction.guests_reserve_percent ?? null;
-  const estimated_guests =
-    guests_min != null && guests_reserve_percent != null
-      ? `${guests_min}+${Math.round((guests_min * guests_reserve_percent) / 100)}`
+  // "אורחים בטוחים" plus the three meal-type headcounts (גלאט/צמחוני/טבעוני)
+  // together make up the guaranteed-guests figure; "אורחים רזרבה" is a
+  // separate, already-computed number on this screen (not a percentage to
+  // derive it from, unlike the older iPlan commitment page).
+  const guestsSecure = extraction.guests_secure ?? null;
+  const guestsReserve = extraction.guests_reserve ?? null;
+  const totalSecure =
+    guestsSecure != null
+      ? guestsSecure + (extraction.glat_meals ?? 0) + (extraction.vegetarian_meals ?? 0) + (extraction.vegan_meals ?? 0)
       : null;
+  const estimated_guests =
+    totalSecure != null && guestsReserve != null
+      ? `${totalSecure}+${guestsReserve}`
+      : totalSecure != null
+        ? `${totalSecure}`
+        : null;
+  if (estimated_guests == null) {
+    warnings.push('לא זוהו נתוני התחייבות אורחים - יש להזין ידנית את שדה "מספר אורחים - התחייבות"');
+  }
+
+  const kids_meal_count = extraction.kids_meals != null ? String(extraction.kids_meals) : null;
+
+  const toddlersUnder2 = extraction.toddlers_under_2 ?? null;
+  const menu_notes = toddlersUnder2 && toddlersUnder2 > 0 ? `צריך לדאוג ל-${toddlersUnder2} כסאות תינוק` : null;
 
   // Friday weddings end ~6.5h after the reception starts (Shabbat) rather
   // than the usual late finish - fill this in only when iPlan itself didn't
@@ -170,9 +196,9 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
     contact_phone_2: extraction.contact_phone_2?.trim() || null,
     contact_email: extraction.contact_email?.trim() || null,
     contact_email_2: extraction.contact_email_2?.trim() || null,
-    guests_min,
-    guests_reserve_percent,
     estimated_guests,
+    kids_meal_count,
+    menu_notes,
     warnings,
   };
 }

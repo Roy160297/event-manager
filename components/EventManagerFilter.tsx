@@ -2,15 +2,23 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-export function EventManagerFilter({ managers }: { managers: { id: string; name: string }[] }) {
+export function EventManagerFilter({
+  managers,
+  defaultManagerId,
+}: {
+  managers: { id: string; name: string }[];
+  defaultManagerId: string | null;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const current = searchParams.get("manager") ?? "";
+  const raw = searchParams.get("manager");
+  // "all" is the explicit "show everyone" choice, distinct from the param
+  // being absent (first load), which instead falls back to defaultManagerId.
+  const current = raw === "all" ? "" : (raw ?? defaultManagerId ?? "");
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const params = new URLSearchParams(searchParams.toString());
-    if (e.target.value) params.set("manager", e.target.value);
-    else params.delete("manager");
+    params.set("manager", e.target.value || "all");
     const query = params.toString();
     router.push(query ? `/?${query}` : "/");
   }

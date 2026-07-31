@@ -2,13 +2,14 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { deleteEvent } from "@/app/events/actions";
 import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDate, getDisplayEventStatus } from "@/lib/labels";
+import { todaysEventDate } from "@/lib/scheduleTime";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { EventManagerFilter } from "@/components/EventManagerFilter";
 import { TrashIcon } from "@/components/icons";
 import { getCurrentStaff } from "@/lib/auth";
 import { getEventManagerCandidates } from "@/lib/staff";
-import { canRead, canWrite } from "@/lib/permissions";
+import { canWrite } from "@/lib/permissions";
 import type { EventRow } from "@/lib/types";
 
 export default async function EventsDashboard({
@@ -16,7 +17,7 @@ export default async function EventsDashboard({
 }: {
   searchParams: Promise<{ manager?: string }>;
 }) {
-  const { manager: managerFilter } = await searchParams;
+  const { manager: managerParam } = await searchParams;
   const supabase = await createClient();
   const [{ data: events, error }, managers, currentStaff] = await Promise.all([
     supabase
@@ -29,20 +30,30 @@ export default async function EventsDashboard({
     getCurrentStaff(),
   ]);
 
-  const canReadEvents = !!currentStaff && canRead(currentStaff.permissions, "events");
-  const canWriteEvents = !!currentStaff && canWrite(currentStaff.permissions, "events");
+  if (!currentStaff) return <NoPermissionNotice />;
 
-  if (!canReadEvents) return <NoPermissionNotice />;
+  const canWriteEvents = canWrite(currentStaff.permissions, "events");
 
-  const filteredEvents = managerFilter ? events?.filter((event) => event.manager_id === managerFilter) : events;
+  // Default (no ?manager param yet) is "my events" when the logged-in staff
+  // member is themselves an event-manager candidate; ?manager=all is the
+  // explicit "show everyone" choice from the dropdown, distinct from the
+  // param simply being absent on first load.
+  const isSelfAManager = managers?.some((manager) => manager.id === currentStaff.id) ?? false;
+  const effectiveManagerId =
+    managerParam === "all" ? null : (managerParam ?? (isSelfAManager ? currentStaff.id : null));
+
+  const filteredEvents = effectiveManagerId
+    ? events?.filter((event) => event.manager_id === effectiveManagerId)
+    : events;
   const managerName = (id: string | null) => managers?.find((manager) => manager.id === id)?.name ?? null;
+  const highlightDate = todaysEventDate();
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-serif text-2xl font-bold">אירועים</h1>
-          <EventManagerFilter managers={managers ?? []} />
+          <EventManagerFilter managers={managers ?? []} defaultManagerId={isSelfAManager ? currentStaff.id : null} />
         </div>
         {canWriteEvents && (
           <div className="flex flex-wrap gap-2">
@@ -101,6 +112,7 @@ export default async function EventsDashboard({
       <ul className="flex flex-col gap-3">
         {filteredEvents?.map((event) => {
           const displayStatus = getDisplayEventStatus(event);
+          const isToday = event.event_date === highlightDate;
 
           async function remove() {
             "use server";
@@ -110,14 +122,19 @@ export default async function EventsDashboard({
           return (
             <li
               key={event.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-classic bg-surface p-4 hover:border-accent"
+              className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4 hover:border-accent ${
+                isToday ? "border-accent bg-accent-soft ring-1 ring-accent" : "border-border-classic bg-surface"
+              }`}
             >
               <Link
                 href={`/events/${event.id}`}
                 className="flex flex-1 flex-wrap items-center justify-between gap-3 min-w-0"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-medium">{event.name}</p>
+                  <p className="truncate font-medium">
+                    {event.name}
+                    {isToday && <span className="ms-2 text-xs font-medium text-accent">אירוע היום</span>}
+                  </p>
                   <p className="text-sm text-foreground/60">
                     {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
                     {managerName(event.manager_id) && ` · ${managerName(event.manager_id)}`}

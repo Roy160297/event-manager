@@ -13,6 +13,7 @@ import {
   setRoleChecklistItem,
   setRoleChecklistNote,
   clearRoleChecklistItems,
+  markAllRoleChecklistItems,
   signChecklist,
   unsignChecklist,
   cosignChecklistAsManager,
@@ -36,6 +37,7 @@ export default function RoleChecklist({
   signedAt,
   signatureData,
   currentStaffName,
+  managerName,
   canManagerCosign,
   managerSignedByName,
   managerSignedAt,
@@ -58,6 +60,7 @@ export default function RoleChecklist({
   signedAt?: string | null;
   signatureData?: string | null;
   currentStaffName?: string | null;
+  managerName?: string | null;
   // Second sign-off, done by the event manager after the role holder signs -
   // canManagerCosign mirrors closing_checklist:write, not this checklist's
   // own write permission.
@@ -71,9 +74,11 @@ export default function RoleChecklist({
   // role/title under their signature, instead of a generic "נחתם על ידי".
   const roleTitle = title.replace("צ'קליסט סגירה - ", "");
   const totalItems = categories.reduce((sum, category) => sum + category.items.length, 0);
+  const allItemKeys = categories.flatMap((category) => category.items.map((item) => item.key));
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [marking, setMarking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState(initialNote ?? "");
   const [noteStatus, setNoteStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -122,6 +127,21 @@ export default function RoleChecklist({
     }
   }
 
+  async function markAll() {
+    const previous = checked;
+    setError(null);
+    setChecked(new Set(allItemKeys));
+    setMarking(true);
+    try {
+      await markAllRoleChecklistItems(eventId, checklistKey);
+    } catch (err) {
+      setChecked(previous);
+      setError(err instanceof Error ? err.message : "שגיאה בסימון");
+    } finally {
+      setMarking(false);
+    }
+  }
+
   async function saveNote() {
     setNoteError(null);
     setNoteStatus("saving");
@@ -150,14 +170,24 @@ export default function RoleChecklist({
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {canEditNow && (
-          <button
-            type="button"
-            onClick={clearAll}
-            disabled={clearing || checked.size === 0}
-            className="self-start rounded-full border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
-          >
-            נקה את כל הסימונים
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={markAll}
+              disabled={marking || checked.size === totalItems}
+              className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-50"
+            >
+              סמן הכל
+            </button>
+            <button
+              type="button"
+              onClick={clearAll}
+              disabled={clearing || checked.size === 0}
+              className="self-start rounded-full border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              נקה את כל הסימונים
+            </button>
+          </div>
         )}
 
         <PdfExportButton
@@ -258,7 +288,7 @@ export default function RoleChecklist({
               cosignedAt={managerSignedAt}
               cosignatureData={managerSignatureData}
               canCosign={canManagerCosign}
-              defaultSignerName={currentStaffName}
+              defaultSignerName={managerName ?? currentStaffName}
               onCosign={(name, signature) => cosignChecklistAsManager(eventId, checklistKey, name, signature)}
               onUncosign={() => uncosignChecklistAsManager(eventId, checklistKey)}
             />

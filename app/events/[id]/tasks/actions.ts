@@ -108,6 +108,14 @@ export async function clearClosingChecklist(eventId: string) {
   revalidatePath(`/events/${eventId}/tasks`);
 }
 
+export async function markAllClosingChecklist(eventId: string) {
+  const supabase = await createClient();
+  const rows = Array.from(ALL_CLOSING_CHECKLIST_KEYS).map((itemKey) => ({ event_id: eventId, item_key: itemKey }));
+  const { error } = await supabase.from("closing_checklist_checks").upsert(rows);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
 export async function setClosingChecklistNote(eventId: string, note: string) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -154,6 +162,17 @@ export async function clearRoleChecklistItems(eventId: string, checklistKey: str
     .eq("event_id", eventId)
     .eq("checklist_key", checklistKey);
 
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
+export async function markAllRoleChecklistItems(eventId: string, checklistKey: string) {
+  const keys = ROLE_CHECKLIST_KEYS[checklistKey];
+  if (!keys) throw new Error("צ'קליסט לא מוכר");
+
+  const supabase = await createClient();
+  const rows = Array.from(keys).map((itemKey) => ({ event_id: eventId, checklist_key: checklistKey, item_key: itemKey }));
+  const { error } = await supabase.from("role_checklist_checks").upsert(rows);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/tasks`);
 }

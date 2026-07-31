@@ -23,3 +23,18 @@ export function addHoursToTime(time: string, hours: number): string | null {
 export function fridayEndTime(startTime: string): string | null {
   return addHoursToTime(startTime, 6.5);
 }
+
+// Weddings routinely run past midnight (end_time like 03:00), so "today's
+// event" for highlighting purposes shouldn't flip over at local midnight -
+// mirrors scheduleSortKey's same 6am cutoff for schedule-step ordering.
+// Before 6am Israel time, we're still within the previous calendar day's event.
+export function todaysEventDate(now: Date = new Date()): string {
+  const date = now.toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
+  const hour = Number(now.toLocaleTimeString("en-GB", { timeZone: "Asia/Jerusalem", hour12: false }).slice(0, 2));
+  if (hour >= 6) return date;
+
+  const [year, month, day] = date.split("-").map(Number);
+  const previous = new Date(Date.UTC(year, month - 1, day));
+  previous.setUTCDate(previous.getUTCDate() - 1);
+  return previous.toISOString().slice(0, 10);
+}

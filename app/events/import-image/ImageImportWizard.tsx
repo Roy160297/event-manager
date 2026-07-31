@@ -223,6 +223,15 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
         </label>
 
         <label className={labelClass}>
+          <span className="font-medium">מספר מנות ילדים</span>
+          <input
+            value={draft.kids_meal_count ?? ""}
+            onChange={(e) => updateField("kids_meal_count", e.target.value || null)}
+            className={inputClass}
+          />
+        </label>
+
+        <label className={labelClass}>
           <span className="font-medium">אימייל 1</span>
           <input
             type="email"
@@ -262,6 +271,16 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
           />
         </label>
       </div>
+
+      <label className={labelClass}>
+        <span className="font-medium">מידע נוסף</span>
+        <textarea
+          value={draft.menu_notes ?? ""}
+          onChange={(e) => updateField("menu_notes", e.target.value || null)}
+          rows={2}
+          className={inputClass}
+        />
+      </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 

@@ -283,6 +283,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               signedAt={signature?.signed_at}
               signatureData={signature?.signature_data}
               currentStaffName={currentStaff?.name}
+              managerName={managerName}
               canManagerCosign={canEditChecklist}
               managerSignedByName={signature?.manager_signed_by_name}
               managerSignedAt={signature?.manager_signed_at}
@@ -539,7 +540,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               signedAt={summaryReportSignature?.signed_at}
               signatureData={summaryReportSignature?.signature_data}
               canEdit={canWriteSummary}
-              defaultSignerName={currentStaff?.name ?? managerName}
+              defaultSignerName={managerName ?? currentStaff?.name}
               onSign={signSummaryReport}
               onUnsign={unsignSummaryReport}
             />

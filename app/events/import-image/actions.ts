@@ -62,6 +62,8 @@ export async function createEventFromImageImport(
       end_time: draft.end_time || "03:00",
       manager_id: managerId,
       estimated_guests: draft.estimated_guests,
+      kids_meal_count: draft.kids_meal_count,
+      menu_notes: draft.menu_notes,
       bride_name: draft.bride_name,
       groom_name: draft.groom_name,
       sales_person_name: draft.sales_person_name,

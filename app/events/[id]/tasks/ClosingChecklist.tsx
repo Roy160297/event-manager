@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
+import { ALL_CLOSING_CHECKLIST_KEYS, CLOSING_CHECKLIST } from "@/lib/closingChecklist";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
@@ -12,6 +12,7 @@ import {
   setClosingChecklistItem,
   setClosingChecklistNote,
   clearClosingChecklist,
+  markAllClosingChecklist,
   signChecklist,
   unsignChecklist,
 } from "./actions";
@@ -52,6 +53,7 @@ export default function ClosingChecklist({
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [marking, setMarking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState(initialNote ?? "");
   const [noteStatus, setNoteStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -100,6 +102,21 @@ export default function ClosingChecklist({
     }
   }
 
+  async function markAll() {
+    const previous = checked;
+    setError(null);
+    setChecked(new Set(ALL_CLOSING_CHECKLIST_KEYS));
+    setMarking(true);
+    try {
+      await markAllClosingChecklist(eventId);
+    } catch (err) {
+      setChecked(previous);
+      setError(err instanceof Error ? err.message : "שגיאה בסימון");
+    } finally {
+      setMarking(false);
+    }
+  }
+
   async function saveNote() {
     setNoteError(null);
     setNoteStatus("saving");
@@ -132,14 +149,24 @@ export default function ClosingChecklist({
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {canEditNow && (
-          <button
-            type="button"
-            onClick={clearAll}
-            disabled={clearing || checked.size === 0}
-            className="self-start rounded-full border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
-          >
-            נקה את כל הסימונים
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={markAll}
+              disabled={marking || checked.size === TOTAL_ITEMS}
+              className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-50"
+            >
+              סמן הכל
+            </button>
+            <button
+              type="button"
+              onClick={clearAll}
+              disabled={clearing || checked.size === 0}
+              className="self-start rounded-full border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              נקה את כל הסימונים
+            </button>
+          </div>
         )}
 
         <PdfExportButton
@@ -225,7 +252,7 @@ export default function ClosingChecklist({
             signedAt={signedAt}
             signatureData={signatureData}
             canEdit={canEdit}
-            defaultSignerName={currentStaffName ?? managerName}
+            defaultSignerName={managerName ?? currentStaffName}
             onSign={(name, signature) => signChecklist(eventId, "closing_checklist", name, signature)}
             onUnsign={() => unsignChecklist(eventId, "closing_checklist")}
           />
