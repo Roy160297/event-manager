@@ -17,7 +17,7 @@ export function EventSummaryReportPrintable({
     ["שם הלקוח", event.name],
     ["סוג אירוע", EVENT_TYPE_LABELS[event.event_type]],
     ["שעת תחילת האירוע", formatTime(event.start_time)],
-    ["שעת סיום האירוע", formatTime(event.end_time)],
+    ["שעת סיום האירוע", formatTime(event.report_end_time)],
     ["מינימום אורחים בהתחייבות", guestCommitment],
     ["מנהל אירוע", managerName],
     ["חברת הפקה", event.production_company],
@@ -32,10 +32,12 @@ export function EventSummaryReportPrintable({
     ["כמות טבחים", event.cook_count],
     ["כמות מנקי מטבח", event.kitchen_dishwasher_count],
     ["כמות שוטפי כלים", event.dishwasher_count],
+    ["כמות מאבטחים", event.security_guard_count],
     ["שעות מנקה אולם", event.hall_cleaner_hours],
     ["שעות מנקה שירותים", event.restroom_cleaner_hours],
     ["שעות מנקי מטבח", event.kitchen_dishwasher_hours],
     ["שעות שוטפי כלים", event.dishwasher_hours],
+    ["שעות מאבטחים", event.security_guard_hours],
   ];
 
   return (
@@ -56,12 +58,6 @@ export function EventSummaryReportPrintable({
         ))}
       </div>
 
-      {event.security_notes && (
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-bold">מאבטחים</p>
-          <p className="whitespace-pre-wrap text-[12.5px]">{event.security_notes}</p>
-        </div>
-      )}
       {event.report_summary && (
         <div className="flex flex-col gap-1">
           <p className="text-sm font-bold">סיכום האירוע</p>

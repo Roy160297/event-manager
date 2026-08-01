@@ -65,6 +65,7 @@ export interface EventRow {
   table_sketch_path: string | null;
   production_company: string | null;
   exit_time: string | null;
+  report_end_time: string | null;
   final_guest_count_counter: number | null;
   final_guest_count_iplan: string | null;
   reserve_opened_count: number | null;
@@ -75,7 +76,8 @@ export interface EventRow {
   cook_count: number | null;
   kitchen_dishwasher_count: number | null;
   dishwasher_count: number | null;
-  security_notes: string | null;
+  security_guard_count: number | null;
+  security_guard_hours: string | null;
   report_summary: string | null;
   report_general_notes: string | null;
   hall_cleaner_hours: string | null;

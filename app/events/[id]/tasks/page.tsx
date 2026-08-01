@@ -126,6 +126,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
 
   const summaryFields: [string, string | number | null][] = [
     ["חברת הפקה", event?.production_company ?? null],
+    ["שעת סיום האירוע", event?.report_end_time ?? null],
     ["שעת יציאה מהאולם", event?.exit_time ?? null],
     ["כמות אורחים סופית - קאונטר", event?.final_guest_count_counter ?? null],
     ["כמות אורחים סופית - אייפלן", event?.final_guest_count_iplan ?? null],
@@ -137,10 +138,12 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     ["כמות טבחים", event?.cook_count ?? null],
     ["כמות מנקי מטבח", event?.kitchen_dishwasher_count ?? null],
     ["כמות שוטפי כלים", event?.dishwasher_count ?? null],
+    ["כמות מאבטחים", event?.security_guard_count ?? null],
     ["שעות מנקה אולם", event?.hall_cleaner_hours ?? null],
     ["שעות מנקה שירותים", event?.restroom_cleaner_hours ?? null],
     ["שעות מנקי מטבח", event?.kitchen_dishwasher_hours ?? null],
     ["שעות שוטפי כלים", event?.dishwasher_hours ?? null],
+    ["שעות מאבטחים", event?.security_guard_hours ?? null],
   ];
 
   async function addTask(formData: FormData) {
@@ -333,7 +336,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
             </p>
             <p>
               <span className="text-foreground/60">שעת סיום האירוע: </span>
-              {formatTime(event?.end_time ?? null)}
+              {formatTime(event?.report_end_time ?? null)}
             </p>
             <p>
               <span className="text-foreground/60">מינימום אורחים בהתחייבות: </span>
@@ -362,6 +365,10 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               <label className={reportLabelClass}>
                 <span>חברת הפקה</span>
                 <input name="production_company" defaultValue={event?.production_company ?? ""} className={inputClass} />
+              </label>
+              <label className={reportLabelClass}>
+                <span>שעת סיום האירוע</span>
+                <TimeField name="report_end_time" defaultValue={event?.report_end_time ?? ""} />
               </label>
               <label className={reportLabelClass}>
                 <span>שעת יציאה מהאולם</span>
@@ -449,6 +456,16 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 />
               </label>
               <label className={reportLabelClass}>
+                <span>כמות מאבטחים</span>
+                <input
+                  type="number"
+                  min={0}
+                  name="security_guard_count"
+                  defaultValue={event?.security_guard_count ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
                 <span>שעות מנקה אולם</span>
                 <input
                   name="hall_cleaner_hours"
@@ -484,18 +501,16 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                   className={inputClass}
                 />
               </label>
+              <label className={reportLabelClass}>
+                <span>שעות מאבטחים</span>
+                <input
+                  name="security_guard_hours"
+                  placeholder="לדוגמה: 18-3"
+                  defaultValue={event?.security_guard_hours ?? ""}
+                  className={inputClass}
+                />
+              </label>
             </div>
-
-            <label className={reportLabelClass}>
-              <span>מאבטחים</span>
-              <textarea
-                name="security_notes"
-                rows={3}
-                placeholder="שמות המאבטחים, שעות יציאה, נוהל נשק, אירועים, ברקוד..."
-                defaultValue={event?.security_notes ?? ""}
-                className={inputClass}
-              />
-            </label>
 
             <label className={reportLabelClass}>
               <span>סיכום האירוע</span>

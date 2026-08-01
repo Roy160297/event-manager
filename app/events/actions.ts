@@ -167,6 +167,7 @@ export async function updateEventSummaryReport(eventId: string, formData: FormDa
     .update({
       production_company: text("production_company"),
       exit_time: text("exit_time"),
+      report_end_time: text("report_end_time"),
       final_guest_count_counter: num("final_guest_count_counter"),
       final_guest_count_iplan: text("final_guest_count_iplan"),
       reserve_opened_count: num("reserve_opened_count"),
@@ -177,7 +178,8 @@ export async function updateEventSummaryReport(eventId: string, formData: FormDa
       cook_count: num("cook_count"),
       kitchen_dishwasher_count: num("kitchen_dishwasher_count"),
       dishwasher_count: num("dishwasher_count"),
-      security_notes: text("security_notes"),
+      security_guard_count: num("security_guard_count"),
+      security_guard_hours: text("security_guard_hours"),
       report_summary: text("report_summary"),
       report_general_notes: text("report_general_notes"),
       hall_cleaner_hours: text("hall_cleaner_hours"),
