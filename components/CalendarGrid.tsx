@@ -59,20 +59,15 @@ export function CalendarGrid({
                 isToday ? "border-accent bg-accent-soft/40" : "border-border-classic bg-surface"
               }`}
             >
-              <div className="flex items-start justify-between gap-1">
+              <div className="flex flex-col gap-0.5">
                 <div className="flex items-baseline gap-1">
                   <span className="text-foreground/60">{cell.day}</span>
                   {cell.hebrewDate && (
-                    <span className="text-[9px] text-foreground/40">{cell.hebrewDate}</span>
+                    <span className="text-[11px] text-foreground/60">{cell.hebrewDate}</span>
                   )}
                 </div>
                 {cell.holiday && (
-                  <span
-                    className="truncate text-[9px] font-medium text-accent"
-                    title={cell.holiday}
-                  >
-                    {cell.holiday}
-                  </span>
+                  <span className="text-[9px] font-medium leading-tight text-accent">{cell.holiday}</span>
                 )}
               </div>
               {cell.events.map((event) => (
