@@ -34,7 +34,7 @@ export default async function EventLayout({
       <EventSwitcher events={allEvents ?? []} currentEventId={id} />
 
       <div>
-        <p className="text-sm text-foreground/60">
+        <p className="text-sm text-foreground/80">
           <Link href="/">אירועים</Link> / {event.name}
         </p>
         <div className="mt-1 flex items-center justify-between">
@@ -43,7 +43,7 @@ export default async function EventLayout({
             {EVENT_STATUS_LABELS[displayStatus]}
           </span>
         </div>
-        <p className="text-sm text-foreground/60">
+        <p className="text-sm text-foreground/80">
           {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
         </p>
       </div>

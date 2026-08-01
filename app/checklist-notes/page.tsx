@@ -40,7 +40,7 @@ export default async function ChecklistNotesPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="font-serif text-2xl font-bold">הערות וסיכומים</h1>
-      <p className="text-sm text-foreground/60">
+      <p className="text-sm text-foreground/80">
         כל ההערות שנרשמו בצ&apos;קליסטים, מרוכזות לפי סוג צ&apos;קליסט.
       </p>
 

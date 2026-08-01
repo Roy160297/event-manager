@@ -59,13 +59,13 @@ export default async function EventsDashboard({
           <div className="flex flex-wrap gap-2">
             <Link
               href="/events/import"
-              className="rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
+              className="rounded-full border border-accent bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
             >
               צור אירוע חדש מ&quot;טופס אירוע חתונה&quot; מ-iPlan
             </Link>
             <Link
               href="/events/import-image"
-              className="rounded-full border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
+              className="rounded-full border border-accent bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
             >
               יצירת אירוע מצילום מסך &quot;ענן&quot; מ-iPlan
             </Link>
@@ -78,7 +78,7 @@ export default async function EventsDashboard({
             <div className="flex gap-2">
               <Link
                 href="/events/trash"
-                className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+                className="rounded-full border border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
               >
                 פח מיחזור
               </Link>
@@ -86,7 +86,7 @@ export default async function EventsDashboard({
                 href="https://iplan.co.il/he-IL/corp/sign_in?"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-border-classic px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+                className="rounded-full border border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
               >
                 מעבר ל-iPlan
               </a>
@@ -102,11 +102,11 @@ export default async function EventsDashboard({
       )}
 
       {!error && (!events || events.length === 0) && (
-        <p className="text-foreground/60">אין עדיין אירועים. לחצו על &quot;אירוע חדש&quot; כדי להתחיל.</p>
+        <p className="text-foreground/80">אין עדיין אירועים. לחצו על &quot;אירוע חדש&quot; כדי להתחיל.</p>
       )}
 
       {!error && events && events.length > 0 && filteredEvents?.length === 0 && (
-        <p className="text-foreground/60">אין אירועים למנהל/ת הנבחר/ת.</p>
+        <p className="text-foreground/80">אין אירועים למנהל/ת הנבחר/ת.</p>
       )}
 
       <ul className="flex flex-col gap-3">

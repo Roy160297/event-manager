@@ -110,7 +110,7 @@ export default async function CalendarPage({
         <div className="flex items-center justify-between">
           <Link
             href={`/calendar?month=${prev.year}-${pad(prev.month)}`}
-            className="rounded-full border border-border-classic px-3 py-1 text-sm hover:bg-accent-soft"
+            className="rounded-full border border-border-classic bg-background px-3 py-1 text-sm hover:bg-accent-soft"
           >
             ‹ {MONTH_LABELS[prev.month - 1]}
           </Link>
@@ -119,7 +119,7 @@ export default async function CalendarPage({
           </h1>
           <Link
             href={`/calendar?month=${next.year}-${pad(next.month)}`}
-            className="rounded-full border border-border-classic px-3 py-1 text-sm hover:bg-accent-soft"
+            className="rounded-full border border-border-classic bg-background px-3 py-1 text-sm hover:bg-accent-soft"
           >
             {MONTH_LABELS[next.month - 1]} ›
           </Link>

@@ -14,7 +14,7 @@ export default async function CoupleMeetingPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">פגישה עם זוג</h1>
-      <p className="text-sm text-foreground/60">
+      <p className="text-sm text-foreground/80">
         מדריך לנושאים שיש לעבור עליהם בפגישה עם זוג, ולמה שצריך להתבצע לפני ואחרי הפגישה.
       </p>
 

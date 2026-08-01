@@ -28,7 +28,7 @@ export function EventSubNav({ eventId }: { eventId: string }) {
             className={
               isActive
                 ? "border-b-2 border-accent px-3 py-2 text-sm font-semibold text-accent"
-                : "border-b-2 border-transparent px-3 py-2 text-sm text-foreground/70 hover:text-foreground"
+                : "border-b-2 border-transparent px-3 py-2 text-sm text-foreground/85 hover:text-foreground"
             }
           >
             {item.label}

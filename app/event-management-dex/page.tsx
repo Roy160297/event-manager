@@ -88,7 +88,7 @@ export default async function EventManagementDexPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">סד&quot;פ ניהול אירוע</h1>
-      <p className="text-sm text-foreground/60">
+      <p className="text-sm text-foreground/80">
         מדריך למנהל האירוע לאורך כל האירוע - מהכנות לפני האירוע ועד סופו.
       </p>
 
