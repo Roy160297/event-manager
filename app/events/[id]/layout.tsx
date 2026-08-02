@@ -2,9 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDate, getDisplayEventStatus } from "@/lib/labels";
-import { todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { EventSubNav } from "@/components/EventSubNav";
-import { EventSwitcher } from "@/components/EventSwitcher";
 import type { EventRow } from "@/lib/types";
 
 export default async function EventLayout({
@@ -16,16 +14,7 @@ export default async function EventLayout({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const [{ data: event }, { data: allEvents }] = await Promise.all([
-    supabase.from("events").select("*").eq("id", id).returns<EventRow[]>().single(),
-    supabase
-      .from("events")
-      .select("id, name, event_date, event_type")
-      .is("deleted_at", null)
-      .gte("event_date", todayInIsrael())
-      .order("event_date", { ascending: true })
-      .returns<Pick<EventRow, "id" | "name" | "event_date" | "event_type">[]>(),
-  ]);
+  const { data: event } = await supabase.from("events").select("*").eq("id", id).returns<EventRow[]>().single();
 
   if (!event) notFound();
 
@@ -33,8 +22,6 @@ export default async function EventLayout({
 
   return (
     <div className="flex flex-col gap-6">
-      <EventSwitcher events={allEvents ?? []} currentEventId={id} />
-
       <div>
         <p className="text-sm text-foreground/80">
           <Link href="/">אירועים</Link> / {event.name}

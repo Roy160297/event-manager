@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { Heebo, Frank_Ruhl_Libre } from "next/font/google";
 import { MainNav } from "@/components/MainNav";
+import { EventSwitcher } from "@/components/EventSwitcher";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
 import { signOut } from "@/app/login/actions";
+import { createClient } from "@/lib/supabase/server";
+import { todayInIsrael } from "@/lib/coupleMeetingReminders";
+import type { EventRow } from "@/lib/types";
 import "./globals.css";
 
 const heebo = Heebo({
@@ -28,6 +32,21 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const staff = await getCurrentStaff();
+
+  // Fetched here (rather than only within the per-event layout) so the
+  // switcher sidebar shows on every page, not just an event's own sub-pages.
+  let switcherEvents: Pick<EventRow, "id" | "name" | "event_date" | "event_type">[] | null = null;
+  if (staff) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("events")
+      .select("id, name, event_date, event_type")
+      .is("deleted_at", null)
+      .gte("event_date", todayInIsrael())
+      .order("event_date", { ascending: true })
+      .returns<Pick<EventRow, "id" | "name" | "event_date" | "event_type">[]>();
+    switcherEvents = data;
+  }
 
   return (
     <html
@@ -79,6 +98,7 @@ export default async function RootLayout({
             </div>
           </div>
         </header>
+        {staff && <EventSwitcher events={switcherEvents ?? []} />}
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
         <footer className="border-t border-border-classic bg-background px-4 py-4 text-center text-xs text-foreground/50">
           © {new Date().getFullYear()} רועי פוריאן. כל הזכויות שמורות.

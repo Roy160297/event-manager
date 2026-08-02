@@ -8,18 +8,22 @@ import type { EventRow } from "@/lib/types";
 
 type SwitcherEvent = Pick<EventRow, "id" | "name" | "event_date" | "event_type">;
 
-export function EventSwitcher({
-  events,
-  currentEventId,
-}: {
-  events: SwitcherEvent[];
-  currentEventId: string;
-}) {
+// Non-id segments under /events/* - matching one of these means we're not
+// actually looking at a specific event, so there's no "current event" to
+// highlight and no sub-path (tasks/guests/etc.) to carry over on switch.
+const RESERVED_SEGMENTS = new Set(["new", "import", "import-image", "trash", "archive"]);
+
+export function EventSwitcher({ events }: { events: SwitcherEvent[] }) {
   const pathname = usePathname();
   const [query, setQuery] = useState("");
 
-  const base = `/events/${currentEventId}`;
-  const subPath = pathname.startsWith(base) ? pathname.slice(base.length) : "";
+  // Rendered globally (every page, not just an event's own sub-pages), so
+  // the current event and its sub-path are derived from the URL itself
+  // rather than passed in - there may not be one at all (e.g. on /calendar).
+  const match = pathname.match(/^\/events\/([^/]+)(\/.*)?$/);
+  const matchedId = match?.[1];
+  const currentEventId = matchedId && !RESERVED_SEGMENTS.has(matchedId) ? matchedId : null;
+  const subPath = currentEventId ? (match?.[2] ?? "") : "";
 
   const normalizedQuery = query.trim().toLowerCase();
   const filtered = normalizedQuery
