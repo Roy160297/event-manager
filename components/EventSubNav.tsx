@@ -8,7 +8,7 @@ const SUB_NAV = [
   { segment: "tasks", label: "משימות" },
   { segment: "timeline", label: "לוח זמנים" },
   { segment: "guests", label: "אורחים" },
-  { segment: "staffing", label: "שיבוץ מלצרים" },
+  { segment: "staffing", label: "סקיצה לאירוע" },
 ];
 
 export function EventSubNav({ eventId }: { eventId: string }) {

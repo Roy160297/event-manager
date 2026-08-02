@@ -22,7 +22,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   tasks: "משימות",
   timeline: "לוח זמנים",
   guests: "אורחים",
-  staffing: "שיבוץ מלצרים",
+  staffing: "סקיצה לאירוע",
   closing_checklist: "צ'קליסט סגירה - מנהל אירוע",
   event_summary_report: "דוח סיכום אירוע - מנהל אירוע",
   floor_manager_checklist: "צ'קליסט סגירה - מנהל פלור",
