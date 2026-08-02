@@ -19,7 +19,10 @@ export function EventFormExport({
   suppliers: EventSupplierRow[];
   scheduleItems: Pick<TimelineItemRow, "label" | "approx_time" | "notes">[];
 }) {
-  const fields: [string, string | number | null][] = [
+  const isBusinessEvent = event.event_type === "business_event";
+  const hiddenForBusinessEvent = new Set(["מספר מנות ילדים", "שמות הורי הכלה", "שמות הורי החתן"]);
+
+  const allFields: [string, string | number | null][] = [
     ["שעת התחלה", formatTime(event.start_time)],
     ["שעת סיום", formatTime(event.end_time)],
     ["תאריך פגישת זוג", formatDate(event.couple_meeting_date)],
@@ -35,6 +38,7 @@ export function EventFormExport({
     ["אימייל 2", event.contact_email_2],
     ["טלפון 2", event.contact_phone_2],
   ];
+  const fields = allFields.filter(([label]) => !isBusinessEvent || !hiddenForBusinessEvent.has(label));
 
   const sortedSchedule = [...scheduleItems].sort(
     (a, b) => scheduleSortKey(a.approx_time) - scheduleSortKey(b.approx_time),

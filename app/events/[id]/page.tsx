@@ -168,15 +168,17 @@ export default async function EventOverviewPage({
                 <TimeField name="end_time" defaultValue={event?.end_time ?? ""} />
               </label>
 
-              <label className={labelClass}>
-                <span className="font-medium">מספר מנות ילדים</span>
-                <input
-                  type="text"
-                  name="kids_meal_count"
-                  defaultValue={event?.kids_meal_count ?? ""}
-                  className={inputClass}
-                />
-              </label>
+              {event?.event_type !== "business_event" && (
+                <label className={labelClass}>
+                  <span className="font-medium">מספר מנות ילדים</span>
+                  <input
+                    type="text"
+                    name="kids_meal_count"
+                    defaultValue={event?.kids_meal_count ?? ""}
+                    className={inputClass}
+                  />
+                </label>
+              )}
             </div>
 
             <div className="flex flex-col gap-4">
@@ -239,15 +241,27 @@ export default async function EventOverviewPage({
               </select>
             </label>
 
-            <label className={labelClass}>
-              <span className="font-medium">שמות הורי הכלה</span>
-              <input name="bride_parents_names" defaultValue={event?.bride_parents_names ?? ""} className={inputClass} />
-            </label>
+            {event?.event_type !== "business_event" && (
+              <>
+                <label className={labelClass}>
+                  <span className="font-medium">שמות הורי הכלה</span>
+                  <input
+                    name="bride_parents_names"
+                    defaultValue={event?.bride_parents_names ?? ""}
+                    className={inputClass}
+                  />
+                </label>
 
-            <label className={labelClass}>
-              <span className="font-medium">שמות הורי החתן</span>
-              <input name="groom_parents_names" defaultValue={event?.groom_parents_names ?? ""} className={inputClass} />
-            </label>
+                <label className={labelClass}>
+                  <span className="font-medium">שמות הורי החתן</span>
+                  <input
+                    name="groom_parents_names"
+                    defaultValue={event?.groom_parents_names ?? ""}
+                    className={inputClass}
+                  />
+                </label>
+              </>
+            )}
           </div>
 
           <label className={labelClass}>
@@ -280,7 +294,9 @@ export default async function EventOverviewPage({
                 ["מספר אורחים - התחייבות", event?.estimated_guests ?? null],
                 ["שעת התחלה", event ? formatTime(event.start_time) : null],
                 ["שעת סיום", event ? formatTime(event.end_time) : null],
-                ["מספר מנות ילדים", event?.kids_meal_count ?? null],
+                ...(event?.event_type !== "business_event"
+                  ? ([["מספר מנות ילדים", event?.kids_meal_count ?? null]] as [string, string | null][])
+                  : []),
                 ["אימייל 1", event?.contact_email ?? null],
                 ["טלפון 1", event?.contact_phone ?? null],
                 ["אימייל 2", event?.contact_email_2 ?? null],
@@ -288,8 +304,12 @@ export default async function EventOverviewPage({
                 ["מנהל/ת אירוע אחראי/ת", managerName],
                 ["מנהל/ת פלור", floorManagerName],
                 ["איש/ת מכירות", salespersonName],
-                ["שמות הורי הכלה", event?.bride_parents_names ?? null],
-                ["שמות הורי החתן", event?.groom_parents_names ?? null],
+                ...(event?.event_type !== "business_event"
+                  ? ([
+                      ["שמות הורי הכלה", event?.bride_parents_names ?? null],
+                      ["שמות הורי החתן", event?.groom_parents_names ?? null],
+                    ] as [string, string | null][])
+                  : []),
               ] as [string, string | null][]
             ).map(([label, value]) => (
               <p key={label}>
