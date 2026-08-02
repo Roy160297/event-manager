@@ -16,7 +16,7 @@ export function EventSubNav({ eventId }: { eventId: string }) {
   const base = `/events/${eventId}`;
 
   return (
-    <nav className="flex gap-1 border-b border-border-classic">
+    <nav className="flex gap-1 rounded-t-md border-b border-border-classic bg-background px-1">
       {SUB_NAV.map((item) => {
         const href = `${base}/${item.segment}`;
         const isActive = item.segment === "" ? pathname === base || pathname === `${base}/` : pathname.startsWith(href);
