@@ -65,6 +65,12 @@ export function EventSwitcher({
             <li className="px-2 py-1.5 text-sm text-foreground/60">לא נמצאו אירועים</li>
           )}
         </ul>
+        <Link
+          href="/events/archive"
+          className="mt-1 block rounded-md px-2 py-1.5 text-xs text-accent hover:bg-accent-soft"
+        >
+          לצפייה באירועים שחלפו - ארכיון ›
+        </Link>
       </div>
     </aside>
   );

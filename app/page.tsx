@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { deleteEvent } from "@/app/events/actions";
 import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDate, getDisplayEventStatus } from "@/lib/labels";
 import { todaysEventDate } from "@/lib/scheduleTime";
+import { todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { EventManagerFilter } from "@/components/EventManagerFilter";
@@ -24,6 +25,7 @@ export default async function EventsDashboard({
       .from("events")
       .select("*")
       .is("deleted_at", null)
+      .gte("event_date", todayInIsrael())
       .order("event_date", { ascending: true })
       .returns<EventRow[]>(),
     getEventManagerCandidates(),
@@ -77,6 +79,12 @@ export default async function EventsDashboard({
             </Link>
             <div className="flex gap-2">
               <Link
+                href="/events/archive"
+                className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+              >
+                ארכיון
+              </Link>
+              <Link
                 href="/events/trash"
                 className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
               >
@@ -102,7 +110,13 @@ export default async function EventsDashboard({
       )}
 
       {!error && (!events || events.length === 0) && (
-        <p className="text-foreground/80">אין עדיין אירועים. לחצו על &quot;אירוע חדש&quot; כדי להתחיל.</p>
+        <p className="text-foreground/80">
+          אין אירועים קרובים. לחצו על &quot;אירוע חדש&quot; כדי להתחיל, או עברו ל
+          <Link href="/events/archive" className="text-accent hover:underline">
+            ארכיון
+          </Link>{" "}
+          לצפייה באירועים שחלפו.
+        </p>
       )}
 
       {!error && events && events.length > 0 && filteredEvents?.length === 0 && (

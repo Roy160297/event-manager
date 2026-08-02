@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDate, getDisplayEventStatus } from "@/lib/labels";
+import { todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { EventSubNav } from "@/components/EventSubNav";
 import { EventSwitcher } from "@/components/EventSwitcher";
 import type { EventRow } from "@/lib/types";
@@ -21,6 +22,7 @@ export default async function EventLayout({
       .from("events")
       .select("id, name, event_date, event_type")
       .is("deleted_at", null)
+      .gte("event_date", todayInIsrael())
       .order("event_date", { ascending: true })
       .returns<Pick<EventRow, "id" | "name" | "event_date" | "event_type">[]>(),
   ]);
