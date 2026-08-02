@@ -219,6 +219,7 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
         <SaveDetailsForm
           action={addItem}
           message="השלב נוסף בהצלחה"
+          clearOnSuccess
           className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
         >
           <p className="text-sm font-medium">שלב חדש בלוח הזמנים</p>
@@ -227,6 +228,7 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
               name="label"
               placeholder="לדוגמה: קבלת פנים"
               required
+              autoFocus
               className="rounded-md border border-border-classic bg-surface px-3 py-2 sm:col-span-2"
             />
             <TimeField name="approx_time" />
