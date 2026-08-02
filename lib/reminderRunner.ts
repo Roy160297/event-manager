@@ -3,7 +3,7 @@ import { sendReminderEmail } from "@/lib/reminderEmail";
 import { COUPLE_MEETING_REMINDER_RULES, addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
 import type { EventRow } from "@/lib/types";
 
-type ReminderableEvent = Pick<EventRow, "id" | "name" | "event_date" | "couple_meeting_date">;
+type ReminderableEvent = Pick<EventRow, "id" | "name" | "event_type" | "event_date" | "couple_meeting_date">;
 
 // Shared by the daily cron route (app/api/cron/couple-meeting-reminders) and
 // the "check right now" call after creating/saving an event - same
@@ -15,6 +15,9 @@ export async function sendDueReminders(
   managerEmail: string | null | undefined,
 ): Promise<{ sent: number; skippedAlreadySent: number }> {
   if (!managerEmail) return { sent: 0, skippedAlreadySent: 0 };
+  // Business events don't have a couple/wedding flow, so none of these
+  // couple-meeting-anchored reminder rules are relevant to them.
+  if (event.event_type === "business_event") return { sent: 0, skippedAlreadySent: 0 };
 
   const today = todayInIsrael();
   let sent = 0;
