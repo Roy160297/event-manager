@@ -31,7 +31,7 @@ export default async function EventsTrashPage() {
         <h1 className="font-serif text-2xl font-bold">פח מיחזור</h1>
         <Link
           href="/"
-          className="rounded-full border border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+          className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
         >
           חזרה לאירועים
         </Link>

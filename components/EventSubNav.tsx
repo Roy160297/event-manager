@@ -16,7 +16,7 @@ export function EventSubNav({ eventId }: { eventId: string }) {
   const base = `/events/${eventId}`;
 
   return (
-    <nav className="flex gap-1 rounded-t-md border-b border-border-classic bg-background px-1">
+    <nav className="flex flex-wrap gap-1 border-b border-border-classic pb-1">
       {SUB_NAV.map((item) => {
         const href = `${base}/${item.segment}`;
         const isActive = item.segment === "" ? pathname === base || pathname === `${base}/` : pathname.startsWith(href);
@@ -27,8 +27,8 @@ export function EventSubNav({ eventId }: { eventId: string }) {
             aria-current={isActive ? "page" : undefined}
             className={
               isActive
-                ? "border-b-2 border-accent px-3 py-2 text-sm font-semibold text-accent"
-                : "border-b-2 border-transparent px-3 py-2 text-sm text-foreground/85 hover:text-foreground"
+                ? "rounded-md bg-accent-soft px-3 py-2 text-sm font-semibold text-accent"
+                : "rounded-md bg-background px-3 py-2 text-sm text-foreground/85 hover:text-foreground"
             }
           >
             {item.label}
