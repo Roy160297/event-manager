@@ -20,7 +20,12 @@ export function EventFormExport({
   scheduleItems: Pick<TimelineItemRow, "label" | "approx_time" | "notes">[];
 }) {
   const isBusinessEvent = event.event_type === "business_event";
-  const hiddenForBusinessEvent = new Set(["מספר מנות ילדים", "שמות הורי הכלה", "שמות הורי החתן"]);
+  const hiddenForBusinessEvent = new Set([
+    "מספר מנות ילדים",
+    "שמות הורי הכלה",
+    "שמות הורי החתן",
+    "תאריך פגישת זוג",
+  ]);
 
   const allFields: [string, string | number | null][] = [
     ["שעת התחלה", formatTime(event.start_time)],
