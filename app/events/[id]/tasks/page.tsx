@@ -93,9 +93,13 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     return checklistSignatures?.find((row) => row.checklist_key === checklistKey) ?? null;
   }
 
-  function photosFor(checklistKey: string) {
+  // slot omitted -> every photo for this checklist regardless of slot (used
+  // for the PDF export); slot passed (including null) -> only that slot, so
+  // the summary report's counter/additional-guests photos and its general
+  // gallery (slot null) stay visually separate on the page.
+  function photosFor(checklistKey: string, slot?: string | null) {
     return (checklistPhotos ?? [])
-      .filter((row) => row.checklist_key === checklistKey)
+      .filter((row) => row.checklist_key === checklistKey && (slot === undefined || (row.slot ?? null) === slot))
       .map((row) => ({
         id: row.id,
         storagePath: row.storage_path,
@@ -358,6 +362,26 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                   </p>
                 ))}
               </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <ChecklistPhotos
+                  eventId={eventId}
+                  checklistKey="event_summary_report"
+                  slot="counter"
+                  label="תמונת קאונטר"
+                  compact
+                  photos={photosFor("event_summary_report", "counter")}
+                  canEdit={canWriteSummary && !summaryReportSignature}
+                />
+                <ChecklistPhotos
+                  eventId={eventId}
+                  checklistKey="event_summary_report"
+                  slot="additional_guests"
+                  label="תמונה של אורחים נוספים"
+                  compact
+                  photos={photosFor("event_summary_report", "additional_guests")}
+                  canEdit={canWriteSummary && !summaryReportSignature}
+                />
+              </div>
               {event?.report_summary && (
                 <div className="flex flex-col gap-1 text-sm">
                   <p className="font-medium">סיכום האירוע</p>
@@ -388,24 +412,46 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <span>שעת יציאה מהאולם</span>
                 <TimeField name="exit_time" defaultValue={event?.exit_time ?? ""} />
               </label>
-              <label className={reportLabelClass}>
-                <span>כמות אורחים סופית - קאונטר</span>
-                <input
-                  type="number"
-                  min={0}
-                  name="final_guest_count_counter"
-                  defaultValue={event?.final_guest_count_counter ?? ""}
-                  className={inputClass}
+              <div className="flex flex-col gap-2">
+                <label className={reportLabelClass}>
+                  <span>כמות אורחים סופית - קאונטר</span>
+                  <input
+                    type="number"
+                    min={0}
+                    name="final_guest_count_counter"
+                    defaultValue={event?.final_guest_count_counter ?? ""}
+                    className={inputClass}
+                  />
+                </label>
+                <ChecklistPhotos
+                  eventId={eventId}
+                  checklistKey="event_summary_report"
+                  slot="counter"
+                  label="תמונת קאונטר"
+                  compact
+                  photos={photosFor("event_summary_report", "counter")}
+                  canEdit={canWriteSummary && !summaryReportSignature}
                 />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות אורחים סופית - אייפלן</span>
-                <input
-                  name="final_guest_count_iplan"
-                  defaultValue={event?.final_guest_count_iplan ?? ""}
-                  className={inputClass}
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className={reportLabelClass}>
+                  <span>כמות אורחים סופית - אייפלן</span>
+                  <input
+                    name="final_guest_count_iplan"
+                    defaultValue={event?.final_guest_count_iplan ?? ""}
+                    className={inputClass}
+                  />
+                </label>
+                <ChecklistPhotos
+                  eventId={eventId}
+                  checklistKey="event_summary_report"
+                  slot="additional_guests"
+                  label="תמונה של אורחים נוספים"
+                  compact
+                  photos={photosFor("event_summary_report", "additional_guests")}
+                  canEdit={canWriteSummary && !summaryReportSignature}
                 />
-              </label>
+              </div>
               <label className={reportLabelClass}>
                 <span>כמות רזרבה שנפתחו</span>
                 <input
@@ -558,7 +604,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           <ChecklistPhotos
             eventId={eventId}
             checklistKey="event_summary_report"
-            photos={photosFor("event_summary_report")}
+            slot={null}
+            photos={photosFor("event_summary_report", null)}
             canEdit={canWriteSummary && !summaryReportSignature}
           />
 

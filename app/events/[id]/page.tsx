@@ -12,7 +12,7 @@ import { getEventManagerCandidates, getFloorManagerCandidates, getSalespersonCan
 import { canRead, canWrite } from "@/lib/permissions";
 import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
-import type { EventRow, EventSupplierRow, EventType, TimelineItemRow } from "@/lib/types";
+import type { EventRow, EventSupplierRow, EventType, GuestRow, TimelineItemRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
@@ -27,7 +27,7 @@ export default async function EventOverviewPage({
   const [
     { data: event },
     { count: openTasks },
-    { count: guestCount },
+    { data: guestPartySizes },
     managers,
     floorManagers,
     salespeople,
@@ -41,7 +41,7 @@ export default async function EventOverviewPage({
       .select("*", { count: "exact", head: true })
       .eq("event_id", id)
       .neq("status", "done"),
-    supabase.from("guests").select("*", { count: "exact", head: true }).eq("event_id", id),
+    supabase.from("guests").select("party_size").eq("event_id", id).returns<Pick<GuestRow, "party_size">[]>(),
     getEventManagerCandidates(),
     getFloorManagerCandidates(),
     getSalespersonCandidates(),
@@ -63,6 +63,11 @@ export default async function EventOverviewPage({
   const canWriteEvents = !!currentStaff && canWrite(currentStaff.permissions, "events");
 
   if (!canReadEvents) return <NoPermissionNotice />;
+
+  // Sum of party_size, not row count - a "guest" row is a seated party
+  // (often 2+ people sharing a table), so counting rows undercounts the
+  // real headcount whenever any party has more than one seat.
+  const guestCount = (guestPartySizes ?? []).reduce((sum, guest) => sum + (guest.party_size ?? 1), 0);
 
   const managerName = managers?.find((manager) => manager.id === event?.manager_id)?.name ?? null;
   const floorManagerName = floorManagers?.find((manager) => manager.id === event?.floor_manager_id)?.name ?? null;
@@ -98,7 +103,7 @@ export default async function EventOverviewPage({
         </div>
         <div className="rounded-lg border border-border-classic bg-surface p-4">
           <p className="text-sm text-foreground/60">אורחים</p>
-          <p className="text-2xl font-bold">{guestCount ?? 0}</p>
+          <p className="text-2xl font-bold">{guestCount}</p>
         </div>
       </div>
 

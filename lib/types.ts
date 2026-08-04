@@ -158,6 +158,7 @@ export interface ChecklistPhotoRow {
   event_id: string;
   checklist_key: string;
   storage_path: string;
+  slot: string | null;
   created_at: string;
 }
 

@@ -48,11 +48,22 @@ export function ChecklistPhotos({
   checklistKey,
   photos,
   canEdit,
+  slot = null,
+  label = "תמונות",
+  compact = false,
 }: {
   eventId: string;
   checklistKey: string;
   photos: ChecklistPhoto[];
   canEdit: boolean;
+  // Lets one checklist_key carry more than one distinctly-labeled photo slot
+  // (e.g. the summary report's counter/additional-guests photos, separate
+  // from its general end-of-checklist gallery) - see migration 049.
+  slot?: string | null;
+  label?: string;
+  // Tighter styling (no top border/padding) for slots embedded directly
+  // under a specific field, instead of the default end-of-checklist look.
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
@@ -72,7 +83,7 @@ export function ChecklistPhotos({
         const compressed = await compressImage(file);
         const formData = new FormData();
         formData.set("file", compressed);
-        await uploadChecklistPhoto(eventId, checklistKey, formData);
+        await uploadChecklistPhoto(eventId, checklistKey, formData, slot);
       }
       router.refresh();
     } catch (err) {
@@ -108,8 +119,8 @@ export function ChecklistPhotos({
   if (!canEdit && photos.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-2 border-t border-border-classic pt-3">
-      <p className="text-sm font-medium">תמונות</p>
+    <div className={compact ? "flex flex-col gap-1.5" : "flex flex-col gap-2 border-t border-border-classic pt-3"}>
+      <p className="text-sm font-medium">{label}</p>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 

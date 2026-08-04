@@ -231,7 +231,12 @@ const VALID_PHOTO_CHECKLIST_KEYS = new Set([
   ...Object.keys(ROLE_CHECKLIST_KEYS),
 ]);
 
-export async function uploadChecklistPhoto(eventId: string, checklistKey: string, formData: FormData) {
+export async function uploadChecklistPhoto(
+  eventId: string,
+  checklistKey: string,
+  formData: FormData,
+  slot: string | null = null,
+) {
   if (!VALID_PHOTO_CHECKLIST_KEYS.has(checklistKey)) throw new Error("צ'קליסט לא מוכר");
 
   const file = formData.get("file");
@@ -249,7 +254,7 @@ export async function uploadChecklistPhoto(eventId: string, checklistKey: string
 
   const { error } = await supabase
     .from("checklist_photos")
-    .insert({ event_id: eventId, checklist_key: checklistKey, storage_path: path });
+    .insert({ event_id: eventId, checklist_key: checklistKey, storage_path: path, slot });
   if (error) throw new Error(error.message);
 
   revalidatePath(`/events/${eventId}/tasks`);
