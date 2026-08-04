@@ -10,6 +10,32 @@ export interface ChecklistPhoto {
   storagePath: string;
 }
 
+// Full-resolution phone photos (often 8-15MB) can exceed the server action
+// body size limit and are slow to upload over venue wifi - downscale to a
+// reasonable max dimension and re-encode as JPEG before sending. Falls back
+// to the original file if compression fails or doesn't actually help.
+async function compressImage(file: File, maxDimension = 1600, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
+
 // Shared "attach photos" section for the end of every checklist (after its
 // notes field): a thumbnail grid plus upload buttons, backed by the
 // checklist_photos table + the checklist-photos storage bucket. Two separate
@@ -35,19 +61,31 @@ export function ChecklistPhotos({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  async function handleFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
     const input = e.target;
-    if (!file) return;
+    if (files.length === 0) return;
     setError(null);
     setIsUploading(true);
-    const formData = new FormData();
-    formData.set("file", file);
     try {
-      await uploadChecklistPhoto(eventId, checklistKey, formData);
+      for (const file of files) {
+        const compressed = await compressImage(file);
+        const formData = new FormData();
+        formData.set("file", compressed);
+        await uploadChecklistPhoto(eventId, checklistKey, formData);
+      }
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה בהעלאת התמונה");
+      const message = err instanceof Error ? err.message : "שגיאה בהעלאת התמונה";
+      // The action ID embedded in the page's JS goes stale after a new
+      // deploy - if this phone's tab has been open since before one, the
+      // fix is a reload (fetches the current build), not a retry.
+      if (message.includes("Failed to find Server Action")) {
+        setError("האתר עודכן לגרסה חדשה - טוען מחדש...");
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        setError(message);
+      }
     } finally {
       setIsUploading(false);
       input.value = "";
@@ -111,14 +149,15 @@ export function ChecklistPhotos({
             accept="image/*"
             capture="environment"
             className="hidden"
-            onChange={handleFileSelected}
+            onChange={handleFilesSelected}
           />
           <input
             ref={galleryInputRef}
             type="file"
             accept="image/*"
+            multiple
             className="hidden"
-            onChange={handleFileSelected}
+            onChange={handleFilesSelected}
           />
           <button
             type="button"

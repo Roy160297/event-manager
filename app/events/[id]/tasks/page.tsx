@@ -405,7 +405,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               <div />
               <label className={reportLabelClass}>
                 <span>מנהל בר</span>
-                <input name="bar_manager_name" defaultValue={event?.bar_manager_name ?? ""} className={inputClass} />
+                <input name="bar_manager_name" defaultValue={event?.bar_manager_name ?? "דניאל"} className={inputClass} />
               </label>
               <label className={reportLabelClass}>
                 <span>כמות ברמנים</span>
@@ -413,7 +413,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               </label>
               <label className={reportLabelClass}>
                 <span>מנהל פלור</span>
-                <input name="floor_manager_name" defaultValue={event?.floor_manager_name ?? ""} className={inputClass} />
+                <input name="floor_manager_name" defaultValue={event?.floor_manager_name ?? "אווה"} className={inputClass} />
               </label>
               <label className={reportLabelClass}>
                 <span>כמות מלצרים</span>
@@ -461,7 +461,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                   type="number"
                   min={0}
                   name="security_guard_count"
-                  defaultValue={event?.security_guard_count ?? ""}
+                  defaultValue={event?.security_guard_count ?? 2}
                   className={inputClass}
                 />
               </label>

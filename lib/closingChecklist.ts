@@ -128,6 +128,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
     label: "מערכות חשמליות",
     items: [
       { key: "electrical-hall-power", text: "כיבוי החשמל באולם (ארון חשמל מעל המטבח וארון חשמל במטבח החיצוני)." },
+      { key: "electrical-inner-cabinet-switch-off", text: "כיבוי מפסק ארון חשמל פנימי." },
       { key: "electrical-hall-ac", text: "כיבוי מזגנים באולם (ליד עמדת מגנטים ובכניסה למטבח)." },
       { key: "electrical-hall-hood", text: "כיבוי מנדף אולם." },
       { key: "electrical-stoves-off", text: "כיבוי כיריים." },
@@ -169,7 +170,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "lock-waiters-room-inner-door", text: "נעילת הדלת הפנימית בחדר המלצרים." },
       { key: "lock-emergency-exit", text: "נעילת דלת היציאה לפחים." },
       { key: "lock-inner-kitchen-door", text: "נעילת דלת המטבח הפנימי." },
-      { key: "lock-outside-white-metal-door", text: "נעילת דלת חדר הקירור במטבח החיצוני." },
+      { key: "lock-outside-white-metal-door", text: "נעילת דלת חדר הקירור במטבח החיצוני - הדלת ליד משרד השף." },
       { key: "lock-hall-kitchen-disposal-door", text: "נעילת דלת היציאה לרחוב ממטבח הפינויים באולם." },
       { key: "lock-alarm-activation", text: "הפעלת אזעקה בסיום האירוע." },
     ],

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SignaturePad } from "./SignaturePad";
 
 function formatSignedAt(value: string): string {
@@ -35,6 +35,7 @@ export function ChecklistCosignBlock({
   const [signature, setSignature] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   async function submit() {
     if (!name.trim()) {
@@ -45,11 +46,15 @@ export function ChecklistCosignBlock({
       setError("יש לצייר חתימה");
       return;
     }
+    // Captured before the await, since this whole subtree can unmount
+    // (swapped for the "cosigned" branch) once onCosign's revalidation lands.
+    const detailsEl = rootRef.current?.closest("details");
     setIsSubmitting(true);
     setError(null);
     try {
       await onCosign(name.trim(), signature);
       setOpen(false);
+      detailsEl?.removeAttribute("open");
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בשמירת האישור");
     } finally {
@@ -101,7 +106,7 @@ export function ChecklistCosignBlock({
   }
 
   return (
-    <div className="flex flex-col items-start gap-2">
+    <div ref={rootRef} className="flex flex-col items-start gap-2">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
