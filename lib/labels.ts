@@ -3,6 +3,7 @@ import type {
   EventRow,
   EventType,
   LocationType,
+  MenuType,
   RsvpStatus,
   TaskPriority,
   TaskStatus,
@@ -33,6 +34,11 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   bar_mitzvah: "בר מצווה",
   business_event: "אירוע עסקי",
   other: "אחר",
+};
+
+export const MENU_TYPE_LABELS: Record<MenuType, string> = {
+  buffet: "מזנונים",
+  plated: "הגשה",
 };
 
 // Status is no longer manually editable: new events start "approved" directly,

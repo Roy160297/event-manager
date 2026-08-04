@@ -29,7 +29,16 @@ export type PermissionResource =
   | "barista_checklist"
   | "couple_meeting"
   | "event_management_dex"
-  | "my_tasks";
+  | "my_tasks"
+  | "menu";
+
+export type MenuType = "buffet" | "plated";
+
+export interface MenuSection {
+  label: string;
+  note: string | null;
+  items: string[];
+}
 
 export interface EventRow {
   id: string;
@@ -85,6 +94,17 @@ export interface EventRow {
   kitchen_dishwasher_hours: string | null;
   dishwasher_hours: string | null;
   created_at: string;
+}
+
+export interface EventMenuRow {
+  event_id: string;
+  menu_type: MenuType;
+  title: string | null;
+  subtitle: string | null;
+  linens_note: string | null;
+  sections: MenuSection[];
+  footer_notes: string[];
+  updated_at: string;
 }
 
 export interface EventSupplierRow {
