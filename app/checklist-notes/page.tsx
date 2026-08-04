@@ -19,13 +19,23 @@ type NoteWithEvent = {
   events: { id: string; name: string; event_type: EventType; event_date: string; deleted_at: string | null } | null;
 };
 
+type SummaryReportEvent = {
+  id: string;
+  name: string;
+  event_type: EventType;
+  event_date: string;
+  report_summary: string | null;
+  report_general_notes: string | null;
+};
+
 export default async function ChecklistNotesPage() {
   const currentStaff = await getCurrentStaff();
   const readableSections = CHECKLIST_SECTIONS.filter(
     (section) => !!currentStaff && canRead(currentStaff.permissions, section.key),
   );
+  const canReadSummaryReport = !!currentStaff && canRead(currentStaff.permissions, "event_summary_report");
 
-  if (readableSections.length === 0) return <NoPermissionNotice />;
+  if (readableSections.length === 0 && !canReadSummaryReport) return <NoPermissionNotice />;
 
   const supabase = await createClient();
   const { data: notes } = await supabase
@@ -36,6 +46,22 @@ export default async function ChecklistNotesPage() {
     .is("events.deleted_at", null)
     .order("event_date", { referencedTable: "events", ascending: false })
     .returns<NoteWithEvent[]>();
+
+  // The summary report's "summary"/"general notes" live directly on the
+  // events table (not role_checklist_notes, which the 4 role checklists
+  // above share), so it needs its own query and its own section shape -
+  // one event can carry both a summary and general notes at once.
+  const { data: summaryReportEventsRaw } = canReadSummaryReport
+    ? await supabase
+        .from("events")
+        .select("id, name, event_type, event_date, report_summary, report_general_notes")
+        .is("deleted_at", null)
+        .order("event_date", { ascending: false })
+        .returns<SummaryReportEvent[]>()
+    : { data: null };
+  const summaryReportEvents = (summaryReportEventsRaw ?? []).filter(
+    (event) => event.report_summary || event.report_general_notes,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -82,6 +108,47 @@ export default async function ChecklistNotesPage() {
           </div>
         );
       })}
+
+      {canReadSummaryReport && (
+        <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+          <p className="font-serif text-lg font-bold">דוח סיכום אירוע - מנהל אירוע</p>
+
+          {summaryReportEvents.length === 0 ? (
+            <p className="text-sm text-foreground/60">אין הערות עדיין.</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {summaryReportEvents.map((event) => (
+                <li
+                  key={event.id}
+                  className="flex flex-col gap-1.5 border-t border-border-classic pt-3 first:border-0 first:pt-0"
+                >
+                  <p className="text-sm font-medium">
+                    <Link href={`/events/${event.id}/tasks`} className="text-accent hover:underline">
+                      {event.name}
+                    </Link>
+                    <span className="text-foreground/60">
+                      {" "}
+                      · {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+                    </span>
+                  </p>
+                  {event.report_summary && (
+                    <p className="text-sm">
+                      <span className="font-medium">סיכום האירוע: </span>
+                      <span className="whitespace-pre-wrap">{event.report_summary}</span>
+                    </p>
+                  )}
+                  {event.report_general_notes && (
+                    <p className="text-sm">
+                      <span className="font-medium">הערות כלליות: </span>
+                      <span className="whitespace-pre-wrap">{event.report_general_notes}</span>
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }

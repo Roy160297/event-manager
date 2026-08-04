@@ -349,14 +349,28 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           </div>
 
           {(!canWriteSummary || !!summaryReportSignature) && (
-            <div className="grid gap-x-4 gap-y-1 rounded-md bg-accent-soft/50 p-3 text-sm sm:grid-cols-3">
-              {summaryFields.map(([label, value]) => (
-                <p key={label}>
-                  <span className="text-foreground/60">{label}: </span>
-                  {value ?? "—"}
-                </p>
-              ))}
-            </div>
+            <>
+              <div className="grid gap-x-4 gap-y-1 rounded-md bg-accent-soft/50 p-3 text-sm sm:grid-cols-3">
+                {summaryFields.map(([label, value]) => (
+                  <p key={label}>
+                    <span className="text-foreground/60">{label}: </span>
+                    {value ?? "—"}
+                  </p>
+                ))}
+              </div>
+              {event?.report_summary && (
+                <div className="flex flex-col gap-1 text-sm">
+                  <p className="font-medium">סיכום האירוע</p>
+                  <p className="whitespace-pre-wrap text-foreground/80">{event.report_summary}</p>
+                </div>
+              )}
+              {event?.report_general_notes && (
+                <div className="flex flex-col gap-1 text-sm">
+                  <p className="font-medium">הערות כלליות</p>
+                  <p className="whitespace-pre-wrap text-foreground/80">{event.report_general_notes}</p>
+                </div>
+              )}
+            </>
           )}
 
           {canWriteSummary && !summaryReportSignature && (
