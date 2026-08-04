@@ -4,6 +4,9 @@ import { getDisplayEventStatus, MONTH_LABELS } from "@/lib/labels";
 import { getHebrewDatesByDate, getHolidaysByDate } from "@/lib/hebrewCalendar";
 import { CalendarGrid, type CalendarCell, type CalendarEvent } from "@/components/CalendarGrid";
 import { MonthPicker } from "@/components/MonthPicker";
+import { NoPermissionNotice } from "@/components/NoPermissionNotice";
+import { getCurrentStaff } from "@/lib/auth";
+import { canRead } from "@/lib/permissions";
 import type { EventRow, StaffRow } from "@/lib/types";
 
 function pad(value: number) {
@@ -59,6 +62,9 @@ export default async function CalendarPage({
 }) {
   const { month: monthParam } = await searchParams;
   const { year, month } = parseMonthParam(monthParam);
+
+  const currentStaff = await getCurrentStaff();
+  if (!currentStaff || !canRead(currentStaff.permissions, "calendar")) return <NoPermissionNotice />;
 
   const monthStart = `${year}-${pad(month)}-01`;
   const { year: nextYear, month: nextMonth } = shiftMonth(year, month, 1);

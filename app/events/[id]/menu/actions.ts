@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractMenuDraftFromDocx, type MenuImportDraft } from "@/lib/menuImport";
+import { DEFAULT_MENUS } from "@/lib/defaultMenus";
 import type { MenuSection, MenuType } from "@/lib/types";
 
 const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -61,4 +62,33 @@ export async function deleteMenu(eventId: string) {
   const { error } = await supabase.from("event_menus").delete().eq("event_id", eventId);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/menu`);
+}
+
+// Called right after a new event is created, so wedding-type events start
+// with the venue's standard tasting menu pre-filled instead of empty
+// (mirrors applyDefaultSchedule) - buffet for the plain wedding types,
+// plated for the "_service" (הגשה) variants. Other event types (bar/bat
+// mitzvah, business events) don't have a tasting-menu template and are left
+// without one, same as they're left without a default schedule.
+export async function applyDefaultMenu(eventId: string, eventType: string) {
+  const menuType: MenuType | null =
+    eventType === "wedding" || eventType === "reverse_wedding"
+      ? "buffet"
+      : eventType === "wedding_service" || eventType === "reverse_wedding_service"
+        ? "plated"
+        : null;
+  if (!menuType) return;
+
+  const template = DEFAULT_MENUS[menuType];
+  const supabase = await createClient();
+  const { error } = await supabase.from("event_menus").insert({
+    event_id: eventId,
+    menu_type: template.menu_type,
+    title: template.title,
+    subtitle: template.subtitle,
+    linens_note: template.linens_note,
+    sections: template.sections,
+    footer_notes: template.footer_notes,
+  });
+  if (error) throw new Error(error.message);
 }

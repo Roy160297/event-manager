@@ -271,6 +271,64 @@ export default async function EventOverviewPage({
             )}
           </div>
 
+          {event?.event_type !== "business_event" && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-medium">פירוט מנות</p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <label className={labelClass}>
+                  <span className="font-medium">מנות גלאט</span>
+                  <input
+                    type="number"
+                    min={0}
+                    name="glat_meal_count"
+                    defaultValue={event?.glat_meal_count ?? ""}
+                    className={inputClass}
+                  />
+                </label>
+                <label className={labelClass}>
+                  <span className="font-medium">מנות צמחוניות</span>
+                  <input
+                    type="number"
+                    min={0}
+                    name="vegetarian_meal_count"
+                    defaultValue={event?.vegetarian_meal_count ?? ""}
+                    className={inputClass}
+                  />
+                </label>
+                <label className={labelClass}>
+                  <span className="font-medium">מנות טבעוניות</span>
+                  <input
+                    type="number"
+                    min={0}
+                    name="vegan_meal_count"
+                    defaultValue={event?.vegan_meal_count ?? ""}
+                    className={inputClass}
+                  />
+                </label>
+                <label className={labelClass}>
+                  <span className="font-medium">מנות ללא גלוטן</span>
+                  <input
+                    type="number"
+                    min={0}
+                    name="gluten_free_meal_count"
+                    defaultValue={event?.gluten_free_meal_count ?? ""}
+                    className={inputClass}
+                  />
+                </label>
+                <label className={labelClass}>
+                  <span className="font-medium">ילדים מתחת לגיל 2</span>
+                  <input
+                    type="number"
+                    min={0}
+                    name="toddlers_under_2_count"
+                    defaultValue={event?.toddlers_under_2_count ?? ""}
+                    className={inputClass}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
           <label className={labelClass}>
             <span className="font-medium">מידע נוסף</span>
             <textarea name="menu_notes" rows={2} defaultValue={event?.menu_notes ?? ""} className={inputClass} />
@@ -304,6 +362,11 @@ export default async function EventOverviewPage({
                   ? ([
                       ["תאריך פגישת זוג", event ? formatDate(event.couple_meeting_date) : null],
                       ["מספר מנות ילדים", event?.kids_meal_count ?? null],
+                      ["מנות גלאט", event?.glat_meal_count ?? null],
+                      ["מנות צמחוניות", event?.vegetarian_meal_count ?? null],
+                      ["מנות טבעוניות", event?.vegan_meal_count ?? null],
+                      ["מנות ללא גלוטן", event?.gluten_free_meal_count ?? null],
+                      ["ילדים מתחת לגיל 2", event?.toddlers_under_2_count ?? null],
                     ] as [string, string | null][])
                   : []),
                 ["אימייל 1", event?.contact_email ?? null],

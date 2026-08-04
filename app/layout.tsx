@@ -62,6 +62,7 @@ export default async function RootLayout({
               {staff && (
                 <MainNav
                   showAdmin={canRead(staff.permissions, "admin")}
+                  showCalendar={canRead(staff.permissions, "calendar")}
                   showCoupleMeeting={canRead(staff.permissions, "couple_meeting")}
                   showEventManagementDex={canRead(staff.permissions, "event_management_dex")}
                   showMyTasks={canRead(staff.permissions, "my_tasks")}

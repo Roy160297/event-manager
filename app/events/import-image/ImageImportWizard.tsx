@@ -214,6 +214,61 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
         </label>
 
         <label className={labelClass}>
+          <span className="font-medium">מנות גלאט</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.glat_meal_count ?? ""}
+            onChange={(e) => updateField("glat_meal_count", e.target.value || null)}
+            className={inputClass}
+          />
+        </label>
+
+        <label className={labelClass}>
+          <span className="font-medium">מנות צמחוניות</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.vegetarian_meal_count ?? ""}
+            onChange={(e) => updateField("vegetarian_meal_count", e.target.value || null)}
+            className={inputClass}
+          />
+        </label>
+
+        <label className={labelClass}>
+          <span className="font-medium">מנות טבעוניות</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.vegan_meal_count ?? ""}
+            onChange={(e) => updateField("vegan_meal_count", e.target.value || null)}
+            className={inputClass}
+          />
+        </label>
+
+        <label className={labelClass}>
+          <span className="font-medium">מנות ללא גלוטן</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.gluten_free_meal_count ?? ""}
+            onChange={(e) => updateField("gluten_free_meal_count", e.target.value || null)}
+            className={inputClass}
+          />
+        </label>
+
+        <label className={labelClass}>
+          <span className="font-medium">ילדים מתחת לגיל 2</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.toddlers_under_2_count ?? ""}
+            onChange={(e) => updateField("toddlers_under_2_count", e.target.value || null)}
+            className={inputClass}
+          />
+        </label>
+
+        <label className={labelClass}>
           <span className="font-medium">אימייל 1</span>
           <input
             type="email"

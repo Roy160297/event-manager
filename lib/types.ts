@@ -30,7 +30,8 @@ export type PermissionResource =
   | "couple_meeting"
   | "event_management_dex"
   | "my_tasks"
-  | "menu";
+  | "menu"
+  | "calendar";
 
 export type MenuType = "buffet" | "plated";
 
@@ -59,6 +60,11 @@ export interface EventRow {
   contact_phone_2: string | null;
   estimated_guests: string | null;
   kids_meal_count: string | null;
+  glat_meal_count: string | null;
+  vegetarian_meal_count: string | null;
+  vegan_meal_count: string | null;
+  gluten_free_meal_count: string | null;
+  toddlers_under_2_count: string | null;
   bride_name: string | null;
   groom_name: string | null;
   end_time: string | null;

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
+import { applyDefaultMenu } from "@/app/events/[id]/menu/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
@@ -52,6 +53,7 @@ export async function createEvent(formData: FormData): Promise<string | void> {
   if (error) return error.message;
 
   await applyDefaultSchedule(data.id, eventType, eventDate);
+  await applyDefaultMenu(data.id, eventType);
   await checkRemindersForEvent(data.id);
 
   revalidatePath("/");
@@ -101,6 +103,11 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
   const contactPhone2 = String(formData.get("contact_phone_2") ?? "").trim() || null;
   const estimatedGuests = String(formData.get("estimated_guests") ?? "").trim() || null;
   const kidsMealCount = String(formData.get("kids_meal_count") ?? "").trim() || null;
+  const glatMealCount = String(formData.get("glat_meal_count") ?? "").trim() || null;
+  const vegetarianMealCount = String(formData.get("vegetarian_meal_count") ?? "").trim() || null;
+  const veganMealCount = String(formData.get("vegan_meal_count") ?? "").trim() || null;
+  const glutenFreeMealCount = String(formData.get("gluten_free_meal_count") ?? "").trim() || null;
+  const toddlersUnder2Count = String(formData.get("toddlers_under_2_count") ?? "").trim() || null;
   const salesPersonId = String(formData.get("sales_person_id") ?? "").trim() || null;
   const brideParentsNames = String(formData.get("bride_parents_names") ?? "").trim() || null;
   const groomParentsNames = String(formData.get("groom_parents_names") ?? "").trim() || null;
@@ -129,6 +136,11 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
       contact_phone_2: contactPhone2,
       estimated_guests: estimatedGuests,
       kids_meal_count: kidsMealCount,
+      glat_meal_count: glatMealCount,
+      vegetarian_meal_count: vegetarianMealCount,
+      vegan_meal_count: veganMealCount,
+      gluten_free_meal_count: glutenFreeMealCount,
+      toddlers_under_2_count: toddlersUnder2Count,
       sales_person_id: salesPersonId,
       bride_parents_names: brideParentsNames,
       groom_parents_names: groomParentsNames,

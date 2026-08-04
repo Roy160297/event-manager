@@ -22,6 +22,11 @@ export function EventFormExport({
   const isBusinessEvent = event.event_type === "business_event";
   const hiddenForBusinessEvent = new Set([
     "מספר מנות ילדים",
+    "מנות גלאט",
+    "מנות צמחוניות",
+    "מנות טבעוניות",
+    "מנות ללא גלוטן",
+    "ילדים מתחת לגיל 2",
     "שמות הורי הכלה",
     "שמות הורי החתן",
     "תאריך פגישת זוג",
@@ -33,6 +38,11 @@ export function EventFormExport({
     ["תאריך פגישת זוג", formatDate(event.couple_meeting_date)],
     ["מספר אורחים - התחייבות", event.estimated_guests],
     ["מספר מנות ילדים", event.kids_meal_count],
+    ["מנות גלאט", event.glat_meal_count],
+    ["מנות צמחוניות", event.vegetarian_meal_count],
+    ["מנות טבעוניות", event.vegan_meal_count],
+    ["מנות ללא גלוטן", event.gluten_free_meal_count],
+    ["ילדים מתחת לגיל 2", event.toddlers_under_2_count],
     ["מנהל/ת אירוע אחראי/ת", managerName],
     ["מנהל/ת פלור", floorManagerName],
     ["איש/ת מכירות", salespersonName],

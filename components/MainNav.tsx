@@ -5,18 +5,19 @@ import { usePathname } from "next/navigation";
 
 const NAV_LINKS = [
   { href: "/", label: "אירועים" },
-  { href: "/calendar", label: "יומן" },
   { href: "/waiters", label: "מלצרים" },
 ];
 
 export function MainNav({
   showAdmin = false,
+  showCalendar = false,
   showCoupleMeeting = false,
   showEventManagementDex = false,
   showMyTasks = false,
   showChecklistNotes = false,
 }: {
   showAdmin?: boolean;
+  showCalendar?: boolean;
   showCoupleMeeting?: boolean;
   showEventManagementDex?: boolean;
   showMyTasks?: boolean;
@@ -24,12 +25,13 @@ export function MainNav({
 }) {
   const pathname = usePathname();
   const extraLinks = [];
+  if (showCalendar) extraLinks.push({ href: "/calendar", label: "יומן" });
   if (showMyTasks) extraLinks.push({ href: "/my-tasks", label: "המשימות שלי" });
   if (showChecklistNotes) extraLinks.push({ href: "/checklist-notes", label: "הערות וסיכומים" });
   if (showCoupleMeeting) extraLinks.push({ href: "/couple-meeting", label: "פגישה עם זוג" });
   if (showEventManagementDex) extraLinks.push({ href: "/event-management-dex", label: 'סד"פ ניהול אירוע' });
 
-  let links = [...NAV_LINKS.slice(0, 2), ...extraLinks, ...NAV_LINKS.slice(2)];
+  let links = [NAV_LINKS[0], ...extraLinks, NAV_LINKS[1]];
   if (showAdmin) links = [...links, { href: "/admin", label: "ניהול" }];
 
   return (
