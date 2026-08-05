@@ -91,11 +91,19 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
       seating_table: (mapping.seating_table ? row[mapping.seating_table] : "") || "—",
     }));
 
+    // Sum of party_size, not row count - a row is a seated party (often 2+
+    // people sharing a table), so counting rows undercounts the real
+    // headcount whenever any party has more than one seat.
+    const totalGuestCount = parsed.rows.reduce(
+      (sum, row) => sum + (mapping.party_size ? Number(row[mapping.party_size]) || 1 : 1),
+      0,
+    );
+
     return (
       <div className="flex flex-col gap-4 rounded-lg border border-border-classic bg-surface p-4">
         <p className="text-sm text-foreground/60">
-          זוהה קידוד: {parsed.detectedEncoding} · נמצאו {parsed.rows.length} אורחים בקובץ. הייבוא
-          יחליף את רשימת האורחים הקיימת באירוע זה.
+          זוהה קידוד: {parsed.detectedEncoding} · נמצאו {totalGuestCount} אורחים ({parsed.rows.length} רשומות)
+          בקובץ. הייבוא יחליף את רשימת האורחים הקיימת באירוע זה.
         </p>
 
         {previewRows.length > 0 && (
@@ -130,7 +138,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
             disabled={isPending}
             className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
           >
-            {isPending ? "מייבא..." : `ייבא ${parsed.rows.length} אורחים`}
+            {isPending ? "מייבא..." : `ייבא ${totalGuestCount} אורחים`}
           </button>
           <button
             onClick={reset}
