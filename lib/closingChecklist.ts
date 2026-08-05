@@ -42,7 +42,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "yard-buffets-cover", text: "כיסוי מזנונים חיצוניים." },
       { key: "yard-sweep", text: "מטאטא יסודי בחצר." },
       { key: "yard-chuppah-cleanup", text: "ניקיון שולחן חופה ושברי זכוכית וזוהמה מהרצפה." },
-      { key: "yard-chuppah-decoration-removal", text: "הסרת קישוט מהחופה." },
+      { key: "yard-chuppah-decoration-removal", text: "הסרת עיצוב מהחופה." },
       {
         key: "yard-hostess-station",
         text: "ניקיון עמדת מארחת + בטן העמדה + כיסאות + עמדות חבלול, ולהכניס אותה בסיום האירוע פנימה.",
