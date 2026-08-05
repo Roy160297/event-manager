@@ -35,6 +35,16 @@ export function MenuImportWizard({
   const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  function handleCancelReview() {
+    // Going back to the upload step reuses this same component instance
+    // (only the JSX branch changes), so state like fileName isn't reset on
+    // its own - without this the dropzone would keep showing the previously
+    // picked file name even though the underlying <input> is now empty.
+    setDraft(null);
+    setFileName(null);
+    setError(null);
+  }
+
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -88,7 +98,7 @@ export function MenuImportWizard({
         eventId={eventId}
         initial={draftToEditable(draft)}
         warnings={draft.warnings}
-        onCancel={() => setDraft(null)}
+        onCancel={handleCancelReview}
         onSaved={onSaved}
       />
     </div>
