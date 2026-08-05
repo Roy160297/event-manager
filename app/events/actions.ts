@@ -10,8 +10,9 @@ import { applyDefaultMenu } from "@/app/events/[id]/menu/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
+import { extractEventDraftFromImage } from "@/lib/imageImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
-import type { EventType } from "@/lib/types";
+import type { EventRow, EventType, StaffRow } from "@/lib/types";
 
 // Returns an error message on failure instead of throwing (except for
 // redirect(), whose internal control-flow signal is never caught here) -
@@ -250,6 +251,129 @@ export async function deleteSupplier(eventId: string, supplierId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("event_suppliers").delete().eq("id", supplierId);
   if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}`);
+}
+
+export interface EventImageUpdateDraft {
+  name: string;
+  event_type: EventType;
+  event_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  manager_id: string | null;
+  sales_person_id: string | null;
+  contact_email: string | null;
+  contact_email_2: string | null;
+  contact_phone: string | null;
+  contact_phone_2: string | null;
+  estimated_guests: string | null;
+  kids_meal_count: string | null;
+  glat_meal_count: string | null;
+  vegetarian_meal_count: string | null;
+  vegan_meal_count: string | null;
+  gluten_free_meal_count: string | null;
+  toddlers_under_2_count: string | null;
+  warnings: string[];
+}
+
+// Parses an updated "ענן" screenshot for an EXISTING event and merges it onto
+// the event's current field values - unlike the create-from-image flow, a
+// field the screenshot doesn't show (null) must fall back to what's already
+// saved rather than wiping it, since this is an update, not a fresh import.
+export async function parseEventImageUpdate(eventId: string, formData: FormData): Promise<EventImageUpdateDraft> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("יש לבחור קובץ תמונה");
+  }
+  if (!file.type.startsWith("image/")) {
+    throw new Error("הקובץ שנבחר אינו תמונה");
+  }
+
+  const supabase = await createClient();
+  const { data: event } = await supabase.from("events").select("*").eq("id", eventId).returns<EventRow[]>().single();
+  if (!event) throw new Error("האירוע לא נמצא");
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const draft = await extractEventDraftFromImage(buffer, file.type);
+
+  const name = draft.bride_name && draft.groom_name
+    ? `${draft.bride_name} ו${draft.groom_name}`
+    : draft.bride_name || draft.groom_name || event.name;
+
+  let managerId = event.manager_id;
+  let salesPersonId = event.sales_person_id;
+  if (draft.event_manager_name || draft.sales_person_name) {
+    const { data: staff } = await supabase.from("staff").select("id, name").returns<StaffRow[]>();
+    if (draft.event_manager_name) {
+      const match = staff?.find((s) => s.name.trim().toLowerCase() === draft.event_manager_name!.trim().toLowerCase());
+      if (match) managerId = match.id;
+    }
+    if (draft.sales_person_name) {
+      const match = staff?.find((s) => s.name.trim().toLowerCase() === draft.sales_person_name!.trim().toLowerCase());
+      if (match) salesPersonId = match.id;
+    }
+  }
+
+  return {
+    name,
+    event_type: draft.event_type,
+    event_date: draft.event_date ?? event.event_date,
+    start_time: draft.start_time ?? event.start_time,
+    end_time: draft.end_time ?? event.end_time,
+    manager_id: managerId,
+    sales_person_id: salesPersonId,
+    contact_email: draft.contact_email ?? event.contact_email,
+    contact_email_2: draft.contact_email_2 ?? event.contact_email_2,
+    contact_phone: draft.contact_phone ?? event.contact_phone,
+    contact_phone_2: draft.contact_phone_2 ?? event.contact_phone_2,
+    estimated_guests: draft.estimated_guests ?? event.estimated_guests,
+    kids_meal_count: draft.kids_meal_count ?? event.kids_meal_count,
+    glat_meal_count: draft.glat_meal_count ?? event.glat_meal_count,
+    vegetarian_meal_count: draft.vegetarian_meal_count ?? event.vegetarian_meal_count,
+    vegan_meal_count: draft.vegan_meal_count ?? event.vegan_meal_count,
+    gluten_free_meal_count: draft.gluten_free_meal_count ?? event.gluten_free_meal_count,
+    toddlers_under_2_count: draft.toddlers_under_2_count ?? event.toddlers_under_2_count,
+    warnings: draft.warnings,
+  };
+}
+
+export async function applyEventImageUpdate(eventId: string, draft: EventImageUpdateDraft) {
+  const supabase = await createClient();
+
+  const name = draft.name.trim();
+  if (!name || !draft.event_type || !draft.event_date) {
+    throw new Error("שם, סוג אירוע ותאריך הם שדות חובה");
+  }
+  await assertNoDuplicateEventDate(supabase, draft.event_date, eventId);
+
+  const { error } = await supabase
+    .from("events")
+    .update({
+      name,
+      event_type: draft.event_type,
+      event_date: draft.event_date,
+      start_time: draft.start_time,
+      end_time: draft.end_time,
+      manager_id: draft.manager_id,
+      sales_person_id: draft.sales_person_id,
+      contact_email: draft.contact_email,
+      contact_email_2: draft.contact_email_2,
+      contact_phone: draft.contact_phone,
+      contact_phone_2: draft.contact_phone_2,
+      estimated_guests: draft.estimated_guests,
+      kids_meal_count: draft.kids_meal_count,
+      glat_meal_count: draft.glat_meal_count,
+      vegetarian_meal_count: draft.vegetarian_meal_count,
+      vegan_meal_count: draft.vegan_meal_count,
+      gluten_free_meal_count: draft.gluten_free_meal_count,
+      toddlers_under_2_count: draft.toddlers_under_2_count,
+    })
+    .eq("id", eventId);
+
+  if (error) throw new Error(error.message);
+  await checkRemindersForEvent(eventId);
+
+  revalidatePath("/");
   revalidatePath(`/events/${eventId}`);
 }
 

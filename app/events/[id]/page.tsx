@@ -12,6 +12,7 @@ import { getEventManagerCandidates, getFloorManagerCandidates, getSalespersonCan
 import { canRead, canWrite } from "@/lib/permissions";
 import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
+import { ImageUpdateWizard } from "./ImageUpdateWizard";
 import type { EventRow, EventSupplierRow, EventType, GuestRow, TimelineItemRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -116,6 +117,10 @@ export default async function EventOverviewPage({
           suppliers={suppliers ?? []}
           scheduleItems={scheduleItems ?? []}
         />
+      )}
+
+      {canWriteEvents && (
+        <ImageUpdateWizard eventId={id} managers={managers ?? []} salespeople={salespeople ?? []} />
       )}
 
       {canWriteEvents ? (
