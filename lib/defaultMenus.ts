@@ -58,8 +58,9 @@ export const DEFAULT_MENUS: Record<MenuType, DefaultMenu> = {
           "סלסה של עגבניות שרופות",
         ],
       },
+      { label: "ארוחת ערב", note: null, items: [] },
       {
-        label: "ארוחת ערב - על השולחן",
+        label: "על השולחן",
         note: null,
         items: [
           'פוקצ\'ה "עננים"',
