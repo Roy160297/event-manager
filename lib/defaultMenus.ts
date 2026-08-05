@@ -24,7 +24,7 @@ export const DEFAULT_MENUS: Record<MenuType, DefaultMenu> = {
     menu_type: "buffet",
     title: "תפריט טעימות מטבחים פתוחים",
     subtitle: "תפריט השראה עונתי-מקומי המוגש ממטבחים פתוחים",
-    linens_note: "מפות ומפיות: לבן / שמנת / שחור",
+    linens_note: "לבן / שמנת / שחור",
     sections: [
       { label: "הגינה שלנו", note: "2 עמדות לבחירה", items: [] },
       {
@@ -139,7 +139,7 @@ export const DEFAULT_MENUS: Record<MenuType, DefaultMenu> = {
     menu_type: "plated",
     title: "תפריט טעימות הגשה",
     subtitle: "תפריט השראה עונתי-מקומי המוגש ממטבחים פתוחים",
-    linens_note: "מפות: לבן ומפיות: שמנת",
+    linens_note: "לבן, מפיות: שמנת",
     sections: [
       {
         label: "דגים נאים",
