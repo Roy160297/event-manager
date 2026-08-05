@@ -32,6 +32,12 @@ export function GuestList({ guests, eventId, canWrite }: { guests: GuestRow[]; e
     });
   }, [guests, query, tableFilter]);
 
+  // Sum of party_size, not row count - a guest row is a seated party (often
+  // 2+ people sharing a table), so counting rows undercounts the real
+  // headcount whenever any party has more than one seat.
+  const filteredGuestCount = filtered.reduce((sum, guest) => sum + (guest.party_size ?? 1), 0);
+  const totalGuestCount = guests.reduce((sum, guest) => sum + (guest.party_size ?? 1), 0);
+
   const cellClass = "border-b border-border-classic p-2";
   const fieldClass = "rounded-md border border-border-classic bg-surface px-2 py-1 text-sm";
 
@@ -79,7 +85,7 @@ export function GuestList({ guests, eventId, canWrite }: { guests: GuestRow[]; e
       </div>
 
       <p className="text-sm text-foreground/60">
-        מציג {filtered.length} מתוך {guests.length} אורחים
+        מציג {filteredGuestCount} מתוך {totalGuestCount} אורחים
       </p>
 
       {filtered.length === 0 && <p className="text-foreground/60">לא נמצאו אורחים תואמים.</p>}
