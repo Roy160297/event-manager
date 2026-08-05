@@ -39,8 +39,10 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "yard-furniture-cleaning", text: "ניקוי ריהוט חצר: ניקוי שולחנות קפה, כסאות, ספות + שולחן נלווה." },
       { key: "yard-sofa-cushions", text: "החזרת כריות ספות האירוח פנימה." },
       { key: "yard-tables-cover", text: "כיסוי שולחנות חצר." },
+      { key: "yard-buffets-cover", text: "כיסוי מזנונים חיצוניים." },
       { key: "yard-sweep", text: "מטאטא יסודי בחצר." },
       { key: "yard-chuppah-cleanup", text: "ניקיון שולחן חופה ושברי זכוכית וזוהמה מהרצפה." },
+      { key: "yard-chuppah-decoration-removal", text: "הסרת קישוט מהחופה." },
       {
         key: "yard-hostess-station",
         text: "ניקיון עמדת מארחת + בטן העמדה + כיסאות + עמדות חבלול, ולהכניס אותה בסיום האירוע פנימה.",
@@ -107,6 +109,11 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         key: "hall-full-scan",
         text: "סריקת מטבחים כוללת: שוטף כלים שביצע את כל משימותיו.",
       },
+      {
+        key: "hall-inner-kitchen-area-cleanup",
+        text: "ניקיון וסידור השטח מחוץ למטבח הפנימי.",
+      },
+      { key: "hall-fridges-no-food", text: "לוודא שאין אוכל במקררים." },
     ],
   },
   {
@@ -120,7 +127,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         text: "לוודא שהדברים מעמדת המארחות חזרו: 2 אייפדים, 2 קאונטרים, 2 מטענים.",
       },
       { key: "office-ipads-charging", text: "האייפדים מחוברים לטעינה." },
-      { key: "office-photo-summary", text: 'צילום הקאונטרים ועמוד "הצטרפות אורחים" - ושליחת סיכום במייל.' },
+      { key: "office-photo-summary", text: 'צילום הקאונטרים ועמוד "הצטרפות אורחים".' },
     ],
   },
   {
@@ -139,7 +146,6 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "electrical-staircase-light", text: "כיבוי תאורת חדר המדרגות (שני מתגים)." },
       { key: "electrical-path-light", text: "כיבוי תאורת השביל." },
       { key: "electrical-restroom-light", text: "כיבוי תאורת השירותים." },
-      { key: "electrical-disposal-lights", text: "כיבוי אורות עמדת הפינויים." },
       {
         key: "electrical-niche-cleaning",
         text: "ניקיון נישת החשמל משאריות אוכל, קשים, לימונים, בדלי סיגריות וכל לכלוך אחר.",
