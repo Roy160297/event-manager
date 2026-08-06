@@ -108,6 +108,11 @@ export function ImageUpdateWizard({
     );
   }
 
+  const changed = new Set(draft.changedFields);
+  function labelSpan(key: keyof EventImageUpdateDraft, text: string) {
+    return <span className={changed.has(key) ? "font-bold text-accent" : "font-medium"}>{text}</span>;
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-md border border-border-classic bg-accent-soft/30 p-3">
       {draft.warnings.length > 0 && (
@@ -119,17 +124,18 @@ export function ImageUpdateWizard({
       )}
 
       <p className="text-sm font-medium">
-        בדיקת הפרטים לפני עדכון האירוע - שדות שלא זוהו בתמונה נשארו כפי שהיו
+        בדיקת הפרטים לפני עדכון האירוע - שדות שלא זוהו בתמונה נשארו כפי שהיו. שדות שכן השתנו מסומנים{" "}
+        <span className="font-bold text-accent">כך</span>.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <label className={labelClass}>
-          <span className="font-medium">שם הלקוח / הזוג</span>
+          {labelSpan("name", "שם הלקוח / הזוג")}
           <input value={draft.name} onChange={(e) => updateField("name", e.target.value)} required className={inputClass} />
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">סוג האירוע</span>
+          {labelSpan("event_type", "סוג האירוע")}
           <select
             value={draft.event_type}
             onChange={(e) => updateField("event_type", e.target.value as EventType)}
@@ -144,22 +150,22 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">תאריך</span>
+          {labelSpan("event_date", "תאריך")}
           <DateInput value={draft.event_date} onChange={(v) => updateField("event_date", v)} />
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">שעת התחלה</span>
+          {labelSpan("start_time", "שעת התחלה")}
           <TimeInput value={draft.start_time ?? ""} onChange={(v) => updateField("start_time", v || null)} />
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">שעת סיום</span>
+          {labelSpan("end_time", "שעת סיום")}
           <TimeInput value={draft.end_time ?? ""} onChange={(v) => updateField("end_time", v || null)} />
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">מנהל/ת אירוע אחראי/ת</span>
+          {labelSpan("manager_id", "מנהל/ת אירוע אחראי/ת")}
           <select
             value={draft.manager_id ?? ""}
             onChange={(e) => updateField("manager_id", e.target.value || null)}
@@ -175,7 +181,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">איש/ת מכירות</span>
+          {labelSpan("sales_person_id", "איש/ת מכירות")}
           <select
             value={draft.sales_person_id ?? ""}
             onChange={(e) => updateField("sales_person_id", e.target.value || null)}
@@ -191,7 +197,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">מספר אורחים - התחייבות</span>
+          {labelSpan("estimated_guests", "מספר אורחים - התחייבות")}
           <input
             value={draft.estimated_guests ?? ""}
             onChange={(e) => updateField("estimated_guests", e.target.value || null)}
@@ -201,7 +207,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">מספר מנות ילדים</span>
+          {labelSpan("kids_meal_count", "מספר מנות ילדים")}
           <input
             value={draft.kids_meal_count ?? ""}
             onChange={(e) => updateField("kids_meal_count", e.target.value || null)}
@@ -210,7 +216,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">מנות גלאט</span>
+          {labelSpan("glat_meal_count", "מנות גלאט")}
           <input
             type="number"
             min={0}
@@ -221,7 +227,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">מנות צמחוניות</span>
+          {labelSpan("vegetarian_meal_count", "מנות צמחוניות")}
           <input
             type="number"
             min={0}
@@ -232,7 +238,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">מנות טבעוניות</span>
+          {labelSpan("vegan_meal_count", "מנות טבעוניות")}
           <input
             type="number"
             min={0}
@@ -243,7 +249,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">מנות ללא גלוטן</span>
+          {labelSpan("gluten_free_meal_count", "מנות ללא גלוטן")}
           <input
             type="number"
             min={0}
@@ -254,7 +260,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">ילדים מתחת לגיל 2</span>
+          {labelSpan("toddlers_under_2_count", "ילדים מתחת לגיל 2")}
           <input
             type="number"
             min={0}
@@ -265,7 +271,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">אימייל 1</span>
+          {labelSpan("contact_email", "אימייל 1")}
           <input
             type="email"
             value={draft.contact_email ?? ""}
@@ -275,7 +281,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">טלפון 1</span>
+          {labelSpan("contact_phone", "טלפון 1")}
           <input
             type="tel"
             value={draft.contact_phone ?? ""}
@@ -285,7 +291,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">אימייל 2</span>
+          {labelSpan("contact_email_2", "אימייל 2")}
           <input
             type="email"
             value={draft.contact_email_2 ?? ""}
@@ -295,7 +301,7 @@ export function ImageUpdateWizard({
         </label>
 
         <label className={labelClass}>
-          <span className="font-medium">טלפון 2</span>
+          {labelSpan("contact_phone_2", "טלפון 2")}
           <input
             type="tel"
             value={draft.contact_phone_2 ?? ""}

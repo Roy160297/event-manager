@@ -274,6 +274,10 @@ export interface EventImageUpdateDraft {
   gluten_free_meal_count: string | null;
   toddlers_under_2_count: string | null;
   warnings: string[];
+  // Keys (matching this interface's own field names) whose merged value
+  // actually differs from what's currently saved on the event - lets the
+  // review screen bold only the fields the screenshot is really changing.
+  changedFields: string[];
 }
 
 // Parses an updated "ענן" screenshot for an EXISTING event and merges it onto
@@ -314,7 +318,7 @@ export async function parseEventImageUpdate(eventId: string, formData: FormData)
     }
   }
 
-  return {
+  const merged: Omit<EventImageUpdateDraft, "warnings" | "changedFields"> = {
     name,
     event_type: draft.event_type,
     event_date: draft.event_date ?? event.event_date,
@@ -333,8 +337,42 @@ export async function parseEventImageUpdate(eventId: string, formData: FormData)
     vegan_meal_count: draft.vegan_meal_count ?? event.vegan_meal_count,
     gluten_free_meal_count: draft.gluten_free_meal_count ?? event.gluten_free_meal_count,
     toddlers_under_2_count: draft.toddlers_under_2_count ?? event.toddlers_under_2_count,
-    warnings: draft.warnings,
   };
+
+  const previous: Record<keyof typeof merged, string | null> = {
+    name: event.name,
+    event_type: event.event_type,
+    event_date: event.event_date,
+    start_time: event.start_time,
+    end_time: event.end_time,
+    manager_id: event.manager_id,
+    sales_person_id: event.sales_person_id,
+    contact_email: event.contact_email,
+    contact_email_2: event.contact_email_2,
+    contact_phone: event.contact_phone,
+    contact_phone_2: event.contact_phone_2,
+    estimated_guests: event.estimated_guests,
+    kids_meal_count: event.kids_meal_count,
+    glat_meal_count: event.glat_meal_count,
+    vegetarian_meal_count: event.vegetarian_meal_count,
+    vegan_meal_count: event.vegan_meal_count,
+    gluten_free_meal_count: event.gluten_free_meal_count,
+    toddlers_under_2_count: event.toddlers_under_2_count,
+  };
+  const changedFields = (Object.keys(merged) as (keyof typeof merged)[]).filter(
+    (key) => merged[key] !== previous[key],
+  );
+
+  // The shared extractor's boilerplate warning is worded for the
+  // create-event flow ("לפני יצירת האירוע") - reword it for this update
+  // context so it doesn't misleadingly suggest a new event is being made.
+  const warnings = draft.warnings.map((w) =>
+    w === "החילוץ מתמונה עלול לכלול טעויות - יש לבדוק את כל השדות בקפידה לפני יצירת האירוע."
+      ? "החילוץ מתמונה עלול לכלול טעויות - יש לבדוק את כל השדות בקפידה לפני עדכון האירוע."
+      : w,
+  );
+
+  return { ...merged, warnings, changedFields };
 }
 
 export async function applyEventImageUpdate(eventId: string, draft: EventImageUpdateDraft) {
