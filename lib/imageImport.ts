@@ -208,10 +208,13 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
   }
 
   const kids_meal_count = extraction.kids_meals != null ? String(extraction.kids_meals) : null;
-  const glat_meal_count = extraction.glat_meals != null ? String(extraction.glat_meals) : null;
-  const vegetarian_meal_count = extraction.vegetarian_meals != null ? String(extraction.vegetarian_meals) : null;
-  const vegan_meal_count = extraction.vegan_meals != null ? String(extraction.vegan_meals) : null;
-  const gluten_free_meal_count = extraction.gluten_free_meals != null ? String(extraction.gluten_free_meals) : null;
+  // Diet-type portion counts (unlike kids/toddlers headcounts) aren't worth
+  // recording as an explicit "0" - a 0 here just means that diet type wasn't
+  // ordered, so leave the field blank rather than filling it with "0".
+  const glat_meal_count = extraction.glat_meals ? String(extraction.glat_meals) : null;
+  const vegetarian_meal_count = extraction.vegetarian_meals ? String(extraction.vegetarian_meals) : null;
+  const vegan_meal_count = extraction.vegan_meals ? String(extraction.vegan_meals) : null;
+  const gluten_free_meal_count = extraction.gluten_free_meals ? String(extraction.gluten_free_meals) : null;
   const toddlers_under_2_count = extraction.toddlers_under_2 != null ? String(extraction.toddlers_under_2) : null;
 
   // Friday weddings end ~6.5h after the reception starts (Shabbat) rather
