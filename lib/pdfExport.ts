@@ -45,6 +45,42 @@ async function inlineExternalImages(root: HTMLElement) {
   );
 }
 
+const CAPTURE_SCALE = 2;
+
+// A page break is just "cut the rasterized canvas at this pixel row" with no
+// idea what's there - if that row happens to fall inside a photo thumbnail,
+// the photo gets sliced in half across two pages. Record each <img>'s
+// vertical span (in canvas-pixel space, matching html2canvas's scale) before
+// capture so the pagination loop below can push the break above the photo
+// instead of through it.
+function getProtectedRanges(root: HTMLElement): [number, number][] {
+  const rootTop = root.getBoundingClientRect().top;
+  return Array.from(root.querySelectorAll("img")).map((img) => {
+    const rect = img.getBoundingClientRect();
+    return [(rect.top - rootTop) * CAPTURE_SCALE, (rect.bottom - rootTop) * CAPTURE_SCALE];
+  });
+}
+
+// Moves a naive page-end pixel row up to just above any photo it would
+// otherwise cut through - the photo starts fresh on the next page instead.
+// Ignores a range that already started before this page (can't move the
+// break earlier than where the page began) or one taller than a full page
+// (nothing to do but accept the cut in that unavoidable case).
+function adjustedSliceEnd(renderedPx: number, naiveEnd: number, ranges: [number, number][]): number {
+  let end = naiveEnd;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [top, bottom] of ranges) {
+      if (top > renderedPx && top < end && bottom > end) {
+        end = top;
+        changed = true;
+      }
+    }
+  }
+  return Math.max(end, renderedPx + 1);
+}
+
 async function buildPdf({
   contentElement,
   footerElement,
@@ -58,10 +94,11 @@ async function buildPdf({
   ]);
 
   await Promise.all([inlineExternalImages(contentElement), inlineExternalImages(footerElement)]);
+  const protectedRanges = getProtectedRanges(contentElement);
 
   const [contentCanvas, footerCanvas] = await Promise.all([
-    html2canvas(contentElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }),
-    html2canvas(footerElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }),
+    html2canvas(contentElement, { scale: CAPTURE_SCALE, backgroundColor: "#ffffff", useCORS: true }),
+    html2canvas(footerElement, { scale: CAPTURE_SCALE, backgroundColor: "#ffffff", useCORS: true }),
   ]);
 
   const contentWidthMm = PAGE_WIDTH_MM - MARGIN_MM * 2;
@@ -87,7 +124,9 @@ async function buildPdf({
   let pageIndex = 0;
   let lastSliceHeightMm = 0;
   do {
-    const sliceHeightPx = Math.min(pageSlicePx, contentCanvas.height - renderedPx);
+    const naiveEnd = Math.min(renderedPx + pageSlicePx, contentCanvas.height);
+    const sliceEnd = adjustedSliceEnd(renderedPx, naiveEnd, protectedRanges);
+    const sliceHeightPx = sliceEnd - renderedPx;
     if (pageIndex > 0) pdf.addPage();
 
     slice.height = Math.max(1, sliceHeightPx);

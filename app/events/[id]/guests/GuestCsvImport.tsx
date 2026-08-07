@@ -93,9 +93,12 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
 
     // Sum of party_size, not row count - a row is a seated party (often 2+
     // people sharing a table), so counting rows undercounts the real
-    // headcount whenever any party has more than one seat.
+    // headcount whenever any party has more than one seat. A blank/non-numeric
+    // cell in a mapped column means 0 (not yet seated/counted), matching what
+    // importGuests actually stores - only an unmapped column (no size data at
+    // all) implies exactly 1 person per row.
     const totalGuestCount = parsed.rows.reduce(
-      (sum, row) => sum + (mapping.party_size ? Number(row[mapping.party_size]) || 1 : 1),
+      (sum, row) => sum + (mapping.party_size ? Number(row[mapping.party_size]) || 0 : 1),
       0,
     );
 

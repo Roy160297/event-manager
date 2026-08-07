@@ -60,7 +60,7 @@ export function ChecklistPrintable({
       {note != null && (
         <div className="flex flex-col gap-1 pt-1" style={{ borderTop: "1px solid #d4d4d4" }}>
           <p className="text-sm font-bold">{noteLabel}</p>
-          <p className="text-[12.5px]" style={{ color: note ? "#000000" : "#737373" }}>
+          <p className="whitespace-pre-wrap text-[12.5px]" style={{ color: note ? "#000000" : "#737373" }}>
             {note || (noteLabel === "רשימת חוסרים" ? "אין חוסרים" : "אין הערות")}
           </p>
         </div>
