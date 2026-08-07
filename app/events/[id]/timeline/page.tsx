@@ -11,6 +11,7 @@ import {
   addTimelineItem,
   deleteAllTimelineItems,
   deleteTimelineItem,
+  shiftTimelineFrom,
   updateTimelineItem,
 } from "./actions";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
@@ -125,6 +126,15 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
   async function removeAll() {
     "use server";
     await deleteAllTimelineItems(eventId);
+  }
+
+  async function shiftFrom(formData: FormData) {
+    "use server";
+    try {
+      await shiftTimelineFrom(eventId, formData);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
   }
 
   const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
@@ -243,6 +253,42 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
             className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
           >
             הוסף ללוח הזמנים
+          </button>
+        </SaveDetailsForm>
+      )}
+
+      {canWriteTimeline && items && items.length > 0 && (
+        <SaveDetailsForm
+          action={shiftFrom}
+          message="השעות עודכנו בהצלחה"
+          className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
+        >
+          <p className="text-sm font-medium">הוספת דקות לכל השלבים החל משלב מסוים</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <select name="from_item_id" required defaultValue="" className={`${inputClass} sm:col-span-2`}>
+              <option value="" disabled>
+                בחרו שלב התחלה
+              </option>
+              {items.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.approx_time ? `${item.approx_time} · ` : ""}
+                  {item.label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              name="minutes"
+              placeholder="דקות להוספה (למשל 15-, להקדמה)"
+              required
+              className={inputClass}
+            />
+          </div>
+          <button
+            type="submit"
+            className="self-start rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+          >
+            עדכן שעות
           </button>
         </SaveDetailsForm>
       )}

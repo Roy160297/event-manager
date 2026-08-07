@@ -260,6 +260,21 @@ export async function uploadChecklistPhoto(
   revalidatePath(`/events/${eventId}/tasks`);
 }
 
+// Checklist photos render fine as plain <img> tags on the page (no CORS
+// needed for a normal image display), but the PDF export rasterizes them
+// into a canvas via html2canvas, which - unlike a plain <img> - does require
+// the image response to carry CORS headers, and can silently drop images
+// that don't. Downloading the bytes server-side (no CORS concept between
+// servers) and handing back a data: URL sidesteps that entirely, regardless
+// of the storage bucket's CORS configuration.
+export async function fetchChecklistPhotoDataUrl(storagePath: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage.from(CHECKLIST_PHOTOS_BUCKET).download(storagePath);
+  if (error || !data) return null;
+  const buffer = Buffer.from(await data.arrayBuffer());
+  return `data:${data.type || "image/jpeg"};base64,${buffer.toString("base64")}`;
+}
+
 export async function deleteChecklistPhoto(eventId: string, photoId: string, storagePath: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("checklist_photos").delete().eq("id", photoId);

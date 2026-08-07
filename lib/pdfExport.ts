@@ -13,6 +13,38 @@ const PAGE_HEIGHT_MM = 297;
 const MARGIN_MM = 10;
 const FOOTER_GAP_MM = 4;
 
+// Checklist photos are plain <img src="https://.../storage/v1/object/public/
+// checklist-photos/..."> tags - they display fine on the page (no CORS
+// needed for a normal image display), but html2canvas has to read their
+// pixels into a canvas, which does require CORS, and silently drops any
+// image that fails that check rather than erroring the whole export. Swap
+// each one for a same-origin-fetched data: URL first, which sidesteps CORS
+// entirely regardless of the storage bucket's configuration.
+async function inlineExternalImages(root: HTMLElement) {
+  const bucketPrefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/checklist-photos/`;
+  const imgs = Array.from(root.querySelectorAll("img")).filter((img) => img.src.startsWith(bucketPrefix));
+  if (imgs.length === 0) return;
+
+  const { fetchChecklistPhotoDataUrl } = await import("@/app/events/[id]/tasks/actions");
+  await Promise.all(
+    imgs.map(async (img) => {
+      const path = decodeURIComponent(img.src.slice(bucketPrefix.length));
+      try {
+        const dataUrl = await fetchChecklistPhotoDataUrl(path);
+        if (!dataUrl) return;
+        await new Promise<void>((resolve) => {
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          img.src = dataUrl;
+        });
+      } catch {
+        // Leave the original src - html2canvas will just skip this one
+        // image rather than fail the whole export.
+      }
+    }),
+  );
+}
+
 async function buildPdf({
   contentElement,
   footerElement,
@@ -24,6 +56,8 @@ async function buildPdf({
     import("jspdf"),
     import("html2canvas-pro"),
   ]);
+
+  await Promise.all([inlineExternalImages(contentElement), inlineExternalImages(footerElement)]);
 
   const [contentCanvas, footerCanvas] = await Promise.all([
     html2canvas(contentElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }),

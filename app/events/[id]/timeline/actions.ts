@@ -2,6 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { scheduleSortKey } from "@/lib/labels";
+import { addMinutesToTime } from "@/lib/scheduleTime";
+import type { TimelineItemRow } from "@/lib/types";
 
 export async function addTimelineItem(eventId: string, formData: FormData) {
   const supabase = await createClient();
@@ -26,6 +29,50 @@ export async function addTimelineItem(eventId: string, formData: FormData) {
   });
 
   if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/timeline`);
+}
+
+// Shifts the chosen step and every step after it (in displayed/sorted
+// order, not insertion order) by the same number of minutes - e.g. running
+// 20 minutes late from "חופה" onward without having to retype every
+// following step's time by hand.
+export async function shiftTimelineFrom(eventId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const fromItemId = String(formData.get("from_item_id") ?? "").trim();
+  const minutesRaw = String(formData.get("minutes") ?? "").trim();
+  const minutes = Number(minutesRaw);
+
+  if (!fromItemId) throw new Error("יש לבחור שלב התחלה");
+  if (!minutesRaw || !Number.isFinite(minutes) || minutes === 0) {
+    throw new Error("יש להזין מספר דקות שונה מאפס");
+  }
+
+  const { data: rawItems, error: fetchError } = await supabase
+    .from("timeline_items")
+    .select("*")
+    .eq("event_id", eventId)
+    .returns<TimelineItemRow[]>();
+  if (fetchError) throw new Error(fetchError.message);
+
+  const items = (rawItems ?? []).sort((a, b) => scheduleSortKey(a.approx_time) - scheduleSortKey(b.approx_time));
+  const fromIndex = items.findIndex((item) => item.id === fromItemId);
+  if (fromIndex === -1) throw new Error("השלב שנבחר לא נמצא");
+
+  const toShift = items.slice(fromIndex).filter((item) => item.approx_time);
+  const updates = toShift.map((item) => ({
+    id: item.id,
+    approx_time: addMinutesToTime(item.approx_time!, minutes),
+  }));
+
+  for (const update of updates) {
+    const { error } = await supabase
+      .from("timeline_items")
+      .update({ approx_time: update.approx_time })
+      .eq("id", update.id);
+    if (error) throw new Error(error.message);
+  }
+
   revalidatePath(`/events/${eventId}/timeline`);
 }
 

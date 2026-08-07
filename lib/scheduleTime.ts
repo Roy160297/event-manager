@@ -9,14 +9,21 @@ export function isFriday(dateStr: string | null): boolean {
   return new Date(Date.UTC(year, month - 1, day)).getUTCDay() === 5;
 }
 
-export function addHoursToTime(time: string, hours: number): string | null {
+// Integer-minute arithmetic (no float division) so shifting a whole
+// schedule by a round number of minutes never drifts by a fraction of a
+// minute the way hours*60 division/multiplication can.
+export function addMinutesToTime(time: string, minutes: number): string | null {
   const match = time.match(/^(\d{1,2}):(\d{2})/);
   if (!match) return null;
-  const totalMinutes = Number(match[1]) * 60 + Number(match[2]) + hours * 60;
+  const totalMinutes = Number(match[1]) * 60 + Number(match[2]) + minutes;
   const normalized = ((totalMinutes % 1440) + 1440) % 1440;
   const outHours = Math.floor(normalized / 60);
-  const outMinutes = Math.round(normalized % 60);
+  const outMinutes = normalized % 60;
   return `${String(outHours).padStart(2, "0")}:${String(outMinutes).padStart(2, "0")}`;
+}
+
+export function addHoursToTime(time: string, hours: number): string | null {
+  return addMinutesToTime(time, Math.round(hours * 60));
 }
 
 // Friday-specific default: 6.5 hours after the guest-reception start time.
