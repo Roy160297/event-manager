@@ -3,7 +3,21 @@ import { sendReminderEmail } from "@/lib/reminderEmail";
 import { COUPLE_MEETING_REMINDER_RULES, addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
 import type { EventRow } from "@/lib/types";
 
-type ReminderableEvent = Pick<EventRow, "id" | "name" | "event_type" | "event_date" | "couple_meeting_date">;
+type ReminderableEvent = Pick<
+  EventRow,
+  | "id"
+  | "name"
+  | "event_type"
+  | "event_date"
+  | "couple_meeting_date"
+  | "estimated_guests"
+  | "kids_meal_count"
+  | "glat_meal_count"
+  | "vegetarian_meal_count"
+  | "vegan_meal_count"
+  | "gluten_free_meal_count"
+  | "toddlers_under_2_count"
+>;
 
 // Shared by the daily cron route (app/api/cron/couple-meeting-reminders) and
 // the "check right now" call after creating/saving an event - same
@@ -14,7 +28,6 @@ export async function sendDueReminders(
   event: ReminderableEvent,
   managerEmail: string | null | undefined,
 ): Promise<{ sent: number; skippedAlreadySent: number }> {
-  if (!managerEmail) return { sent: 0, skippedAlreadySent: 0 };
   // Business events don't have a couple/wedding flow, so none of these
   // couple-meeting-anchored reminder rules are relevant to them.
   if (event.event_type === "business_event") return { sent: 0, skippedAlreadySent: 0 };
@@ -32,6 +45,12 @@ export async function sendDueReminders(
     if (!isDue) continue;
 
     if (rule.condition && !(await rule.condition(supabase, event.id))) continue;
+
+    // Most rules go to whoever manages the event; a rule can override that
+    // with a fixed recipient instead (e.g. always the kitchen, regardless of
+    // who's managing) - skip entirely if neither is available.
+    const to = rule.recipientOverride ?? managerEmail;
+    if (!to) continue;
 
     // "onOrAfter" rules (e.g. an event created/edited with fewer days left
     // than the offset, so the exact target day already passed) fire at most
@@ -63,9 +82,9 @@ export async function sendDueReminders(
     }
 
     await sendReminderEmail({
-      to: managerEmail,
+      to,
       subject: rule.subject,
-      bodyText: rule.body(event.name, event.event_date),
+      bodyText: rule.body(event),
     });
     sent++;
   }

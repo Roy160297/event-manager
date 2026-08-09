@@ -26,8 +26,19 @@ describe("COUPLE_MEETING_REMINDER_RULES", () => {
   });
 
   it("renders the couple name and event date into the body", () => {
+    const sampleEvent = {
+      name: "שי קטש וגיל מזרחי",
+      event_date: "2026-08-14",
+      estimated_guests: "200+14",
+      kids_meal_count: "10",
+      glat_meal_count: "5",
+      vegetarian_meal_count: "8",
+      vegan_meal_count: "3",
+      gluten_free_meal_count: "2",
+      toddlers_under_2_count: "1",
+    };
     for (const rule of COUPLE_MEETING_REMINDER_RULES) {
-      const body = rule.body("שי קטש וגיל מזרחי", "2026-08-14");
+      const body = rule.body(sampleEvent);
       expect(body).toContain("שי קטש וגיל מזרחי");
       expect(body).toContain("14/08/2026");
     }
