@@ -5,7 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // edit, easy to forget since nothing else about the event flags it. Matched
 // by supplier name (not role) since that's the only place this shows up.
 const DJ_NAME_MATCH = "צח זיו";
-export const DJ_SKETCH_TASK_TITLE = "עדכון סקיצה - הדיג'יי הוא צח זיו";
+export const DJ_SKETCH_TASK_TITLE = "עדכון סקיצה (במה במקום עמדה עגולה) - הדיג'י הוא צח זיו";
 const DJ_SKETCH_DESCRIPTION =
   "הדיג'יי באירוע הוא צח זיו - יש לעדכן את הסקיצה בהתאם: להוציא את עמדת הדיג'יי העגולה ולהכניס במה במקומה.";
 
