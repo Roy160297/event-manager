@@ -196,7 +196,7 @@ export default async function EventOverviewPage({
 
           {event?.event_type !== "business_event" && (
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-medium">פירוט מנות</p>
+              <p className="text-sm font-medium">פירוט מנות (חלק מתוך מנות ההתחייבות, לא בנוסף)</p>
               <div className="grid gap-4 sm:grid-cols-3">
                 <label className={labelClass}>
                   <span className="font-medium">מנות גלאט</span>
