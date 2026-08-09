@@ -9,6 +9,7 @@ import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import { applyDefaultMenu } from "@/app/events/[id]/menu/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
+import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { extractEventDraftFromImage } from "@/lib/imageImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
@@ -226,6 +227,7 @@ export async function addSupplier(eventId: string, formData: FormData) {
     .insert({ event_id: eventId, name, role, phone, sort_order: count ?? 0 });
   if (error) throw new Error(error.message);
 
+  await maybeCreateDjSketchTask(supabase, eventId, [name]);
   revalidatePath(`/events/${eventId}`);
 }
 
@@ -244,6 +246,7 @@ export async function updateSupplier(eventId: string, supplierId: string, formDa
     .eq("id", supplierId);
   if (error) throw new Error(error.message);
 
+  await maybeCreateDjSketchTask(supabase, eventId, [name]);
   revalidatePath(`/events/${eventId}`);
 }
 
@@ -473,5 +476,6 @@ export async function addSuppliersFromImport(eventId: string, suppliers: Supplie
   );
   if (error) throw new Error(error.message);
 
+  await maybeCreateDjSketchTask(supabase, eventId, validSuppliers.map((s) => s.name));
   revalidatePath(`/events/${eventId}`);
 }

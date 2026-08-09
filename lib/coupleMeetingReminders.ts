@@ -1,4 +1,6 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatDate } from "@/lib/labels";
+import { hasDjTzachZivSupplier } from "@/lib/djSketchReminder";
 
 // Automated email reminders for the couple-meeting checklist items whose
 // timing is computable from a date the app already tracks (event_date or
@@ -18,6 +20,10 @@ export interface CoupleMeetingReminderRule {
   // at most once ever for that event - catches events entering the window
   // "already late" instead of silently skipping them.
   matchMode?: "exact" | "onOrAfter";
+  // Optional extra gate checked only once the date already matches, e.g. "does
+  // this event actually have the supplier this reminder is about" - skips the
+  // query entirely for the (large) majority of events where it's irrelevant.
+  condition?: (supabase: SupabaseClient, eventId: string) => Promise<boolean>;
   subject: string;
   body: (eventName: string, eventDate: string) => string;
 }
@@ -55,6 +61,16 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     subject: "תזכורת: התחייבות סופית, iPlan וסקיצה",
     body: (eventName, eventDate) =>
       `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): היום התאריך (שבוע לפני האירוע) לביצוע המשימות הבאות:<ul><li>עדכון התחייבות סופית בפרטי האירוע והעלאת טופס אירוע סופי ל-iPlan.</li><li>העלאת סקיצה סופית לאתר, לאחר ההתחייבות הסופית.</li></ul>`,
+  },
+  {
+    key: "dj-tzach-ziv-sketch-update",
+    anchor: "event_date",
+    offsetDays: -7,
+    matchMode: "onOrAfter",
+    condition: hasDjTzachZivSupplier,
+    subject: "תזכורת: עדכון סקיצה - הדיג'יי צח זיו",
+    body: (eventName, eventDate) =>
+      `תזכורת לגבי האירוע של <strong>${eventName}</strong> (בתאריך ${formatDate(eventDate)}): הדיג'יי באירוע הוא צח זיו - יש לעדכן את הסקיצה בהתאם: להוציא את עמדת הדיג'יי העגולה ולהכניס במה במקומה.`,
   },
   {
     key: "guest-invitation-file-upload",

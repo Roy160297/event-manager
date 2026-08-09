@@ -176,7 +176,7 @@ export default async function EventOverviewPage({
               </label>
 
               <label className={labelClass}>
-                <span className="font-medium">שעת סיום</span>
+                <span className="font-medium">שעת סיום (ע&quot;פ חוזה)</span>
                 <TimeField name="end_time" defaultValue={event?.end_time ?? ""} />
               </label>
 
@@ -364,7 +364,7 @@ export default async function EventOverviewPage({
                 ["תאריך", event ? formatDate(event.event_date) : null],
                 ["מספר אורחים - התחייבות", event?.estimated_guests ?? null],
                 ["שעת התחלה", event ? formatTime(event.start_time) : null],
-                ["שעת סיום", event ? formatTime(event.end_time) : null],
+                ['שעת סיום (ע"פ חוזה)', event ? formatTime(event.end_time) : null],
                 ...(event?.event_type !== "business_event"
                   ? ([
                       ["תאריך פגישת זוג", event ? formatDate(event.couple_meeting_date) : null],

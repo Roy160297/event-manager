@@ -114,6 +114,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         text: "ניקיון וסידור השטח מחוץ למטבח הפנימי.",
       },
       { key: "hall-fridges-no-food", text: "לוודא שאין אוכל במקררים." },
+      { key: "hall-ice-machine-closed", text: "לוודא שמכונת הקרח בחדר המלצרים סגורה." },
     ],
   },
   {

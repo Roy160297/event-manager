@@ -6,6 +6,7 @@ import { extractPdfText, parsePdfDraft, type PdfImportDraft } from "@/lib/pdfImp
 import { getCurrentStaff } from "@/lib/auth";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
+import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import type { StaffRow } from "@/lib/types";
 
 export async function addManagerFromImport(name: string): Promise<StaffRow> {
@@ -120,6 +121,8 @@ export async function createEventFromPdfImport(
     }));
     const { error: supErr } = await supabase.from("event_suppliers").insert(rows);
     if (supErr) throw new Error(supErr.message);
+
+    await maybeCreateDjSketchTask(supabase, eventId, validSuppliers.map((s) => s.name));
   }
 
   await checkRemindersForEvent(eventId);

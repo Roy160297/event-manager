@@ -31,6 +31,8 @@ export async function sendDueReminders(
     const isDue = rule.matchMode === "onOrAfter" ? today >= targetDate : today === targetDate;
     if (!isDue) continue;
 
+    if (rule.condition && !(await rule.condition(supabase, event.id))) continue;
+
     // "onOrAfter" rules (e.g. an event created/edited with fewer days left
     // than the offset, so the exact target day already passed) fire at most
     // once ever per event - checked separately since the reminder_log unique
