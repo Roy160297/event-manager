@@ -115,6 +115,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       },
       { key: "hall-fridges-no-food", text: "לוודא שאין אוכל במקררים." },
       { key: "hall-ice-machine-closed", text: "לוודא שמכונת הקרח בחדר המלצרים סגורה." },
+      { key: "hall-doors-handprints", text: "ניקוי דלתות אולם מסימני כפות ידיים." },
     ],
   },
   {
