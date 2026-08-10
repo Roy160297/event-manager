@@ -1,5 +1,5 @@
 // Friday weddings end much earlier than the usual late-night finish (Shabbat
-// constraints) - this venue's rule of thumb is a flat 6.5 hours after the
+// constraints) - this venue's rule of thumb is a flat 5.5 hours after the
 // guest-reception start time (e.g. 12:00-18:30), regardless of season. Used
 // as a fallback when an import source doesn't give an explicit end time.
 export function isFriday(dateStr: string | null): boolean {
@@ -26,9 +26,9 @@ export function addHoursToTime(time: string, hours: number): string | null {
   return addMinutesToTime(time, Math.round(hours * 60));
 }
 
-// Friday-specific default: 6.5 hours after the guest-reception start time.
+// Friday-specific default: 5.5 hours after the guest-reception start time.
 export function fridayEndTime(startTime: string): string | null {
-  return addHoursToTime(startTime, 6.5);
+  return addHoursToTime(startTime, 5.5);
 }
 
 // Weddings routinely run past midnight (end_time like 03:00), so "today's

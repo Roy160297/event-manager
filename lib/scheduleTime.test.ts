@@ -59,8 +59,8 @@ describe("addMinutesToTime", () => {
 });
 
 describe("fridayEndTime", () => {
-  it("is always 6.5 hours after the given start time", () => {
-    expect(fridayEndTime("12:00")).toBe("18:30");
+  it("is always 5.5 hours after the given start time", () => {
+    expect(fridayEndTime("12:00")).toBe("17:30");
   });
 });
 

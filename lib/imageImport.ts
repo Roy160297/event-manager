@@ -217,13 +217,13 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
   const gluten_free_meal_count = extraction.gluten_free_meals ? String(extraction.gluten_free_meals) : null;
   const toddlers_under_2_count = extraction.toddlers_under_2 != null ? String(extraction.toddlers_under_2) : null;
 
-  // Friday weddings end ~6.5h after the reception starts (Shabbat) rather
+  // Friday weddings end ~5.5h after the reception starts (Shabbat) rather
   // than the usual late finish - fill this in only when iPlan itself didn't
   // give an explicit end time, never override a real extracted value.
   let end_time = extraction.end_time ?? null;
   if (!end_time && extraction.start_time && isFriday(extraction.event_date ?? null)) {
     end_time = fridayEndTime(extraction.start_time);
-    if (end_time) warnings.push('שעת הסיום לא זוהתה - חושבה אוטומטית לפי כלל יום שישי (6.5 שעות מקבלת הפנים)');
+    if (end_time) warnings.push('שעת הסיום לא זוהתה - חושבה אוטומטית לפי כלל יום שישי (5.5 שעות מקבלת הפנים)');
   }
 
   return {

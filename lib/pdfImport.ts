@@ -336,13 +336,13 @@ export function parsePdfDraft(rawText: string): PdfImportDraft {
   const start_time = startTimeMatch?.[1] ?? schedule[0]?.approx_time ?? null;
   if (!start_time) warnings.push("לא נמצאה שעת התחלה - יש להזין ידנית");
 
-  // Friday weddings end ~6.5h after the reception starts (Shabbat) rather
+  // Friday weddings end ~5.5h after the reception starts (Shabbat) rather
   // than the usual late finish - fill this in only when the PDF itself
   // didn't give an explicit end time, never override a real extracted value.
   let end_time = rawEndTime;
   if (!end_time && start_time && isFriday(event_date)) {
     end_time = fridayEndTime(start_time);
-    if (end_time) warnings.push('שעת הסיום לא זוהתה - חושבה אוטומטית לפי כלל יום שישי (6.5 שעות מקבלת הפנים)');
+    if (end_time) warnings.push('שעת הסיום לא זוהתה - חושבה אוטומטית לפי כלל יום שישי (5.5 שעות מקבלת הפנים)');
   }
 
   const commitmentLine = findValueBeforeLabel(lines, "התחייבות סופית") ? lines.find((l) => l.includes("התחייבות סופית")) : null;
