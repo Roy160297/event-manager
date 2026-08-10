@@ -83,7 +83,7 @@ export async function sendDueReminders(
 
     await sendReminderEmail({
       to,
-      subject: rule.subject,
+      subject: typeof rule.subject === "function" ? rule.subject(event) : rule.subject,
       bodyText: rule.body(event),
     });
     sent++;

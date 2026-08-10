@@ -28,6 +28,7 @@ describe("COUPLE_MEETING_REMINDER_RULES", () => {
   it("renders the couple name and event date into the body", () => {
     const sampleEvent = {
       name: "שי קטש וגיל מזרחי",
+      event_type: "wedding" as const,
       event_date: "2026-08-14",
       estimated_guests: "200+14",
       kids_meal_count: "10",

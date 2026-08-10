@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatDate } from "@/lib/labels";
+import { formatDate, EVENT_TYPE_LABELS } from "@/lib/labels";
 import { hasDjTzachZivSupplier } from "@/lib/djSketchReminder";
+import type { EventType } from "@/lib/types";
 
 // Automated email reminders for the couple-meeting checklist items whose
 // timing is computable from a date the app already tracks (event_date or
@@ -14,6 +15,7 @@ export type ReminderAnchor = "couple_meeting_date" | "event_date";
 // circular import, since reminderRunner.ts already imports from this file.
 export interface ReminderBodyEvent {
   name: string;
+  event_type: EventType;
   event_date: string;
   estimated_guests: string | null;
   kids_meal_count: string | null;
@@ -43,7 +45,9 @@ export interface CoupleMeetingReminderRule {
   // reminders meant for a specific staff member regardless of who's managing
   // the event (e.g. the kitchen always wants the meal breakdown).
   recipientOverride?: string;
-  subject: string;
+  // A plain string for most rules; a function for the (rare) rule whose
+  // subject needs to name the specific couple/event, like the kitchen one.
+  subject: string | ((event: ReminderBodyEvent) => string);
   body: (event: ReminderBodyEvent) => string;
 }
 
@@ -106,7 +110,8 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     anchor: "event_date",
     offsetDays: -1,
     recipientOverride: "chef@house7.co.il",
-    subject: "תזכורת: פירוט מנות לקראת האירוע",
+    subject: (event) =>
+      `פירוט מנות לקראת האירוע של ${event.name} - ${EVENT_TYPE_LABELS[event.event_type]} - ${formatDate(event.event_date)}`,
     body: (event) =>
       `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר - פירוט מנות:<ul>` +
       `<li>מספר אורחים - התחייבות: ${mealField(event.estimated_guests)}</li>` +
