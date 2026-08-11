@@ -56,7 +56,6 @@ export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
             key: "fm-waiters-room",
             text: "לוודא סדר וניקיון בחדר המלצרים - תלייה מסודרת של כל החולצות הנקיות על הקולבים, סידור סינרים בשקיות, סידור המדפים מעל הלוקרים.",
           },
-          { key: "fm-glasses-cigarettes", text: "פינוי כוסות וסיגריות מהעציצים והאדניות." },
           { key: "fm-chuppah-cleanup", text: "ניקיון שולחן חופה ושברי זכוכית מהרצפה." },
           { key: "fm-warming-cabinets", text: "לוודא שארונות החימום כבויים ונקיים." },
         ],

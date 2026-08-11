@@ -116,6 +116,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "hall-fridges-no-food", text: "לוודא שאין אוכל במקררים." },
       { key: "hall-ice-machine-closed", text: "לוודא שמכונת הקרח בחדר המלצרים סגורה." },
       { key: "hall-doors-handprints", text: "ניקוי דלתות אולם מסימני כפות ידיים." },
+      { key: "hall-speakers-armchairs", text: "ניקוי רמקולים וכורסאות." },
     ],
   },
   {
@@ -145,7 +146,6 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "electrical-kitchen-hood", text: "כיבוי מנדף מטבח יצרן." },
       { key: "electrical-yard-fans", text: "כיבוי מאווררים וצ'ילרים באולם ובחצר." },
       { key: "electrical-outer-kitchen-lights-both-floors", text: "כיבוי אורות במטבח החיצוני (שתי הקומות)." },
-      { key: "electrical-staircase-light", text: "כיבוי תאורת חדר המדרגות (שני מתגים)." },
       { key: "electrical-path-light", text: "כיבוי תאורת השביל." },
       { key: "electrical-restroom-light", text: "כיבוי תאורת השירותים." },
       {
