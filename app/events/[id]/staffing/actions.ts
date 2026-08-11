@@ -125,6 +125,15 @@ export async function removeTableSketch(eventId: string) {
   revalidatePath(`/events/${eventId}/staffing`);
 }
 
+export async function updateSeatedChairsCount(eventId: string, formData: FormData) {
+  const supabase = await createClient();
+  const count = String(formData.get("sketch_seated_chairs_count") ?? "").trim() || null;
+
+  const { error } = await supabase.from("events").update({ sketch_seated_chairs_count: count }).eq("id", eventId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/staffing`);
+}
+
 export async function deleteLocation(eventId: string, locationId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("locations").delete().eq("id", locationId);

@@ -50,10 +50,10 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
         .returns<AssignmentWithWaiter[]>(),
       supabase
         .from("events")
-        .select("table_sketch_path")
+        .select("table_sketch_path, sketch_seated_chairs_count")
         .eq("id", eventId)
         .single()
-        .returns<Pick<EventRow, "table_sketch_path">>(),
+        .returns<Pick<EventRow, "table_sketch_path" | "sketch_seated_chairs_count">>(),
       getCurrentStaff(),
     ]);
 
@@ -97,7 +97,13 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="flex flex-col gap-6">
-      <TableSketchPhoto eventId={eventId} sketchUrl={sketchUrl} isPdf={isSketchPdf} canWrite={canWriteStaffing} />
+      <TableSketchPhoto
+        eventId={eventId}
+        sketchUrl={sketchUrl}
+        isPdf={isSketchPdf}
+        canWrite={canWriteStaffing}
+        seatedChairsCount={event?.sketch_seated_chairs_count ?? null}
+      />
 
       {canWriteStaffing && (
         <div className="flex justify-end rounded-lg border border-border-classic bg-surface p-4">

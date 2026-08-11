@@ -2,18 +2,22 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { removeTableSketch, uploadTableSketch } from "./actions";
+import { SaveDetailsForm } from "@/components/SaveDetailsForm";
+import { actionErrorMessage } from "@/lib/actionError";
+import { removeTableSketch, updateSeatedChairsCount, uploadTableSketch } from "./actions";
 
 export default function TableSketchPhoto({
   eventId,
   sketchUrl,
   isPdf,
   canWrite,
+  seatedChairsCount,
 }: {
   eventId: string;
   sketchUrl: string | null;
   isPdf: boolean;
   canWrite: boolean;
+  seatedChairsCount: string | null;
 }) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
@@ -122,6 +126,41 @@ export default function TableSketchPhoto({
         <p className="text-sm text-foreground/60">
           העלו תמונה או PDF של סקיצת הפריסה כדי שיהיה ניתן לראות אותה כאן בזמן שיבוץ המלצרים.
         </p>
+      )}
+
+      {canWrite ? (
+        <SaveDetailsForm
+          action={async (formData) => {
+            try {
+              await updateSeatedChairsCount(eventId, formData);
+            } catch (err) {
+              return actionErrorMessage(err);
+            }
+          }}
+          className="flex flex-wrap items-end gap-2"
+        >
+          <label className="flex flex-col gap-1 text-sm">
+            <span>מספר כיסאות שהושבו (לפי הסקיצה)</span>
+            <input
+              name="sketch_seated_chairs_count"
+              defaultValue={seatedChairsCount ?? ""}
+              className="w-40 rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
+            />
+          </label>
+          <button
+            type="submit"
+            className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
+          >
+            שמור
+          </button>
+        </SaveDetailsForm>
+      ) : (
+        seatedChairsCount && (
+          <p className="text-sm">
+            <span className="text-foreground/60">מספר כיסאות שהושבו (לפי הסקיצה): </span>
+            {seatedChairsCount}
+          </p>
+        )
       )}
     </div>
   );

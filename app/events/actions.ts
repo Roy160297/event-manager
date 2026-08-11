@@ -171,10 +171,6 @@ export async function updateEventSummaryReport(eventId: string, formData: FormDa
   }
 
   const text = (key: string) => String(formData.get(key) ?? "").trim() || null;
-  const num = (key: string) => {
-    const raw = String(formData.get(key) ?? "").trim();
-    return raw ? Number(raw) : null;
-  };
 
   const { error } = await supabase
     .from("events")
@@ -182,17 +178,17 @@ export async function updateEventSummaryReport(eventId: string, formData: FormDa
       production_company: text("production_company"),
       exit_time: text("exit_time"),
       report_end_time: text("report_end_time"),
-      final_guest_count_counter: num("final_guest_count_counter"),
+      final_guest_count_counter: text("final_guest_count_counter"),
       final_guest_count_iplan: text("final_guest_count_iplan"),
-      reserve_opened_count: num("reserve_opened_count"),
+      reserve_opened_count: text("reserve_opened_count"),
       bar_manager_name: text("bar_manager_name"),
       bartender_count: text("bartender_count"),
       floor_manager_name: text("floor_manager_name"),
-      waiter_count: num("waiter_count"),
-      cook_count: num("cook_count"),
-      kitchen_dishwasher_count: num("kitchen_dishwasher_count"),
-      dishwasher_count: num("dishwasher_count"),
-      security_guard_count: num("security_guard_count"),
+      waiter_count: text("waiter_count"),
+      cook_count: text("cook_count"),
+      kitchen_dishwasher_count: text("kitchen_dishwasher_count"),
+      dishwasher_count: text("dishwasher_count"),
+      security_guard_count: text("security_guard_count"),
       security_guard_hours: text("security_guard_hours"),
       report_summary: text("report_summary"),
       report_general_notes: text("report_general_notes"),

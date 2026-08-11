@@ -416,8 +416,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <label className={reportLabelClass}>
                   <span>כמות אורחים סופית - קאונטר</span>
                   <input
-                    type="number"
-                    min={0}
                     name="final_guest_count_counter"
                     defaultValue={event?.final_guest_count_counter ?? ""}
                     className={inputClass}
@@ -455,8 +453,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               <label className={reportLabelClass}>
                 <span>כמות רזרבה שנפתחו</span>
                 <input
-                  type="number"
-                  min={0}
                   name="reserve_opened_count"
                   defaultValue={event?.reserve_opened_count ?? ""}
                   className={inputClass}
@@ -478,8 +474,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               <label className={reportLabelClass}>
                 <span>כמות מלצרים</span>
                 <input
-                  type="number"
-                  min={0}
                   name="waiter_count"
                   defaultValue={event?.waiter_count ?? ""}
                   className={inputClass}
@@ -488,8 +482,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               <label className={reportLabelClass}>
                 <span>כמות טבחים</span>
                 <input
-                  type="number"
-                  min={0}
                   name="cook_count"
                   defaultValue={event?.cook_count ?? ""}
                   className={inputClass}
@@ -498,8 +490,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               <label className={reportLabelClass}>
                 <span>כמות מנקי מטבח</span>
                 <input
-                  type="number"
-                  min={0}
                   name="kitchen_dishwasher_count"
                   defaultValue={event?.kitchen_dishwasher_count ?? ""}
                   className={inputClass}
@@ -508,8 +498,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               <label className={reportLabelClass}>
                 <span>כמות שוטפי כלים</span>
                 <input
-                  type="number"
-                  min={0}
                   name="dishwasher_count"
                   defaultValue={event?.dishwasher_count ?? ""}
                   className={inputClass}
@@ -518,8 +506,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               <label className={reportLabelClass}>
                 <span>כמות מאבטחים</span>
                 <input
-                  type="number"
-                  min={0}
                   name="security_guard_count"
                   defaultValue={event?.security_guard_count ?? 2}
                   className={inputClass}

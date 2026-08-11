@@ -81,17 +81,17 @@ export interface EventRow {
   production_company: string | null;
   exit_time: string | null;
   report_end_time: string | null;
-  final_guest_count_counter: number | null;
+  final_guest_count_counter: string | null;
   final_guest_count_iplan: string | null;
-  reserve_opened_count: number | null;
+  reserve_opened_count: string | null;
   bar_manager_name: string | null;
   bartender_count: string | null;
   floor_manager_name: string | null;
-  waiter_count: number | null;
-  cook_count: number | null;
-  kitchen_dishwasher_count: number | null;
-  dishwasher_count: number | null;
-  security_guard_count: number | null;
+  waiter_count: string | null;
+  cook_count: string | null;
+  kitchen_dishwasher_count: string | null;
+  dishwasher_count: string | null;
+  security_guard_count: string | null;
   security_guard_hours: string | null;
   report_summary: string | null;
   report_general_notes: string | null;
@@ -99,6 +99,7 @@ export interface EventRow {
   restroom_cleaner_hours: string | null;
   kitchen_dishwasher_hours: string | null;
   dishwasher_hours: string | null;
+  sketch_seated_chairs_count: string | null;
   created_at: string;
 }
 
