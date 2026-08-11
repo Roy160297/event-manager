@@ -130,6 +130,7 @@ export function SendChecklistsEmailButton({
   blockedReasons,
   summaryReportSignedByName,
   summaryReportSignatureData,
+  summaryReportPhotoUrls,
 }: {
   event: EventRow;
   managerName: string | null;
@@ -143,6 +144,7 @@ export function SendChecklistsEmailButton({
   blockedReasons: string[];
   summaryReportSignedByName: string | null;
   summaryReportSignatureData: string | null;
+  summaryReportPhotoUrls: string[];
 }) {
   const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
   const footerRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -204,7 +206,14 @@ export function SendChecklistsEmailButton({
       signatureData: summaryReportSignatureData,
       managerCosignedByName: null,
       managerCosignatureData: null,
-      body: <EventSummaryReportPrintable event={event} managerName={managerName} guestCommitment={guestCommitment} />,
+      body: (
+        <EventSummaryReportPrintable
+          event={event}
+          managerName={managerName}
+          guestCommitment={guestCommitment}
+          photoUrls={summaryReportPhotoUrls}
+        />
+      ),
     },
   ];
 

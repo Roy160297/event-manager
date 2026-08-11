@@ -245,6 +245,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           blockedReasons={sendBlockedReasons}
           summaryReportSignedByName={summaryReportSignature?.signed_by_name ?? null}
           summaryReportSignatureData={summaryReportSignature?.signature_data ?? null}
+          summaryReportPhotoUrls={photosFor("event_summary_report").map((photo) => photo.url)}
         />
       )}
 
