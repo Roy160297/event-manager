@@ -96,7 +96,29 @@ export async function uploadTableSketch(eventId: string, formData: FormData) {
     .upload(path, buffer, { contentType: file.type || undefined });
   if (uploadError) throw new Error(uploadError.message);
 
-  const { error } = await supabase.from("events").update({ table_sketch_path: path }).eq("id", eventId);
+  // Auto-fill the seated-chairs count from the sketch's own occupancy data -
+  // only possible for iPlan PDF exports (image sketches have no extractable
+  // text). Left untouched if parsing fails or finds no tables, so a manager
+  // can still fill it in by hand; still editable afterward either way.
+  let seatedChairsCount: string | null = null;
+  if (ext === "pdf") {
+    try {
+      const draft = parseTableSketchDraft(await extractPdfText(buffer));
+      if (draft.tables.length > 0) {
+        seatedChairsCount = String(draft.tables.reduce((sum, t) => sum + t.seated, 0));
+      }
+    } catch {
+      // Ignore - falls back to manual entry.
+    }
+  }
+
+  const { error } = await supabase
+    .from("events")
+    .update({
+      table_sketch_path: path,
+      ...(seatedChairsCount !== null ? { sketch_seated_chairs_count: seatedChairsCount } : {}),
+    })
+    .eq("id", eventId);
   if (error) throw new Error(error.message);
 
   if (event?.table_sketch_path) {

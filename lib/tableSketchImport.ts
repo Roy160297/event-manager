@@ -1,6 +1,10 @@
 export interface TableSketchTable {
   label: string;
   capacity: number;
+  // Confirmed + reserved guests actually assigned a seat at this table
+  // ("6+2/9" -> 8), as opposed to `capacity` (the table's total seat count,
+  // the "9"). Used to total up how many chairs were seated venue-wide.
+  seated: number;
 }
 
 export interface TableSketchFoodStand {
@@ -14,7 +18,7 @@ export interface TableSketchDraft {
 }
 
 const TABLE_NUMBER_PATTERN = /^\d{1,3}$/;
-const OCCUPANCY_PATTERN = /^\d+(?:\+\d+)?\/(\d+)$/;
+const OCCUPANCY_PATTERN = /^(\d+)(?:\+(\d+))?\/(\d+)$/;
 
 // iPlan's floor-plan sketch export lists each table as its number on one line
 // followed by an occupancy line ("6+2/9" = 6 confirmed + 2 reserved out of 9
@@ -51,7 +55,8 @@ export function parseTableSketchDraft(rawText: string): TableSketchDraft {
       const next = lines[i + 1] ?? "";
       const occupancyMatch = next.match(OCCUPANCY_PATTERN);
       if (occupancyMatch) {
-        tables.push({ label: line, capacity: Number(occupancyMatch[1]) });
+        const seated = Number(occupancyMatch[1]) + Number(occupancyMatch[2] ?? 0);
+        tables.push({ label: line, capacity: Number(occupancyMatch[3]), seated });
         i += 2;
         continue;
       }

@@ -142,8 +142,10 @@ export default function TableSketchPhoto({
           <label className="flex flex-col gap-1 text-sm">
             <span>מספר כיסאות שהושבו (לפי הסקיצה)</span>
             <input
+              key={seatedChairsCount ?? ""}
               name="sketch_seated_chairs_count"
               defaultValue={seatedChairsCount ?? ""}
+              placeholder="מתמלא אוטומטית בהעלאת סקיצת PDF"
               className="w-40 rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
             />
           </label>
