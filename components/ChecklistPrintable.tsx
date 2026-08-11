@@ -68,10 +68,16 @@ export function ChecklistPrintable({
       {photoUrls && photoUrls.length > 0 && (
         <div className="flex flex-col gap-1.5 pt-1" style={{ borderTop: "1px solid #d4d4d4" }}>
           <p className="text-sm font-bold">תמונות</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {photoUrls.map((url) => (
               // eslint-disable-next-line @next/next/no-img-element -- captured by html2canvas, not rendered to the user
-              <img key={url} src={url} alt="" className="h-28 w-28 object-cover" style={{ border: "1px solid #d4d4d4" }} />
+              <img
+                key={url}
+                src={url}
+                alt=""
+                className="max-h-[420px] w-full object-contain"
+                style={{ border: "1px solid #d4d4d4" }}
+              />
             ))}
           </div>
         </div>
