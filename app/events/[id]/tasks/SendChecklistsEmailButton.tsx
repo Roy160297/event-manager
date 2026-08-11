@@ -151,6 +151,7 @@ export function SendChecklistsEmailButton({
   const [attachments, setAttachments] = useState<{ filename: string; base64: string }[] | null>(null);
   const [toList, setToList] = useState<string[]>(CHECKLIST_EMAIL_TO);
   const [ccList, setCcList] = useState<string[]>(CHECKLIST_EMAIL_CC);
+  const [bodyOverride, setBodyOverride] = useState<string | null>(null);
 
   const eventLabel = `${event.name} · ${EVENT_TYPE_LABELS[event.event_type]} · ${formatDate(event.event_date)}`;
   const coupleLabel =
@@ -165,9 +166,10 @@ export function SendChecklistsEmailButton({
     `דוח סיכום אירוע - ${nameLabel}` + (dayMonth ? `.${dayMonth}` : "") + (managerName ? ` - ${managerName}` : "");
   const dateForFilename = fileDate(event.event_date);
   const filenameBase = `${nameLabel}${dateForFilename ? `-${dateForFilename}` : ""}`;
-  const bodyText = `מצורפים כל צ&apos;קליסטי הסגירה ודוח סיכום האירוע עבור ${eventLabel}.${
+  const defaultBodyText = `מצורפים כל צ&apos;קליסטי הסגירה ודוח סיכום האירוע עבור ${eventLabel}.${
     managerName ? `<br/>נשלח על ידי: ${managerName}` : ""
   }`;
+  const bodyText = bodyOverride ?? defaultBodyText;
 
   const printables = [
     ...checklists.map((checklist) => ({
@@ -312,6 +314,21 @@ export function SendChecklistsEmailButton({
             <span className="text-foreground/60">מענה לכתובת (Reply-To): </span>
             {managerEmail ?? "—"}
           </p>
+
+          {step === "sent" ? (
+            <p className="text-xs whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: bodyText }} />
+          ) : (
+            <label className="flex flex-col gap-1 text-xs">
+              <span className="text-foreground/60">תוכן ההודעה:</span>
+              <textarea
+                value={bodyText}
+                onChange={(e) => setBodyOverride(e.target.value)}
+                rows={4}
+                className="rounded-md border border-border-classic bg-surface px-2 py-1.5 text-xs"
+              />
+            </label>
+          )}
+
           <div className="flex flex-col gap-1 text-xs">
             <p className="text-foreground/60">קבצים מצורפים:</p>
             {step === "sent" ? (
@@ -357,6 +374,7 @@ export function SendChecklistsEmailButton({
                 onClick={() => {
                   setStep("idle");
                   setAttachments(null);
+                  setBodyOverride(null);
                 }}
                 disabled={step === "sending"}
                 className="text-sm text-foreground/60 hover:underline"
