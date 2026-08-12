@@ -167,7 +167,7 @@ export function SendChecklistsEmailButton({
   const subject =
     `דוח סיכום אירוע - ${nameLabel}` + (dayMonth ? `.${dayMonth}` : "") + (managerName ? ` - ${managerName}` : "");
   const dateForFilename = fileDate(event.event_date);
-  const filenameBase = `${nameLabel}${dateForFilename ? `-${dateForFilename}` : ""}`;
+  const filenameBase = dateForFilename;
   const defaultBodyText = `מצורפים כל צ&apos;קליסטי הסגירה ודוח סיכום האירוע עבור ${eventLabel}.${
     managerName ? `<br/>נשלח על ידי: ${managerName}` : ""
   }`;
@@ -200,7 +200,7 @@ export function SendChecklistsEmailButton({
     })),
     {
       key: "event_summary_report",
-      filenameTitle: "דוח סיכום אירוע - מנהל אירוע",
+      filenameTitle: "דוח סיכום אירוע",
       signerLabel: "מנהל אירוע",
       signedByName: summaryReportSignedByName,
       signatureData: summaryReportSignatureData,
@@ -230,7 +230,10 @@ export function SendChecklistsEmailButton({
         const footerElement = footerRefs.current[index];
         if (!contentElement || !footerElement) continue;
         const base64 = await renderElementToPdfBase64({ contentElement, footerElement });
-        built.push({ filename: `${printables[index].filenameTitle}-${filenameBase}.pdf`, base64 });
+        const filename = filenameBase
+          ? `${printables[index].filenameTitle}-${filenameBase}.pdf`
+          : `${printables[index].filenameTitle}.pdf`;
+        built.push({ filename, base64 });
       }
       setAttachments(built);
       setStep("review");
