@@ -111,7 +111,7 @@ export default async function ChecklistNotesPage() {
 
       {canReadSummaryReport && (
         <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
-          <p className="font-serif text-lg font-bold">דוח סיכום אירוע - מנהל אירוע</p>
+          <p className="font-serif text-lg font-bold">דוח סיכום אירוע</p>
 
           {summaryReportEvents.length === 0 ? (
             <p className="text-sm text-foreground/60">אין הערות עדיין.</p>

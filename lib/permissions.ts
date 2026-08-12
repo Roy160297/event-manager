@@ -26,7 +26,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   guests: "אורחים",
   staffing: "סקיצה לאירוע",
   closing_checklist: "צ'קליסט סגירה - מנהל אירוע",
-  event_summary_report: "דוח סיכום אירוע - מנהל אירוע",
+  event_summary_report: "דוח סיכום אירוע",
   floor_manager_checklist: "צ'קליסט סגירה - מנהל פלור",
   bar_checklist: "צ'קליסט סגירה - בר",
   barista_checklist: "צ'קליסט סגירה - בריסטה",
