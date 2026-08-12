@@ -13,6 +13,7 @@ import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { extractEventDraftFromImage } from "@/lib/imageImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
+import { deleteAllChecklistPhotosForEvent } from "@/app/events/[id]/tasks/actions";
 import type { EventRow, EventType, StaffRow } from "@/lib/types";
 
 // Returns an error message on failure instead of throwing (except for
@@ -428,6 +429,7 @@ export async function parseSupplierImage(formData: FormData): Promise<SupplierIm
 }
 
 export async function sendAllChecklistsEmail({
+  eventId,
   to,
   cc,
   subject,
@@ -435,6 +437,7 @@ export async function sendAllChecklistsEmail({
   replyTo,
   attachments,
 }: {
+  eventId: string;
   to: string[];
   cc: string[];
   subject: string;
@@ -449,6 +452,16 @@ export async function sendAllChecklistsEmail({
   if (attachments.length === 0) throw new Error("אין צ'קליסטים לשליחה");
 
   await sendChecklistsEmail({ to, cc, subject, bodyText, replyTo, attachments });
+
+  // The sent PDFs are now the durable copy of every checklist/report photo -
+  // the originals in storage are redundant weight once the email is out. Best
+  // effort: the email has already gone out at this point, so a cleanup
+  // failure here shouldn't surface as a "send failed" error to the user.
+  try {
+    await deleteAllChecklistPhotosForEvent(eventId);
+  } catch {
+    // Ignore - the storage objects just linger until manually cleaned up.
+  }
 }
 
 export async function addSuppliersFromImport(eventId: string, suppliers: SupplierImportDraft[]) {

@@ -284,6 +284,23 @@ export async function deleteChecklistPhoto(eventId: string, photoId: string, sto
   revalidatePath(`/events/${eventId}/tasks`);
 }
 
+// Every checklist_photos row for an event is always embedded into the PDF
+// attachments of the "send all checklists by email" bundle (see
+// checklistsForEmail in tasks/page.tsx - it always includes every checklist,
+// not a filtered subset), so once that email is sent the originals in
+// storage are redundant - the sent PDFs are the durable copy.
+export async function deleteAllChecklistPhotosForEvent(eventId: string) {
+  const supabase = await createClient();
+  const { data: photos } = await supabase.from("checklist_photos").select("storage_path").eq("event_id", eventId);
+  if (!photos || photos.length === 0) return;
+
+  const { error } = await supabase.from("checklist_photos").delete().eq("event_id", eventId);
+  if (error) throw new Error(error.message);
+
+  await supabase.storage.from(CHECKLIST_PHOTOS_BUCKET).remove(photos.map((p) => p.storage_path));
+  revalidatePath(`/events/${eventId}/tasks`);
+}
+
 // Second signature on top of the role holder's own, for the 4 role
 // checklists: the event manager reviews and co-signs after the role holder
 // has already filled in and signed. Requires an existing signed row (RLS

@@ -245,7 +245,15 @@ export function SendChecklistsEmailButton({
     setStep("sending");
     setError(null);
     try {
-      await sendAllChecklistsEmail({ to: toList, cc: ccList, subject, bodyText, replyTo: managerEmail, attachments });
+      await sendAllChecklistsEmail({
+        eventId: event.id,
+        to: toList,
+        cc: ccList,
+        subject,
+        bodyText,
+        replyTo: managerEmail,
+        attachments,
+      });
       setStep("sent");
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בשליחת המייל");
@@ -365,6 +373,12 @@ export function SendChecklistsEmailButton({
               </ul>
             )}
           </div>
+
+          {step !== "sent" && (
+            <p className="text-xs text-foreground/60">
+              לאחר השליחה, תמונות הצ&apos;קליסטים ודוח הסיכום יימחקו מהאחסון (הן נשמרות כחלק מקובצי ה-PDF שנשלחו).
+            </p>
+          )}
 
           {step === "sent" ? (
             <p className="text-sm font-medium text-green-700">נשלח בהצלחה</p>
