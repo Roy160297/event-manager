@@ -3,12 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseCsvBuffer, parseExcelBuffer, type ParsedCsv } from "@/lib/csv-import";
+import { mapGuestRows, type GuestColumnMapping } from "@/lib/guestImport";
 
-export interface GuestColumnMapping {
-  name: string;
-  party_size?: string;
-  seating_table?: string;
-}
+export type { GuestColumnMapping };
 
 export async function parseGuestFile(formData: FormData): Promise<ParsedCsv> {
   const file = formData.get("file");
@@ -27,21 +24,7 @@ export async function importGuests(
 ) {
   const supabase = await createClient();
 
-  const guests = rows
-    .map((row) => ({
-      event_id: eventId,
-      name: (mapping.name ? row[mapping.name] : "")?.trim(),
-      // A blank/non-numeric cell in a mapped party_size column means "not
-      // seated/counted yet" (0), not "assume 1" - only fall back to 1 per
-      // row when the file has no such column at all, so every row implicitly
-      // represents exactly one person. Defaulting a blank cell to 1 instead
-      // of 0 silently inflated real guest-count totals (e.g. 44 blank rows
-      // in a real import added 44 phantom guests) past what the source
-      // spreadsheet's own sum shows.
-      party_size: mapping.party_size ? Number(row[mapping.party_size]) || 0 : 1,
-      seating_table: mapping.seating_table ? row[mapping.seating_table]?.trim() || null : null,
-    }))
-    .filter((guest) => guest.name);
+  const guests = mapGuestRows(rows, mapping).map((guest) => ({ ...guest, event_id: eventId }));
 
   if (guests.length === 0) {
     throw new Error("לא נמצאו אורחים תקינים לייבוא — ודאו שהוגדרה עמודת השם");

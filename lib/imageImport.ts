@@ -31,7 +31,7 @@ export interface ImageImportDraft {
 
 const EVENT_TYPE_KEYS = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
-interface GeminiExtraction {
+export interface GeminiExtraction {
   bride_name: string | null;
   groom_name: string | null;
   event_type: EventType;
@@ -163,6 +163,13 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
     throw new Error("תשובת Gemini לא הייתה JSON תקין");
   }
 
+  return buildImageImportDraft(extraction);
+}
+
+// Pure merge/derivation step, split out from extractEventDraftFromImage so
+// the guest-count math (the part that's actually gone wrong before) can be
+// unit-tested without mocking the Gemini API.
+export function buildImageImportDraft(extraction: GeminiExtraction): ImageImportDraft {
   const warnings: string[] = [
     "החילוץ מתמונה עלול לכלול טעויות - יש לבדוק את כל השדות בקפידה לפני יצירת האירוע.",
   ];

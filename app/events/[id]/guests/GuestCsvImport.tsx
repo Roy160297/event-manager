@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { importGuests, parseGuestFile, type GuestColumnMapping } from "./actions";
+import { importGuests, parseGuestFile } from "./actions";
+import { mapGuestRows, type GuestColumnMapping } from "@/lib/guestImport";
 import type { ParsedCsv } from "@/lib/csv-import";
 
 // The guest-list template is fixed, so columns are always detected by these
@@ -93,14 +94,11 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
 
     // Sum of party_size, not row count - a row is a seated party (often 2+
     // people sharing a table), so counting rows undercounts the real
-    // headcount whenever any party has more than one seat. A blank/non-numeric
-    // cell in a mapped column means 0 (not yet seated/counted), matching what
-    // importGuests actually stores - only an unmapped column (no size data at
-    // all) implies exactly 1 person per row.
-    const totalGuestCount = parsed.rows.reduce(
-      (sum, row) => sum + (mapping.party_size ? Number(row[mapping.party_size]) || 0 : 1),
-      0,
-    );
+    // headcount whenever any party has more than one seat. Uses the same
+    // mapGuestRows helper importGuests calls, so this preview total always
+    // exactly matches what actually gets imported (blank-name rows excluded,
+    // blank/non-numeric party_size cells in a mapped column counted as 0).
+    const totalGuestCount = mapGuestRows(parsed.rows, mapping).reduce((sum, guest) => sum + guest.party_size, 0);
 
     return (
       <div className="flex flex-col gap-4 rounded-lg border border-border-classic bg-surface p-4">
