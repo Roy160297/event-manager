@@ -66,7 +66,15 @@ export default async function RootLayout({
             DOM column -> rightmost, last DOM column -> leftmost, same as
             flex would.
           */}
-          <div className="mx-auto grid max-w-5xl grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2 px-4 py-3">
+          {/*
+            items-start, not items-center: below sm the middle column can
+            wrap onto 2 lines (title above the nav strip) while the account
+            column stays one line - items-center would float the shorter
+            account column at the vertical midpoint of the taller one instead
+            of pinning it to the top. Single-line at sm+, where centering the
+            two short corners against the nav row looks right again.
+          */}
+          <div className="mx-auto grid max-w-5xl grid-cols-[auto_1fr_auto] items-start gap-x-4 gap-y-2 px-4 py-3 sm:items-center">
             {/* Rightmost: account. */}
             <div className="justify-self-start">
               {staff && (
@@ -87,8 +95,11 @@ export default async function RootLayout({
               )}
             </div>
 
-            {/* Middle: title + nav, centered between the two corners. */}
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+            {/* Middle: title + nav, centered between the two corners. min-w-0
+                lets this column shrink below its content's width so the
+                nav's own overflow-x-auto can actually scroll instead of
+                blowing out the grid track. */}
+            <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-6 gap-y-2">
               <span className="font-serif text-2xl font-bold text-accent">ניהול אירועים</span>
               {staff && (
                 <MainNav
