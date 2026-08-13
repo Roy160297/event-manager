@@ -48,6 +48,41 @@ export default async function RootLayout({
     switcherEvents = data;
   }
 
+  const accountBlock = staff && (
+    <div className="flex items-center gap-2.5 text-sm text-foreground/70">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+        {staff.name.trim().charAt(0)}
+      </span>
+      <span className="whitespace-nowrap">{staff.name}</span>
+      <form action={signOut}>
+        <button
+          type="submit"
+          className="whitespace-nowrap rounded-full border border-border-classic bg-surface px-3 py-1 text-xs font-medium text-foreground/70 hover:border-accent hover:text-accent"
+        >
+          התנתקות
+        </button>
+      </form>
+    </div>
+  );
+
+  const titleEl = <span className="font-serif text-2xl font-bold text-accent">ניהול אירועים</span>;
+
+  const navEl = staff && (
+    <MainNav
+      showAdmin={canRead(staff.permissions, "admin")}
+      showCalendar={canRead(staff.permissions, "calendar")}
+      showCoupleMeeting={canRead(staff.permissions, "couple_meeting")}
+      showEventManagementDex={canRead(staff.permissions, "event_management_dex")}
+      showMyTasks={canRead(staff.permissions, "my_tasks")}
+      showChecklistNotes={
+        canRead(staff.permissions, "closing_checklist") ||
+        canRead(staff.permissions, "floor_manager_checklist") ||
+        canRead(staff.permissions, "bar_checklist") ||
+        canRead(staff.permissions, "barista_checklist")
+      }
+    />
+  );
+
   return (
     <html
       lang="he"
@@ -56,75 +91,45 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background font-sans text-foreground">
         <header className="border-b border-border-classic bg-background">
-          {/*
-            Three-column grid, not flex+justify-between: with only two flex
-            children the "corners" are really just leftover space at each
-            end, so they end up uneven once the nav's width varies. A grid
-            with fixed-width outer columns and a flexible middle one keeps
-            both corners pinned edge-to-edge and the nav genuinely centered
-            between them. Grid respects the inherited dir="rtl", so first
-            DOM column -> rightmost, last DOM column -> leftmost, same as
-            flex would.
-          */}
-          {/*
-            items-start, not items-center: below sm the middle column can
-            wrap onto 2 lines (title above the nav strip) while the account
-            column stays one line - items-center would float the shorter
-            account column at the vertical midpoint of the taller one instead
-            of pinning it to the top. Single-line at sm+, where centering the
-            two short corners against the nav row looks right again.
-          */}
-          <div className="mx-auto grid max-w-5xl grid-cols-[auto_1fr_auto] items-start gap-x-4 gap-y-2 px-4 py-3 sm:items-center">
-            {/* Rightmost: account. */}
-            <div className="justify-self-start">
-              {staff && (
-                <div className="flex items-center gap-2.5 text-sm text-foreground/70">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-                    {staff.name.trim().charAt(0)}
-                  </span>
-                  <span className="whitespace-nowrap">{staff.name}</span>
-                  <form action={signOut}>
-                    <button
-                      type="submit"
-                      className="whitespace-nowrap rounded-full border border-border-classic bg-surface px-3 py-1 text-xs font-medium text-foreground/70 hover:border-accent hover:text-accent"
-                    >
-                      התנתקות
-                    </button>
-                  </form>
-                </div>
-              )}
+          <div className="mx-auto max-w-5xl px-4 py-3">
+            {/* Below sm: two stacked rows instead of the 3-column grid - a
+                narrow shared column left the nav too little width to wrap
+                the way it does on desktop (long labels collided instead of
+                landing on their own line). Row 1 is account+title, row 2 is
+                the nav spanning the page's full width so it wraps the same
+                way the desktop version does. */}
+            <div className="flex flex-col gap-2 sm:hidden">
+              <div className="flex items-center justify-between gap-4">
+                {accountBlock}
+                {titleEl}
+              </div>
+              {navEl}
             </div>
 
-            {/* Middle: title + nav, centered between the two corners and
-                free to wrap onto extra lines once there isn't room. */}
-            <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-6 gap-y-2">
-              <span className="font-serif text-2xl font-bold text-accent">ניהול אירועים</span>
-              {staff && (
-                <MainNav
-                  showAdmin={canRead(staff.permissions, "admin")}
-                  showCalendar={canRead(staff.permissions, "calendar")}
-                  showCoupleMeeting={canRead(staff.permissions, "couple_meeting")}
-                  showEventManagementDex={canRead(staff.permissions, "event_management_dex")}
-                  showMyTasks={canRead(staff.permissions, "my_tasks")}
-                  showChecklistNotes={
-                    canRead(staff.permissions, "closing_checklist") ||
-                    canRead(staff.permissions, "floor_manager_checklist") ||
-                    canRead(staff.permissions, "bar_checklist") ||
-                    canRead(staff.permissions, "barista_checklist")
-                  }
-                />
-              )}
-            </div>
+            {/* sm+: three-column grid, not flex+justify-between - with only
+                two flex children the "corners" are really just leftover
+                space at each end, so they end up uneven once the nav's width
+                varies. A grid with fixed-width outer columns and a flexible
+                middle one keeps both corners pinned edge-to-edge and the nav
+                genuinely centered between them. Grid respects the inherited
+                dir="rtl", so first DOM column -> rightmost, last DOM column
+                -> leftmost, same as flex would. */}
+            <div className="hidden sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-x-4 sm:gap-y-2">
+              {/* Rightmost: account. */}
+              <div className="justify-self-start">{accountBlock}</div>
 
-            {/* Leftmost: logo. */}
-            <div
-              dir="ltr"
-              aria-label="House No. Seven"
-              className="hidden items-baseline gap-1.5 justify-self-end text-foreground sm:flex"
-            >
-              <span className="text-2xl font-black uppercase tracking-tight">House</span>
-              <span className="font-serif text-lg italic text-foreground/80">No.</span>
-              <span className="text-2xl font-black uppercase tracking-tight">Seven</span>
+              {/* Middle: title + nav, centered between the two corners. */}
+              <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                {titleEl}
+                {navEl}
+              </div>
+
+              {/* Leftmost: logo. */}
+              <div dir="ltr" aria-label="House No. Seven" className="flex items-baseline gap-1.5 justify-self-end text-foreground">
+                <span className="text-2xl font-black uppercase tracking-tight">House</span>
+                <span className="font-serif text-lg italic text-foreground/80">No.</span>
+                <span className="text-2xl font-black uppercase tracking-tight">Seven</span>
+              </div>
             </div>
           </div>
         </header>
