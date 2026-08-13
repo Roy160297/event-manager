@@ -70,14 +70,16 @@ export default async function RootLayout({
             {/* Rightmost: account. */}
             <div className="justify-self-start">
               {staff && (
-                <div className="flex items-center gap-2 rounded-full border border-border-classic bg-surface py-1 pe-3 ps-1.5 text-sm text-foreground/70">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+                <div className="flex items-center gap-2.5 text-sm text-foreground/70">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
                     {staff.name.trim().charAt(0)}
                   </span>
                   <span className="whitespace-nowrap">{staff.name}</span>
-                  <span className="text-border-classic">|</span>
                   <form action={signOut}>
-                    <button type="submit" className="whitespace-nowrap hover:text-foreground">
+                    <button
+                      type="submit"
+                      className="whitespace-nowrap rounded-full border border-border-classic bg-surface px-3 py-1 text-xs font-medium text-foreground/70 hover:border-accent hover:text-accent"
+                    >
                       התנתקות
                     </button>
                   </form>
@@ -87,7 +89,7 @@ export default async function RootLayout({
 
             {/* Middle: title + nav, centered between the two corners. */}
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-              <span className="font-serif text-lg font-bold text-accent">ניהול אירועים</span>
+              <span className="font-serif text-2xl font-bold text-accent">ניהול אירועים</span>
               {staff && (
                 <MainNav
                   showAdmin={canRead(staff.permissions, "admin")}
@@ -111,9 +113,9 @@ export default async function RootLayout({
               aria-label="House No. Seven"
               className="hidden items-baseline gap-1.5 justify-self-end text-foreground sm:flex"
             >
-              <span className="text-xl font-black uppercase tracking-tight">House</span>
-              <span className="font-serif text-base italic text-foreground/80">No.</span>
-              <span className="text-xl font-black uppercase tracking-tight">Seven</span>
+              <span className="text-2xl font-black uppercase tracking-tight">House</span>
+              <span className="font-serif text-lg italic text-foreground/80">No.</span>
+              <span className="text-2xl font-black uppercase tracking-tight">Seven</span>
             </div>
           </div>
         </header>
