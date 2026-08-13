@@ -284,7 +284,22 @@ export interface EventImageUpdateDraft {
 // the event's current field values - unlike the create-from-image flow, a
 // field the screenshot doesn't show (null) must fall back to what's already
 // saved rather than wiping it, since this is an update, not a fresh import.
-export async function parseEventImageUpdate(eventId: string, formData: FormData): Promise<EventImageUpdateDraft> {
+// Returns { error } on failure instead of throwing - Next.js redacts thrown
+// Server Action error messages to a generic string in production regardless
+// of where the throw is caught, so a returned value is the only way the
+// caller sees the real text (e.g. a transient Gemini overload message).
+export async function parseEventImageUpdate(
+  eventId: string,
+  formData: FormData,
+): Promise<EventImageUpdateDraft | { error: string }> {
+  try {
+    return await parseEventImageUpdateInner(eventId, formData);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "שגיאה בעיבוד התמונה" };
+  }
+}
+
+async function parseEventImageUpdateInner(eventId: string, formData: FormData): Promise<EventImageUpdateDraft> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     throw new Error("יש לבחור קובץ תמונה");

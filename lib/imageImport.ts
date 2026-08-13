@@ -133,25 +133,39 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
   if (!apiKey) throw new Error("GEMINI_API_KEY אינו מוגדר בסביבת השרת");
 
   const ai = new GoogleGenAI({ apiKey });
-  const response = await ai.models.generateContent({
-    // Full-page "ענן" screenshots are dense with many small side-by-side
-    // panels - the lite tier (used elsewhere for lighter extraction tasks)
-    // has missed clearly-visible fields here (e.g. the guest-commitment
-    // panel) on real screenshots, which is unacceptable for a number that
-    // drives billing/headcount. The non-lite flash tier reads small/dense
-    // text more reliably at a modest cost increase.
-    model: "gemini-flash-latest",
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: PROMPT }, { inlineData: { mimeType, data: buffer.toString("base64") } }],
+  let response;
+  try {
+    response = await ai.models.generateContent({
+      // Full-page "ענן" screenshots are dense with many small side-by-side
+      // panels - the lite tier (used elsewhere for lighter extraction tasks)
+      // has missed clearly-visible fields here (e.g. the guest-commitment
+      // panel) on real screenshots, which is unacceptable for a number that
+      // drives billing/headcount. The non-lite flash tier reads small/dense
+      // text more reliably at a modest cost increase.
+      model: "gemini-flash-latest",
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: PROMPT }, { inlineData: { mimeType, data: buffer.toString("base64") } }],
+        },
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: RESPONSE_SCHEMA,
       },
-    ],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: RESPONSE_SCHEMA,
-    },
-  });
+    });
+  } catch (err) {
+    // Gemini occasionally comes back with a transient 503 "UNAVAILABLE" (high
+    // demand) - surface something actionable instead of the raw API error.
+    // Callers must return this message rather than throw it: Next.js redacts
+    // thrown Server Action error messages in production regardless of where
+    // the throw is caught.
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes("UNAVAILABLE") || message.includes("high demand") || message.includes('"code":503')) {
+      throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
+    }
+    throw err;
+  }
 
   const rawText = response.text;
   if (!rawText) throw new Error("לא התקבלה תשובה מ-Gemini");

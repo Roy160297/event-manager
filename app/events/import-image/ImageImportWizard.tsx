@@ -37,6 +37,10 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
     setIsPending(true);
     try {
       const result = await parseImageImport(formData);
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
       setDraft(result);
       setManagerId(result.matched_manager_id ?? "");
       setStep("review");

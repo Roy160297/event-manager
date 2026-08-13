@@ -45,7 +45,11 @@ export function ImageUpdateWizard({
     setIsPending(true);
     try {
       const result = await parseEventImageUpdate(eventId, formData);
-      setDraft(result);
+      if ("error" in result) {
+        setError(result.error);
+      } else {
+        setDraft(result);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בעיבוד התמונה");
     } finally {

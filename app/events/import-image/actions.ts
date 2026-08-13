@@ -10,7 +10,21 @@ import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import type { StaffRow } from "@/lib/types";
 
+// Returns { error } on failure instead of throwing - Next.js redacts thrown
+// Server Action error messages to a generic string in production regardless
+// of where the throw is caught, so a returned value is the only way the
+// caller sees the real text (e.g. a transient Gemini overload message).
 export async function parseImageImport(
+  formData: FormData,
+): Promise<(ImageImportDraft & { matched_manager_id: string | null }) | { error: string }> {
+  try {
+    return await parseImageImportInner(formData);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "שגיאה בעיבוד התמונה" };
+  }
+}
+
+async function parseImageImportInner(
   formData: FormData,
 ): Promise<ImageImportDraft & { matched_manager_id: string | null }> {
   const file = formData.get("file");
