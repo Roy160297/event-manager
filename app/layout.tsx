@@ -95,10 +95,8 @@ export default async function RootLayout({
               )}
             </div>
 
-            {/* Middle: title + nav, centered between the two corners. min-w-0
-                lets this column shrink below its content's width so the
-                nav's own overflow-x-auto can actually scroll instead of
-                blowing out the grid track. */}
+            {/* Middle: title + nav, centered between the two corners and
+                free to wrap onto extra lines once there isn't room. */}
             <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-6 gap-y-2">
               <span className="font-serif text-2xl font-bold text-accent">ניהול אירועים</span>
               {staff && (

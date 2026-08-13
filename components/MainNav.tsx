@@ -35,13 +35,8 @@ export function MainNav({
   if (showAdmin) links = [...links, { href: "/admin", label: "ניהול" }];
 
   return (
-    <nav className="min-w-0">
-      {/* flex-nowrap + overflow-x-auto below sm: 8 links don't fit one row on
-          a phone, and letting them flex-wrap turns the header into a tall
-          vertical stack. A horizontally-scrollable strip is the usual mobile
-          pattern for a nav that doesn't fit, and keeps the header's height
-          predictable regardless of how many links are visible. */}
-      <ul className="flex flex-nowrap gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible">
+    <nav>
+      <ul className="flex flex-wrap justify-center gap-2">
         {links.map((link) => {
           const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
           return (
