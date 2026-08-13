@@ -390,7 +390,7 @@ export function SendChecklistsEmailButton({
               <button
                 type="button"
                 onClick={confirmSend}
-                disabled={step === "sending" || toList.length === 0 || attachments.length === 0}
+                disabled={step === "sending" || toList.length === 0}
                 className="rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-60"
               >
                 {step === "sending" ? "שולח..." : "אישור ושליחה"}

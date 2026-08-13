@@ -363,26 +363,15 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                   </p>
                 ))}
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <ChecklistPhotos
-                  eventId={eventId}
-                  checklistKey="event_summary_report"
-                  slot="counter"
-                  label="תמונת קאונטר"
-                  compact
-                  photos={photosFor("event_summary_report", "counter")}
-                  canEdit={canWriteSummary && !summaryReportSignature}
-                />
-                <ChecklistPhotos
-                  eventId={eventId}
-                  checklistKey="event_summary_report"
-                  slot="additional_guests"
-                  label="תמונה של אורחים נוספים"
-                  compact
-                  photos={photosFor("event_summary_report", "additional_guests")}
-                  canEdit={canWriteSummary && !summaryReportSignature}
-                />
-              </div>
+              <ChecklistPhotos
+                eventId={eventId}
+                checklistKey="event_summary_report"
+                slot="counter"
+                label="תמונת קאונטר"
+                compact
+                photos={photosFor("event_summary_report", "counter")}
+                canEdit={canWriteSummary && !summaryReportSignature}
+              />
               {event?.report_summary && (
                 <div className="flex flex-col gap-1 text-sm">
                   <p className="font-medium">סיכום האירוע</p>
@@ -432,25 +421,14 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                   canEdit={canWriteSummary && !summaryReportSignature}
                 />
               </div>
-              <div className="flex flex-col gap-2">
-                <label className={reportLabelClass}>
-                  <span>כמות אורחים סופית - אייפלן</span>
-                  <input
-                    name="final_guest_count_iplan"
-                    defaultValue={event?.final_guest_count_iplan ?? ""}
-                    className={inputClass}
-                  />
-                </label>
-                <ChecklistPhotos
-                  eventId={eventId}
-                  checklistKey="event_summary_report"
-                  slot="additional_guests"
-                  label="תמונה של אורחים נוספים"
-                  compact
-                  photos={photosFor("event_summary_report", "additional_guests")}
-                  canEdit={canWriteSummary && !summaryReportSignature}
+              <label className={reportLabelClass}>
+                <span>כמות אורחים סופית - אייפלן</span>
+                <input
+                  name="final_guest_count_iplan"
+                  defaultValue={event?.final_guest_count_iplan ?? ""}
+                  className={inputClass}
                 />
-              </div>
+              </label>
               <label className={reportLabelClass}>
                 <span>כמות רזרבה שנפתחו</span>
                 <input

@@ -41,6 +41,18 @@ export interface CoupleMeetingReminderRule {
   // this event actually have the supplier this reminder is about" - skips the
   // query entirely for the (large) majority of events where it's irrelevant.
   condition?: (supabase: SupabaseClient, eventId: string) => Promise<boolean>;
+  // Same idea as `condition`, but synchronous and computed straight from the
+  // event fields already in hand (e.g. "is event_date a Friday") - no DB call.
+  dateCondition?: (event: ReminderBodyEvent) => boolean;
+  // Restricts this rule to a specific daily cron pass (see vercel.json - there's
+  // a morning pass and an evening pass). Omitted (the default, and every rule
+  // below except the Friday-eve one) means "any pass" - safe because the
+  // reminder_log unique constraint already prevents a rule from sending twice
+  // in one day even if both passes evaluate it. Used for rules that need to
+  // land at a specific time of day rather than just on a specific date - the
+  // immediate post-save check (checkRemindersForEvent) always runs as if it
+  // were the morning pass, so an evening-only rule never fires immediately.
+  runWindow?: "morning" | "evening";
   // Sends to this fixed address instead of the event's manager - for
   // reminders meant for a specific staff member regardless of who's managing
   // the event (e.g. the kitchen always wants the meal breakdown).
@@ -52,6 +64,14 @@ export interface CoupleMeetingReminderRule {
 }
 
 const mealField = (value: string | null) => value || "—";
+
+// Same UTC-anchored computation as timeline/actions.ts's isFridayDate - kept
+// as a local copy rather than a shared import since that file is a "use
+// server" actions module and this one isn't.
+function isFridayEvent(event: ReminderBodyEvent): boolean {
+  const [year, month, day] = event.event_date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay() === 5;
+}
 
 export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
   {
@@ -122,6 +142,25 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
       `<li>מנות ללא גלוטן: ${mealField(event.gluten_free_meal_count)}</li>` +
       `<li>ילדים מתחת לגיל 2: ${mealField(event.toddlers_under_2_count)}</li>` +
       `</ul>`,
+  },
+  {
+    key: "equipment-checklist-envelopes-day-of",
+    anchor: "event_date",
+    offsetDays: 0,
+    dateCondition: (event) => !isFridayEvent(event),
+    subject: "תזכורת: צ'קליסט ציוד ומעטפות ספק/טיפ",
+    body: (event) =>
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים היום: יש לוודא מול הזוג את צ'קליסט הציוד, וכן את מעטפות הספק/טיפ.`,
+  },
+  {
+    key: "equipment-checklist-envelopes-friday-eve",
+    anchor: "event_date",
+    offsetDays: -1,
+    runWindow: "evening",
+    dateCondition: isFridayEvent,
+    subject: "תזכורת: צ'קליסט ציוד ומעטפות ספק/טיפ (אירוע יום שישי מחר)",
+    body: (event) =>
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר (יום שישי): יש לוודא מול הזוג את צ'קליסט הציוד, וכן את מעטפות הספק/טיפ.`,
   },
 ];
 

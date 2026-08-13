@@ -5,8 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { parseCsvBuffer, parseExcelBuffer, type ParsedCsv } from "@/lib/csv-import";
 import { mapGuestRows, type GuestColumnMapping } from "@/lib/guestImport";
 
-export type { GuestColumnMapping };
-
 export async function parseGuestFile(formData: FormData): Promise<ParsedCsv> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {

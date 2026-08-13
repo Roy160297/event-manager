@@ -27,6 +27,10 @@ export async function sendDueReminders(
   supabase: ReturnType<typeof createAdminClient>,
   event: ReminderableEvent,
   managerEmail: string | null | undefined,
+  // Which daily cron pass is calling this (see vercel.json - morning and
+  // evening passes). The immediate post-save check has no real "pass" of its
+  // own, so it's treated as the morning one - see runWindow's doc comment.
+  pass: "morning" | "evening" = "morning",
 ): Promise<{ sent: number; skippedAlreadySent: number }> {
   // Business events don't have a couple/wedding flow, so none of these
   // couple-meeting-anchored reminder rules are relevant to them.
@@ -37,6 +41,8 @@ export async function sendDueReminders(
   let skippedAlreadySent = 0;
 
   for (const rule of COUPLE_MEETING_REMINDER_RULES) {
+    if (rule.runWindow && rule.runWindow !== pass) continue;
+
     const anchorDate = rule.anchor === "couple_meeting_date" ? event.couple_meeting_date : event.event_date;
     if (!anchorDate) continue;
 
@@ -44,6 +50,7 @@ export async function sendDueReminders(
     const isDue = rule.matchMode === "onOrAfter" ? today >= targetDate : today === targetDate;
     if (!isDue) continue;
 
+    if (rule.dateCondition && !rule.dateCondition(event)) continue;
     if (rule.condition && !(await rule.condition(supabase, event.id))) continue;
 
     // Most rules go to whoever manages the event; a rule can override that

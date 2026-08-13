@@ -167,7 +167,6 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         key: "lock-black-bag-envelopes",
         text: "איסוף שקית שחורה מהבר / מהמאבטח המיועדת למעטפות לכספת - האיסוף מתבצע יחד עם מאבטח ואחד מבני הזוג.",
       },
-      { key: "lock-safe", text: "נעילת כספת הזוג והחזרת המפתח למקומו." },
       { key: "lock-liran-office", text: "נעילת משרד לירן (מפתח: אדום קטן, צרור במגירה השנייה)." },
       { key: "lock-offices", text: "נעילת דלת הכניסה למשרדים (מפתח: שחור עגול קטן)." },
       { key: "lock-office-kitchenette", text: "נעילת דלת מטבח המשרדים (מפתח: צהוב משולש)." },
