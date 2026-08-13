@@ -36,18 +36,23 @@ export function MainNav({
 
   return (
     <nav>
-      <ul className="flex flex-wrap justify-center gap-2">
+      {/* Below sm: a fixed 4-column grid, so links line up in even rows
+          instead of flex-wrap's uneven row lengths (a long label eating a
+          whole row while a short one leaves a gap next to it - reads like a
+          lopsided column on a phone). sm+: back to a plain single wrapping
+          row, since it always fits on desktop-width screens anyway. */}
+      <ul className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:justify-center sm:gap-2">
         {links.map((link) => {
           const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
           return (
-            <li key={link.href}>
+            <li key={link.href} className="min-w-0">
               <Link
                 href={link.href}
                 aria-current={isActive ? "page" : undefined}
                 className={
                   isActive
-                    ? "whitespace-nowrap rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-foreground"
-                    : "whitespace-nowrap rounded-full px-4 py-1.5 text-sm text-foreground/70 hover:bg-accent-soft hover:text-foreground"
+                    ? "block rounded-full bg-accent px-2 py-1.5 text-center text-xs font-semibold text-accent-foreground sm:whitespace-nowrap sm:px-4 sm:text-sm"
+                    : "block rounded-full px-2 py-1.5 text-center text-xs text-foreground/70 hover:bg-accent-soft hover:text-foreground sm:whitespace-nowrap sm:px-4 sm:text-sm"
                 }
               >
                 {link.label}
