@@ -57,6 +57,20 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col bg-background font-sans text-foreground">
         <header className="border-b border-border-classic bg-background">
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+            {/* First in DOM order -> rightmost in this RTL header. */}
+            <div className="flex items-center gap-4">
+              {staff && (
+                <div className="flex items-center gap-2 text-sm text-foreground/70">
+                  <span>{staff.name}</span>
+                  <form action={signOut}>
+                    <button type="submit" className="underline hover:text-foreground">
+                      התנתקות
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <span className="font-serif text-lg font-bold text-accent">ניהול אירועים</span>
               {staff && (
@@ -76,26 +90,15 @@ export default async function RootLayout({
               )}
             </div>
 
-            <div className="flex items-center gap-4">
-              {staff && (
-                <div className="flex items-center gap-2 text-sm text-foreground/70">
-                  <span>{staff.name}</span>
-                  <form action={signOut}>
-                    <button type="submit" className="underline hover:text-foreground">
-                      התנתקות
-                    </button>
-                  </form>
-                </div>
-              )}
-              <div
-                dir="ltr"
-                aria-label="House No. Seven"
-                className="hidden items-baseline gap-1.5 text-foreground sm:flex"
-              >
-                <span className="text-xl font-black uppercase tracking-tight">House</span>
-                <span className="font-serif text-base italic text-foreground/80">No.</span>
-                <span className="text-xl font-black uppercase tracking-tight">Seven</span>
-              </div>
+            {/* Last in DOM order -> leftmost in this RTL header. */}
+            <div
+              dir="ltr"
+              aria-label="House No. Seven"
+              className="hidden items-baseline gap-1.5 text-foreground sm:flex"
+            >
+              <span className="text-xl font-black uppercase tracking-tight">House</span>
+              <span className="font-serif text-base italic text-foreground/80">No.</span>
+              <span className="text-xl font-black uppercase tracking-tight">Seven</span>
             </div>
           </div>
         </header>
