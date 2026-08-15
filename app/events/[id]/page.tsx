@@ -495,6 +495,7 @@ export default async function EventOverviewPage({
           <SaveDetailsForm
             action={addSupplierAction}
             message="הספק נוסף בהצלחה"
+            clearOnSuccess
             className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end"
           >
             <label className="flex flex-1 flex-col gap-1 text-sm">
