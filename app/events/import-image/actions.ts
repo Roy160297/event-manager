@@ -50,7 +50,21 @@ async function parseImageImportInner(
   return { ...draft, matched_manager_id };
 }
 
+// Returns { error } on failure instead of throwing - Next.js redacts thrown
+// Server Action error messages to a generic string in production regardless
+// of where the throw is caught, so a returned value is the only way the
+// caller sees the real text (e.g. the duplicate-event-date message).
 export async function createEventFromImageImport(
+  draft: ImageImportDraft & { manager_id: string | null },
+): Promise<{ eventId: string } | { error: string }> {
+  try {
+    return await createEventFromImageImportInner(draft);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "שגיאה ביצירת האירוע" };
+  }
+}
+
+async function createEventFromImageImportInner(
   draft: ImageImportDraft & { manager_id: string | null },
 ): Promise<{ eventId: string }> {
   const supabase = await createClient();

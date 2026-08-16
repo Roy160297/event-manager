@@ -56,8 +56,13 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
     setIsPending(true);
     setError(null);
     try {
-      const { eventId } = await createEventFromImageImport({ ...draft, manager_id: managerId || null });
-      router.push(`/events/${eventId}?newEvent=1`);
+      const result = await createEventFromImageImport({ ...draft, manager_id: managerId || null });
+      if ("error" in result) {
+        setError(result.error);
+        setIsPending(false);
+        return;
+      }
+      router.push(`/events/${result.eventId}?newEvent=1`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת האירוע");
       setIsPending(false);
