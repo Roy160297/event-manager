@@ -140,15 +140,18 @@ function isTransientOverload(err: unknown): boolean {
   return message.includes("UNAVAILABLE") || message.includes("high demand") || message.includes('"code":503');
 }
 
-function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string) {
+// Full-page "ענן" screenshots are dense with many small side-by-side panels
+// - the lite tier has missed clearly-visible fields here (e.g. the
+// guest-commitment panel) on real screenshots, which is unacceptable for a
+// number that drives billing/headcount. The non-lite flash tier reads
+// small/dense text more reliably at a modest cost increase - it's the
+// default, with lite kept only as an overload fallback below.
+const PRIMARY_MODEL = "gemini-flash-latest";
+const FALLBACK_MODEL = "gemini-flash-lite-latest";
+
+function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: string) {
   return ai.models.generateContent({
-    // Full-page "ענן" screenshots are dense with many small side-by-side
-    // panels - the lite tier (used elsewhere for lighter extraction tasks)
-    // has missed clearly-visible fields here (e.g. the guest-commitment
-    // panel) on real screenshots, which is unacceptable for a number that
-    // drives billing/headcount. The non-lite flash tier reads small/dense
-    // text more reliably at a modest cost increase.
-    model: "gemini-flash-latest",
+    model,
     contents: [
       {
         role: "user",
@@ -171,23 +174,33 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string) {
 async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: string): Promise<GeminiExtraction> {
   let response;
   try {
-    response = await callGemini(ai, buffer, mimeType);
+    response = await callGemini(ai, buffer, mimeType, PRIMARY_MODEL);
   } catch (err) {
     if (!isTransientOverload(err)) throw err;
-    // One quick retry before giving up - a "high demand" 503 is usually a
-    // momentary capacity blip on Gemini's end, not a sustained outage, so
-    // this often succeeds without the user ever seeing an error.
-    await sleep(1500);
+    // One quick retry on the same tier before falling back - a "high
+    // demand" 503 is often a momentary capacity blip that clears within a
+    // second, so this can succeed without the user ever seeing an error.
+    await sleep(1000);
     try {
-      response = await callGemini(ai, buffer, mimeType);
+      response = await callGemini(ai, buffer, mimeType, PRIMARY_MODEL);
     } catch (retryErr) {
-      // Callers must return this message rather than throw it: Next.js
-      // redacts thrown Server Action error messages in production
-      // regardless of where the throw is caught.
-      if (isTransientOverload(retryErr)) {
-        throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
+      if (!isTransientOverload(retryErr)) throw retryErr;
+      // The flash tier is genuinely saturated (not just a one-off blip) -
+      // the lite tier draws from separate capacity, so it's worth one
+      // attempt there rather than failing outright. A slightly less careful
+      // read (mitigated by the missing-critical-fields retry below) beats
+      // no result at all.
+      try {
+        response = await callGemini(ai, buffer, mimeType, FALLBACK_MODEL);
+      } catch (fallbackErr) {
+        // Callers must return this message rather than throw it: Next.js
+        // redacts thrown Server Action error messages in production
+        // regardless of where the throw is caught.
+        if (isTransientOverload(fallbackErr)) {
+          throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
+        }
+        throw fallbackErr;
       }
-      throw retryErr;
     }
   }
 
