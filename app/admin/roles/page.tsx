@@ -50,7 +50,16 @@ export default async function RolesPage() {
         <p className="text-foreground/60">עדיין לא הוגדרו תפקידים.</p>
       ) : (
         <>
-          <PermissionGrid roles={roles} permissionsByRole={permissionsByRole} readOnly={!canManage} />
+          {/* Keyed by the role-id set so adding/deleting a role remounts the
+              grid and re-derives its checkbox state from fresh props -
+              PermissionGrid's local state is otherwise seeded once on mount
+              and would have no entry for a role that didn't exist yet. */}
+          <PermissionGrid
+            key={roles.map((role) => role.id).join(",")}
+            roles={roles}
+            permissionsByRole={permissionsByRole}
+            readOnly={!canManage}
+          />
 
           <ul className="flex flex-col gap-2">
             {roles.map((role) => {
