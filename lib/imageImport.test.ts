@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildImageImportDraft, type GeminiExtraction } from "@/lib/imageImport";
+import { buildImageImportDraft, mergeExtractions, type GeminiExtraction } from "@/lib/imageImport";
 
 const BASE_EXTRACTION: GeminiExtraction = {
   bride_name: "מאיה",
@@ -99,5 +99,31 @@ describe("buildImageImportDraft - diet-type meal counts", () => {
     const draft = buildImageImportDraft({ ...BASE_EXTRACTION, kids_meals: 0, toddlers_under_2: 0 });
     expect(draft.kids_meal_count).toBe("0");
     expect(draft.toddlers_under_2_count).toBe("0");
+  });
+});
+
+describe("mergeExtractions - auto-retry fill-in", () => {
+  it("fills a field the primary pass missed from the retry pass", () => {
+    const merged = mergeExtractions(
+      { ...BASE_EXTRACTION, event_date: null },
+      { ...BASE_EXTRACTION, event_date: "2026-07-04" },
+    );
+    expect(merged.event_date).toBe("2026-07-04");
+  });
+
+  it("keeps the primary pass's value when both passes have one, even if they disagree", () => {
+    const merged = mergeExtractions(
+      { ...BASE_EXTRACTION, guests_secure: 200 },
+      { ...BASE_EXTRACTION, guests_secure: 999 },
+    );
+    expect(merged.guests_secure).toBe(200);
+  });
+
+  it("stays null when neither pass found the field", () => {
+    const merged = mergeExtractions(
+      { ...BASE_EXTRACTION, guests_secure: null },
+      { ...BASE_EXTRACTION, guests_secure: null },
+    );
+    expect(merged.guests_secure).toBeNull();
   });
 });

@@ -128,11 +128,7 @@ const PROMPT = `זהו צילום מסך של עמוד אירוע ממסך "ענ
 - טלפון ואימייל של איש/אשת הקשר: אם אזור "משתמשים באירוע" ריק (כתוב בו "אין") או לא מכיל טלפון/אימייל, חפש אותם ברשימת "הזמנות להצטרף לאירוע" - כל שורה שם מציגה טלפון או אימייל עם תיוג (חתן)/(כלה) ליד שם איש הקשר; שייך כל טלפון/אימייל לפי התיוג הזה (חתן -> contact_phone/contact_email, כלה -> contact_phone_2/contact_email_2, או להפך אם רק צד אחד מופיע - חשוב על עצמך כדי לשייך נכון בין השניים).
 - תאריכים בתמונה מופיעים לרוב כ-DD/MM/YYYY - המר לפורמט YYYY-MM-DD.`;
 
-export async function extractEventDraftFromImage(buffer: Buffer, mimeType: string): Promise<ImageImportDraft> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY אינו מוגדר בסביבת השרת");
-
-  const ai = new GoogleGenAI({ apiKey });
+async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: string): Promise<GeminiExtraction> {
   let response;
   try {
     response = await ai.models.generateContent({
@@ -152,6 +148,12 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
       config: {
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
+        // This is a read-the-label-off-the-screen task, not a creative one -
+        // temperature 0 removes sampling variance that was otherwise letting
+        // the model drop one clearly-visible field on one pass (e.g. the
+        // date box, or the guest-commitment count) while getting everything
+        // else right.
+        temperature: 0,
       },
     });
   } catch (err) {
@@ -170,11 +172,45 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
   const rawText = response.text;
   if (!rawText) throw new Error("לא התקבלה תשובה מ-Gemini");
 
-  let extraction: GeminiExtraction;
   try {
-    extraction = JSON.parse(rawText) as GeminiExtraction;
+    return JSON.parse(rawText) as GeminiExtraction;
   } catch {
     throw new Error("תשובת Gemini לא הייתה JSON תקין");
+  }
+}
+
+// event_date and guests_secure are the two fields a missed read is most
+// costly for (they drive the calendar slot and the billed headcount) and,
+// in practice, the two most often dropped on an otherwise-correct pass.
+function isMissingCriticalFields(extraction: GeminiExtraction): boolean {
+  return extraction.event_date == null || extraction.guests_secure == null;
+}
+
+// A single Gemini pass over a dense screenshot occasionally comes back with
+// one obviously-visible field left null while everything else is correct -
+// re-running the identical request reliably catches what the first pass
+// missed. Merge rather than replace: trust the first pass's non-null values
+// and only fill the gaps, since the retry itself isn't guaranteed to be
+// strictly better on every field.
+export function mergeExtractions(primary: GeminiExtraction, retry: GeminiExtraction): GeminiExtraction {
+  const merged = { ...primary };
+  for (const key of Object.keys(retry) as (keyof GeminiExtraction)[]) {
+    if (merged[key] == null && retry[key] != null) {
+      (merged as Record<string, unknown>)[key] = retry[key];
+    }
+  }
+  return merged;
+}
+
+export async function extractEventDraftFromImage(buffer: Buffer, mimeType: string): Promise<ImageImportDraft> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY אינו מוגדר בסביבת השרת");
+
+  const ai = new GoogleGenAI({ apiKey });
+  let extraction = await requestExtraction(ai, buffer, mimeType);
+  if (isMissingCriticalFields(extraction)) {
+    const retry = await requestExtraction(ai, buffer, mimeType);
+    extraction = mergeExtractions(extraction, retry);
   }
 
   return buildImageImportDraft(extraction);
