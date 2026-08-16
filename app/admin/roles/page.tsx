@@ -27,10 +27,24 @@ export default async function RolesPage() {
     (permissionsByRole[perm.role_id] ??= []).push(perm);
   }
 
+  async function create(formData: FormData) {
+    "use server";
+    try {
+      await createRole(formData);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {canManage && (
-        <form action={createRole} className="flex flex-wrap items-end gap-3 rounded-lg border border-border-classic bg-surface p-4">
+        <SaveDetailsForm
+          action={create}
+          message="התפקיד נוצר בהצלחה"
+          clearOnSuccess
+          className="flex flex-wrap items-end gap-3 rounded-lg border border-border-classic bg-surface p-4"
+        >
           <label className="flex flex-1 flex-col gap-1 text-sm">
             <span>שם התפקיד</span>
             <input
@@ -43,7 +57,7 @@ export default async function RolesPage() {
           <SubmitButton className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-60">
             + תפקיד חדש
           </SubmitButton>
-        </form>
+        </SaveDetailsForm>
       )}
 
       {!roles || roles.length === 0 ? (
