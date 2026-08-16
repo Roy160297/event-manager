@@ -54,24 +54,6 @@ export default function NewEventPage() {
           <DateField name="event_date" />
         </label>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">אימייל 1</span>
-          <input
-            type="email"
-            name="contact_email"
-            className="rounded-md border border-border-classic bg-surface px-3 py-2"
-          />
-        </label>
-
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">אימייל 2</span>
-          <input
-            type="email"
-            name="contact_email_2"
-            className="rounded-md border border-border-classic bg-surface px-3 py-2"
-          />
-        </label>
-
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
