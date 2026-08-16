@@ -78,6 +78,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     key: "meeting-guidelines-email",
     anchor: "couple_meeting_date",
     offsetDays: -3,
+    matchMode: "onOrAfter",
     subject: "תזכורת: שליחת דף הנחיות לזוג",
     body: (event) =>
       `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום התאריך לשליחת דף ההנחיות לזוג במייל (3 ימים לפני הפגישה).`,
