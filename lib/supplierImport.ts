@@ -25,6 +25,18 @@ const RESPONSE_SCHEMA = {
   },
 };
 
+// Gemini sometimes reads a phone number in its international form off the
+// photo (e.g. a contact card showing "+972 52-123-4567") - convert that back
+// to the local "0" prefix suppliers are otherwise stored with.
+export function normalizeIsraeliPhone(raw: string): string {
+  const trimmed = raw.trim();
+  const digits = trimmed.replace(/\D/g, "");
+  if (trimmed.startsWith("+972") || (digits.startsWith("972") && digits.length > 9)) {
+    return "0" + digits.slice(3);
+  }
+  return trimmed;
+}
+
 const PROMPT = `זהו צילום מסך של הודעה (למשל וואטסאפ) או רשימה חופשית של ספקים לאירוע. חלץ ממנה רשימת ספקים והחזר JSON בלבד לפי הסכמה שסופקה - מערך אובייקטים, אחד לכל ספק.
 
 הנחיות חשובות:
@@ -67,7 +79,7 @@ export async function extractSuppliersFromImage(buffer: Buffer, mimeType: string
     .map((supplier) => ({
       role: supplier.role?.trim() || null,
       name: supplier.name?.trim() || "",
-      phone: supplier.phone?.trim() || null,
+      phone: supplier.phone?.trim() ? normalizeIsraeliPhone(supplier.phone) : null,
     }))
     .filter((supplier) => supplier.name);
 }

@@ -491,7 +491,11 @@ export default async function EventOverviewPage({
                   {canWriteEvents && (
                     <details>
                       <summary className="cursor-pointer text-xs font-medium text-accent">ערוך פרטים</summary>
-                      <SaveDetailsForm action={saveSupplierEdit} className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end">
+                      <SaveDetailsForm
+                        action={saveSupplierEdit}
+                        closeDetailsOnSave
+                        className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end"
+                      >
                         <label className="flex flex-1 flex-col gap-1 text-sm">
                           <span>תפקיד</span>
                           <input name="role" defaultValue={supplier.role ?? ""} className={inputClass} />
