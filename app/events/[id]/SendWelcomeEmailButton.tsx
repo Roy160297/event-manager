@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import { WelcomeEmailForm } from "./WelcomeEmailForm";
 
-export function WelcomeEmailPrompt({
+export function SendWelcomeEmailButton({
   eventId,
   to1,
   to2,
@@ -17,17 +16,19 @@ export function WelcomeEmailPrompt({
   defaultSubject: string;
   defaultBody: string;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [dismissed, setDismissed] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  // Clears the ?newEvent=1 flag so a page refresh (or coming back later)
-  // doesn't re-show this prompt.
-  function clearFlag() {
-    router.replace(pathname);
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
+      >
+        שליחת מייל פתיחה לזוג
+      </button>
+    );
   }
-
-  if (dismissed) return null;
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-accent bg-accent-soft/40 p-4">
@@ -38,12 +39,8 @@ export function WelcomeEmailPrompt({
         to2={to2}
         defaultSubject={defaultSubject}
         defaultBody={defaultBody}
-        cancelLabel="דלג"
-        onSent={clearFlag}
-        onCancel={() => {
-          setDismissed(true);
-          clearFlag();
-        }}
+        cancelLabel="ביטול"
+        onCancel={() => setOpen(false)}
       />
     </div>
   );

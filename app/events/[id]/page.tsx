@@ -14,6 +14,7 @@ import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
 import { ImageUpdateWizard } from "./ImageUpdateWizard";
 import { WelcomeEmailPrompt } from "./WelcomeEmailPrompt";
+import { SendWelcomeEmailButton } from "./SendWelcomeEmailButton";
 import { WELCOME_EMAIL_SUBJECT, buildWelcomeEmailBody } from "@/lib/welcomeEmail";
 import type { EventRow, EventSupplierRow, EventType, GuestRow, TimelineItemRow } from "@/lib/types";
 
@@ -144,6 +145,16 @@ export default async function EventOverviewPage({
 
       {canWriteEvents && (
         <ImageUpdateWizard eventId={id} managers={managers ?? []} salespeople={salespeople ?? []} />
+      )}
+
+      {canWriteEvents && event && (
+        <SendWelcomeEmailButton
+          eventId={id}
+          to1={event.contact_email}
+          to2={event.contact_email_2}
+          defaultSubject={WELCOME_EMAIL_SUBJECT}
+          defaultBody={buildWelcomeEmailBody(welcomeEmailSenderName, welcomeEmailSenderPhone)}
+        />
       )}
 
       {canWriteEvents ? (

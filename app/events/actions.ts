@@ -31,6 +31,8 @@ export async function createEvent(formData: FormData): Promise<string | void> {
   const name = String(formData.get("name") ?? "").trim();
   const eventType = String(formData.get("event_type") ?? "other") as EventType;
   const eventDate = String(formData.get("event_date") ?? "");
+  const contactEmail = String(formData.get("contact_email") ?? "").trim() || null;
+  const contactEmail2 = String(formData.get("contact_email_2") ?? "").trim() || null;
 
   if (!name || !eventType || !eventDate) {
     return "שם הלקוח, סוג האירוע ותאריך הם שדות חובה";
@@ -52,6 +54,8 @@ export async function createEvent(formData: FormData): Promise<string | void> {
       start_time: "19:30",
       end_time: "03:00",
       manager_id: managerId,
+      contact_email: contactEmail,
+      contact_email_2: contactEmail2,
     })
     .select("id")
     .single();
