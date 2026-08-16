@@ -20,11 +20,22 @@ export default async function UsersPage() {
 
   const canManage = !!currentStaff && canWrite(currentStaff.permissions, "admin");
 
+  async function create(formData: FormData) {
+    "use server";
+    try {
+      await addStaff(formData);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {canManage && (
-        <form
-          action={addStaff}
+        <SaveDetailsForm
+          action={create}
+          message="איש/אשת הצוות נוסף/ה בהצלחה"
+          clearOnSuccess
           className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4 sm:flex-row sm:items-end sm:flex-wrap"
         >
           <label className="flex flex-col gap-1 text-sm">
@@ -62,7 +73,7 @@ export default async function UsersPage() {
           >
             + הוסף איש/אשת צוות
           </button>
-        </form>
+        </SaveDetailsForm>
       )}
 
       <p className="text-sm text-foreground/60">

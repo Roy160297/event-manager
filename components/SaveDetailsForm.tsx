@@ -50,19 +50,30 @@ export function SaveDetailsForm({
   );
   const [showToast, setShowToast] = useState(false);
 
+  // Adjusting state during render (not inside an effect, and via useState
+  // rather than a ref - both are flagged by this project's stricter
+  // react-hooks lint rules) when state.count changes since the last render.
+  // See "storing information from previous renders" in the React docs.
+  const [prevCount, setPrevCount] = useState(state.count);
+  if (state.count !== prevCount) {
+    setPrevCount(state.count);
+    if (state.count > 0) setShowToast(true);
+  }
+
   useEffect(() => {
-    if (state.count === 0) return;
-    setShowToast(true);
+    if (!showToast) return;
     const timeout = setTimeout(() => setShowToast(false), 2500);
-    if (closeDetailsOnSave) {
-      const row = formRef.current?.closest("li");
-      if (row) {
-        row.querySelectorAll("details[open]").forEach((details) => details.removeAttribute("open"));
-      } else {
-        formRef.current?.closest("details")?.removeAttribute("open");
-      }
-    }
     return () => clearTimeout(timeout);
+  }, [showToast]);
+
+  useEffect(() => {
+    if (state.count === 0 || !closeDetailsOnSave) return;
+    const row = formRef.current?.closest("li");
+    if (row) {
+      row.querySelectorAll("details[open]").forEach((details) => details.removeAttribute("open"));
+    } else {
+      formRef.current?.closest("details")?.removeAttribute("open");
+    }
   }, [state.count, closeDetailsOnSave]);
 
   return (
@@ -83,11 +94,7 @@ export function SaveDetailsForm({
     >
       {clearOnSuccess ? <Fragment key={state.count}>{children}</Fragment> : children}
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-      {showToast && (
-        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground shadow-lg">
-          {message}
-        </div>
-      )}
+      {showToast && <p className="text-sm font-medium text-accent">{message}</p>}
     </form>
   );
 }
