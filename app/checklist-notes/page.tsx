@@ -4,6 +4,7 @@ import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import { addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
 import type { EventType, PermissionResource } from "@/lib/types";
 
 const CHECKLIST_SECTIONS: { key: PermissionResource; label: string }[] = [
@@ -37,6 +38,12 @@ export default async function ChecklistNotesPage() {
 
   if (readableSections.length === 0 && !canReadSummaryReport) return <NoPermissionNotice />;
 
+  // Only recently-happened events, not the full archive - closing-checklist
+  // notes and summary reports are only useful to review shortly after an
+  // event, so a growing all-time list would just get harder to scan.
+  const today = todayInIsrael();
+  const sevenDaysAgo = addDaysToDate(today, -7);
+
   const supabase = await createClient();
   const { data: notes } = await supabase
     .from("role_checklist_notes")
@@ -44,6 +51,8 @@ export default async function ChecklistNotesPage() {
     .not("note", "is", null)
     .neq("note", "")
     .is("events.deleted_at", null)
+    .gte("events.event_date", sevenDaysAgo)
+    .lte("events.event_date", today)
     .order("event_date", { referencedTable: "events", ascending: false })
     .returns<NoteWithEvent[]>();
 
@@ -56,6 +65,8 @@ export default async function ChecklistNotesPage() {
         .from("events")
         .select("id, name, event_type, event_date, report_summary, report_general_notes")
         .is("deleted_at", null)
+        .gte("event_date", sevenDaysAgo)
+        .lte("event_date", today)
         .order("event_date", { ascending: false })
         .returns<SummaryReportEvent[]>()
     : { data: null };
@@ -67,7 +78,7 @@ export default async function ChecklistNotesPage() {
     <div className="flex flex-col gap-6">
       <h1 className="font-serif text-2xl font-bold">הערות וסיכומים</h1>
       <p className="text-sm text-foreground/80">
-        כל ההערות שנרשמו בצ&apos;קליסטים, מרוכזות לפי סוג צ&apos;קליסט.
+        הערות מהצ&apos;קליסטים מאירועים ב-7 הימים האחרונים, מרוכזות לפי סוג צ&apos;קליסט.
       </p>
 
       {readableSections.map((section) => {
