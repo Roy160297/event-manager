@@ -13,16 +13,21 @@ import { canRead, canWrite } from "@/lib/permissions";
 import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
 import { ImageUpdateWizard } from "./ImageUpdateWizard";
+import { WelcomeEmailPrompt } from "./WelcomeEmailPrompt";
+import { WELCOME_EMAIL_SUBJECT, buildWelcomeEmailBody } from "@/lib/welcomeEmail";
 import type { EventRow, EventSupplierRow, EventType, GuestRow, TimelineItemRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
 export default async function EventOverviewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ newEvent?: string }>;
 }) {
   const { id } = await params;
+  const { newEvent } = await searchParams;
   const supabase = await createClient();
 
   const [
@@ -70,9 +75,17 @@ export default async function EventOverviewPage({
   // real headcount whenever any party has more than one seat.
   const guestCount = (guestPartySizes ?? []).reduce((sum, guest) => sum + (guest.party_size ?? 1), 0);
 
-  const managerName = managers?.find((manager) => manager.id === event?.manager_id)?.name ?? null;
+  const assignedManager = managers?.find((manager) => manager.id === event?.manager_id) ?? null;
+  const managerName = assignedManager?.name ?? null;
   const floorManagerName = floorManagers?.find((manager) => manager.id === event?.floor_manager_id)?.name ?? null;
   const salespersonName = salespeople?.find((person) => person.id === event?.sales_person_id)?.name ?? null;
+
+  // Falls back to whoever's viewing (the creator, in practice) when no event
+  // manager is assigned yet, so the email still signs off as a real person.
+  const welcomeEmailSenderName = assignedManager?.name ?? currentStaff?.name ?? "";
+  const welcomeEmailSenderPhone = assignedManager?.phone ?? null;
+  const showWelcomeEmailPrompt =
+    newEvent === "1" && canWriteEvents && !!event && (!!event.contact_email || !!event.contact_email_2);
 
   async function saveDetails(formData: FormData) {
     "use server";
@@ -97,6 +110,16 @@ export default async function EventOverviewPage({
 
   return (
     <div className="flex flex-col gap-6">
+      {showWelcomeEmailPrompt && event && (
+        <WelcomeEmailPrompt
+          eventId={id}
+          to1={event.contact_email}
+          to2={event.contact_email_2}
+          defaultSubject={WELCOME_EMAIL_SUBJECT}
+          defaultBody={buildWelcomeEmailBody(welcomeEmailSenderName, welcomeEmailSenderPhone)}
+        />
+      )}
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-border-classic bg-surface p-4">
           <p className="text-sm text-foreground/60">משימות פתוחות</p>

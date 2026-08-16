@@ -1,5 +1,7 @@
 "use server";
 
+import fs from "fs";
+import path from "path";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -13,6 +15,7 @@ import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { extractEventDraftFromImage } from "@/lib/imageImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
+import { WELCOME_EMAIL_ATTACHMENT_FILENAME } from "@/lib/welcomeEmail";
 import { deleteAllChecklistPhotosForEvent } from "@/app/events/[id]/tasks/actions";
 import type { EventRow, EventType, StaffRow } from "@/lib/types";
 
@@ -60,7 +63,44 @@ export async function createEvent(formData: FormData): Promise<string | void> {
   await checkRemindersForEvent(data.id);
 
   revalidatePath("/");
-  redirect(`/events/${data.id}`);
+  redirect(`/events/${data.id}?newEvent=1`);
+}
+
+// Escaped separately from the newline->br swap below so user-edited body
+// text can't inject markup into the HTML email (sendChecklistsEmail wraps
+// bodyText directly in a <div>, unescaped).
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+export async function sendWelcomeEmail(eventId: string, formData: FormData): Promise<string | void> {
+  try {
+    const to = [formData.get("to1"), formData.get("to2")]
+      .filter((v): v is string => typeof v === "string" && v.trim() !== "")
+      .map((v) => v.trim());
+    if (to.length === 0) throw new Error("אין כתובת מייל לשליחה");
+
+    const subject = String(formData.get("subject") ?? "").trim();
+    const body = String(formData.get("body") ?? "");
+    if (!subject || !body.trim()) throw new Error("נושא ותוכן המייל הם שדות חובה");
+
+    const currentStaff = await getCurrentStaff();
+    const docxPath = path.join(process.cwd(), "assets", "wedding-welcome-guidelines.docx");
+    const docxBase64 = fs.readFileSync(docxPath).toString("base64");
+
+    await sendChecklistsEmail({
+      to,
+      cc: [],
+      subject,
+      bodyText: escapeHtml(body).replace(/\n/g, "<br/>"),
+      replyTo: currentStaff?.email ?? null,
+      attachments: [{ filename: WELCOME_EMAIL_ATTACHMENT_FILENAME, base64: docxBase64 }],
+    });
+
+    revalidatePath(`/events/${eventId}`);
+  } catch (err) {
+    return err instanceof Error ? err.message : "שגיאה בשליחת המייל";
+  }
 }
 
 export async function deleteEvent(eventId: string) {
