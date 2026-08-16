@@ -128,45 +128,67 @@ const PROMPT = `זהו צילום מסך של עמוד אירוע ממסך "ענ
 - טלפון ואימייל של איש/אשת הקשר: אם אזור "משתמשים באירוע" ריק (כתוב בו "אין") או לא מכיל טלפון/אימייל, חפש אותם ברשימת "הזמנות להצטרף לאירוע" - כל שורה שם מציגה טלפון או אימייל עם תיוג (חתן)/(כלה) ליד שם איש הקשר; שייך כל טלפון/אימייל לפי התיוג הזה (חתן -> contact_phone/contact_email, כלה -> contact_phone_2/contact_email_2, או להפך אם רק צד אחד מופיע - חשוב על עצמך כדי לשייך נכון בין השניים).
 - תאריכים בתמונה מופיעים לרוב כ-DD/MM/YYYY - המר לפורמט YYYY-MM-DD.`;
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Gemini occasionally comes back with a transient 503 "UNAVAILABLE" (high
+// demand) that clears within a second or two - distinguishing it from a
+// genuine failure lets the caller decide whether a quick retry is worth it.
+function isTransientOverload(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return message.includes("UNAVAILABLE") || message.includes("high demand") || message.includes('"code":503');
+}
+
+function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string) {
+  return ai.models.generateContent({
+    // Full-page "ענן" screenshots are dense with many small side-by-side
+    // panels - the lite tier (used elsewhere for lighter extraction tasks)
+    // has missed clearly-visible fields here (e.g. the guest-commitment
+    // panel) on real screenshots, which is unacceptable for a number that
+    // drives billing/headcount. The non-lite flash tier reads small/dense
+    // text more reliably at a modest cost increase.
+    model: "gemini-flash-latest",
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: PROMPT }, { inlineData: { mimeType, data: buffer.toString("base64") } }],
+      },
+    ],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: RESPONSE_SCHEMA,
+      // This is a read-the-label-off-the-screen task, not a creative one -
+      // temperature 0 removes sampling variance that was otherwise letting
+      // the model drop one clearly-visible field on one pass (e.g. the
+      // date box, or the guest-commitment count) while getting everything
+      // else right.
+      temperature: 0,
+    },
+  });
+}
+
 async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: string): Promise<GeminiExtraction> {
   let response;
   try {
-    response = await ai.models.generateContent({
-      // Full-page "ענן" screenshots are dense with many small side-by-side
-      // panels - the lite tier (used elsewhere for lighter extraction tasks)
-      // has missed clearly-visible fields here (e.g. the guest-commitment
-      // panel) on real screenshots, which is unacceptable for a number that
-      // drives billing/headcount. The non-lite flash tier reads small/dense
-      // text more reliably at a modest cost increase.
-      model: "gemini-flash-latest",
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: PROMPT }, { inlineData: { mimeType, data: buffer.toString("base64") } }],
-        },
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: RESPONSE_SCHEMA,
-        // This is a read-the-label-off-the-screen task, not a creative one -
-        // temperature 0 removes sampling variance that was otherwise letting
-        // the model drop one clearly-visible field on one pass (e.g. the
-        // date box, or the guest-commitment count) while getting everything
-        // else right.
-        temperature: 0,
-      },
-    });
+    response = await callGemini(ai, buffer, mimeType);
   } catch (err) {
-    // Gemini occasionally comes back with a transient 503 "UNAVAILABLE" (high
-    // demand) - surface something actionable instead of the raw API error.
-    // Callers must return this message rather than throw it: Next.js redacts
-    // thrown Server Action error messages in production regardless of where
-    // the throw is caught.
-    const message = err instanceof Error ? err.message : String(err);
-    if (message.includes("UNAVAILABLE") || message.includes("high demand") || message.includes('"code":503')) {
-      throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
+    if (!isTransientOverload(err)) throw err;
+    // One quick retry before giving up - a "high demand" 503 is usually a
+    // momentary capacity blip on Gemini's end, not a sustained outage, so
+    // this often succeeds without the user ever seeing an error.
+    await sleep(1500);
+    try {
+      response = await callGemini(ai, buffer, mimeType);
+    } catch (retryErr) {
+      // Callers must return this message rather than throw it: Next.js
+      // redacts thrown Server Action error messages in production
+      // regardless of where the throw is caught.
+      if (isTransientOverload(retryErr)) {
+        throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
+      }
+      throw retryErr;
     }
-    throw err;
   }
 
   const rawText = response.text;
