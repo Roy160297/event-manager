@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildWelcomeEmailBody } from "@/lib/welcomeEmail";
+import { buildWelcomeEmailBody, buildMeetingDayWhatsAppMessage } from "@/lib/welcomeEmail";
 
 describe("buildWelcomeEmailBody", () => {
   it("signs off with the manager's name and phone when a phone is available", () => {
@@ -13,5 +13,12 @@ describe("buildWelcomeEmailBody", () => {
     expect(body).toContain("נעים מאוד, דנה כהן 😊");
     expect(body.trim().endsWith("דנה כהן")).toBe(true);
     expect(body).not.toContain("null");
+  });
+});
+
+describe("buildMeetingDayWhatsAppMessage", () => {
+  it("includes the manager's name in the greeting", () => {
+    const message = buildMeetingDayWhatsAppMessage("רועי פוריאן");
+    expect(message).toBe("אהלן, זה רועי פוריאן מHouse No. Seven.\nמגיעים היום לפגישה שנקבעה לנו?");
   });
 });
