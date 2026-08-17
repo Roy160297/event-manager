@@ -37,5 +37,5 @@ ${signature}`;
 // Default text for the WhatsApp click-to-chat button - a short day-of
 // check-in rather than the full guidelines-email body above.
 export function buildMeetingDayWhatsAppMessage(managerName: string): string {
-  return `אהלן, זה ${managerName} מHouse No. Seven.\nמגיעים היום לפגישה שנקבעה לנו?`;
+  return `אהלן, זה ${managerName} מנהל האירוע שלכם מHouse No. Seven 😊\nמגיעים בזמן היום לפגישה שנקבעה לנו?`;
 }
