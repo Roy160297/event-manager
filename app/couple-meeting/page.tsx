@@ -35,6 +35,7 @@ export default async function CoupleMeetingPage() {
           <li>לעבור על הסקיצה.</li>
           <li>הסבר על ההתחייבות + הרזרבה.</li>
           <li>הסבר על מזומן לטיפים ולתשלומים לספקים.</li>
+          <li>בדיקה לגבי חניה, אפטר ובר מרובע.</li>
         </ul>
       </div>
 
