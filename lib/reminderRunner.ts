@@ -50,6 +50,13 @@ export async function sendDueReminders(
     const isDue = rule.matchMode === "onOrAfter" ? today >= targetDate : today === targetDate;
     if (!isDue) continue;
 
+    // onOrAfter has no upper bound on its own - without this, a rule that
+    // never fired for some old event (e.g. it had no manager assigned back
+    // when its exact day passed) would "catch up" and send today even
+    // though the event itself is long over. Only worth catching up while
+    // the event hasn't happened yet.
+    if (rule.matchMode === "onOrAfter" && event.event_date < today) continue;
+
     if (rule.dateCondition && !rule.dateCondition(event)) continue;
     if (rule.condition && !(await rule.condition(supabase, event.id))) continue;
 
