@@ -15,6 +15,7 @@ import { SupplierImageImport } from "./SupplierImageImport";
 import { ImageUpdateWizard } from "./ImageUpdateWizard";
 import { WelcomeEmailPrompt } from "./WelcomeEmailPrompt";
 import { SendWelcomeEmailButton } from "./SendWelcomeEmailButton";
+import { SendWhatsAppButton } from "./SendWhatsAppButton";
 import { WELCOME_EMAIL_SUBJECT, buildWelcomeEmailBody } from "@/lib/welcomeEmail";
 import type { EventRow, EventSupplierRow, EventType, GuestRow, TimelineItemRow } from "@/lib/types";
 
@@ -148,13 +149,20 @@ export default async function EventOverviewPage({
       )}
 
       {canWriteEvents && event && (
-        <SendWelcomeEmailButton
-          eventId={id}
-          to1={event.contact_email}
-          to2={event.contact_email_2}
-          defaultSubject={WELCOME_EMAIL_SUBJECT}
-          defaultBody={buildWelcomeEmailBody(welcomeEmailSenderName, welcomeEmailSenderPhone)}
-        />
+        <div className="flex flex-wrap gap-3">
+          <SendWelcomeEmailButton
+            eventId={id}
+            to1={event.contact_email}
+            to2={event.contact_email_2}
+            defaultSubject={WELCOME_EMAIL_SUBJECT}
+            defaultBody={buildWelcomeEmailBody(welcomeEmailSenderName, welcomeEmailSenderPhone)}
+          />
+          <SendWhatsAppButton
+            to1={event.contact_phone}
+            to2={event.contact_phone_2}
+            defaultMessage={buildWelcomeEmailBody(welcomeEmailSenderName, welcomeEmailSenderPhone)}
+          />
+        </div>
       )}
 
       {canWriteEvents ? (
