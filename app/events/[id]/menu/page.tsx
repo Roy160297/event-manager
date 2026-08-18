@@ -5,6 +5,12 @@ import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { MenuView } from "./MenuView";
 import type { EventMenuRow, EventRow } from "@/lib/types";
 
+// The menu-image extraction can chain multiple sequential Gemini calls
+// (overload retry, model fallback) - the platform's default function
+// timeout can be shorter than that worst case, which surfaces to the user
+// as a generic "unexpected response from the server" error.
+export const maxDuration = 60;
+
 export default async function MenuPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = await params;
   const supabase = await createClient();

@@ -21,6 +21,13 @@ import type { EventRow, EventSupplierRow, EventType, GuestRow, TimelineItemRow }
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
+// Both the image-update wizard and the supplier-photo import on this page
+// chain multiple sequential Gemini calls (overload retry, model fallback,
+// missing-critical-fields retry) - the platform's default function timeout
+// can be shorter than that worst case, which surfaces to the user as a
+// generic "unexpected response from the server" error.
+export const maxDuration = 60;
+
 export default async function EventOverviewPage({
   params,
   searchParams,
