@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getHebrewWeekday } from "@/lib/labels";
 
 const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0"));
 const MONTHS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
@@ -126,8 +127,10 @@ export function DateInput({
   onChange: (value: string) => void;
   className?: string;
 }) {
+  const weekday = getHebrewWeekday(value);
+
   return (
-    <>
+    <div className="flex flex-wrap items-center gap-2">
       <input
         type="date"
         value={value}
@@ -137,7 +140,8 @@ export function DateInput({
       <div className="sm:hidden">
         <DateSelects value={value} onChange={onChange} />
       </div>
-    </>
+      {weekday && <span className="text-sm text-foreground/60">יום {weekday}</span>}
+    </div>
   );
 }
 

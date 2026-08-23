@@ -104,11 +104,25 @@ export const WAITER_ROLE_LABELS: Record<WaiterRole, string> = {
   runner: "ראנר/פינוי",
 };
 
+const WEEKDAY_LABELS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+// Date.UTC + getUTCDay (rather than `new Date(value)` + getDay) keeps the
+// weekday calculation independent of the server/browser's local timezone -
+// otherwise a "YYYY-MM-DD" string parsed as UTC midnight could read back as
+// the previous day in timezones behind UTC.
+export function getHebrewWeekday(value: string | null): string | null {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return WEEKDAY_LABELS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+}
+
 export function formatDate(value: string | null): string {
   if (!value) return "—";
   const [year, month, day] = value.split("-");
   if (!year || !month || !day) return value;
-  return `${day}/${month}/${year}`;
+  const weekday = getHebrewWeekday(value);
+  return weekday ? `${day}/${month}/${year} (יום ${weekday})` : `${day}/${month}/${year}`;
 }
 
 export function formatTime(value: string | null): string {
