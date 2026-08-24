@@ -119,12 +119,15 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
       `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): הדיג'י באירוע הוא צח זיו - יש לעדכן את הסקיצה בהתאם: להוציא את עמדת הדיג'י העגולה ולהכניס במה במקומה.`,
   },
   {
-    key: "guest-invitation-file-upload",
+    key: "day-before-event-tasks",
     anchor: "event_date",
     offsetDays: -1,
-    subject: "תזכורת: העלאת קובץ הזמנות אורחים לאתר",
+    subject: "תזכורת: משימות ליום שלפני האירוע",
     body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום התאריך להעלאת קובץ ההזמנות (אורחים) לאתר (יום לפני האירוע).`,
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר - יש לבצע את המשימות הבאות:<ul>` +
+      `<li>העלאת קובץ הזמנות (אורחים) לאתר.</li>` +
+      `<li>ווידוא הבאת צ'קליסט ומעטפות מול הזוג.</li>` +
+      `</ul>`,
   },
   {
     key: "kitchen-meal-breakdown",
@@ -143,14 +146,6 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
       `<li>מנות ללא גלוטן: ${mealField(event.gluten_free_meal_count)}</li>` +
       `<li>ילדים מתחת לגיל 2: ${mealField(event.toddlers_under_2_count)}</li>` +
       `</ul>`,
-  },
-  {
-    key: "equipment-checklist-envelopes-bring-day-before",
-    anchor: "event_date",
-    offsetDays: -1,
-    subject: "תזכורת: הבאת צ'קליסט ומעטפות",
-    body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר: ווידוא הבאת צ'קליסט ומעטפות מול הזוג.`,
   },
   {
     key: "equipment-checklist-envelopes-day-of",
