@@ -145,6 +145,14 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
       `</ul>`,
   },
   {
+    key: "equipment-checklist-envelopes-bring-day-before",
+    anchor: "event_date",
+    offsetDays: -1,
+    subject: "תזכורת: הבאת צ'קליסט ומעטפות",
+    body: (event) =>
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר: ווידוא הבאת צ'קליסט ומעטפות מול הזוג.`,
+  },
+  {
     key: "equipment-checklist-envelopes-day-of",
     anchor: "event_date",
     offsetDays: 0,
