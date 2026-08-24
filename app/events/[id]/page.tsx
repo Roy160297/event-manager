@@ -82,7 +82,12 @@ export default async function EventOverviewPage({
   // Sum of party_size, not row count - a "guest" row is a seated party
   // (often 2+ people sharing a table), so counting rows undercounts the
   // real headcount whenever any party has more than one seat.
-  const guestCount = (guestPartySizes ?? []).reduce((sum, guest) => sum + (guest.party_size ?? 1), 0);
+  const guestListCount = (guestPartySizes ?? []).reduce((sum, guest) => sum + (guest.party_size ?? 1), 0);
+  // The guest list is the source of truth once it's populated, but plenty of
+  // events only ever get a seating sketch uploaded (no names entered here) -
+  // fall back to the sketch's seated-chairs count so the tile isn't stuck at
+  // 0 for those.
+  const guestCount = guestListCount || Number(event?.sketch_seated_chairs_count) || 0;
 
   const assignedManager = managers?.find((manager) => manager.id === event?.manager_id) ?? null;
   const managerName = assignedManager?.name ?? null;
