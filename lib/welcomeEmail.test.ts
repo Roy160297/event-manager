@@ -20,7 +20,7 @@ describe("buildMeetingDayWhatsAppMessage", () => {
   it("includes the manager's name in the greeting", () => {
     const message = buildMeetingDayWhatsAppMessage("רועי פוריאן");
     expect(message).toBe(
-      "אהלן, זה רועי פוריאן מנהל האירוע שלכם מHouse No. Seven 😊\nמגיעים בזמן היום לפגישה שנקבעה לנו?",
+      "אהלן, זה רועי פוריאן מנהל האירוע שלכם מHouse No. Seven 😊\nמגיעים בזמן היום לפגישה שנקבעה לנו? 🥳",
     );
   });
 });
