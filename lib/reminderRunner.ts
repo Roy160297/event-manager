@@ -95,12 +95,21 @@ export async function sendDueReminders(
       continue;
     }
 
-    await sendReminderEmail({
-      to,
-      subject: typeof rule.subject === "function" ? rule.subject(event) : rule.subject,
-      bodyText: rule.body(event),
-    });
-    sent++;
+    try {
+      await sendReminderEmail({
+        to,
+        subject: typeof rule.subject === "function" ? rule.subject(event) : rule.subject,
+        bodyText: rule.body(event),
+      });
+      sent++;
+    } catch (err) {
+      // The claim above already marked this (event, rule, day) as sent - undo
+      // it so a transient failure (bad credentials, Gmail hiccup) gets
+      // retried on the next pass instead of being silently lost forever.
+      // Logged (not swallowed) so it's visible in Vercel's function logs.
+      await supabase.from("reminder_log").delete().eq("event_id", event.id).eq("rule_key", rule.key).eq("sent_date", today);
+      console.error(`Failed to send reminder "${rule.key}" for event ${event.id}:`, err);
+    }
   }
 
   return { sent, skippedAlreadySent };
@@ -125,7 +134,9 @@ export async function checkRemindersForEvent(eventId: string): Promise<void> {
 
     if (!event) return;
     await sendDueReminders(supabase, event, event.staff?.email);
-  } catch {
-    // Swallow - see comment above.
+  } catch (err) {
+    // Swallow - see comment above - but still log so a broken admin client
+    // (e.g. missing SUPABASE_SERVICE_ROLE_KEY) doesn't fail invisibly.
+    console.error(`checkRemindersForEvent failed for event ${eventId}:`, err);
   }
 }

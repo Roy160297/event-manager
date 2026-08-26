@@ -39,9 +39,14 @@ export async function GET(request: Request) {
     let skippedAlreadySent = 0;
 
     for (const event of events ?? []) {
-      const result = await sendDueReminders(supabase, event, event.staff?.email, pass);
-      sent += result.sent;
-      skippedAlreadySent += result.skippedAlreadySent;
+      try {
+        const result = await sendDueReminders(supabase, event, event.staff?.email, pass);
+        sent += result.sent;
+        skippedAlreadySent += result.skippedAlreadySent;
+      } catch (err) {
+        // One event's failure shouldn't abort the sweep for every other event.
+        console.error(`sendDueReminders failed for event ${event.id}:`, err);
+      }
     }
 
     return Response.json({ ok: true, sent, skippedAlreadySent });
