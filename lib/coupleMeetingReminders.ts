@@ -126,7 +126,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     body: (event) =>
       `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר - יש לבצע את המשימות הבאות:<ul>` +
       `<li>העלאת קובץ הזמנות (אורחים) לאתר.</li>` +
-      `<li>ווידוא הבאת צ'קליסט ומעטפות מול הזוג.</li>` +
+      `<li>ווידוא שהזוג מביא את כל הציוד והמעטפות.</li>` +
       `</ul>`,
   },
   {
