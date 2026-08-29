@@ -84,6 +84,7 @@ export interface EventRow {
   final_guest_count_counter: string | null;
   final_guest_count_iplan: string | null;
   reserve_opened_count: string | null;
+  final_children_count: string | null;
   bar_manager_name: string | null;
   bartender_count: string | null;
   floor_manager_name: string | null;

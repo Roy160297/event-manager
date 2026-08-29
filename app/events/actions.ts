@@ -222,6 +222,7 @@ export async function updateEventSummaryReport(eventId: string, formData: FormDa
       final_guest_count_counter: text("final_guest_count_counter"),
       final_guest_count_iplan: text("final_guest_count_iplan"),
       reserve_opened_count: text("reserve_opened_count"),
+      final_children_count: text("final_children_count"),
       bar_manager_name: text("bar_manager_name"),
       bartender_count: text("bartender_count"),
       floor_manager_name: text("floor_manager_name"),

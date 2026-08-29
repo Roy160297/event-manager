@@ -133,8 +133,9 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     ["שעת סיום האירוע", event?.report_end_time ?? null],
     ["שעת יציאה מהאולם", event?.exit_time ?? null],
     ["כמות אורחים סופית - קאונטר", event?.final_guest_count_counter ?? null],
-    ["כמות אורחים סופית - אייפלן", event?.final_guest_count_iplan ?? null],
+    ["כמות אורחים סופית - אייפלן (כולל דף נוספים)", event?.final_guest_count_iplan ?? null],
     ["כמות רזרבה שנפתחו", event?.reserve_opened_count ?? null],
+    ["כמות ילדים", event?.final_children_count ?? null],
     ["מנהל בר", event?.bar_manager_name ?? null],
     ["כמות ברמנים", event?.bartender_count ?? null],
     ["מנהל פלור", event?.floor_manager_name ?? null],
@@ -422,7 +423,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 />
               </div>
               <label className={reportLabelClass}>
-                <span>כמות אורחים סופית - אייפלן</span>
+                <span>כמות אורחים סופית - אייפלן (כולל דף נוספים)</span>
                 <input
                   name="final_guest_count_iplan"
                   defaultValue={event?.final_guest_count_iplan ?? ""}
@@ -437,7 +438,14 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                   className={inputClass}
                 />
               </label>
-              <div />
+              <label className={reportLabelClass}>
+                <span>כמות ילדים</span>
+                <input
+                  name="final_children_count"
+                  defaultValue={event?.final_children_count ?? ""}
+                  className={inputClass}
+                />
+              </label>
               <label className={reportLabelClass}>
                 <span>מנהל בר</span>
                 <input name="bar_manager_name" defaultValue={event?.bar_manager_name ?? "דניאל"} className={inputClass} />
