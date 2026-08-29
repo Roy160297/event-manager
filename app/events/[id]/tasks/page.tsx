@@ -135,7 +135,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     ["כמות אורחים סופית - קאונטר", event?.final_guest_count_counter ?? null],
     ["כמות אורחים סופית - אייפלן (כולל דף נוספים)", event?.final_guest_count_iplan ?? null],
     ["כמות רזרבה שנפתחו", event?.reserve_opened_count ?? null],
-    ["כמות ילדים", event?.final_children_count ?? null],
+    ["כמות ילדים (אורחים)", event?.final_children_count ?? null],
     ["מנהל בר", event?.bar_manager_name ?? null],
     ["כמות ברמנים", event?.bartender_count ?? null],
     ["מנהל פלור", event?.floor_manager_name ?? null],
@@ -439,7 +439,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 />
               </label>
               <label className={reportLabelClass}>
-                <span>כמות ילדים</span>
+                <span>כמות ילדים (אורחים)</span>
                 <input
                   name="final_children_count"
                   defaultValue={event?.final_children_count ?? ""}

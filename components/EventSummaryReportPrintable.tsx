@@ -25,7 +25,7 @@ export function EventSummaryReportPrintable({
     ["כמות אורחים סופית - קאונטר", event.final_guest_count_counter],
     ["כמות אורחים סופית - אייפלן (כולל דף נוספים)", event.final_guest_count_iplan],
     ["כמות רזרבה שנפתחו", event.reserve_opened_count],
-    ["כמות ילדים", event.final_children_count],
+    ["כמות ילדים (אורחים)", event.final_children_count],
     ["מנהל בר", event.bar_manager_name],
     ["כמות ברמנים", event.bartender_count],
     ["מנהל פלור", event.floor_manager_name],
