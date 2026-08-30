@@ -26,6 +26,12 @@ export interface ImageImportDraft {
   gluten_free_meal_count: string | null;
   toddlers_under_2_count: string | null;
   menu_notes: string | null;
+  // Which screenshot format this was extracted from - callers that carry
+  // forward a previous reserve percentage (see applyCarriedReservePercent)
+  // only do so for "commitment_email", since that format never shows reserve
+  // data at all (unlike "iplan_screen", where a missing reserve genuinely
+  // means none was visible this time).
+  source_type: "iplan_screen" | "commitment_email";
   warnings: string[];
 }
 
@@ -54,11 +60,18 @@ export interface GeminiExtraction {
   vegan_meals: number | null;
   gluten_free_meals: number | null;
   toddlers_under_2: number | null;
+  source_type: "iplan_screen" | "commitment_email";
 }
 
 const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
+    source_type: {
+      type: Type.STRING,
+      enum: ["iplan_screen", "commitment_email"],
+      description:
+        'iplan_screen = צילום מסך של עמוד אירוע ממסך "ענן" במערכת iPlan (עמוס בתיבות מידע קטנות רבות זו לצד זו). commitment_email = צילום מסך של מייל (למשל מ-Outlook) שכותרתו "התחייבות סופית - ..." ותוכנו מדווח על עדכון בכמות אורחים.',
+    },
     bride_name: {
       type: Type.STRING,
       nullable: true,
@@ -91,32 +104,69 @@ const RESPONSE_SCHEMA = {
     guests_secure: {
       type: Type.NUMBER,
       nullable: true,
-      description: 'המספר משדה "אורחים בטוחים", או משדה "מינימום אורחים" אם זה השם המופיע במקום זאת - אותו שדה בשני שמות אפשריים',
+      description:
+        'iplan_screen: המספר משדה "אורחים בטוחים", או משדה "מינימום אורחים" אם זה השם המופיע במקום זאת - אותו שדה בשני שמות אפשריים. commitment_email: המספר הכולל הסופי שליד "העלו כמות ל" (או ניסוח דומה) ולידו "מבוגרים" - אינו כולל רזרבה.',
     },
     guests_reserve: {
       type: Type.NUMBER,
       nullable: true,
-      description: 'המספר הגולמי משדה "אורחים רזרבה", רק אם הוא מוצג כמספר אורחים ולא כאחוז',
+      description:
+        'iplan_screen בלבד: המספר הגולמי משדה "אורחים רזרבה", רק אם הוא מוצג כמספר אורחים ולא כאחוז. ב-commitment_email תמיד null - מייל זה אינו מציג נתוני רזרבה בכלל.',
     },
     guests_reserve_percent: {
       type: Type.NUMBER,
       nullable: true,
-      description: 'האחוז הגולמי משדה הרזרבה (לדוגמה "% רזרבה מקסימלי"), רק אם הוא מוצג כאחוז ולא כמספר אורחים',
+      description:
+        'iplan_screen בלבד: האחוז הגולמי משדה הרזרבה (לדוגמה "% רזרבה מקסימלי"), רק אם הוא מוצג כאחוז ולא כמספר אורחים. ב-commitment_email תמיד null.',
     },
-    kids_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות ילדים"' },
-    glat_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות גלאט"' },
-    vegetarian_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות צמחוניות"' },
-    vegan_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות טבעוניות"' },
-    gluten_free_meals: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "מנות ללא גלוטן"' },
-    toddlers_under_2: { type: Type.NUMBER, nullable: true, description: 'המספר משדה "ילדים מתחת לגיל 2"' },
+    kids_meals: {
+      type: Type.NUMBER,
+      nullable: true,
+      description:
+        'iplan_screen: המספר משדה "מנות ילדים". commitment_email: המספר שב"בנוסף" ליד "מנות ילדים"/"ילדים", או חלק ה"מעל" אם יש פיצול "מעל"/"תינוק".',
+    },
+    glat_meals: {
+      type: Type.NUMBER,
+      nullable: true,
+      description:
+        'iplan_screen: המספר משדה "מנות גלאט". commitment_email: המספר שב"מתוכם" ליד "גלאט" (כבר נכלל בתוך guests_secure, לא מתווסף עליו).',
+    },
+    vegetarian_meals: {
+      type: Type.NUMBER,
+      nullable: true,
+      description:
+        'iplan_screen: המספר משדה "מנות צמחוניות". commitment_email: המספר שב"מתוכם" ליד "צמחוני" (כבר נכלל בתוך guests_secure, לא מתווסף עליו).',
+    },
+    vegan_meals: {
+      type: Type.NUMBER,
+      nullable: true,
+      description:
+        'iplan_screen: המספר משדה "מנות טבעוניות". commitment_email: המספר שב"מתוכם" ליד "טבעוני" (כבר נכלל בתוך guests_secure, לא מתווסף עליו).',
+    },
+    gluten_free_meals: {
+      type: Type.NUMBER,
+      nullable: true,
+      description:
+        'iplan_screen: המספר משדה "מנות ללא גלוטן". commitment_email: המספר שב"מתוכם" ליד "ללא גלוטן" (כבר נכלל בתוך guests_secure, לא מתווסף עליו).',
+    },
+    toddlers_under_2: {
+      type: Type.NUMBER,
+      nullable: true,
+      description:
+        'iplan_screen: המספר משדה "ילדים מתחת לגיל 2". commitment_email: חלק ה"תינוק" אם יש פיצול "מעל"/"תינוק" ב"בנוסף".',
+    },
   },
-  required: ["event_type"],
+  required: ["event_type", "source_type"],
 };
 
-const PROMPT = `זהו צילום מסך של עמוד אירוע ממסך "ענן" במערכת iPlan. חלץ ממנו את הנתונים הבאים והחזר JSON בלבד לפי הסכמה שסופקה.
+const PROMPT = `זהו צילום מסך שעשוי להיות אחד משני סוגים שונים. קבע קודם כל איזה מהם זה (שדה source_type), ולאחר מכן חלץ את שאר הנתונים בהתאם לסוג שזוהה. החזר JSON בלבד לפי הסכמה שסופקה.
+
+סוג 1 - "iplan_screen": צילום מסך של עמוד אירוע ממסך "ענן" במערכת iPlan - עמוס בתיבות מידע קטנות רבות זו לצד זו.
+סוג 2 - "commitment_email": צילום מסך של מייל (למשל מ-Outlook) שכותרתו "התחייבות סופית - ..." ותוכנו מדווח על עדכון בכמות אורחים.
 
 הנחיות חשובות:
 - אם שדה אינו מופיע בבירור בתמונה, החזר null עבורו - לעולם אל תמציא ערך.
+--- הנחיות לסוג "iplan_screen" ---
 - שם הזוג מופיע בכותרת הראשית של העמוד (למשל "יובל ורדי ואיילון אלקיים") ולעיתים גם באזור "משתמשים באירוע" או ברשימת "הזמנות להצטרף לאירוע", שם כל איש קשר מתויג בסוגריים (חתן)/(כלה). ייתכן זוג מאותו מין - שני הצדדים מתויגים "חתן" (זוג חתנים) או ששניהם מתויגים "כלה" (זוג כלות). במקרה כזה אל תכריח התאמה של חתן אחד וכלה אחת - חלץ את שני השמות יחד לפי ההנחיות בשדות bride_name/groom_name.
 - שמות בני הזוג (וכל שם אחר שאתה מחלץ) חייבים להיות בעברית בלבד, לעולם לא באנגלית/אותיות לועזיות. אם שם מופיע באנגלית באזור "משתמשים באירוע" (למשל שם משתמש), בעוד שאותו אדם מופיע בעברית בכותרת הראשית של העמוד - יש להשתמש תמיד בגרסה העברית מהכותרת ולהתעלם לחלוטין מהגרסה האנגלית.
 - תאריך, שעת התחלה ושעת סיום מופיעים בתיבות הכחולות בפינה השמאלית העליונה של העמוד. לעיתים התאריך מופיע בתוך אותה תיבה יחד עם שם היום בשבוע (למשל "יום ג' 11/08/2026") - במקרה כזה התעלם משם היום וחלץ רק את החלק המספרי של התאריך. אל תחזיר null עבור event_date אם יש בתיבה כלשהי רצף מספרים בפורמט תאריך (DD/MM/YYYY) - זהו כמעט תמיד תאריך האירוע.
@@ -126,7 +176,17 @@ const PROMPT = `זהו צילום מסך של עמוד אירוע ממסך "ענ
 - שים לב: לעיתים העמוד מציג גם אזור נפרד בשם "אפשרויות אירוע" עם רשימת סימוני וי/איקס (✓/✗) ליד תוויות כמו "סימון מנות ילדים", "סימון מנות גלאט" וכו' - אלו הם מתגי הפעלה בלבד (מציינים שהתכונה קיימת לאירוע), ולא מספרים בפועל. אסור לפרש סימן וי כ"1" או להמציא כמות מהם - שדות kids_meals/glat_meals/vegetarian_meals/vegan_meals/gluten_free_meals/toddlers_under_2 צריכים להתמלא רק אם מופיע לצידם מספר ממשי במקום כלשהו בעמוד (למשל באזור ההתחייבות עצמו), אחרת החזר null.
 - שדה הרזרבה יכול להופיע בשני פורמטים שונים בהתאם לגרסת המסך - לפעמים כמספר אורחים ("אורחים רזרבה: 20") ולפעמים כאחוז ("% רזרבה מקסימלי: 7"). זהה איזה משני הפורמטים מופיע בתמונה והחזר את הערך הגולמי בשדה guests_reserve (מספר) או guests_reserve_percent (אחוז) בהתאם - לעולם לא בשניהם יחד.
 - טלפון ואימייל של איש/אשת הקשר: אם אזור "משתמשים באירוע" ריק (כתוב בו "אין") או לא מכיל טלפון/אימייל, חפש אותם ברשימת "הזמנות להצטרף לאירוע" - כל שורה שם מציגה טלפון או אימייל עם תיוג (חתן)/(כלה) ליד שם איש הקשר; שייך כל טלפון/אימייל לפי התיוג הזה (חתן -> contact_phone/contact_email, כלה -> contact_phone_2/contact_email_2, או להפך אם רק צד אחד מופיע - חשוב על עצמך כדי לשייך נכון בין השניים).
-- תאריכים בתמונה מופיעים לרוב כ-DD/MM/YYYY - המר לפורמט YYYY-MM-DD.`;
+
+--- הנחיות לסוג "commitment_email" ---
+- שמות בני הזוג ותאריך האירוע מופיעים בשורת הנושא של המייל (למשל "התחייבות סופית - אלמוג הלחמי וגל תשובה - 25.08.26"), לעיתים גם חוזרים בשורה הראשונה של תוכן המייל. חלץ אותם לפי אותם כללי עברית-בלבד כמו בסוג iplan_screen.
+- שדה guests_secure הוא המספר הכולל הסופי שליד "העלו כמות ל"/"העלו כמות -" ולידו "מבוגרים" - אינו כולל רזרבה (אין נתוני רזרבה במייל זה כלל - guests_reserve ו-guests_reserve_percent תמיד null).
+- סעיף "מתוכם { ... }" (אם מופיע) מפרט כמה מתוך המספר שכבר חולץ ל-guests_secure שייכים לכל סוג מנה מיוחדת (גלאט/צמחוני/טבעוני/ללא גלוטן) - אלו כבר נכללים בתוך guests_secure ואינם תוספת עליו. חלץ אותם לשדות glat_meals/vegetarian_meals/vegan_meals/gluten_free_meals בהתאם.
+- סעיף "בנוסף" (או "בנוסף:") מפרט תוספות שאינן חלק מהמספר ב-guests_secure - לרוב "מנות ילדים"/"ילדים", ולעיתים עם פיצול משנה "מעל"/"תינוק". אם מופיע מספר יחיד ("בנוסף: 7 מנות ילדים" או "בנוסף 18 ילדים") שים אותו ב-kids_meals. אם מופיע פיצול ("1 - מעל" ו-"1 - תינוק") שים את מספר ה"מעל" ב-kids_meals ואת מספר ה"תינוק" ב-toddlers_under_2.
+- התעלם לחלוטין מכל פרט אחר במייל שאינו אחד מהשדות שלעיל (למשל סוג בר, קוקטיילים, עמדת לייט גייט, אפטר, שם מעצב/ת, הערות חניה, "חתונה הפוכה", או הערות/בקשות אישיות לצוות) - אל תשבץ אותם בשום שדה.
+- שדות event_manager_name, sales_person_name, service_style, contact_phone, contact_phone_2, contact_email, contact_email_2 כמעט אף פעם לא מופיעים במייל מסוג זה - החזר null עבורם במקרה הרגיל.
+
+--- הנחיה כללית לשני הסוגים ---
+- תאריכים בתמונה עשויים להופיע כ-DD/MM/YYYY או DD.MM.YY - המר תמיד לפורמט YYYY-MM-DD.`;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -270,19 +330,28 @@ export function buildImageImportDraft(extraction: GeminiExtraction): ImageImport
   }
 
   // "אורחים בטוחים" plus the four meal-type headcounts (גלאט/צמחוני/טבעוני/
-  // ללא גלוטן) together make up the guaranteed-guests figure. The reserve on
+  // ללא גלוטן) together make up the guaranteed-guests figure on an iplan_screen
+  // read. A commitment_email read is different: its guests_secure ("X
+  // מבוגרים") is already inclusive of those meal-type counts ("מתוכם" = "of
+  // which"), so adding them again here would double-count. The reserve on
   // top of that can appear either as a direct headcount ("אורחים רזרבה") or
   // as a percentage ("% רזרבה מקסימלי") depending on the screen version -
   // when it's a percentage, round the resulting fraction of a guest UP (5%
-  // of 270 is 13.5, i.e. 14 reserve guests), never down.
+  // of 270 is 13.5, i.e. 14 reserve guests), never down. commitment_email
+  // never shows reserve data at all (see applyCarriedReservePercent, applied
+  // by the update-flow caller instead, which has the previous value to carry
+  // a percentage forward from).
+  const isCommitmentEmail = extraction.source_type === "commitment_email";
   const guestsSecure = extraction.guests_secure ?? null;
   const totalSecure =
     guestsSecure != null
-      ? guestsSecure +
-        (extraction.glat_meals ?? 0) +
-        (extraction.vegetarian_meals ?? 0) +
-        (extraction.vegan_meals ?? 0) +
-        (extraction.gluten_free_meals ?? 0)
+      ? isCommitmentEmail
+        ? guestsSecure
+        : guestsSecure +
+          (extraction.glat_meals ?? 0) +
+          (extraction.vegetarian_meals ?? 0) +
+          (extraction.vegan_meals ?? 0) +
+          (extraction.gluten_free_meals ?? 0)
       : null;
   const guestsReserve =
     extraction.guests_reserve ??
@@ -341,6 +410,30 @@ export function buildImageImportDraft(extraction: GeminiExtraction): ImageImport
     gluten_free_meal_count,
     toddlers_under_2_count,
     menu_notes: null,
+    source_type: isCommitmentEmail ? "commitment_email" : "iplan_screen",
     warnings,
   };
+}
+
+const RESERVE_FORMAT = /^(\d+)\+(\d+)$/;
+
+// A commitment_email screenshot only ever gives a final secure-guest total,
+// never a reserve figure (unlike iplan_screen, which sometimes shows one
+// directly) - so on an event update, carry forward the reserve as whatever
+// percentage of secure guests it was before this update, applied to the new
+// total. E.g. previously "300+15" (5%) and a new total of 340 -> "340+17".
+// Never round the resulting reserve down, matching the iplan_screen
+// percentage rule above. Falls back to the plain total (no "+reserve") when
+// there's no previous "secure+reserve" value to carry a percentage from.
+export function applyCarriedReservePercent(totalSecure: number, previousEstimatedGuests: string | null): string {
+  const match = previousEstimatedGuests?.match(RESERVE_FORMAT);
+  if (!match) return String(totalSecure);
+
+  const previousSecure = Number(match[1]);
+  const previousReserve = Number(match[2]);
+  if (previousSecure <= 0) return String(totalSecure);
+
+  const reservePercent = previousReserve / previousSecure;
+  const reserve = Math.ceil(totalSecure * reservePercent);
+  return `${totalSecure}+${reserve}`;
 }

@@ -13,7 +13,7 @@ import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
-import { extractEventDraftFromImage } from "@/lib/imageImport";
+import { extractEventDraftFromImage, applyCarriedReservePercent } from "@/lib/imageImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
 import { WELCOME_EMAIL_ATTACHMENT_FILENAME } from "@/lib/welcomeEmail";
 import { deleteAllChecklistPhotosForEvent } from "@/app/events/[id]/tasks/actions";
@@ -374,9 +374,24 @@ async function parseEventImageUpdateInner(eventId: string, formData: FormData): 
     }
   }
 
+  // A commitment_email screenshot never states the event type (it's just a
+  // guest-count update to an event that already exists), so extraction falls
+  // back to "other" - don't let that clobber the event's real type the way an
+  // iplan_screen read (which does show the type) is trusted to.
+  const eventType = draft.source_type === "commitment_email" ? event.event_type : draft.event_type;
+
+  // commitment_email only ever gives a final secure-guest total, never a
+  // reserve figure - carry forward whatever reserve percentage the event's
+  // current estimated_guests implies (see applyCarriedReservePercent) rather
+  // than dropping the reserve on the update.
+  const estimatedGuests =
+    draft.source_type === "commitment_email" && draft.estimated_guests != null && /^\d+$/.test(draft.estimated_guests)
+      ? applyCarriedReservePercent(Number(draft.estimated_guests), event.estimated_guests)
+      : (draft.estimated_guests ?? event.estimated_guests);
+
   const merged: Omit<EventImageUpdateDraft, "warnings" | "changedFields"> = {
     name,
-    event_type: draft.event_type,
+    event_type: eventType,
     event_date: draft.event_date ?? event.event_date,
     start_time: draft.start_time ?? event.start_time,
     end_time: draft.end_time ?? event.end_time,
@@ -386,7 +401,7 @@ async function parseEventImageUpdateInner(eventId: string, formData: FormData): 
     contact_email_2: draft.contact_email_2 ?? event.contact_email_2,
     contact_phone: draft.contact_phone ?? event.contact_phone,
     contact_phone_2: draft.contact_phone_2 ?? event.contact_phone_2,
-    estimated_guests: draft.estimated_guests ?? event.estimated_guests,
+    estimated_guests: estimatedGuests,
     kids_meal_count: draft.kids_meal_count ?? event.kids_meal_count,
     glat_meal_count: draft.glat_meal_count ?? event.glat_meal_count,
     vegetarian_meal_count: draft.vegetarian_meal_count ?? event.vegetarian_meal_count,

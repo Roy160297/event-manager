@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildImageImportDraft, mergeExtractions, type GeminiExtraction } from "@/lib/imageImport";
+import { applyCarriedReservePercent, buildImageImportDraft, mergeExtractions, type GeminiExtraction } from "@/lib/imageImport";
 
 const BASE_EXTRACTION: GeminiExtraction = {
   bride_name: "מאיה",
@@ -24,6 +24,7 @@ const BASE_EXTRACTION: GeminiExtraction = {
   vegan_meals: null,
   gluten_free_meals: null,
   toddlers_under_2: null,
+  source_type: "iplan_screen",
 };
 
 describe("buildImageImportDraft - guest count derivation", () => {
@@ -99,6 +100,50 @@ describe("buildImageImportDraft - diet-type meal counts", () => {
     const draft = buildImageImportDraft({ ...BASE_EXTRACTION, kids_meals: 0, toddlers_under_2: 0 });
     expect(draft.kids_meal_count).toBe("0");
     expect(draft.toddlers_under_2_count).toBe("0");
+  });
+});
+
+describe("buildImageImportDraft - commitment_email source type", () => {
+  it("does not add diet-type meal counts on top of guests_secure (they're already included, per 'מתוכם')", () => {
+    const draft = buildImageImportDraft({
+      ...BASE_EXTRACTION,
+      source_type: "commitment_email",
+      guests_secure: 300,
+      glat_meals: 2,
+      gluten_free_meals: 1,
+      vegan_meals: 1,
+    });
+    expect(draft.estimated_guests).toBe("300");
+    expect(draft.glat_meal_count).toBe("2");
+  });
+
+  it("never carries a reserve figure from this source type, even if somehow present", () => {
+    const draft = buildImageImportDraft({
+      ...BASE_EXTRACTION,
+      source_type: "commitment_email",
+      guests_secure: 222,
+      kids_meals: 2,
+    });
+    expect(draft.estimated_guests).toBe("222");
+    expect(draft.kids_meal_count).toBe("2");
+    expect(draft.source_type).toBe("commitment_email");
+  });
+});
+
+describe("applyCarriedReservePercent", () => {
+  it("carries forward the previous reserve percentage onto the new total, rounding up", () => {
+    // Previously 300+15 = 5% reserve; 5% of 340 is 17 exactly.
+    expect(applyCarriedReservePercent(340, "300+15")).toBe("340+17");
+  });
+
+  it("rounds a fractional carried reserve up, never down", () => {
+    // Previously 200+7 = 3.5% reserve; 3.5% of 222 is 7.77 -> 8.
+    expect(applyCarriedReservePercent(222, "200+7")).toBe("222+8");
+  });
+
+  it("falls back to the plain total when there is no previous secure+reserve value", () => {
+    expect(applyCarriedReservePercent(300, null)).toBe("300");
+    expect(applyCarriedReservePercent(300, "150")).toBe("300");
   });
 });
 
