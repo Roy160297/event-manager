@@ -114,14 +114,14 @@ export function MenuView({
             <button
               type="button"
               onClick={() => setMode("edit")}
-              className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
+              className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
             >
               עריכה
             </button>
             <button
               type="button"
               onClick={() => setMode("import")}
-              className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
+              className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
             >
               ייבוא מחדש
             </button>
@@ -129,7 +129,7 @@ export function MenuView({
               type="button"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="rounded-full border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+              className="rounded-full border-2 border-red-300 bg-background px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
               {isDeleting ? "מוחק..." : "מחיקת תפריט"}
             </button>
