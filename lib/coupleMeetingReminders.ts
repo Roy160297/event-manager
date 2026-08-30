@@ -134,7 +134,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     key: "kitchen-meal-breakdown",
     anchor: "event_date",
     offsetDays: -1,
-    recipientOverride: "chef@house7.co.il",
+    recipientOverride: "chef@house7.co.il, eva.b@house7.co.il",
     subject: (event) =>
       `פירוט מנות לקראת האירוע של ${event.name} - ${EVENT_TYPE_LABELS[event.event_type]} - ${formatDate(event.event_date)}`,
     body: (event) =>
