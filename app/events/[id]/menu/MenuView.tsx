@@ -114,14 +114,14 @@ export function MenuView({
             <button
               type="button"
               onClick={() => setMode("edit")}
-              className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+              className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
             >
               עריכה
             </button>
             <button
               type="button"
               onClick={() => setMode("import")}
-              className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+              className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
             >
               ייבוא מחדש
             </button>
