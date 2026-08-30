@@ -93,7 +93,7 @@ export function ImageUpdateWizard({
         onSubmit={handleUpload}
         className="flex flex-col gap-3 rounded-md border border-border-classic bg-accent-soft/30 p-3"
       >
-        <p className="text-sm font-medium">העלאת צילום מסך מעודכן מ-iPlan (&quot;ענן&quot;)</p>
+        <p className="text-sm font-medium">העלאת צילום מסך מעודכן (&quot;ענן&quot;\מייל מאיש מכירות)</p>
         <ImageDropZone fileInputRef={fileInputRef} fileName={fileName} onFileName={setFileName} />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex items-center gap-3">
