@@ -80,7 +80,7 @@ export function ImageUpdateWizard({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="self-start rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+        className="self-start rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
       >
         עדכון פרטים מצילום מסך &quot;ענן&quot;
       </button>

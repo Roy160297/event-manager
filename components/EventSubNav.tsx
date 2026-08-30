@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const SUB_NAV = [
   { segment: "", label: "סקירה" },
-  { segment: "tasks", label: "משימות" },
+  { segment: "tasks", label: "משימות וצ'קליסטים" },
   { segment: "timeline", label: "לוח זמנים" },
   { segment: "guests", label: "אורחים" },
   { segment: "staffing", label: "סקיצה לאירוע" },

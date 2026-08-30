@@ -59,7 +59,7 @@ export function PdfExportButton({
         type="button"
         onClick={isInteractive ? () => setOpen((v) => !v) : download}
         disabled={!isInteractive && isExporting}
-        className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft disabled:opacity-60"
+        className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft disabled:opacity-60"
       >
         {!isInteractive && isExporting ? "מכין PDF..." : label}
       </button>
