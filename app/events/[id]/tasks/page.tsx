@@ -502,7 +502,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <span>שעות מנקה אולם</span>
                 <input
                   name="hall_cleaner_hours"
-                  placeholder="לדוגמה: 16-2:20"
                   defaultValue={event?.hall_cleaner_hours ?? ""}
                   className={inputClass}
                 />
@@ -511,7 +510,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <span>שעות מנקה שירותים</span>
                 <input
                   name="restroom_cleaner_hours"
-                  placeholder="לדוגמה: 16:20-2:30"
                   defaultValue={event?.restroom_cleaner_hours ?? ""}
                   className={inputClass}
                 />
@@ -520,7 +518,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <span>שעות מנקי מטבח</span>
                 <input
                   name="kitchen_dishwasher_hours"
-                  placeholder="לדוגמה: 15-3"
                   defaultValue={event?.kitchen_dishwasher_hours ?? ""}
                   className={inputClass}
                 />
@@ -529,7 +526,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <span>שעות שוטפי כלים</span>
                 <input
                   name="dishwasher_hours"
-                  placeholder="לדוגמה: 18-3:15"
                   defaultValue={event?.dishwasher_hours ?? ""}
                   className={inputClass}
                 />
@@ -538,7 +534,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <span>שעות מאבטחים</span>
                 <input
                   name="security_guard_hours"
-                  placeholder="לדוגמה: 18-3"
                   defaultValue={event?.security_guard_hours ?? ""}
                   className={inputClass}
                 />
