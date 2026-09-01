@@ -231,37 +231,44 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: st
   });
 }
 
+// Four attempts across two tiers, with growing backoff - a "high demand" 503
+// is usually a momentary capacity blip, but it can occasionally last several
+// seconds during a real spike, and this used to give up (surfacing the
+// "busy, try again" error to the user) after only 3 attempts and a single
+// 1s pause. Widening the window here means more of those spikes resolve
+// silently instead of failing the upload. The lite tier draws from separate
+// capacity from the flash tier, so falling back to it is worth it even
+// before exhausting retries on flash - and worth retrying itself once too.
+const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
+  { model: PRIMARY_MODEL, delayMsBefore: 0 },
+  { model: PRIMARY_MODEL, delayMsBefore: 1000 },
+  { model: FALLBACK_MODEL, delayMsBefore: 1500 },
+  { model: FALLBACK_MODEL, delayMsBefore: 2500 },
+];
+
 async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: string): Promise<GeminiExtraction> {
-  let response;
-  try {
-    response = await callGemini(ai, buffer, mimeType, PRIMARY_MODEL);
-  } catch (err) {
-    if (!isTransientOverload(err)) throw err;
-    // One quick retry on the same tier before falling back - a "high
-    // demand" 503 is often a momentary capacity blip that clears within a
-    // second, so this can succeed without the user ever seeing an error.
-    await sleep(1000);
+  let response: Awaited<ReturnType<typeof callGemini>> | undefined;
+  let lastError: unknown;
+
+  for (const attempt of EXTRACTION_ATTEMPTS) {
+    if (attempt.delayMsBefore > 0) await sleep(attempt.delayMsBefore);
     try {
-      response = await callGemini(ai, buffer, mimeType, PRIMARY_MODEL);
-    } catch (retryErr) {
-      if (!isTransientOverload(retryErr)) throw retryErr;
-      // The flash tier is genuinely saturated (not just a one-off blip) -
-      // the lite tier draws from separate capacity, so it's worth one
-      // attempt there rather than failing outright. A slightly less careful
-      // read (mitigated by the missing-critical-fields retry below) beats
-      // no result at all.
-      try {
-        response = await callGemini(ai, buffer, mimeType, FALLBACK_MODEL);
-      } catch (fallbackErr) {
-        // Callers must return this message rather than throw it: Next.js
-        // redacts thrown Server Action error messages in production
-        // regardless of where the throw is caught.
-        if (isTransientOverload(fallbackErr)) {
-          throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
-        }
-        throw fallbackErr;
-      }
+      response = await callGemini(ai, buffer, mimeType, attempt.model);
+      break;
+    } catch (err) {
+      lastError = err;
+      if (!isTransientOverload(err)) throw err;
     }
+  }
+
+  if (!response) {
+    // Callers must return this message rather than throw it: Next.js
+    // redacts thrown Server Action error messages in production regardless
+    // of where the throw is caught.
+    if (isTransientOverload(lastError)) {
+      throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
+    }
+    throw lastError;
   }
 
   const rawText = response.text;
@@ -272,13 +279,6 @@ async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: stri
   } catch {
     throw new Error("תשובת Gemini לא הייתה JSON תקין");
   }
-}
-
-// event_date and guests_secure are the two fields a missed read is most
-// costly for (they drive the calendar slot and the billed headcount) and,
-// in practice, the two most often dropped on an otherwise-correct pass.
-function isMissingCriticalFields(extraction: GeminiExtraction): boolean {
-  return extraction.event_date == null || extraction.guests_secure == null;
 }
 
 // A single Gemini pass over a dense screenshot occasionally comes back with
@@ -302,11 +302,20 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
   if (!apiKey) throw new Error("GEMINI_API_KEY אינו מוגדר בסביבת השרת");
 
   const ai = new GoogleGenAI({ apiKey });
-  let extraction = await requestExtraction(ai, buffer, mimeType);
-  if (isMissingCriticalFields(extraction)) {
-    const retry = await requestExtraction(ai, buffer, mimeType);
-    extraction = mergeExtractions(extraction, retry);
-  }
+  // Two independent passes, always run concurrently rather than a serial
+  // "try once, then only retry if a critical field came back missing" - a
+  // single dense-screenshot Gemini call already takes several seconds, and
+  // that serial retry (which triggers often enough on these screenshots to
+  // be the main reason uploads "take forever") used to double the real
+  // wall-clock wait whenever it fired. Running both up front keeps worst-case
+  // latency close to one call's time instead of two calls' time, at the cost
+  // of always paying for a second Gemini call - a few cents, trivial next to
+  // staff time, even on the uploads that didn't strictly need one.
+  const [first, second] = await Promise.all([
+    requestExtraction(ai, buffer, mimeType),
+    requestExtraction(ai, buffer, mimeType),
+  ]);
+  const extraction = mergeExtractions(first, second);
 
   return buildImageImportDraft(extraction);
 }
