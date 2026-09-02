@@ -4,7 +4,44 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { scheduleSortKey } from "@/lib/labels";
 import { addMinutesToTime } from "@/lib/scheduleTime";
+import { extractTimelineFromImage, type TimelineImportDraft } from "@/lib/timelineImport";
 import type { TimelineItemRow } from "@/lib/types";
+
+export async function parseTimelineImage(formData: FormData): Promise<TimelineImportDraft[]> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("יש לבחור קובץ תמונה");
+  }
+  if (!file.type.startsWith("image/")) {
+    throw new Error("הקובץ שנבחר אינו תמונה");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return extractTimelineFromImage(buffer, file.type);
+}
+
+export async function addTimelineItemsFromImport(eventId: string, items: TimelineImportDraft[]) {
+  const validItems = items.filter((item) => item.label.trim());
+  if (validItems.length === 0) throw new Error("אין שלבים תקינים להוספה");
+
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("timeline_items")
+    .select("*", { count: "exact", head: true })
+    .eq("event_id", eventId);
+
+  const rows = validItems.map((item, index) => ({
+    event_id: eventId,
+    label: item.label.trim(),
+    approx_time: item.approx_time?.trim() || null,
+    notes: item.notes?.trim() || null,
+    sort_order: (count ?? 0) + index,
+  }));
+
+  const { error } = await supabase.from("timeline_items").insert(rows);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/timeline`);
+}
 
 export async function addTimelineItem(eventId: string, formData: FormData) {
   const supabase = await createClient();

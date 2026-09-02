@@ -14,6 +14,7 @@ import {
   shiftTimelineFrom,
   updateTimelineItem,
 } from "./actions";
+import { TimelineImageImport } from "./TimelineImageImport";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
@@ -144,8 +145,11 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
       {canWriteTimeline && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-classic bg-surface p-4">
           <p className="text-sm text-foreground/60">
-            יוצרים לוח זמנים סטנדרטי (קבלת פנים, חופה, מזנונים ועוד) ואז אפשר להתאים אישית.
+            יוצרים לוח זמנים סטנדרטי (קבלת פנים, חופה, מזנונים ועוד) ואז אפשר להתאים אישית, או מייבאים לוח זמנים מתמונה.
           </p>
+          <div className="w-full">
+            <TimelineImageImport eventId={eventId} />
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <SaveDetailsForm action={addEveningDefault} message="לוח הזמנים נוצר בהצלחה">
               <button
