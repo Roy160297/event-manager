@@ -196,6 +196,7 @@ function sleep(ms: number): Promise<void> {
 // demand) that clears within a second or two - distinguishing it from a
 // genuine failure lets the caller decide whether a quick retry is worth it.
 function isTransientOverload(err: unknown): boolean {
+  if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) return true;
   const message = err instanceof Error ? err.message : String(err);
   return message.includes("UNAVAILABLE") || message.includes("high demand") || message.includes('"code":503');
 }
@@ -209,7 +210,7 @@ function isTransientOverload(err: unknown): boolean {
 const PRIMARY_MODEL = "gemini-flash-latest";
 const FALLBACK_MODEL = "gemini-flash-lite-latest";
 
-function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: string) {
+function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: string, signal: AbortSignal) {
   return ai.models.generateContent({
     model,
     contents: [
@@ -227,6 +228,7 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: st
       // date box, or the guest-commitment count) while getting everything
       // else right.
       temperature: 0,
+      abortSignal: signal,
     },
   });
 }
@@ -246,14 +248,35 @@ const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: FALLBACK_MODEL, delayMsBefore: 2500 },
 ];
 
+// The page that hosts this upload caps the whole Server Action at 60s
+// (app/events/import-image/page.tsx's maxDuration) - if a single Gemini call
+// stalls (slow network, a hung connection) rather than cleanly erroring, the
+// old code had nothing forcing it to give up, so it could sit until Vercel
+// hard-kills the function mid-response. That kill truncates the response the
+// browser is waiting on, which surfaces as React's generic "An unexpected
+// response was received from the server" - an unstyled English error the
+// user can't act on, instead of the friendly Hebrew "busy, try again"
+// message this function already has for the ordinary overload case. Capping
+// the whole retry loop's wall-clock time (well under 60s) and each
+// individual call within it (via abortSignal) means a stuck call always
+// fails fast into that existing friendly path instead.
+const EXTRACTION_BUDGET_MS = 45_000;
+const PER_CALL_TIMEOUT_MS = 20_000;
+
 async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: string): Promise<GeminiExtraction> {
+  const startedAt = Date.now();
   let response: Awaited<ReturnType<typeof callGemini>> | undefined;
   let lastError: unknown;
 
   for (const attempt of EXTRACTION_ATTEMPTS) {
+    if (Date.now() - startedAt + attempt.delayMsBefore >= EXTRACTION_BUDGET_MS) break;
     if (attempt.delayMsBefore > 0) await sleep(attempt.delayMsBefore);
+
+    const remaining = EXTRACTION_BUDGET_MS - (Date.now() - startedAt);
+    if (remaining <= 0) break;
+
     try {
-      response = await callGemini(ai, buffer, mimeType, attempt.model);
+      response = await callGemini(ai, buffer, mimeType, attempt.model, AbortSignal.timeout(Math.min(PER_CALL_TIMEOUT_MS, remaining)));
       break;
     } catch (err) {
       lastError = err;
@@ -264,8 +287,10 @@ async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: stri
   if (!response) {
     // Callers must return this message rather than throw it: Next.js
     // redacts thrown Server Action error messages in production regardless
-    // of where the throw is caught.
-    if (isTransientOverload(lastError)) {
+    // of where the throw is caught. Budget exhaustion with no other error
+    // (lastError still undefined) is itself a form of "too slow right now",
+    // so it gets the same friendly message as a real overload.
+    if (lastError === undefined || isTransientOverload(lastError)) {
       throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
     }
     throw lastError;

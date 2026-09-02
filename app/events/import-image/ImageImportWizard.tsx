@@ -13,6 +13,20 @@ import type { EventType, StaffRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
+// A hard server-side timeout or crash mid-request (rare, but possible on a
+// slow/overloaded image-extraction pass) never reaches our own try/catch in
+// actions.ts - it breaks the Server Action's response itself, and React
+// surfaces that as this generic untranslated message instead of throwing
+// one of our own Hebrew errors. Map it to a matching Hebrew message so the
+// upload screen doesn't show a stray English sentence.
+function friendlyUploadError(err: unknown): string {
+  const message = err instanceof Error ? err.message : "";
+  if (!message || /unexpected response/i.test(message)) {
+    return "הפעולה ארכה זמן רב מדי או שהשרת לא הגיב - נסו להעלות את התמונה שוב.";
+  }
+  return message;
+}
+
 type Draft = ImageImportDraft & { matched_manager_id: string | null };
 
 const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
@@ -45,7 +59,7 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
       setManagerId(result.matched_manager_id ?? "");
       setStep("review");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה בעיבוד התמונה");
+      setError(friendlyUploadError(err));
     } finally {
       setIsPending(false);
     }
@@ -64,7 +78,7 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
       }
       router.push(`/events/${result.eventId}?newEvent=1`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה ביצירת האירוע");
+      setError(friendlyUploadError(err));
       setIsPending(false);
     }
   }
