@@ -37,6 +37,22 @@ describe("parseTableSketchDraft", () => {
     expect(draft.warnings.some((w) => w.includes("6+2/9"))).toBe(true);
   });
 
+  it("recovers two tables whose lines got merged by the PDF layout ('9/9 21' = table 20's occupancy glued to table 21's number)", () => {
+    const draft = parseTableSketchDraft("19\n9/9\n20\n9/9 21\n18/18\n22\n17/18");
+    expect(draft.tables).toEqual([
+      { label: "19", capacity: 9, seated: 9 },
+      { label: "20", capacity: 9, seated: 9 },
+      { label: "21", capacity: 18, seated: 18 },
+      { label: "22", capacity: 18, seated: 17 },
+    ]);
+    expect(draft.warnings).toEqual([]);
+  });
+
+  it("leaves a real multi-word food-stand label (e.g. tab-separated names) unsplit", () => {
+    const draft = parseTableSketchDraft("1\n6+2/9\nבשר כפול\tדגים");
+    expect(draft.foodStands).toEqual([{ label: "בשר כפול" }, { label: "דגים" }]);
+  });
+
   it("warns when nothing at all is recognized", () => {
     const draft = parseTableSketchDraft("(some header)\niPlan export");
     expect(draft.tables).toEqual([]);

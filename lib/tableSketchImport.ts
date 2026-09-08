@@ -20,6 +20,25 @@ export interface TableSketchDraft {
 const TABLE_NUMBER_PATTERN = /^\d{1,3}$/;
 const OCCUPANCY_PATTERN = /^(\d+)(?:\+(\d+))?\/(\d+)$/;
 
+// When two tables sit close together in the sketch's layout, pdf-parse's
+// text extraction occasionally merges the tail end of one table's line with
+// the start of the next onto a single physical line (e.g. table 20's "9/9"
+// glued to table 21's "21" as "9/9 21") - purely a PDF-layout artifact, not
+// a real difference in the data. Left alone, the pair-walking loop below
+// can't match either half against its neighbor, so both tables silently
+// drop out of the count entirely (confirmed against a real sketch: exactly
+// this merge accounted for the whole gap between the app's total and a
+// manual recount). Un-merge any line that is nothing but whitespace-joined
+// table-number/occupancy tokens back into separate lines before the main
+// loop runs, so it never has to know this happened.
+function splitMergedLine(line: string): string[] {
+  const parts = line.split(/\s+/).filter(Boolean);
+  if (parts.length > 1 && parts.every((p) => TABLE_NUMBER_PATTERN.test(p) || OCCUPANCY_PATTERN.test(p))) {
+    return parts;
+  }
+  return [line];
+}
+
 // iPlan's floor-plan sketch export lists each table as its number on one line
 // followed by an occupancy line ("6+2/9" = 6 confirmed + 2 reserved out of 9
 // seats, or just "9/9"); we only need the capacity (the number after the
@@ -29,7 +48,8 @@ export function parseTableSketchDraft(rawText: string): TableSketchDraft {
   const lines = rawText
     .split(/\r?\n/)
     .map((l) => l.trim())
-    .filter((l) => l.length > 0);
+    .filter((l) => l.length > 0)
+    .flatMap(splitMergedLine);
 
   const isSkipLine = (line: string) =>
     line.includes("תאריך האירוע") ||
