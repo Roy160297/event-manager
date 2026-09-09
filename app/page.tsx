@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { deleteEvent } from "@/app/events/actions";
-import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDate, getDisplayEventStatus } from "@/lib/labels";
+import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { todaysEventDate } from "@/lib/scheduleTime";
 import { todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
@@ -119,7 +119,6 @@ export default async function EventsDashboard({
 
       <ul className="flex flex-col gap-3">
         {filteredEvents?.map((event) => {
-          const displayStatus = getDisplayEventStatus(event);
           const isToday = event.event_date === highlightDate;
 
           async function remove() {
@@ -134,23 +133,15 @@ export default async function EventsDashboard({
                 isToday ? "border-accent bg-accent-soft ring-1 ring-accent" : "border-border-classic bg-surface"
               }`}
             >
-              <Link
-                href={`/events/${event.id}`}
-                className="flex flex-1 flex-wrap items-center justify-between gap-3 min-w-0"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">
-                    {event.name}
-                    {isToday && <span className="ms-2 text-xs font-medium text-accent">אירוע היום</span>}
-                  </p>
-                  <p className="text-sm text-foreground/60">
-                    {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
-                    {managerName(event.manager_id) && ` · ${managerName(event.manager_id)}`}
-                  </p>
-                </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-medium ${EVENT_STATUS_COLORS[displayStatus]}`}>
-                  {EVENT_STATUS_LABELS[displayStatus]}
-                </span>
+              <Link href={`/events/${event.id}`} className="flex flex-1 flex-col gap-1 min-w-0">
+                <p className="truncate font-medium">
+                  {event.name}
+                  {isToday && <span className="ms-2 text-xs font-medium text-accent">אירוע היום</span>}
+                </p>
+                <p className="text-sm text-foreground/60">
+                  {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+                  {managerName(event.manager_id) && ` · ${managerName(event.manager_id)}`}
+                </p>
               </Link>
               {canWriteEvents && (
                 <form action={remove} className="ms-3">
