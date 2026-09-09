@@ -54,10 +54,10 @@ export function CalendarGrid({
   return (
     <div className="flex flex-col gap-4">
       {managerLegend.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
           {managerLegend.map((entry) => (
-            <div key={entry.name} className="flex items-center gap-1.5">
-              <span className={`h-3 w-3 rounded-full ${entry.color.split(" ")[0]}`} />
+            <div key={entry.name} className="flex items-center gap-2">
+              <span className={`h-4 w-4 rounded-full ${entry.color.split(" ")[0]}`} />
               <span className="text-foreground/70">{entry.name}</span>
             </div>
           ))}

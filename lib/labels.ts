@@ -75,22 +75,48 @@ const MANAGER_COLOR_PALETTE = [
   "bg-lime-100 text-lime-700",
 ];
 
-// Events with no manager assigned (or a manager outside the candidate list
-// passed in) fall back to this neutral color rather than crashing/blending
-// into the palette.
+// Events with no manager assigned (or a manager left out of the legend
+// entirely, see MANAGER_LEGEND_EXCLUDED below) fall back to this neutral
+// color rather than crashing/blending into the palette.
 export const UNASSIGNED_MANAGER_COLOR = "bg-neutral-200 text-neutral-700";
 
+// Curated by the venue: Roy's and Snir's colors were deliberately swapped
+// from whatever auto-assignment would otherwise give them, and these two
+// specific names are dropped from the legend/coloring entirely - they can
+// technically be assigned as event manager per their role, but in practice
+// never are, so including them just clutters the legend with colors no one
+// needs to read.
+const MANAGER_LEGEND_COLOR_OVERRIDES: Record<string, string> = {
+  "רועי פוריאן": "bg-teal-100 text-teal-700",
+  שניר: "bg-amber-100 text-amber-700",
+};
+const MANAGER_LEGEND_EXCLUDED = new Set(["לירן", "ירון"]);
+
 // Deterministic name -> color assignment for the calendar's manager legend -
-// the same input list always produces the same mapping (sorted first), so a
-// given manager's color stays stable across months/reloads without needing
-// a stored color column. Cycles back through the palette past its length
-// rather than crashing, since the manager list isn't bounded in code.
+// the same input list always produces the same mapping (sorted first, after
+// applying the exclusions/overrides above), so a given manager's color stays
+// stable across months/reloads without needing a stored color column.
+// Colors already claimed by an override are reserved (never handed out
+// again via auto-assignment) so two managers never end up sharing one.
+// Cycles back through the remaining palette past its length rather than
+// crashing, since the manager list isn't bounded in code.
 export function assignManagerColors(managerNames: string[]): Map<string, string> {
-  const sorted = [...new Set(managerNames)].sort((a, b) => a.localeCompare(b, "he"));
+  const visible = [...new Set(managerNames)].filter((name) => !MANAGER_LEGEND_EXCLUDED.has(name));
+  const sorted = visible.sort((a, b) => a.localeCompare(b, "he"));
+  const reservedColors = new Set(Object.values(MANAGER_LEGEND_COLOR_OVERRIDES));
+  const autoPalette = MANAGER_COLOR_PALETTE.filter((color) => !reservedColors.has(color));
+
   const map = new Map<string, string>();
-  sorted.forEach((name, index) => {
-    map.set(name, MANAGER_COLOR_PALETTE[index % MANAGER_COLOR_PALETTE.length]);
-  });
+  let autoIndex = 0;
+  for (const name of sorted) {
+    const override = MANAGER_LEGEND_COLOR_OVERRIDES[name];
+    if (override) {
+      map.set(name, override);
+    } else {
+      map.set(name, autoPalette[autoIndex % autoPalette.length]);
+      autoIndex += 1;
+    }
+  }
   return map;
 }
 
