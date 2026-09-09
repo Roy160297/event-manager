@@ -31,7 +31,8 @@ export type PermissionResource =
   | "event_management_dex"
   | "my_tasks"
   | "menu"
-  | "calendar";
+  | "calendar"
+  | "business_event_checklist";
 
 export type MenuType = "buffet" | "plated";
 

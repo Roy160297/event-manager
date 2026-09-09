@@ -1,5 +1,5 @@
 import type { ClosingChecklistCategory } from "@/lib/closingChecklist";
-import type { PermissionResource } from "@/lib/types";
+import type { EventType, PermissionResource } from "@/lib/types";
 
 // Three more of the venue's paper closing checklists, each signed by a
 // different role (Floor Manager, Bar Manager, Barista), separate from
@@ -15,6 +15,11 @@ export interface RoleChecklistDefinition {
   // a checkable item. Barista's paper sheet specifically ends in a
   // deficiency list, so it keeps that wording; the rest use a generic label.
   noteLabel?: string;
+  // Omitted -> shown for every event, matching the 3 role checklists below.
+  // Present -> this checklist only shows (and only gets added to) events of
+  // one of these types - see business_event_checklist, gated to business
+  // events only in the Tasks page's rendering loop.
+  eventTypes?: EventType[];
 }
 
 export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
@@ -141,6 +146,30 @@ export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
           { key: "barista-decorations", text: "לרכז את כל הדקורציה בבטן העמדה." },
           { key: "barista-milk-fridge", text: "לוודא שמקרר החלב מחובר לחשמל בסוף הערב." },
           { key: "barista-cover-machine", text: "כיסוי מכונת הקפה." },
+        ],
+      },
+    ],
+  },
+  {
+    key: "business_event_checklist",
+    label: "צ'קליסט סגירה - ספקי הפקה (אירוע עסקי)",
+    noteLabel: "הערות",
+    eventTypes: ["business_event"],
+    categories: [
+      {
+        key: "business-event-vendors",
+        label: "ספקי הפקה",
+        items: [
+          {
+            key: "biz-production-vendor-departure-timing",
+            text: "ווידוא עם ההפקה שכלל הספקים יודעים מתי להגיע בסיום האירוע: במה, הגברה ותאורה, עיצוב, מיתוג וכו'.",
+          },
+          { key: "biz-production-rep-stays-until-done", text: "הישארות נציג הפקה עד סיום עבודת הספקים." },
+          {
+            key: "biz-vendor-tasks-review-before-leaving",
+            text: "מעבר עם כל ספק על ביצוע כלל משימותיו טרם עזיבתו (כולל פינוי זבל).",
+          },
+          { key: "biz-yard-morning-items", text: "השארת פריטים לבוקר מרוכז בחצר." },
         ],
       },
     ],

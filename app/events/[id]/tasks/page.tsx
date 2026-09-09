@@ -114,7 +114,9 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
   const canReadTasks = !!currentStaff && canRead(currentStaff.permissions, "tasks");
   const canWriteTasks = !!currentStaff && canWrite(currentStaff.permissions, "tasks");
 
-  const roleChecklistPermissions = ROLE_CHECKLISTS.map((definition) => ({
+  const roleChecklistPermissions = ROLE_CHECKLISTS.filter(
+    (definition) => !definition.eventTypes || (!!event && definition.eventTypes.includes(event.event_type)),
+  ).map((definition) => ({
     definition,
     canRead: !!currentStaff && canRead(currentStaff.permissions, definition.key),
     canWrite: !!currentStaff && canWrite(currentStaff.permissions, definition.key),
