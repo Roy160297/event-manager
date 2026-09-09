@@ -1,3 +1,5 @@
+import type { EventType } from "@/lib/types";
+
 // Fixed catalog for the venue's paper "closing checklist" - same list for
 // every event, so it lives here in code rather than in the database. Only
 // which items are checked per event is persisted (closing_checklist_checks).
@@ -12,6 +14,12 @@ export interface ClosingChecklistCategory {
   key: string;
   label: string;
   items: ClosingChecklistItem[];
+  // Omitted -> shown for every event type, matching every category below
+  // except the business-event one. Present -> only shown as a default for
+  // events of one of these types (checked-state for its items is still
+  // stored the same way as everything else; it just never renders, and
+  // never counts toward the total, for an event of a different type).
+  eventTypes?: EventType[];
 }
 
 export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
@@ -186,8 +194,40 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "lock-alarm-activation", text: "הפעלת אזעקה בסיום האירוע." },
     ],
   },
+  {
+    key: "business-event-vendors",
+    label: "ספקי הפקה (אירוע עסקי)",
+    eventTypes: ["business_event"],
+    items: [
+      {
+        key: "biz-production-vendor-departure-timing",
+        text: "ווידוא עם ההפקה שכלל הספקים יודעים מתי להגיע בסיום האירוע: במה, הגברה ותאורה, עיצוב, מיתוג וכו'.",
+      },
+      { key: "biz-production-rep-stays-until-done", text: "הישארות נציג הפקה עד סיום עבודת הספקים." },
+      {
+        key: "biz-vendor-tasks-review-before-leaving",
+        text: "מעבר עם כל ספק על ביצוע כלל משימותיו טרם עזיבתו (כולל פינוי זבל).",
+      },
+      { key: "biz-yard-morning-items", text: "השארת פריטים לבוקר מרוכז בחצר." },
+    ],
+  },
 ];
 
 export const ALL_CLOSING_CHECKLIST_KEYS = new Set(
   CLOSING_CHECKLIST.flatMap((category) => category.items.map((item) => item.key)),
 );
+
+// Categories with no eventTypes restriction always show; a restricted
+// category (currently just the business-event one above) only shows for an
+// event of one of its listed types. Used everywhere the checklist is
+// rendered or totaled, so a wedding never sees/counts the business-only
+// items and vice versa.
+export function getClosingChecklistForEventType(eventType: EventType | null): ClosingChecklistCategory[] {
+  return CLOSING_CHECKLIST.filter(
+    (category) => !category.eventTypes || (eventType != null && category.eventTypes.includes(eventType)),
+  );
+}
+
+export function getClosingChecklistKeysForEventType(eventType: EventType | null): Set<string> {
+  return new Set(getClosingChecklistForEventType(eventType).flatMap((category) => category.items.map((item) => item.key)));
+}

@@ -10,7 +10,7 @@ import { updateEventSummaryReport } from "@/app/events/actions";
 import ClosingChecklist from "./ClosingChecklist";
 import RoleChecklist from "./RoleChecklist";
 import { ROLE_CHECKLISTS } from "@/lib/roleChecklists";
-import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
+import { getClosingChecklistForEventType } from "@/lib/closingChecklist";
 import { EventSummaryReportExport } from "./EventSummaryReportExport";
 import { SendChecklistsEmailButton, type ChecklistForEmail } from "./SendChecklistsEmailButton";
 import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
@@ -198,7 +198,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     {
       key: "closing_checklist",
       title: "צ'קליסט סגירה - מנהל אירוע",
-      categories: CLOSING_CHECKLIST,
+      categories: getClosingChecklistForEventType(event?.event_type ?? null),
       checkedKeys: closingChecklistChecks?.map((row) => row.item_key) ?? [],
       note: closingChecklistNote,
       noteLabel: "הערות",
