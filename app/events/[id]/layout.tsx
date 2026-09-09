@@ -28,9 +28,11 @@ export default async function EventLayout({
         </p>
         <div className="mt-1 flex items-center justify-between">
           <h1 className="font-serif text-2xl font-bold">{event.name}</h1>
-          <span className={`rounded-full px-3 py-1 text-xs font-medium ${EVENT_STATUS_COLORS[displayStatus]}`}>
-            {EVENT_STATUS_LABELS[displayStatus]}
-          </span>
+          {displayStatus !== "approved" && (
+            <span className={`rounded-full px-3 py-1 text-xs font-medium ${EVENT_STATUS_COLORS[displayStatus]}`}>
+              {EVENT_STATUS_LABELS[displayStatus]}
+            </span>
+          )}
         </div>
         <p className="text-sm text-foreground/80">
           {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
