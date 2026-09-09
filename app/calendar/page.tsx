@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getDisplayEventStatus, MONTH_LABELS } from "@/lib/labels";
+import { assignManagerColors, getDisplayEventStatus, MONTH_LABELS, UNASSIGNED_MANAGER_COLOR } from "@/lib/labels";
 import { getHebrewDatesByDate, getHolidaysByDate } from "@/lib/hebrewCalendar";
-import { CalendarGrid, type CalendarCell, type CalendarEvent } from "@/components/CalendarGrid";
+import { CalendarGrid, type CalendarCell, type CalendarEvent, type ManagerLegendEntry } from "@/components/CalendarGrid";
 import { MonthPicker } from "@/components/MonthPicker";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
+import { getEventManagerCandidates } from "@/lib/staff";
 import type { EventRow, StaffRow } from "@/lib/types";
 
 function pad(value: number) {
@@ -71,24 +72,39 @@ export default async function CalendarPage({
   const nextMonthStart = `${nextYear}-${pad(nextMonth)}-01`;
 
   const supabase = await createClient();
-  const { data: events } = await supabase
-    .from("events")
-    .select("*, staff!manager_id(name)")
-    .is("deleted_at", null)
-    .gte("event_date", monthStart)
-    .lt("event_date", nextMonthStart)
-    .order("event_date", { ascending: true })
-    .returns<EventWithManager[]>();
+  const [{ data: events }, managerCandidates] = await Promise.all([
+    supabase
+      .from("events")
+      .select("*, staff!manager_id(name)")
+      .is("deleted_at", null)
+      .gte("event_date", monthStart)
+      .lt("event_date", nextMonthStart)
+      .order("event_date", { ascending: true })
+      .returns<EventWithManager[]>(),
+    getEventManagerCandidates(),
+  ]);
+
+  // Colors are assigned from the full candidate list (not just managers with
+  // an event this month), so a given manager's color stays the same from
+  // month to month instead of shifting around based on who happens to have
+  // events right now.
+  const managerColors = assignManagerColors(managerCandidates.map((m) => m.name));
+  const managerLegend: ManagerLegendEntry[] = managerCandidates.map((m) => ({
+    name: m.name,
+    color: managerColors.get(m.name) ?? UNASSIGNED_MANAGER_COLOR,
+  }));
 
   const eventsByDate = new Map<string, CalendarEvent[]>();
   for (const event of events ?? []) {
+    const managerName = event.staff?.name ?? null;
     const calendarEvent: CalendarEvent = {
       id: event.id,
       name: event.name,
       eventType: event.event_type,
       startTime: event.start_time,
       displayStatus: getDisplayEventStatus(event),
-      managerName: event.staff?.name ?? null,
+      managerName,
+      managerColor: (managerName && managerColors.get(managerName)) || UNASSIGNED_MANAGER_COLOR,
       salesPersonName: event.sales_person_name,
       estimatedGuests: event.estimated_guests,
     };
@@ -131,7 +147,7 @@ export default async function CalendarPage({
           </Link>
         </div>
 
-        <CalendarGrid cells={cells} todayStr={todayStr} />
+        <CalendarGrid cells={cells} todayStr={todayStr} managerLegend={managerLegend} />
       </div>
     </div>
   );

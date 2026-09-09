@@ -17,6 +17,10 @@ export interface CalendarEvent {
   startTime: string | null;
   displayStatus: EventDisplayStatus;
   managerName: string | null;
+  // Precomputed server-side (see assignManagerColors in lib/labels.ts) so
+  // this component doesn't need the full manager candidate list just to
+  // color one event's box.
+  managerColor: string;
   salesPersonName: string | null;
   estimatedGuests: string | null;
 }
@@ -29,19 +33,37 @@ export interface CalendarCell {
   hebrewDate: string | null;
 }
 
+export interface ManagerLegendEntry {
+  name: string;
+  color: string;
+}
+
 const WEEKDAY_LABELS = ["א", "ב", "ג", "ד", "ה", "ו", "ש"];
 
 export function CalendarGrid({
   cells,
   todayStr,
+  managerLegend,
 }: {
   cells: (CalendarCell | null)[];
   todayStr: string;
+  managerLegend: ManagerLegendEntry[];
 }) {
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
 
   return (
     <div className="flex flex-col gap-4">
+      {managerLegend.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+          {managerLegend.map((entry) => (
+            <div key={entry.name} className="flex items-center gap-1.5">
+              <span className={`h-3 w-3 rounded-full ${entry.color.split(" ")[0]}`} />
+              <span className="text-foreground/70">{entry.name}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-7 gap-1 text-center text-xs text-foreground/60">
         {WEEKDAY_LABELS.map((label) => (
           <div key={label}>{label}</div>
@@ -75,7 +97,7 @@ export function CalendarGrid({
                   key={event.id}
                   type="button"
                   onClick={() => setSelected(event)}
-                  className={`flex flex-col items-start rounded-md px-1.5 py-1 text-start leading-tight ${EVENT_STATUS_COLORS[event.displayStatus]}`}
+                  className={`flex flex-col items-start rounded-md px-1.5 py-1 text-start leading-tight ${event.managerColor}`}
                   title={event.name}
                 >
                   <span className="w-full break-words text-[11px] font-semibold">{event.name}</span>

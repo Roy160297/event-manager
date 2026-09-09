@@ -59,6 +59,41 @@ export const EVENT_STATUS_COLORS: Record<EventDisplayStatus, string> = {
   completed: "bg-blue-100 text-blue-700",
 };
 
+// Distinct, easily-told-apart colors for the calendar's manager legend -
+// deliberately a different palette from EVENT_STATUS_COLORS above so the two
+// kinds of coloring (this one replaces status color on the calendar grid,
+// per the venue's request to see at a glance whose events are whose) don't
+// get confused with one another if both ever show up in the same UI.
+const MANAGER_COLOR_PALETTE = [
+  "bg-blue-100 text-blue-700",
+  "bg-purple-100 text-purple-700",
+  "bg-amber-100 text-amber-700",
+  "bg-pink-100 text-pink-700",
+  "bg-teal-100 text-teal-700",
+  "bg-orange-100 text-orange-700",
+  "bg-indigo-100 text-indigo-700",
+  "bg-lime-100 text-lime-700",
+];
+
+// Events with no manager assigned (or a manager outside the candidate list
+// passed in) fall back to this neutral color rather than crashing/blending
+// into the palette.
+export const UNASSIGNED_MANAGER_COLOR = "bg-neutral-200 text-neutral-700";
+
+// Deterministic name -> color assignment for the calendar's manager legend -
+// the same input list always produces the same mapping (sorted first), so a
+// given manager's color stays stable across months/reloads without needing
+// a stored color column. Cycles back through the palette past its length
+// rather than crashing, since the manager list isn't bounded in code.
+export function assignManagerColors(managerNames: string[]): Map<string, string> {
+  const sorted = [...new Set(managerNames)].sort((a, b) => a.localeCompare(b, "he"));
+  const map = new Map<string, string>();
+  sorted.forEach((name, index) => {
+    map.set(name, MANAGER_COLOR_PALETTE[index % MANAGER_COLOR_PALETTE.length]);
+  });
+  return map;
+}
+
 export function getDisplayEventStatus(event: Pick<EventRow, "status" | "event_date">): EventDisplayStatus {
   if (event.status === "canceled") return "canceled";
   const today = new Date().toISOString().slice(0, 10);
