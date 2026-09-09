@@ -9,6 +9,7 @@ export const RESOURCES = [
   "floor_manager_checklist",
   "bar_checklist",
   "barista_checklist",
+  "business_event_checklist",
   "couple_meeting",
   "event_management_dex",
   "waiters",
@@ -16,7 +17,6 @@ export const RESOURCES = [
   "my_tasks",
   "menu",
   "calendar",
-  "business_event_checklist",
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
