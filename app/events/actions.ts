@@ -520,7 +520,7 @@ export async function sendAllChecklistsEmail({
   if (!staff || !canWrite(staff.permissions, "closing_checklist")) {
     throw new Error("אין לך הרשאה לשלוח את הצ'קליסטים");
   }
-  if (attachments.length === 0) throw new Error("אין צ'קליסטים לשליחה");
+  if (attachments.length === 0) throw new Error("אין קבצים לשליחה");
 
   await sendChecklistsEmail({ to, cc, subject, bodyText, replyTo, attachments });
 

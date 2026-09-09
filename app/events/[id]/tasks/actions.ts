@@ -284,17 +284,26 @@ export async function deleteChecklistPhoto(eventId: string, photoId: string, sto
   revalidatePath(`/events/${eventId}/tasks`);
 }
 
-// Every checklist_photos row for an event is always embedded into the PDF
-// attachments of the "send all checklists by email" bundle (see
-// checklistsForEmail in tasks/page.tsx - it always includes every checklist,
-// not a filtered subset), so once that email is sent the originals in
-// storage are redundant - the sent PDFs are the durable copy.
+// Only event_summary_report photos are embedded into the PDF attachment of
+// the "send summary report by email" button (see SendChecklistsEmailButton -
+// it only ever attaches the summary report, not the other checklists), so
+// only those originals become redundant once that email is sent. Photos on
+// the other checklist types are never part of this email and must be left
+// alone - deleting them here would have no backup copy anywhere.
 export async function deleteAllChecklistPhotosForEvent(eventId: string) {
   const supabase = await createClient();
-  const { data: photos } = await supabase.from("checklist_photos").select("storage_path").eq("event_id", eventId);
+  const { data: photos } = await supabase
+    .from("checklist_photos")
+    .select("storage_path")
+    .eq("event_id", eventId)
+    .eq("checklist_key", "event_summary_report");
   if (!photos || photos.length === 0) return;
 
-  const { error } = await supabase.from("checklist_photos").delete().eq("event_id", eventId);
+  const { error } = await supabase
+    .from("checklist_photos")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("checklist_key", "event_summary_report");
   if (error) throw new Error(error.message);
 
   await supabase.storage.from(CHECKLIST_PHOTOS_BUCKET).remove(photos.map((p) => p.storage_path));

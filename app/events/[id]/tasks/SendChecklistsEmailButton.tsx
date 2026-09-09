@@ -9,6 +9,9 @@ import { CHECKLIST_EMAIL_TO, CHECKLIST_EMAIL_CC } from "@/lib/checklistEmailReci
 import type { ClosingChecklistCategory } from "@/lib/closingChecklist";
 import type { EventRow } from "@/lib/types";
 
+// Deliberately just the shape needed for the event manager's own closing
+// checklist - callers only ever pass that one checklist here now (see
+// tasks/page.tsx), not the full ROLE_CHECKLISTS set.
 export interface ChecklistForEmail {
   key: string;
   title: string;
@@ -19,8 +22,6 @@ export interface ChecklistForEmail {
   showCategoryLabels?: boolean;
   signedByName?: string | null;
   signatureData?: string | null;
-  managerCosignedByName?: string | null;
-  managerCosignatureData?: string | null;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -136,10 +137,9 @@ export function SendChecklistsEmailButton({
   managerName: string | null;
   managerEmail: string | null;
   guestCommitment: string | null;
+  // Just the event manager's own closing checklist (see tasks/page.tsx) -
+  // gated on it and the event summary report both being signed.
   checklists: ChecklistForEmail[];
-  // Gated on the event manager's own checklist and the event summary report
-  // both being signed - he can send with whichever role checklists happen to
-  // be ready, no need to wait for every role holder to sign theirs.
   canSend: boolean;
   blockedReasons: string[];
   summaryReportSignedByName: string | null;
@@ -168,7 +168,7 @@ export function SendChecklistsEmailButton({
     `דוח סיכום אירוע - ${nameLabel}` + (dayMonth ? `.${dayMonth}` : "") + (managerName ? ` - ${managerName}` : "");
   const dateForFilename = fileDate(event.event_date);
   const filenameBase = dateForFilename;
-  const defaultBodyText = `מצורפים כל צ&apos;קליסטי הסגירה ודוח סיכום האירוע עבור ${eventLabel}.${
+  const defaultBodyText = `מצורפים צ&apos;קליסט מנהל האירוע ודוח סיכום האירוע עבור ${eventLabel}.${
     managerName ? `<br/>נשלח על ידי: ${managerName}` : ""
   }`;
   const bodyText = bodyOverride ?? defaultBodyText;
@@ -177,13 +177,13 @@ export function SendChecklistsEmailButton({
     ...checklists.map((checklist) => ({
       key: checklist.key,
       filenameTitle: checklist.title,
-      // "צ'קליסט סגירה - מנהל אירוע" -> "מנהל אירוע", "...- מנהל פלור" ->
-      // "מנהל פלור" - the signer's role/title shown under their signature.
+      // "צ'קליסט סגירה - מנהל אירוע" -> "מנהל אירוע" - the signer's role/
+      // title shown under their signature.
       signerLabel: checklist.title.replace("צ'קליסט סגירה - ", ""),
       signedByName: checklist.signedByName ?? null,
       signatureData: checklist.signatureData ?? null,
-      managerCosignedByName: checklist.managerCosignedByName ?? null,
-      managerCosignatureData: checklist.managerCosignatureData ?? null,
+      managerCosignedByName: null,
+      managerCosignatureData: null,
       body: (
         <ChecklistPrintable
           title={checklist.title}
@@ -216,8 +216,6 @@ export function SendChecklistsEmailButton({
       ),
     },
   ];
-
-  const unsignedTitles = checklists.filter((c) => !c.signatureData).map((c) => c.title);
 
   async function prepare() {
     setStep("preparing");
@@ -278,20 +276,13 @@ export function SendChecklistsEmailButton({
       )}
 
       {step === "idle" && canSend && (
-        <>
-          {unsignedTitles.length > 0 && (
-            <p className="text-xs text-foreground/60">
-              עדיין לא נחתמו (יישלחו כפי שהם): {unsignedTitles.join(", ")}
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={prepare}
-            className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
-          >
-            שליחת כל הצ&apos;קליסטים במייל
-          </button>
-        </>
+        <button
+          type="button"
+          onClick={prepare}
+          className="rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft"
+        >
+          שליחת צ&apos;קליסט מנהל אירוע ודוח סיכום במייל
+        </button>
       )}
 
       {step === "preparing" && (
@@ -379,7 +370,7 @@ export function SendChecklistsEmailButton({
 
           {step !== "sent" && (
             <p className="text-xs text-foreground/60">
-              לאחר השליחה, תמונות הצ&apos;קליסטים ודוח הסיכום יימחקו מהאחסון (הן נשמרות כחלק מקובצי ה-PDF שנשלחו).
+              לאחר השליחה, תמונות הצ&apos;קליסט ודוח הסיכום יימחקו מהאחסון (הן נשמרות כחלק מקובצי ה-PDF שנשלחו).
             </p>
           )}
 

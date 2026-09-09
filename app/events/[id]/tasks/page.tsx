@@ -191,6 +191,9 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
   const closingChecklistSignature = signatureFor("closing_checklist");
   const summaryReportSignature = signatureFor("event_summary_report");
 
+  // Only the event manager's own closing checklist accompanies the summary
+  // report in this email - the other role checklists (floor manager/bar/
+  // barista) are reviewed/signed in-app but never attached here.
   const checklistsForEmail: ChecklistForEmail[] = [
     {
       key: "closing_checklist",
@@ -203,22 +206,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       signedByName: closingChecklistSignature?.signed_by_name ?? null,
       signatureData: closingChecklistSignature?.signature_data ?? null,
     },
-    ...ROLE_CHECKLISTS.map((definition) => {
-      const signature = signatureFor(definition.key);
-      return {
-        key: definition.key,
-        title: definition.label,
-        categories: definition.categories,
-        checkedKeys:
-          roleChecklistChecks?.filter((row) => row.checklist_key === definition.key).map((row) => row.item_key) ?? [],
-        note: roleChecklistNotes?.find((row) => row.checklist_key === definition.key)?.note ?? null,
-        noteLabel: definition.noteLabel,
-        signedByName: signature?.signed_by_name ?? null,
-        signatureData: signature?.signature_data ?? null,
-        managerCosignedByName: signature?.manager_signed_by_name ?? null,
-        managerCosignatureData: signature?.manager_signature_data ?? null,
-      };
-    }),
   ];
 
   // The event manager's own checklist and the event summary report both need
