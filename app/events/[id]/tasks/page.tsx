@@ -125,6 +125,15 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     initialNote: roleChecklistNotes?.find((row) => row.checklist_key === definition.key)?.note ?? null,
   }));
   const canReadAnyRoleChecklist = roleChecklistPermissions.some((entry) => entry.canRead);
+  // Shown ahead of the event manager's own closing checklist (not just
+  // ahead of the other role checklists) - it's the primary checklist for an
+  // אירוע עסקי, per venue request.
+  const businessEventChecklistEntry = roleChecklistPermissions.find(
+    (entry) => entry.definition.key === "business_event_checklist",
+  );
+  const otherRoleChecklistEntries = roleChecklistPermissions.filter(
+    (entry) => entry.definition.key !== "business_event_checklist",
+  );
   const closingChecklistNote =
     roleChecklistNotes?.find((row) => row.checklist_key === "closing_checklist")?.note ?? null;
 
@@ -222,6 +231,44 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
   const inputClass = "rounded-md border border-border-classic bg-surface px-2.5 py-1.5 text-sm";
   const reportLabelClass = "flex flex-col gap-1 text-sm";
 
+  function renderRoleChecklist({
+    definition,
+    canRead: canReadThis,
+    canWrite: canWriteThis,
+    initialCheckedKeys,
+    initialNote,
+  }: (typeof roleChecklistPermissions)[number]) {
+    if (!canReadThis) return null;
+    const signature = signatureFor(definition.key);
+    return (
+      <RoleChecklist
+        key={definition.key}
+        checklistKey={definition.key}
+        title={definition.label}
+        categories={definition.categories}
+        eventId={eventId}
+        eventName={event?.name ?? ""}
+        eventType={event?.event_type ?? null}
+        eventDate={event?.event_date ?? null}
+        canEdit={canWriteThis}
+        initialCheckedKeys={initialCheckedKeys}
+        noteLabel={definition.noteLabel}
+        initialNote={initialNote}
+        isSigned={!!signature}
+        signedByName={signature?.signed_by_name}
+        signedAt={signature?.signed_at}
+        signatureData={signature?.signature_data}
+        currentStaffName={currentStaff?.name}
+        managerName={managerName}
+        canManagerCosign={canEditChecklist}
+        managerSignedByName={signature?.manager_signed_by_name}
+        managerSignedAt={signature?.manager_signed_at}
+        managerSignatureData={signature?.manager_signature_data}
+        photos={photosFor(definition.key)}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {canEditChecklist && event && (
@@ -238,6 +285,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           summaryReportPhotoUrls={photosFor("event_summary_report").map((photo) => photo.url)}
         />
       )}
+
+      {businessEventChecklistEntry && renderRoleChecklist(businessEventChecklistEntry)}
 
       {canReadChecklist && (
         <ClosingChecklist
@@ -258,39 +307,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         />
       )}
 
-      {roleChecklistPermissions.map(
-        ({ definition, canRead: canReadThis, canWrite: canWriteThis, initialCheckedKeys, initialNote }) => {
-          if (!canReadThis) return null;
-          const signature = signatureFor(definition.key);
-          return (
-            <RoleChecklist
-              key={definition.key}
-              checklistKey={definition.key}
-              title={definition.label}
-              categories={definition.categories}
-              eventId={eventId}
-              eventName={event?.name ?? ""}
-              eventType={event?.event_type ?? null}
-              eventDate={event?.event_date ?? null}
-              canEdit={canWriteThis}
-              initialCheckedKeys={initialCheckedKeys}
-              noteLabel={definition.noteLabel}
-              initialNote={initialNote}
-              isSigned={!!signature}
-              signedByName={signature?.signed_by_name}
-              signedAt={signature?.signed_at}
-              signatureData={signature?.signature_data}
-              currentStaffName={currentStaff?.name}
-              managerName={managerName}
-              canManagerCosign={canEditChecklist}
-              managerSignedByName={signature?.manager_signed_by_name}
-              managerSignedAt={signature?.manager_signed_at}
-              managerSignatureData={signature?.manager_signature_data}
-              photos={photosFor(definition.key)}
-            />
-          );
-        },
-      )}
+      {otherRoleChecklistEntries.map(renderRoleChecklist)}
 
       {canReadSummary && (
       <details className="rounded-lg border border-border-classic bg-surface p-4">

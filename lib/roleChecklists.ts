@@ -28,7 +28,7 @@ export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
   // other event type, since eventTypes hides it from all of them entirely).
   {
     key: "business_event_checklist",
-    label: "צ'קליסט סגירה - ספקי הפקה (אירוע עסקי)",
+    label: "צ'קליסט סגירה - אירוע עסקי",
     noteLabel: "הערות",
     eventTypes: ["business_event"],
     categories: [
