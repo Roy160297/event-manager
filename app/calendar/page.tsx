@@ -89,10 +89,13 @@ export default async function CalendarPage({
   // month to month instead of shifting around based on who happens to have
   // events right now.
   const managerColors = assignManagerColors(managerCandidates.map((m) => m.name));
-  const managerLegend: ManagerLegendEntry[] = managerCandidates.map((m) => ({
-    name: m.name,
-    color: managerColors.get(m.name) ?? UNASSIGNED_MANAGER_COLOR,
-  }));
+  // managerColors only has entries for managers assignManagerColors didn't
+  // exclude (see MANAGER_LEGEND_EXCLUDED in lib/labels.ts) - filter the
+  // legend list the same way, or an excluded manager would still show up
+  // here with a fallback gray color instead of being left out entirely.
+  const managerLegend: ManagerLegendEntry[] = managerCandidates
+    .filter((m) => managerColors.has(m.name))
+    .map((m) => ({ name: m.name, color: managerColors.get(m.name)! }));
 
   const eventsByDate = new Map<string, CalendarEvent[]>();
   for (const event of events ?? []) {
