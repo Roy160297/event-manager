@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getClosingChecklistForEventType, getClosingChecklistKeysForEventType } from "@/lib/closingChecklist";
+import { ALL_CLOSING_CHECKLIST_KEYS, CLOSING_CHECKLIST } from "@/lib/closingChecklist";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
@@ -16,6 +16,8 @@ import {
   signChecklist,
   unsignChecklist,
 } from "./actions";
+
+const TOTAL_ITEMS = CLOSING_CHECKLIST.reduce((sum, category) => sum + category.items.length, 0);
 
 export default function ClosingChecklist({
   eventId,
@@ -48,10 +50,6 @@ export default function ClosingChecklist({
   currentStaffName?: string | null;
   photos: ChecklistPhoto[];
 }) {
-  const categories = getClosingChecklistForEventType(eventType);
-  const totalItems = categories.reduce((sum, category) => sum + category.items.length, 0);
-  const keysForEventType = getClosingChecklistKeysForEventType(eventType);
-
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
@@ -107,10 +105,10 @@ export default function ClosingChecklist({
   async function markAll() {
     const previous = checked;
     setError(null);
-    setChecked(new Set(keysForEventType));
+    setChecked(new Set(ALL_CLOSING_CHECKLIST_KEYS));
     setMarking(true);
     try {
-      await markAllClosingChecklist(eventId, eventType);
+      await markAllClosingChecklist(eventId);
     } catch (err) {
       setChecked(previous);
       setError(err instanceof Error ? err.message : "שגיאה בסימון");
@@ -136,7 +134,7 @@ export default function ClosingChecklist({
       <summary className="cursor-pointer text-sm font-medium">
         צ&apos;קליסט סגירה - מנהל אירוע{" "}
         <span className="text-foreground/60">
-          ({checked.size}/{totalItems})
+          ({checked.size}/{TOTAL_ITEMS})
         </span>
         {isSigned && <span className="text-green-700"> · נחתם</span>}
       </summary>
@@ -155,7 +153,7 @@ export default function ClosingChecklist({
             <button
               type="button"
               onClick={markAll}
-              disabled={marking || checked.size === totalItems}
+              disabled={marking || checked.size === TOTAL_ITEMS}
               className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-50"
             >
               סמן הכל
@@ -182,7 +180,7 @@ export default function ClosingChecklist({
             eventName={eventName}
             eventType={eventType}
             eventDate={eventDate}
-            categories={categories}
+            categories={CLOSING_CHECKLIST}
             checked={checked}
             note={note}
             noteLabel="הערות"
@@ -191,7 +189,7 @@ export default function ClosingChecklist({
           />
         </PdfExportButton>
 
-        {categories.map((category) => (
+        {CLOSING_CHECKLIST.map((category) => (
           <div key={category.key} className="flex flex-col gap-2">
             <p className="text-sm font-semibold underline">{category.label}</p>
             <ul className="flex flex-col gap-1.5">

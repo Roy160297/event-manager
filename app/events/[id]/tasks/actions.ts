@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { ALL_CLOSING_CHECKLIST_KEYS, getClosingChecklistKeysForEventType } from "@/lib/closingChecklist";
+import { ALL_CLOSING_CHECKLIST_KEYS } from "@/lib/closingChecklist";
 import { ROLE_CHECKLIST_KEYS } from "@/lib/roleChecklists";
-import type { EventType, TaskPriority, TaskStatus } from "@/lib/types";
+import type { TaskPriority, TaskStatus } from "@/lib/types";
 
 export async function createTask(eventId: string, formData: FormData) {
   const supabase = await createClient();
@@ -108,17 +108,9 @@ export async function clearClosingChecklist(eventId: string) {
   revalidatePath(`/events/${eventId}/tasks`);
 }
 
-// Only marks the items actually shown for this event's type (e.g. a wedding
-// never gets the business-event-only category's keys written) - otherwise
-// "סמן הכל" would silently create checked-state rows for items the UI never
-// renders for that event, making the checked/total count wrong forever
-// after (e.g. "24/20").
-export async function markAllClosingChecklist(eventId: string, eventType: EventType | null) {
+export async function markAllClosingChecklist(eventId: string) {
   const supabase = await createClient();
-  const rows = Array.from(getClosingChecklistKeysForEventType(eventType)).map((itemKey) => ({
-    event_id: eventId,
-    item_key: itemKey,
-  }));
+  const rows = Array.from(ALL_CLOSING_CHECKLIST_KEYS).map((itemKey) => ({ event_id: eventId, item_key: itemKey }));
   const { error } = await supabase.from("closing_checklist_checks").upsert(rows);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/tasks`);
