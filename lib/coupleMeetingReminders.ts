@@ -153,9 +153,9 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     anchor: "event_date",
     offsetDays: 0,
     dateCondition: (event) => !isFridayEvent(event),
-    subject: "תזכורת: צ'קליסט ציוד ומעטפות ספק/טיפ",
+    subject: "תזכורת: צ'קליסט ציוד ומעטפות ספקים/טיפים",
     body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים היום: יש לוודא מול הזוג את צ'קליסט הציוד, וכן את מעטפות הספק/טיפ.`,
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים היום: יש לוודא מול הזוג את צ'קליסט הציוד, וכן את מעטפות הספקים/טיפים.`,
   },
   {
     key: "equipment-checklist-envelopes-friday-eve",
@@ -163,9 +163,9 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     offsetDays: -1,
     runWindow: "evening",
     dateCondition: isFridayEvent,
-    subject: "תזכורת: צ'קליסט ציוד ומעטפות ספק/טיפ (אירוע יום שישי מחר)",
+    subject: "תזכורת: צ'קליסט ציוד ומעטפות ספקים/טיפים (אירוע יום שישי מחר)",
     body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר (יום שישי): יש לוודא מול הזוג את צ'קליסט הציוד, וכן את מעטפות הספק/טיפ.`,
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר (יום שישי): יש לוודא מול הזוג את צ'קליסט הציוד, וכן את מעטפות הספקים/טיפים.`,
   },
 ];
 

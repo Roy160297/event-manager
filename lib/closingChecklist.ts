@@ -72,6 +72,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "hall-buffet-cables", text: "ניתוק כבלי חשמל מקירות עמדות המזנונים." },
       { key: "hall-black-bins", text: 'פחים שחורים באירועים חד"פ שעברו שטיפה - מתרכזים לפני חדר המלצרים.' },
       { key: "hall-after-equipment", text: "כלי הגשה וציוד האפטר - מנוקה ומוחזר לארגז ציוד." },
+      { key: "hall-barista-baskets-return", text: "החזרת באסקטים של הבריסטה לשטיפה." },
       {
         key: "hall-tables-cleaning",
         text: "ניקיון שולחנות עם סקוץ' וסבון ומים (לא להרטיב את הפלטת העץ) - מנהל צריך לפקח שלא שמים הרבה סבון.",
@@ -152,7 +153,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         key: "electrical-niche-cleaning",
         text: "ניקיון נישת החשמל משאריות אוכל, קשים, לימונים, בדלי סיגריות וכל לכלוך אחר.",
       },
-      { key: "electrical-breaker-check", text: "לוודא שלא ירדו מפסקים 3, 8, 10 (בלוח החשמל)." },
+      { key: "electrical-breaker-check", text: "לוודא שלא ירדו המפסקים שצריך (בלוח החשמל)." },
     ],
   },
   {
