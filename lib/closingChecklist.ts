@@ -19,33 +19,27 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
     key: "yard",
     label: "חצר + חזיתות",
     items: [
-      { key: "yard-reception-cleanup", text: "ניקיון עמדות קבלת פנים: ניקיון של כל החלק העליון + בטן המזנון." },
+      {
+        key: "yard-reception-cleanup",
+        text: "ניקיון עמדות קבלת פנים: החלק העליון + בטן המזנון + השארת ציוד קבוע בבטן המזנון. הזזת המזנונים לטובת טאטוא.",
+      },
       {
         key: "yard-reception-trash-pile",
-        text: "פינוי של פחים עמדות קבלת הפנים - מרוכזים בערימה בתוך האולם ליד המקרר קרח בעמדת פינויים.",
+        text: "פינוי של פחים עמדות קבלת הפנים לשטיפה.",
       },
       {
         key: "yard-ice-fridge-area",
         text: "לוודא שאזור מקרר הקרח בעמדת הפינויים נקי ומסודר (כולל חיפוש מפיות, מגשים וציוד מאחורי המקרר).",
       },
-      {
-        key: "yard-reception-leftover-equipment",
-        text: "נשאר בעמדות קבלת פנים: סטנדים, כלי הגשה כבדים (משטח אבן וקרמיקה מוגבהת). כבלים מאריכים מקופלים בפנים.",
-      },
-      {
-        key: "yard-bread-oven",
-        text: "ניקיון יסודי של תנור הלחם + מלקחי הוצאת הלחם ומקררי החצר.",
-      },
-      { key: "yard-furniture-cleaning", text: "ניקוי ריהוט חצר: ניקוי שולחנות קפה, כסאות, ספות + שולחן נלווה." },
       { key: "yard-sofa-cushions", text: "החזרת כריות ספות האירוח פנימה." },
       { key: "yard-tables-cover", text: "כיסוי שולחנות חצר." },
       { key: "yard-buffets-cover", text: "כיסוי מזנונים חיצוניים." },
-      { key: "yard-sweep", text: "מטאטא יסודי בחצר." },
-      { key: "yard-chuppah-cleanup", text: "ניקיון שולחן חופה ושברי זכוכית וזוהמה מהרצפה." },
+      { key: "yard-sweep", text: "ניקוי חצר: מטאטא יסודי, ניקוי שולחנות וספות." },
+      { key: "yard-chuppah-cleanup", text: "ניקיון שולחן חופה ושברי זכוכית ולכלוך מהרצפה." },
       { key: "yard-chuppah-decoration-removal", text: "הסרת עיצוב מהחופה." },
       {
         key: "yard-hostess-station",
-        text: "ניקיון עמדת מארחת + בטן העמדה + כיסאות + עמדות חבלול, ולהכניס אותה בסיום האירוע פנימה.",
+        text: "ניקיון עמדת מארחת + בטן העמדה + להכניס כיסאות, צ'ילר ועמדות חבלול, ולהכניס אותה בסיום האירוע פנימה.",
       },
       {
         key: "yard-tablecloths-sorting",
@@ -67,10 +61,9 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
     items: [
       {
         key: "hall-buffet-cleaning",
-        text: 'ניקיון כל עמדות המזנונים באולם: חלק עליון + בטן במזנון. לא נשאר כלום (מלבד פק"ל מזנון). לוודא שאין שאריות אוכל - הזזת כל המזנונים לצורך ניקיון יסודי.',
+        text: "ניקיון כל עמדות המזנונים באולם: החלק העליון + בטן המזנון + השארת ציוד קבוע בבטן המזנון. הזזת המזנונים לטובת טאטוא.",
       },
       { key: "hall-buffet-cables", text: "ניתוק כבלי חשמל מקירות עמדות המזנונים." },
-      { key: "hall-black-bins", text: 'פחים שחורים באירועים חד"פ שעברו שטיפה - מתרכזים לפני חדר המלצרים.' },
       { key: "hall-after-equipment", text: "כלי הגשה וציוד האפטר - מנוקה ומוחזר לארגז ציוד." },
       { key: "hall-barista-baskets-return", text: "החזרת באסקטים של הבריסטה לשטיפה." },
       {
@@ -83,10 +76,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         text: "מעבר על הגלריה (ניקוי שולחנות, כסאות, גרם מדרגות ווידוא שרצפת המזנון בגלריה נקייה ומסודרת).",
       },
       { key: "hall-ice-cream-fridge", text: "לוודא שמקרר הגלידה מחובר לחשמל." },
-      {
-        key: "hall-waiters-cabinet-and-room",
-        text: "לוודא סדר בארון המלצרים (פנקסים, מגבונים, עטים, קיסמים וכפפות - כל אחד בתא שלו), וכן ניקיון וסדר בחדר המלצרים והלוקרים - תלייה מסודרת של כל החולצות הנקיות על הקולבים, תיקון הסינרים, וסידור המדפים מעל הלוקרים.",
-      },
+      { key: "hall-waiters-cabinet-and-room", text: "לוודא סדר בחדר המלצרים." },
       {
         key: "hall-shirts-sorting",
         text: "חולצות שחורות מלוכלכות בכניסה לחדר בשקית כתומה; חולצות נקיות חוזרות לקולב.",
@@ -128,9 +118,8 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "office-ac-off", text: "לכבות אורות (שני מתגים) ומזגנים." },
       {
         key: "office-hostess-equipment",
-        text: "לוודא שהדברים מעמדת המארחות חזרו: 2 אייפדים, 2 קאונטרים, 2 מטענים.",
+        text: "לוודא שהדברים מעמדת המארחות חזרו: 2 אייפדים (מוטענים), 2 קאונטרים, 2 מטענים.",
       },
-      { key: "office-ipads-charging", text: "האייפדים מחוברים לטעינה." },
       { key: "office-photo-summary", text: 'צילום הקאונטרים ועמוד "הצטרפות אורחים".' },
     ],
   },
@@ -147,12 +136,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "electrical-kitchen-hood", text: "כיבוי מנדף מטבח יצרן." },
       { key: "electrical-yard-fans", text: "כיבוי מאווררים וצ'ילרים באולם ובחצר." },
       { key: "electrical-outer-kitchen-lights-both-floors", text: "כיבוי אורות במטבח החיצוני (שתי הקומות)." },
-      { key: "electrical-path-light", text: "כיבוי תאורת השביל." },
-      { key: "electrical-restroom-light", text: "כיבוי תאורת השירותים." },
-      {
-        key: "electrical-niche-cleaning",
-        text: "ניקיון נישת החשמל משאריות אוכל, קשים, לימונים, בדלי סיגריות וכל לכלוך אחר.",
-      },
+      { key: "electrical-restroom-light", text: "כיבוי תאורת השביל והשירותים." },
       { key: "electrical-breaker-check", text: "לוודא שלא ירדו המפסקים שצריך (בלוח החשמל)." },
     ],
   },
