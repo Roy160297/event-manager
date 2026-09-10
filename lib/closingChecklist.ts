@@ -35,8 +35,8 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "yard-tables-cover", text: "כיסוי שולחנות חצר." },
       { key: "yard-buffets-cover", text: "כיסוי מזנונים חיצוניים." },
       { key: "yard-sweep", text: "ניקוי חצר: מטאטא יסודי, ניקוי שולחנות וספות." },
-      { key: "yard-chuppah-cleanup", text: "ניקיון שולחן חופה ושברי זכוכית ולכלוך מהרצפה." },
       { key: "yard-chuppah-decoration-removal", text: "הסרת עיצוב מהחופה." },
+      { key: "yard-chuppah-cleanup", text: "ניקוי איזור חופה (לאחר הסרת עיצוב)." },
       {
         key: "yard-hostess-station",
         text: "ניקיון עמדת מארחת + בטן העמדה + להכניס כיסאות, צ'ילר ועמדות חבלול, ולהכניס אותה בסיום האירוע פנימה.",
@@ -49,7 +49,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         key: "yard-glasses-cigarettes",
         text: "פינוי כוסות וסיגריות מהיקף החצר, וכל העציצים והאדניות בחצר ובתוך האולם.",
       },
-      { key: "yard-ashtrays", text: "לנקות מאפרות אפורות (שטיפה במטבח) ולרכז ליד שביל הפחים." },
+      { key: "yard-ashtrays", text: "לנקות מאפרות אפורות (שטיפה במטבח)." },
       { key: "yard-sidewalk-scan", text: "סריקה של המדרכה בצידי האולם, איסוף חפצים שנשארו בחוץ (כוסות וכלים)." },
       { key: "yard-trash-bins", text: "לוודא שפחי האשפה סגורים ואין דליפה על הרצפה." },
       { key: "yard-return-bins", text: "החזרת פחי הפינויים למקומם ולוודא שלמשאית יש גישה נוחה לפחים." },
@@ -63,10 +63,11 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
         key: "hall-buffet-cleaning",
         text: "ניקיון כל עמדות המזנונים באולם: החלק העליון + בטן המזנון + השארת ציוד קבוע בבטן המזנון. הזזת המזנונים לטובת טאטוא.",
       },
-      { key: "hall-buffet-cables", text: "ניתוק כבלי חשמל מקירות עמדות המזנונים." },
       { key: "hall-after-equipment", text: "כלי הגשה וציוד האפטר - מנוקה ומוחזר לארגז ציוד." },
-      { key: "hall-barista-baskets-return", text: "החזרת באסקטים של הבריסטה לשטיפה." },
-      { key: "hall-barista-disposal-check", text: "בדיקת פינויים ליד הבריסטה (בכניסה למטבח)." },
+      {
+        key: "hall-barista-disposal-check",
+        text: "בדיקת פינויים ליד הבריסטה (בכניסה למטבח) והחזרת באסקטים של הבריסטה לשטיפה.",
+      },
       {
         key: "hall-tables-cleaning",
         text: "ניקיון שולחנות עם סקוץ' וסבון ומים (לא להרטיב את הפלטת העץ) - מנהל צריך לפקח שלא שמים הרבה סבון.",
