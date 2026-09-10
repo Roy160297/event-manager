@@ -3,37 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { deleteChecklistPhoto, uploadChecklistPhoto } from "@/app/events/[id]/tasks/actions";
+import { compressImage } from "@/lib/clientImageCompress";
 
 export interface ChecklistPhoto {
   id: string;
   url: string;
   storagePath: string;
-}
-
-// Full-resolution phone photos (often 8-15MB) can exceed the server action
-// body size limit and are slow to upload over venue wifi - downscale to a
-// reasonable max dimension and re-encode as JPEG before sending. Falls back
-// to the original file if compression fails or doesn't actually help.
-async function compressImage(file: File, maxDimension = 1600, quality = 0.82): Promise<File> {
-  if (!file.type.startsWith("image/")) return file;
-  try {
-    const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
-    const width = Math.round(bitmap.width * scale);
-    const height = Math.round(bitmap.height * scale);
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return file;
-    ctx.drawImage(bitmap, 0, 0, width, height);
-    bitmap.close();
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
-    if (!blob || blob.size >= file.size) return file;
-    return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
-  } catch {
-    return file;
-  }
 }
 
 // Shared "attach photos" section for the end of every checklist (after its
@@ -80,7 +55,7 @@ export function ChecklistPhotos({
     setIsUploading(true);
     try {
       for (const file of files) {
-        const compressed = await compressImage(file);
+        const compressed = await compressImage(file, 1600, 0.82);
         const formData = new FormData();
         formData.set("file", compressed);
         await uploadChecklistPhoto(eventId, checklistKey, formData, slot);
@@ -94,6 +69,16 @@ export function ChecklistPhotos({
       if (message.includes("Failed to find Server Action")) {
         setError("האתר עודכן לגרסה חדשה - טוען מחדש...");
         setTimeout(() => window.location.reload(), 1200);
+      } else if (err instanceof TypeError && /fetch/i.test(message)) {
+        // A flaky connection (venue wifi) can drop the response after the
+        // upload already finished server-side - the browser's own network
+        // error ("Failed to fetch") fires either way, so this doesn't mean
+        // the photo wasn't actually saved. Refresh automatically instead of
+        // leaving a scary error up for something that likely worked; the
+        // message clears itself once the refreshed photo list comes back.
+        setError("החיבור נקטע באמצע ההעלאה - בודק אם התמונה בכל זאת הועלתה...");
+        router.refresh();
+        setTimeout(() => setError(null), 2500);
       } else {
         setError(message);
       }
