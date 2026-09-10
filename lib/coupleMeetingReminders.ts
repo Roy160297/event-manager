@@ -75,15 +75,6 @@ function isFridayEvent(event: ReminderBodyEvent): boolean {
 
 export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
   {
-    key: "meeting-guidelines-email",
-    anchor: "couple_meeting_date",
-    offsetDays: -3,
-    matchMode: "onOrAfter",
-    subject: "תזכורת: שליחת דף הנחיות לזוג",
-    body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום התאריך לשליחת דף ההנחיות לזוג במייל (עד 3 ימים לפני הפגישה).`,
-  },
-  {
     key: "meeting-day-arrival-confirmation",
     anchor: "couple_meeting_date",
     offsetDays: 0,
@@ -97,7 +88,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     offsetDays: 1,
     subject: "תזכורת: משימות לאחר פגישת הזוג",
     body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום יום אחרי פגישת הזוג - יש לוודא ביצוע המשימות הבאות:<ul><li>פתיחת קבוצת וואטסאפ עם הזוג.</li><li>שליחת הנקודות העיקריות מהפגישה, וכן נקודות להמשך.</li><li>שליחת אנשי קשר לזוג (מנהל בר, מנהל הקמה ושף).</li><li>שליחת טופס האירוע לזוג.</li><li>העלאת טופס אירוע ל-iPlan (עד יום אחרי הפגישה).</li><li>הכנת סקיצה ראשונית ב-iPlan (לפי כמות ההתחייבות).</li></ul>`,
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום יום אחרי פגישת הזוג - יש לוודא ביצוע המשימות הבאות:<ul><li>פתיחת קבוצת וואטסאפ עם הזוג.</li><li>שליחת הנקודות העיקריות מהפגישה, וכן נקודות להמשך.</li><li>שליחת דף ההנחיות לזוג במייל (לאחר שעברתם עליו יחד בפגישה).</li><li>שליחת אנשי קשר לזוג (מנהל בר, מנהל הקמה ושף).</li><li>שליחת טופס האירוע לזוג.</li><li>העלאת טופס אירוע ל-iPlan (עד יום אחרי הפגישה).</li><li>הכנת סקיצה ראשונית ב-iPlan (לפי כמות ההתחייבות).</li></ul>`,
   },
   {
     key: "final-commitment-and-sketch-update",
