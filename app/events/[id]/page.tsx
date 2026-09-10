@@ -386,7 +386,7 @@ export default async function EventOverviewPage({
             <span className="font-medium">מידע נוסף</span>
             <textarea
               name="menu_notes"
-              rows={2}
+              rows={6}
               defaultValue={event?.menu_notes ?? (event?.event_type !== "business_event" ? DEFAULT_ADDITIONAL_INFO : "")}
               className={inputClass}
             />
