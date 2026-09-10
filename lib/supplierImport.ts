@@ -62,6 +62,12 @@ export async function extractSuppliersFromImage(buffer: Buffer, mimeType: string
     config: {
       responseMimeType: "application/json",
       responseSchema: RESPONSE_SCHEMA,
+      // Without this, a stalled call (rather than a clean error) would have
+      // nothing forcing it to give up, and could sit until the hosting
+      // page's own maxDuration hard-kills the function mid-response -
+      // surfacing as React's generic "unexpected response from the server"
+      // instead of a normal error (same failure mode fixed in imageImport.ts).
+      abortSignal: AbortSignal.timeout(20_000),
     },
   });
 

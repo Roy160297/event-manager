@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { addSuppliersFromImport, parseSupplierImage } from "@/app/events/actions";
 import { ImageDropZone } from "@/components/ImageDropZone";
+import { compressImage } from "@/lib/clientImageCompress";
 import type { SupplierImportDraft } from "@/lib/supplierImport";
 
 const inputClass = "rounded-md border border-border-classic bg-surface px-2 py-1.5 text-sm";
@@ -23,6 +24,13 @@ export function SupplierImageImport({ eventId }: { eventId: string }) {
     const formData = new FormData(e.currentTarget);
     setIsPending(true);
     try {
+      const file = formData.get("file");
+      if (file instanceof File) {
+        // Supplier lists are simple lines of text (not dense small-text UI
+        // like the iPlan screenshots), so a smaller max dimension than that
+        // flow's is fine here - faster upload and a faster Gemini read.
+        formData.set("file", await compressImage(file, 1600, 0.85));
+      }
       const result = await parseSupplierImage(formData);
       if (result.length === 0) throw new Error("לא זוהו ספקים בתמונה");
       setSuppliers(result);
