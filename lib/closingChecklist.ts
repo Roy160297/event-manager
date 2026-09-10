@@ -66,6 +66,7 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "hall-buffet-cables", text: "ניתוק כבלי חשמל מקירות עמדות המזנונים." },
       { key: "hall-after-equipment", text: "כלי הגשה וציוד האפטר - מנוקה ומוחזר לארגז ציוד." },
       { key: "hall-barista-baskets-return", text: "החזרת באסקטים של הבריסטה לשטיפה." },
+      { key: "hall-barista-disposal-check", text: "בדיקת פינויים ליד הבריסטה (בכניסה למטבח)." },
       {
         key: "hall-tables-cleaning",
         text: "ניקיון שולחנות עם סקוץ' וסבון ומים (לא להרטיב את הפלטת העץ) - מנהל צריך לפקח שלא שמים הרבה סבון.",
@@ -131,7 +132,6 @@ export const CLOSING_CHECKLIST: ClosingChecklistCategory[] = [
       { key: "electrical-inner-cabinet-switch-off", text: "כיבוי אור של ארון חשמל פנימי." },
       { key: "electrical-hall-ac", text: "כיבוי מזגנים באולם (ליד עמדת מגנטים ובכניסה למטבח)." },
       { key: "electrical-hall-hood", text: "כיבוי מנדף אולם." },
-      { key: "electrical-stoves-off", text: "כיבוי כיריים." },
       { key: "electrical-warming-cabinets", text: "לוודא שארונות החימום כבויים ונקיים." },
       { key: "electrical-kitchen-hood", text: "כיבוי מנדף מטבח יצרן." },
       { key: "electrical-yard-fans", text: "כיבוי מאווררים וצ'ילרים באולם ובחצר." },
