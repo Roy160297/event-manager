@@ -201,14 +201,17 @@ function isTransientOverload(err: unknown): boolean {
   return message.includes("UNAVAILABLE") || message.includes("high demand") || message.includes('"code":503');
 }
 
-// Full-page "ענן" screenshots are dense with many small side-by-side panels
-// - the lite tier has missed clearly-visible fields here (e.g. the
-// guest-commitment panel) on real screenshots, which is unacceptable for a
-// number that drives billing/headcount. The non-lite flash tier reads
-// small/dense text more reliably at a modest cost increase - it's the
-// default, with lite kept only as an overload fallback below.
-const PRIMARY_MODEL = "gemini-flash-latest";
-const FALLBACK_MODEL = "gemini-flash-lite-latest";
+// Full-page "ענן" screenshots are dense with many small side-by-side panels,
+// and the lite tier has missed clearly-visible fields here on real
+// screenshots (e.g. the guest-commitment panel) that the non-lite flash tier
+// reads more reliably. That said, per explicit venue request, upload speed
+// now matters more than squeezing out that last bit of accuracy - staff
+// would rather double-check a couple of fields than wait through repeated
+// "server busy" overload errors - so lite is the default here, with the
+// slower/more-accurate flash tier kept only as a fallback if lite itself is
+// overloaded.
+const PRIMARY_MODEL = "gemini-flash-lite-latest";
+const FALLBACK_MODEL = "gemini-flash-latest";
 
 function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: string, signal: AbortSignal) {
   return ai.models.generateContent({
@@ -306,41 +309,18 @@ async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: stri
   }
 }
 
-// A single Gemini pass over a dense screenshot occasionally comes back with
-// one obviously-visible field left null while everything else is correct -
-// re-running the identical request reliably catches what the first pass
-// missed. Merge rather than replace: trust the first pass's non-null values
-// and only fill the gaps, since the retry itself isn't guaranteed to be
-// strictly better on every field.
-export function mergeExtractions(primary: GeminiExtraction, retry: GeminiExtraction): GeminiExtraction {
-  const merged = { ...primary };
-  for (const key of Object.keys(retry) as (keyof GeminiExtraction)[]) {
-    if (merged[key] == null && retry[key] != null) {
-      (merged as Record<string, unknown>)[key] = retry[key];
-    }
-  }
-  return merged;
-}
-
 export async function extractEventDraftFromImage(buffer: Buffer, mimeType: string): Promise<ImageImportDraft> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY אינו מוגדר בסביבת השרת");
 
   const ai = new GoogleGenAI({ apiKey });
-  // Two independent passes, always run concurrently rather than a serial
-  // "try once, then only retry if a critical field came back missing" - a
-  // single dense-screenshot Gemini call already takes several seconds, and
-  // that serial retry (which triggers often enough on these screenshots to
-  // be the main reason uploads "take forever") used to double the real
-  // wall-clock wait whenever it fired. Running both up front keeps worst-case
-  // latency close to one call's time instead of two calls' time, at the cost
-  // of always paying for a second Gemini call - a few cents, trivial next to
-  // staff time, even on the uploads that didn't strictly need one.
-  const [first, second] = await Promise.all([
-    requestExtraction(ai, buffer, mimeType),
-    requestExtraction(ai, buffer, mimeType),
-  ]);
-  const extraction = mergeExtractions(first, second);
+  // A single pass, not two parallel ones merged together - the second pass
+  // existed purely to catch an occasional missed field, which is a quality
+  // tradeoff staff explicitly asked to give up here in exchange for firing
+  // half as many Gemini requests per upload (directly easing the overload
+  // errors that come from Gemini being under high demand) and not waiting on
+  // the slower of two calls.
+  const extraction = await requestExtraction(ai, buffer, mimeType);
 
   return buildImageImportDraft(extraction);
 }

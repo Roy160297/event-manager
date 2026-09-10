@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCarriedReservePercent, buildImageImportDraft, mergeExtractions, type GeminiExtraction } from "@/lib/imageImport";
+import { applyCarriedReservePercent, buildImageImportDraft, type GeminiExtraction } from "@/lib/imageImport";
 
 const BASE_EXTRACTION: GeminiExtraction = {
   bride_name: "מאיה",
@@ -144,31 +144,5 @@ describe("applyCarriedReservePercent", () => {
   it("falls back to the plain total when there is no previous secure+reserve value", () => {
     expect(applyCarriedReservePercent(300, null)).toBe("300");
     expect(applyCarriedReservePercent(300, "150")).toBe("300");
-  });
-});
-
-describe("mergeExtractions - auto-retry fill-in", () => {
-  it("fills a field the primary pass missed from the retry pass", () => {
-    const merged = mergeExtractions(
-      { ...BASE_EXTRACTION, event_date: null },
-      { ...BASE_EXTRACTION, event_date: "2026-07-04" },
-    );
-    expect(merged.event_date).toBe("2026-07-04");
-  });
-
-  it("keeps the primary pass's value when both passes have one, even if they disagree", () => {
-    const merged = mergeExtractions(
-      { ...BASE_EXTRACTION, guests_secure: 200 },
-      { ...BASE_EXTRACTION, guests_secure: 999 },
-    );
-    expect(merged.guests_secure).toBe(200);
-  });
-
-  it("stays null when neither pass found the field", () => {
-    const merged = mergeExtractions(
-      { ...BASE_EXTRACTION, guests_secure: null },
-      { ...BASE_EXTRACTION, guests_secure: null },
-    );
-    expect(merged.guests_secure).toBeNull();
   });
 });

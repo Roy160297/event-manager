@@ -7,6 +7,7 @@ import { ImageDropZone } from "@/components/ImageDropZone";
 import { DateInput } from "@/components/DateField";
 import { TimeInput } from "@/components/TimeField";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { compressImage } from "@/lib/clientImageCompress";
 import type { EventType, StaffRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -58,6 +59,13 @@ export function ImageUpdateWizard({
     const formData = new FormData(e.currentTarget);
     setIsPending(true);
     try {
+      const file = formData.get("file");
+      if (file instanceof File) {
+        // Downscaling before upload trades some reading accuracy on small
+        // text for a faster upload and a faster Gemini read - a deliberate
+        // tradeoff per venue request, to ease "server busy" overload errors.
+        formData.set("file", await compressImage(file, 1800, 0.85));
+      }
       const result = await parseEventImageUpdate(eventId, formData);
       if ("error" in result) {
         setError(result.error);
