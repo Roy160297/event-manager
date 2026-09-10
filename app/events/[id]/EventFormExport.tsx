@@ -117,7 +117,7 @@ export function EventFormExport({
         )}
 
         {sortedSchedule.length > 0 && (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5" data-pdf-keep-together>
             <p className="text-sm font-bold underline">לוח זמנים</p>
             <ul className="flex flex-col gap-1">
               {sortedSchedule.map((item, index) => (

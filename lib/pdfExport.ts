@@ -52,11 +52,20 @@ const CAPTURE_SCALE = 2;
 // the photo gets sliced in half across two pages. Record each <img>'s
 // vertical span (in canvas-pixel space, matching html2canvas's scale) before
 // capture so the pagination loop below can push the break above the photo
-// instead of through it.
+// instead of through it. Also protects any element marked
+// data-pdf-keep-together (e.g. the schedule list in EventFormExport) the
+// same way, so a block that doesn't fully fit in the remaining space of a
+// page moves to the next one whole rather than getting cut mid-list - if the
+// block itself is taller than a full page, the cut becomes unavoidable and
+// is accepted (same as an oversized photo would be).
 function getProtectedRanges(root: HTMLElement): [number, number][] {
   const rootTop = root.getBoundingClientRect().top;
-  return Array.from(root.querySelectorAll("img")).map((img) => {
-    const rect = img.getBoundingClientRect();
+  const elements = [
+    ...root.querySelectorAll("img"),
+    ...root.querySelectorAll("[data-pdf-keep-together]"),
+  ];
+  return elements.map((el) => {
+    const rect = el.getBoundingClientRect();
     return [(rect.top - rootTop) * CAPTURE_SCALE, (rect.bottom - rootTop) * CAPTURE_SCALE];
   });
 }
