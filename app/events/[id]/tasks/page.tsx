@@ -153,13 +153,13 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     ["כמות מלצרים", event?.waiter_count ?? null],
     ["כמות טבחים", event?.cook_count ?? null],
     ["כמות מנקי מטבח", event?.kitchen_dishwasher_count ?? null],
+    ["שעות מנקי מטבח", event?.kitchen_dishwasher_hours ?? null],
     ["כמות שוטפי כלים", event?.dishwasher_count ?? null],
+    ["שעות שוטפי כלים", event?.dishwasher_hours ?? null],
     ["כמות מאבטחים", event?.security_guard_count ?? null],
+    ["שעות מאבטחים", event?.security_guard_hours ?? null],
     ["שעות מנקה אולם", event?.hall_cleaner_hours ?? null],
     ["שעות מנקה שירותים", event?.restroom_cleaner_hours ?? null],
-    ["שעות מנקי מטבח", event?.kitchen_dishwasher_hours ?? null],
-    ["שעות שוטפי כלים", event?.dishwasher_hours ?? null],
-    ["שעות מאבטחים", event?.security_guard_hours ?? null],
   ];
 
   async function addTask(formData: FormData) {
@@ -489,6 +489,14 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 />
               </label>
               <label className={reportLabelClass}>
+                <span>שעות מנקי מטבח</span>
+                <input
+                  name="kitchen_dishwasher_hours"
+                  defaultValue={event?.kitchen_dishwasher_hours ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
                 <span>כמות שוטפי כלים</span>
                 <input
                   name="dishwasher_count"
@@ -497,10 +505,26 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 />
               </label>
               <label className={reportLabelClass}>
+                <span>שעות שוטפי כלים</span>
+                <input
+                  name="dishwasher_hours"
+                  defaultValue={event?.dishwasher_hours ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
                 <span>כמות מאבטחים</span>
                 <input
                   name="security_guard_count"
                   defaultValue={event?.security_guard_count ?? 2}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>שעות מאבטחים</span>
+                <input
+                  name="security_guard_hours"
+                  defaultValue={event?.security_guard_hours ?? ""}
                   className={inputClass}
                 />
               </label>
@@ -517,30 +541,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <input
                   name="restroom_cleaner_hours"
                   defaultValue={event?.restroom_cleaner_hours ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>שעות מנקי מטבח</span>
-                <input
-                  name="kitchen_dishwasher_hours"
-                  defaultValue={event?.kitchen_dishwasher_hours ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>שעות שוטפי כלים</span>
-                <input
-                  name="dishwasher_hours"
-                  defaultValue={event?.dishwasher_hours ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>שעות מאבטחים</span>
-                <input
-                  name="security_guard_hours"
-                  defaultValue={event?.security_guard_hours ?? ""}
                   className={inputClass}
                 />
               </label>
