@@ -105,16 +105,19 @@ export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
           { key: "bar-sweep-mop", text: "ניקוי מטאטא ומגב בעמדה בה היה הבר במהלך האירוע (כולל בר חוץ)." },
           { key: "bar-rubber-surfaces", text: "ניגוב עם סמרטוט את משטחי הגומי בברים." },
           { key: "bar-outer-cleaning", text: "ניקיון הבר מהחלק החיצוני (מים, סבון וסמרטוט)." },
-          { key: "bar-trash", text: "פינוי כל הזבל השייך לבר לפחים." },
+          { key: "bar-trash", text: "פינוי כל הזבל." },
           { key: "bar-adjacent-surfaces", text: "ניקיון משטחי העמודים שצמודים לבר." },
           {
             key: "bar-consolidate",
             text: "ריכוז הברים במקום המיועד לכך + ריכוז שאר חתיכות הבר בצידי האולם.",
           },
-          { key: "bar-kitchen-drinks-check", text: "בדיקה במטבח באזור המשקאות שאין ארון בקבוקים וקרטונים." },
-          { key: "bar-disposal-check", text: "בדיקה בעמדת הפינויים שאין ספריט שם כלום." },
+          { key: "bar-kitchen-drinks-check", text: "בדיקה במטבח באזור המשקאות שאין בארון בקבוקים וקרטונים." },
           { key: "bar-cabinets-locked", text: "סריקה שכל הארונות נעולים." },
-          { key: "bar-disposal-scan", text: "סריקה בפינויים שאין קרטונים ודברים שקשורים לבר." },
+          {
+            key: "bar-disposal-scan",
+            text: "סריקה בכניסה למטבח החיצוני שאין קרטונים\\באסקטים ודברים שקשורים לבר.",
+          },
+          { key: "bar-cocktail-station-storage", text: "סידור עמדת הקוקטיילים בארונות של הבר (לא מתחת לבריסטה)." },
           { key: "bar-prep-next-event", text: "הכנת הבר לאירוע הבא על פי הנהלים." },
           { key: "bar-cover-outer", text: "לכסות בר חיצוני." },
           {
