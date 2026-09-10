@@ -63,7 +63,7 @@ export async function createEvent(formData: FormData): Promise<string | void> {
   await checkRemindersForEvent(data.id);
 
   revalidatePath("/");
-  redirect(`/events/${data.id}?newEvent=1`);
+  redirect(`/events/${data.id}`);
 }
 
 // Escaped separately from the newline->br swap below so user-edited body

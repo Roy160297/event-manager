@@ -13,7 +13,6 @@ import { canRead, canWrite } from "@/lib/permissions";
 import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
 import { ImageUpdateWizard } from "./ImageUpdateWizard";
-import { WelcomeEmailPrompt } from "./WelcomeEmailPrompt";
 import { SendWelcomeEmailButton } from "./SendWelcomeEmailButton";
 import { SendWhatsAppButton } from "./SendWhatsAppButton";
 import { WELCOME_EMAIL_SUBJECT, buildWelcomeEmailBody, buildMeetingDayWhatsAppMessage } from "@/lib/welcomeEmail";
@@ -38,13 +37,10 @@ export const maxDuration = 60;
 
 export default async function EventOverviewPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ newEvent?: string }>;
 }) {
   const { id } = await params;
-  const { newEvent } = await searchParams;
   const supabase = await createClient();
 
   const [
@@ -106,8 +102,6 @@ export default async function EventOverviewPage({
   // manager is assigned yet, so the email still signs off as a real person.
   const welcomeEmailSenderName = assignedManager?.name ?? currentStaff?.name ?? "";
   const welcomeEmailSenderPhone = assignedManager?.phone ?? null;
-  const showWelcomeEmailPrompt =
-    newEvent === "1" && canWriteEvents && !!event && (!!event.contact_email || !!event.contact_email_2);
 
   async function saveDetails(formData: FormData) {
     "use server";
@@ -132,16 +126,6 @@ export default async function EventOverviewPage({
 
   return (
     <div className="flex flex-col gap-6">
-      {showWelcomeEmailPrompt && event && (
-        <WelcomeEmailPrompt
-          eventId={id}
-          to1={event.contact_email}
-          to2={event.contact_email_2}
-          defaultSubject={WELCOME_EMAIL_SUBJECT}
-          defaultBody={buildWelcomeEmailBody(welcomeEmailSenderName, welcomeEmailSenderPhone)}
-        />
-      )}
-
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-border-classic bg-surface p-4">
           <p className="text-sm text-foreground/60">משימות פתוחות</p>

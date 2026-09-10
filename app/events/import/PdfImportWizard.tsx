@@ -56,7 +56,7 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
         setIsPending(false);
         return;
       }
-      router.push(`/events/${result.eventId}?newEvent=1`);
+      router.push(`/events/${result.eventId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה ביצירת האירוע");
       setIsPending(false);

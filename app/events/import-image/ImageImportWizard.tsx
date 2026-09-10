@@ -9,6 +9,7 @@ import type { ImageImportDraft } from "@/lib/imageImport";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
 import { DateInput } from "@/components/DateField";
 import { TimeInput } from "@/components/TimeField";
+import { compressImage } from "@/lib/clientImageCompress";
 import type { EventType, StaffRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -50,6 +51,13 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
     const formData = new FormData(e.currentTarget);
     setIsPending(true);
     try {
+      const file = formData.get("file");
+      if (file instanceof File) {
+        // Downscaling before upload trades some reading accuracy on small
+        // text for a faster upload and a faster Gemini read - a deliberate
+        // tradeoff per venue request, to ease "server busy" overload errors.
+        formData.set("file", await compressImage(file, 1800, 0.85));
+      }
       const result = await parseImageImport(formData);
       if ("error" in result) {
         setError(result.error);
@@ -76,7 +84,7 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
         setIsPending(false);
         return;
       }
-      router.push(`/events/${result.eventId}?newEvent=1`);
+      router.push(`/events/${result.eventId}`);
     } catch (err) {
       setError(friendlyUploadError(err));
       setIsPending(false);
