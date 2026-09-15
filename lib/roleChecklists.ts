@@ -87,7 +87,7 @@ export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
           { key: "fm-chuppah-cleanup", text: "ניקיון שולחן חופה ושברי זכוכית ולכלוך מהרצפה." },
           {
             key: "fm-trays-count-before-exit",
-            text: "ריכוז וספירת מגשים לפני יציאה + השארת 4 מגשים לפירוק - להשאיר על מכונת הקרח.",
+            text: "ריכוז מגשים מכל האולם על מקרר הקרח.",
           },
         ],
       },
