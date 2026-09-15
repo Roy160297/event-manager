@@ -81,6 +81,13 @@ async function createEventFromImageImportInner(
     managerId = currentStaff?.id ?? null;
   }
 
+  let salesPersonId: string | null = null;
+  if (draft.sales_person_name) {
+    const { data: staff } = await supabase.from("staff").select("id, name").returns<StaffRow[]>();
+    salesPersonId =
+      staff?.find((s) => s.name.trim().toLowerCase() === draft.sales_person_name!.trim().toLowerCase())?.id ?? null;
+  }
+
   const { data, error } = await supabase
     .from("events")
     .insert({
@@ -90,6 +97,7 @@ async function createEventFromImageImportInner(
       start_time: draft.start_time || "19:30",
       end_time: draft.end_time || "03:00",
       manager_id: managerId,
+      sales_person_id: salesPersonId,
       estimated_guests: draft.estimated_guests,
       kids_meal_count: draft.kids_meal_count,
       glat_meal_count: draft.glat_meal_count,
