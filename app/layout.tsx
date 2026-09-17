@@ -57,11 +57,13 @@ export default async function RootLayout({
     switcherManagers = managers.map((manager) => ({ id: manager.id, name: manager.name }));
   }
 
-  // Default the switcher to "only my events" for a staff member whose role
-  // is specifically "מנהל אירועים" - other roles (e.g. system admins, who
-  // are also eligible as manager_id but usually aren't assigned to most
-  // events) default to the full list, same as before this filter existed.
-  const switcherDefaultManagerId = staff?.roleName === "מנהל אירועים" ? staff.id : null;
+  // Default the switcher to "only my events" for anyone who can actually be
+  // assigned as an event's manager (same eligibility as the manager_id
+  // dropdown itself - see getEventManagerCandidates) - not just the
+  // "מנהל אירועים" role, since a system admin can also personally manage
+  // events. Same condition as the main events page's own default (app/page.tsx).
+  const isSelfAManager = staff ? switcherManagers.some((manager) => manager.id === staff.id) : false;
+  const switcherDefaultManagerId = isSelfAManager ? (staff?.id ?? null) : null;
 
   const accountBlock = staff && (
     <div className="flex items-center gap-2.5 text-sm text-foreground/70">
