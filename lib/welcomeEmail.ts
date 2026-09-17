@@ -1,6 +1,6 @@
 export const WELCOME_EMAIL_SUBJECT = "דף הנחיות לפגישה ראשונית - House No. Seven";
 
-export const WELCOME_EMAIL_ATTACHMENT_FILENAME = "הנחיות והכנות לאירוע - חתונה בשבע.docx";
+export const WELCOME_EMAIL_ATTACHMENT_FILENAME = "הנחיות והכנות לאירוע - חתונה בשבע.pdf";
 
 // managerName/managerPhone are the assigned event manager's own details (or,
 // if no manager is assigned yet, whoever is sending the email) - the couple

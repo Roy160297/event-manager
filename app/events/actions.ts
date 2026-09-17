@@ -85,8 +85,8 @@ export async function sendWelcomeEmail(eventId: string, formData: FormData): Pro
     if (!subject || !body.trim()) throw new Error("נושא ותוכן המייל הם שדות חובה");
 
     const currentStaff = await getCurrentStaff();
-    const docxPath = path.join(process.cwd(), "assets", "wedding-welcome-guidelines.docx");
-    const docxBase64 = fs.readFileSync(docxPath).toString("base64");
+    const attachmentPath = path.join(process.cwd(), "assets", "wedding-welcome-guidelines.pdf");
+    const attachmentBase64 = fs.readFileSync(attachmentPath).toString("base64");
 
     await sendChecklistsEmail({
       to,
@@ -94,7 +94,7 @@ export async function sendWelcomeEmail(eventId: string, formData: FormData): Pro
       subject,
       bodyText: escapeHtml(body).replace(/\n/g, "<br/>"),
       replyTo: currentStaff?.email ?? null,
-      attachments: [{ filename: WELCOME_EMAIL_ATTACHMENT_FILENAME, base64: docxBase64 }],
+      attachments: [{ filename: WELCOME_EMAIL_ATTACHMENT_FILENAME, base64: attachmentBase64 }],
     });
 
     revalidatePath(`/events/${eventId}`);
