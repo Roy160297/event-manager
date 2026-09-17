@@ -65,14 +65,6 @@ export interface CoupleMeetingReminderRule {
 
 const mealField = (value: string | null) => value || "—";
 
-// Same UTC-anchored computation as timeline/actions.ts's isFridayDate - kept
-// as a local copy rather than a shared import since that file is a "use
-// server" actions module and this one isn't.
-function isFridayEvent(event: ReminderBodyEvent): boolean {
-  const [year, month, day] = event.event_date.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day)).getUTCDay() === 5;
-}
-
 export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
   {
     key: "meeting-day-arrival-confirmation",
@@ -88,16 +80,16 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     offsetDays: 1,
     subject: "תזכורת: משימות לאחר פגישת הזוג",
     body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום יום אחרי פגישת הזוג - יש לוודא ביצוע המשימות הבאות:<ul><li>פתיחת קבוצת וואטסאפ עם הזוג.</li><li>שליחת הנקודות העיקריות מהפגישה, וכן נקודות להמשך.</li><li>שליחת דף ההנחיות לזוג במייל (לאחר שעברתם עליו יחד בפגישה).</li><li>שליחת טופס האירוע לזוג.</li><li>הכנת סקיצה ראשונית ב-iPlan (לפי כמות ההתחייבות).</li></ul>`,
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום יום אחרי פגישת הזוג - יש לוודא ביצוע המשימות הבאות:<ul><li>פתיחת קבוצת וואטסאפ עם הזוג.</li><li>שליחת הנקודות העיקריות מהפגישה, וכן נקודות להמשך.</li><li>שליחת דף ההנחיות לזוג במייל (לאחר שעברתם עליו יחד בפגישה).</li><li>שליחת טופס האירוע לזוג.</li><li>הכנת סקיצה ראשונית ב-iPlan לפי התחייבות נוכחית.</li></ul>`,
   },
   {
     key: "final-commitment-and-sketch-update",
     anchor: "event_date",
     offsetDays: -7,
     matchMode: "onOrAfter",
-    subject: "תזכורת: התחייבות סופית, iPlan וסקיצה",
+    subject: "תזכורת: עדכון התחייבות סופית",
     body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום התאריך (שבוע לפני האירוע) לביצוע המשימות הבאות:<ul><li>עדכון התחייבות סופית בפרטי האירוע.</li><li>העלאת סקיצה סופית לאתר, לאחר סיום הושבה.</li></ul>`,
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום התאריך (שבוע לפני האירוע) - יש לעדכן את ההתחייבות הסופית בפרטי האירוע.`,
   },
   {
     key: "dj-tzach-ziv-sketch-update",
@@ -117,7 +109,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     body: (event) =>
       `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר - יש לבצע את המשימות הבאות:<ul>` +
       `<li>העלאת קובץ הזמנות (אורחים) לאתר.</li>` +
-      `<li>העלאת סקיצה סופית לאתר.</li>` +
+      `<li>העלאת סקיצה סופית לאתר, לאחר סיום הושבה.</li>` +
       `<li>ווידוא שהזוג מביא את כל הציוד והמעטפות.</li>` +
       `</ul>`,
   },
@@ -138,15 +130,6 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
       `<li>מנות ללא גלוטן: ${mealField(event.gluten_free_meal_count)}</li>` +
       `<li>ילדים מתחת לגיל 2: ${mealField(event.toddlers_under_2_count)}</li>` +
       `</ul>`,
-  },
-  {
-    key: "equipment-checklist-envelopes-day-of",
-    anchor: "event_date",
-    offsetDays: 0,
-    dateCondition: (event) => !isFridayEvent(event),
-    subject: "תזכורת: צ'קליסט ציוד ומעטפות ספקים/טיפים",
-    body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים היום: יש לוודא מול הזוג את צ'קליסט הציוד, וכן את מעטפות הספקים/טיפים.`,
   },
 ];
 

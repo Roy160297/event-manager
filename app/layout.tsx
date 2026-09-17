@@ -38,11 +38,19 @@ export default async function RootLayout({
   let switcherEvents: Pick<EventRow, "id" | "name" | "event_date" | "event_type">[] | null = null;
   if (staff) {
     const supabase = await createClient();
-    const { data } = await supabase
+    let query = supabase
       .from("events")
       .select("id, name, event_date, event_type")
       .is("deleted_at", null)
-      .gte("event_date", todayInIsrael())
+      .gte("event_date", todayInIsrael());
+    // "מנהל אירועים" only manages their own events, so their switcher should
+    // only list those - other roles (e.g. system admins, who are also
+    // eligible as manager_id but usually aren't assigned to most events)
+    // keep seeing the full upcoming list.
+    if (staff.roleName === "מנהל אירועים") {
+      query = query.eq("manager_id", staff.id);
+    }
+    const { data } = await query
       .order("event_date", { ascending: true })
       .returns<Pick<EventRow, "id" | "name" | "event_date" | "event_type">[]>();
     switcherEvents = data;
