@@ -7,6 +7,7 @@ import { canRead } from "@/lib/permissions";
 import { signOut } from "@/app/login/actions";
 import { createClient } from "@/lib/supabase/server";
 import { todayInIsrael } from "@/lib/coupleMeetingReminders";
+import { getEventManagerCandidates } from "@/lib/staff";
 import type { EventRow } from "@/lib/types";
 import "./globals.css";
 
@@ -35,26 +36,32 @@ export default async function RootLayout({
 
   // Fetched here (rather than only within the per-event layout) so the
   // switcher sidebar shows on every page, not just an event's own sub-pages.
-  let switcherEvents: Pick<EventRow, "id" | "name" | "event_date" | "event_type">[] | null = null;
+  // Always the full upcoming list - the switcher itself filters client-side
+  // (see EventSwitcher's manager dropdown) so a user can switch away from
+  // the default without a round trip.
+  let switcherEvents: Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">[] | null = null;
+  let switcherManagers: { id: string; name: string }[] = [];
   if (staff) {
     const supabase = await createClient();
-    let query = supabase
-      .from("events")
-      .select("id, name, event_date, event_type")
-      .is("deleted_at", null)
-      .gte("event_date", todayInIsrael());
-    // "מנהל אירועים" only manages their own events, so their switcher should
-    // only list those - other roles (e.g. system admins, who are also
-    // eligible as manager_id but usually aren't assigned to most events)
-    // keep seeing the full upcoming list.
-    if (staff.roleName === "מנהל אירועים") {
-      query = query.eq("manager_id", staff.id);
-    }
-    const { data } = await query
-      .order("event_date", { ascending: true })
-      .returns<Pick<EventRow, "id" | "name" | "event_date" | "event_type">[]>();
+    const [{ data }, managers] = await Promise.all([
+      supabase
+        .from("events")
+        .select("id, name, event_date, event_type, manager_id")
+        .is("deleted_at", null)
+        .gte("event_date", todayInIsrael())
+        .order("event_date", { ascending: true })
+        .returns<Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">[]>(),
+      getEventManagerCandidates(),
+    ]);
     switcherEvents = data;
+    switcherManagers = managers.map((manager) => ({ id: manager.id, name: manager.name }));
   }
+
+  // Default the switcher to "only my events" for a staff member whose role
+  // is specifically "מנהל אירועים" - other roles (e.g. system admins, who
+  // are also eligible as manager_id but usually aren't assigned to most
+  // events) default to the full list, same as before this filter existed.
+  const switcherDefaultManagerId = staff?.roleName === "מנהל אירועים" ? staff.id : null;
 
   const accountBlock = staff && (
     <div className="flex items-center gap-2.5 text-sm text-foreground/70">
@@ -141,7 +148,13 @@ export default async function RootLayout({
             </div>
           </div>
         </header>
-        {staff && <EventSwitcher events={switcherEvents ?? []} />}
+        {staff && (
+          <EventSwitcher
+            events={switcherEvents ?? []}
+            managers={switcherManagers}
+            defaultManagerId={switcherDefaultManagerId}
+          />
+        )}
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
         <footer className="border-t border-border-classic bg-background px-4 py-4 text-center text-xs text-foreground/50">
           © {new Date().getFullYear()} רועי פוריאן. כל הזכויות שמורות.

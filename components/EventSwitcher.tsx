@@ -6,16 +6,29 @@ import { usePathname } from "next/navigation";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import type { EventRow } from "@/lib/types";
 
-type SwitcherEvent = Pick<EventRow, "id" | "name" | "event_date" | "event_type">;
+type SwitcherEvent = Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">;
 
 // Non-id segments under /events/* - matching one of these means we're not
 // actually looking at a specific event, so there's no "current event" to
 // highlight and no sub-path (tasks/guests/etc.) to carry over on switch.
 const RESERVED_SEGMENTS = new Set(["new", "import", "import-image", "trash", "archive"]);
 
-export function EventSwitcher({ events }: { events: SwitcherEvent[] }) {
+export function EventSwitcher({
+  events,
+  managers,
+  defaultManagerId,
+}: {
+  events: SwitcherEvent[];
+  managers: { id: string; name: string }[];
+  defaultManagerId: string | null;
+}) {
   const pathname = usePathname();
   const [query, setQuery] = useState("");
+  // "" means "כל המנהלים" (no filter) - distinct from defaultManagerId,
+  // which only sets the initial selection and is never re-applied once the
+  // user has picked something of their own (same convention as the manager
+  // filter on the main events page).
+  const [selectedManagerId, setSelectedManagerId] = useState(defaultManagerId ?? "");
 
   // Rendered globally (every page, not just an event's own sub-pages), so
   // the current event and its sub-path are derived from the URL itself
@@ -26,17 +39,28 @@ export function EventSwitcher({ events }: { events: SwitcherEvent[] }) {
   const subPath = currentEventId ? (match?.[2] ?? "") : "";
 
   const normalizedQuery = query.trim().toLowerCase();
-  const filtered = normalizedQuery
-    ? events.filter((event) =>
-        `${event.name} ${formatDate(event.event_date)} ${event.event_date}`
-          .toLowerCase()
-          .includes(normalizedQuery),
-      )
-    : events;
+  const filtered = events
+    .filter((event) => !selectedManagerId || event.manager_id === selectedManagerId)
+    .filter((event) =>
+      !normalizedQuery ||
+      `${event.name} ${formatDate(event.event_date)} ${event.event_date}`.toLowerCase().includes(normalizedQuery),
+    );
 
   return (
     <aside className="fixed right-0 top-24 bottom-16 z-10 hidden w-56 flex-col border-l border-border-classic bg-surface 2xl:flex">
       <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
+        <select
+          value={selectedManagerId}
+          onChange={(e) => setSelectedManagerId(e.target.value)}
+          className="rounded-md border border-border-classic bg-background px-2 py-1.5 text-sm"
+        >
+          <option value="">כל המנהלים</option>
+          {managers.map((manager) => (
+            <option key={manager.id} value={manager.id}>
+              {manager.name}
+            </option>
+          ))}
+        </select>
         <input
           type="text"
           value={query}
