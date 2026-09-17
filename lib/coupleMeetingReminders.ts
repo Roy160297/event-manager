@@ -45,10 +45,10 @@ export interface CoupleMeetingReminderRule {
   // event fields already in hand (e.g. "is event_date a Friday") - no DB call.
   dateCondition?: (event: ReminderBodyEvent) => boolean;
   // Restricts this rule to a specific daily cron pass (see vercel.json - there's
-  // a morning pass and an evening pass). Omitted (the default, and every rule
-  // below except the Friday-eve one) means "any pass" - safe because the
-  // reminder_log unique constraint already prevents a rule from sending twice
-  // in one day even if both passes evaluate it. Used for rules that need to
+  // a morning pass and an evening pass). Omitted (the default) means "any
+  // pass" - safe because the reminder_log unique constraint already prevents
+  // a rule from sending twice in one day even if both passes evaluate it.
+  // Used for rules that need to
   // land at a specific time of day rather than just on a specific date - the
   // immediate post-save check (checkRemindersForEvent) always runs as if it
   // were the morning pass, so an evening-only rule never fires immediately.
@@ -88,7 +88,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     offsetDays: 1,
     subject: "תזכורת: משימות לאחר פגישת הזוג",
     body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום יום אחרי פגישת הזוג - יש לוודא ביצוע המשימות הבאות:<ul><li>פתיחת קבוצת וואטסאפ עם הזוג.</li><li>שליחת הנקודות העיקריות מהפגישה, וכן נקודות להמשך.</li><li>שליחת דף ההנחיות לזוג במייל (לאחר שעברתם עליו יחד בפגישה).</li><li>שליחת טופס האירוע לזוג.</li><li>העלאת טופס אירוע ל-iPlan (עד יום אחרי הפגישה).</li><li>הכנת סקיצה ראשונית ב-iPlan (לפי כמות ההתחייבות).</li></ul>`,
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום יום אחרי פגישת הזוג - יש לוודא ביצוע המשימות הבאות:<ul><li>פתיחת קבוצת וואטסאפ עם הזוג.</li><li>שליחת הנקודות העיקריות מהפגישה, וכן נקודות להמשך.</li><li>שליחת דף ההנחיות לזוג במייל (לאחר שעברתם עליו יחד בפגישה).</li><li>שליחת טופס האירוע לזוג.</li><li>הכנת סקיצה ראשונית ב-iPlan (לפי כמות ההתחייבות).</li></ul>`,
   },
   {
     key: "final-commitment-and-sketch-update",
@@ -97,7 +97,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     matchMode: "onOrAfter",
     subject: "תזכורת: התחייבות סופית, iPlan וסקיצה",
     body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום התאריך (שבוע לפני האירוע) לביצוע המשימות הבאות:<ul><li>עדכון התחייבות סופית בפרטי האירוע והעלאת טופס אירוע סופי ל-iPlan.</li><li>העלאת סקיצה סופית לאתר, לאחר ההתחייבות הסופית.</li></ul>`,
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום התאריך (שבוע לפני האירוע) לביצוע המשימות הבאות:<ul><li>עדכון התחייבות סופית בפרטי האירוע.</li><li>העלאת סקיצה סופית לאתר, לאחר סיום הושבה.</li></ul>`,
   },
   {
     key: "dj-tzach-ziv-sketch-update",
@@ -147,16 +147,6 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     subject: "תזכורת: צ'קליסט ציוד ומעטפות ספקים/טיפים",
     body: (event) =>
       `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים היום: יש לוודא מול הזוג את צ'קליסט הציוד, וכן את מעטפות הספקים/טיפים.`,
-  },
-  {
-    key: "equipment-checklist-envelopes-friday-eve",
-    anchor: "event_date",
-    offsetDays: -1,
-    runWindow: "evening",
-    dateCondition: isFridayEvent,
-    subject: "תזכורת: צ'קליסט ציוד ומעטפות ספקים/טיפים (אירוע יום שישי מחר)",
-    body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר (יום שישי): יש לוודא מול הזוג את צ'קליסט הציוד, וכן את מעטפות הספקים/טיפים.`,
   },
 ];
 
