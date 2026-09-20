@@ -19,6 +19,7 @@ export function EventSummaryReportPrintable({
     ["שעת תחילת האירוע", formatTime(event.start_time)],
     ["שעת סיום האירוע", formatTime(event.report_end_time)],
     ["מינימום אורחים בהתחייבות", guestCommitment],
+    ["מספר ילדים (התחייבות)", event.kids_meal_count],
     ["מנהל אירוע", managerName],
     ["חברת הפקה", event.production_company],
     ["שעת יציאה מהאולם", formatTime(event.exit_time)],

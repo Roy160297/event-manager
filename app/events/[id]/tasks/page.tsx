@@ -454,7 +454,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               </label>
               <label className={reportLabelClass}>
                 <span>מנהל בר</span>
-                <input name="bar_manager_name" defaultValue={event?.bar_manager_name ?? "דניאל"} className={inputClass} />
+                <input name="bar_manager_name" defaultValue={event?.bar_manager_name ?? "דנאל"} className={inputClass} />
               </label>
               <label className={reportLabelClass}>
                 <span>כמות ברמנים</span>
