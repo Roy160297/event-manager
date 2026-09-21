@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { extractEventDraftFromImage, type ImageImportDraft } from "@/lib/imageImport";
 import { getCurrentStaff } from "@/lib/auth";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
-import { applyDefaultMenu } from "@/app/events/[id]/menu/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import type { StaffRow } from "@/lib/types";
@@ -122,7 +121,6 @@ async function createEventFromImageImportInner(
   const eventId = data.id as string;
 
   await applyDefaultSchedule(eventId, draft.event_type, draft.event_date);
-  await applyDefaultMenu(eventId, draft.event_type);
   await checkRemindersForEvent(eventId);
 
   revalidatePath("/");

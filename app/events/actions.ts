@@ -8,7 +8,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
-import { applyDefaultMenu } from "@/app/events/[id]/menu/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
@@ -59,7 +58,6 @@ export async function createEvent(formData: FormData): Promise<string | void> {
   if (error) return error.message;
 
   await applyDefaultSchedule(data.id, eventType, eventDate);
-  await applyDefaultMenu(data.id, eventType);
   await checkRemindersForEvent(data.id);
 
   revalidatePath("/");
