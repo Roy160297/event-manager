@@ -109,7 +109,7 @@ export function WelcomeEmailForm({
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          rows={16}
+          rows={Math.max(20, body.split("\n").length + 4)}
           className="rounded-md border border-border-classic bg-surface px-3 py-2 font-sans"
         />
       </label>
