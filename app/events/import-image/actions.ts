@@ -7,6 +7,7 @@ import { getCurrentStaff } from "@/lib/auth";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
+import { isFriday } from "@/lib/scheduleTime";
 import type { StaffRow } from "@/lib/types";
 
 // Returns { error } on failure instead of throwing - Next.js redacts thrown
@@ -93,7 +94,9 @@ async function createEventFromImageImportInner(
       name,
       event_type: draft.event_type,
       event_date: draft.event_date,
-      start_time: draft.start_time || "19:30",
+      // Same Friday-afternoon fallback as the manual "new event" flow - see
+      // app/events/actions.ts's createEvent.
+      start_time: draft.start_time || (isFriday(draft.event_date) ? "12:00" : "19:30"),
       end_time: draft.end_time || "03:00",
       manager_id: managerId,
       sales_person_id: salesPersonId,

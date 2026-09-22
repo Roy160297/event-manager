@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { scheduleSortKey } from "@/lib/labels";
-import { addMinutesToTime } from "@/lib/scheduleTime";
+import { addMinutesToTime, timeToMinutes } from "@/lib/scheduleTime";
 import { extractTimelineFromImage, type TimelineImportDraft } from "@/lib/timelineImport";
 import type { TimelineItemRow } from "@/lib/types";
 
@@ -157,7 +157,7 @@ const EVENING_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[
   { label: "מנות עיקריות", time: "21:45", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "22:15" },
   { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
+  { label: "אפטר", time: "23:45", notes: "קיפול הקינוחים" },
 ];
 
 const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
@@ -172,7 +172,7 @@ const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: s
   { label: "עיקריות", time: "22:00", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "22:30" },
   { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
+  { label: "אפטר", time: "23:45", notes: "קיפול הקינוחים" },
 ];
 
 const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
@@ -190,7 +190,7 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
   { label: "חופה", time: "21:30" },
   { label: "ריקודים", time: "21:50", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
   { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
+  { label: "אפטר", time: "23:30", notes: "קיפול הקינוחים" },
 ];
 
 // Reverse + service combined: the "reverse" timing skeleton (food happens
@@ -211,15 +211,18 @@ const EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; n
     notes: "יצירת שביל חופה",
   },
   { label: "חופה", time: "21:30" },
-  { label: "ריקודים", time: "21:50" },
+  { label: "ריקודים", time: "21:50", notes: "הכלה מחליפה ללוק שני" },
   { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
+  { label: "אפטר", time: "23:45", notes: "קיפול הקינוחים" },
 ];
 
-// Same schedule as EVENING_REVERSE_WEDDING_SCHEDULE, shifted earlier so
-// reception starts at 12:00 instead of 19:30 (Friday afternoon events end
-// well before evening). Desserts/after don't follow the same fixed offset as
-// the rest of the steps - corrected per venue's actual timing.
+// Every FRIDAY_* schedule below is written assuming קבלת פנים at "12:00" -
+// insertFridaySchedule shifts every step by the difference between this and
+// the real event's own start_time (so an event starting at 11:30 gets its
+// first step, the couple's arrival, at 10:30, קבלת פנים at 11:30, and the
+// rest of the schedule following at the same relative offsets), rather than
+// assuming every Friday event starts at noon. אפטר is always exactly one
+// hour after קינוחים, same rule as the evening schedules.
 const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
   { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
@@ -238,11 +241,7 @@ const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: st
   { label: "אפטר", time: "16:00", notes: "קיפול הקינוחים" },
 ];
 
-// Same schedule as EVENING_WEDDING_SCHEDULE, shifted so reception starts at
-// 12:00 instead of 19:30 (Friday afternoon events end well before evening).
-// Desserts/after don't follow the same fixed offset as the rest of the
-// steps - corrected per venue's actual timing (same pattern as the reverse
-// Friday schedule).
+// Same structure as EVENING_WEDDING_SCHEDULE.
 const FRIDAY_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
   { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
@@ -255,11 +254,10 @@ const FRIDAY_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[]
   { label: "מנות עיקריות", time: "14:15", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "14:45" },
   { label: "קינוחים", time: "15:30", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "17:00", notes: "קיפול הקינוחים" },
+  { label: "אפטר", time: "16:30", notes: "קיפול הקינוחים" },
 ];
 
-// Same schedule as EVENING_WEDDING_SERVICE_SCHEDULE, shifted the same way as
-// FRIDAY_WEDDING_SCHEDULE.
+// Same structure as EVENING_WEDDING_SERVICE_SCHEDULE.
 const FRIDAY_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
   { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
@@ -272,36 +270,28 @@ const FRIDAY_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: st
   { label: "עיקריות", time: "14:30", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "15:00" },
   { label: "קינוחים", time: "15:30", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "17:00", notes: "קיפול הקינוחים" },
+  { label: "אפטר", time: "16:30", notes: "קיפול הקינוחים" },
 ];
 
-// Friday-afternoon version of the reverse+service schedule (see
-// EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE's comment for the concept) - kept
-// in its original pre-restructure shape (still a separate post-chuppah
-// עיקריות course), since only the ריקודים offset and the "פתיחת מזנון
-// עיקריות" note were asked to change across every service schedule, not the
-// wider Evening-side restructuring.
+// Mirrors EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE's structure and offsets
+// from קבלת פנים (not FRIDAY_REVERSE_WEDDING_SCHEDULE's own historical
+// times), per the same 2026-09-22 restructuring.
 const FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
   { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "12:00" },
+  { label: "פתיחת דלתות, ראשונות על השולחן", time: "12:20" },
+  { label: "כתובה", time: "12:40", notes: "לוודא הגעת שני עדים עד השעה 12:30" },
+  { label: "הגשת עיקריות", time: "12:45" },
   {
-    label: "פתיחת דלתות והגשת ראשונות",
-    time: "12:20",
-    notes: "30 דק' של אוכל (הריקודים מתחילים תוך כדי)",
-  },
-  { label: "כתובה", time: "13:00", notes: "לוודא הגעת שני עדים עד השעה 13:00" },
-  {
-    label: "סיום הגשת ראשונות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
+    label: "סיום הגשת עיקריות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
     time: "13:45",
     notes: "יצירת שביל חופה",
   },
   { label: "חופה", time: "14:00" },
-  { label: "ריקודים", time: "14:20" },
-  { label: "עיקריות", time: "14:30", notes: "הכלה מחליפה ללוק שני" },
-  { label: "ריקודים", time: "15:00" },
-  { label: "קינוחים", time: "15:30", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "17:00", notes: "קיפול הקינוחים" },
+  { label: "ריקודים", time: "14:20", notes: "הכלה מחליפה ללוק שני" },
+  { label: "קינוחים", time: "15:15", notes: "קיפול מזנונים" },
+  { label: "אפטר", time: "16:15", notes: "קיפול הקינוחים" },
 ];
 
 async function insertSchedule(
@@ -336,10 +326,6 @@ export async function addEveningWeddingServiceSchedule(eventId: string) {
   await insertSchedule(eventId, EVENING_WEDDING_SERVICE_SCHEDULE);
 }
 
-export async function addFridayReverseWeddingSchedule(eventId: string) {
-  await insertSchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
-}
-
 export async function addEveningReverseWeddingSchedule(eventId: string) {
   await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SCHEDULE);
 }
@@ -348,16 +334,47 @@ export async function addEveningReverseWeddingServiceSchedule(eventId: string) {
   await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE);
 }
 
+// FRIDAY_* templates all assume קבלת פנים at "12:00" - shift every step by
+// the real event's own start_time (see the comment above
+// FRIDAY_REVERSE_WEDDING_SCHEDULE) before inserting. Falls back to the
+// template as-is if the event has no start_time yet.
+const FRIDAY_SCHEDULE_TEMPLATE_START_TIME = "12:00";
+
+async function insertFridaySchedule(
+  eventId: string,
+  template: { label: string; time: string; notes?: string }[],
+) {
+  const supabase = await createClient();
+  const { data: event } = await supabase.from("events").select("start_time").eq("id", eventId).maybeSingle();
+
+  const startTime = event?.start_time;
+  const diffMinutes =
+    startTime != null
+      ? (timeToMinutes(startTime) ?? 0) - (timeToMinutes(FRIDAY_SCHEDULE_TEMPLATE_START_TIME) ?? 0)
+      : 0;
+
+  const schedule =
+    diffMinutes === 0
+      ? template
+      : template.map((step) => ({ ...step, time: addMinutesToTime(step.time, diffMinutes) ?? step.time }));
+
+  await insertSchedule(eventId, schedule);
+}
+
+export async function addFridayReverseWeddingSchedule(eventId: string) {
+  await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
+}
+
 export async function addFridayWeddingSchedule(eventId: string) {
-  await insertSchedule(eventId, FRIDAY_WEDDING_SCHEDULE);
+  await insertFridaySchedule(eventId, FRIDAY_WEDDING_SCHEDULE);
 }
 
 export async function addFridayWeddingServiceSchedule(eventId: string) {
-  await insertSchedule(eventId, FRIDAY_WEDDING_SERVICE_SCHEDULE);
+  await insertFridaySchedule(eventId, FRIDAY_WEDDING_SERVICE_SCHEDULE);
 }
 
 export async function addFridayReverseWeddingServiceSchedule(eventId: string) {
-  await insertSchedule(eventId, FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE);
+  await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE);
 }
 
 // Called right after a new event is created, so events of a type with a
@@ -370,16 +387,17 @@ export async function addFridayReverseWeddingServiceSchedule(eventId: string) {
 export async function applyDefaultSchedule(eventId: string, eventType: string, eventDate?: string | null) {
   const isFriday = isFridayDate(eventDate);
   if (eventType === "wedding") {
-    await insertSchedule(eventId, isFriday ? FRIDAY_WEDDING_SCHEDULE : EVENING_WEDDING_SCHEDULE);
+    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_WEDDING_SCHEDULE);
+    else await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE);
   } else if (eventType === "wedding_service") {
-    await insertSchedule(eventId, isFriday ? FRIDAY_WEDDING_SERVICE_SCHEDULE : EVENING_WEDDING_SERVICE_SCHEDULE);
+    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_WEDDING_SERVICE_SCHEDULE);
+    else await insertSchedule(eventId, EVENING_WEDDING_SERVICE_SCHEDULE);
   } else if (eventType === "reverse_wedding") {
-    await insertSchedule(eventId, isFriday ? FRIDAY_REVERSE_WEDDING_SCHEDULE : EVENING_REVERSE_WEDDING_SCHEDULE);
+    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
+    else await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SCHEDULE);
   } else if (eventType === "reverse_wedding_service") {
-    await insertSchedule(
-      eventId,
-      isFriday ? FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE : EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE,
-    );
+    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE);
+    else await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE);
   }
 }
 

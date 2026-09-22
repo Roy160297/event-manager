@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { addHoursToTime, addMinutesToTime, fridayEndTime, isFriday, todaysEventDate } from "@/lib/scheduleTime";
+import {
+  addHoursToTime,
+  addMinutesToTime,
+  fridayEndTime,
+  isFriday,
+  timeToMinutes,
+  todaysEventDate,
+} from "@/lib/scheduleTime";
 
 describe("isFriday", () => {
   it("returns true for a known Friday", () => {
@@ -55,6 +62,18 @@ describe("addMinutesToTime", () => {
     for (let i = 1; i <= 120; i++) {
       expect(addMinutesToTime("00:00", i)).toBe(`${String(Math.floor(i / 60)).padStart(2, "0")}:${String(i % 60).padStart(2, "0")}`);
     }
+  });
+});
+
+describe("timeToMinutes", () => {
+  it("converts a time to minutes since midnight", () => {
+    expect(timeToMinutes("00:00")).toBe(0);
+    expect(timeToMinutes("12:00")).toBe(720);
+    expect(timeToMinutes("23:59")).toBe(1439);
+  });
+
+  it("returns null for an unparseable time", () => {
+    expect(timeToMinutes("not-a-time")).toBeNull();
   });
 });
 

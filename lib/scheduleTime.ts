@@ -26,6 +26,12 @@ export function addHoursToTime(time: string, hours: number): string | null {
   return addMinutesToTime(time, Math.round(hours * 60));
 }
 
+export function timeToMinutes(time: string): number | null {
+  const match = time.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
 // Friday-specific default: 5.5 hours after the guest-reception start time.
 export function fridayEndTime(startTime: string): string | null {
   return addHoursToTime(startTime, 5.5);

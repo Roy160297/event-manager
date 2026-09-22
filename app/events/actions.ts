@@ -10,6 +10,7 @@ import { canWrite } from "@/lib/permissions";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
+import { isFriday } from "@/lib/scheduleTime";
 import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { extractEventDraftFromImage, applyCarriedReservePercent } from "@/lib/imageImport";
@@ -48,7 +49,10 @@ export async function createEvent(formData: FormData): Promise<string | void> {
       name,
       event_type: eventType,
       event_date: eventDate,
-      start_time: "19:30",
+      // Friday events run in the afternoon (Shabbat), not the usual evening
+      // start - matters now that the Friday default schedule anchors itself
+      // to this field (see insertFridaySchedule in the timeline actions).
+      start_time: isFriday(eventDate) ? "12:00" : "19:30",
       end_time: "03:00",
       manager_id: managerId,
     })
