@@ -150,14 +150,13 @@ const EVENING_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "19:30" },
   { label: "כתובה", time: "20:30", notes: "לוודא הגעת שני עדים עד השעה 20:30" },
-  { label: "מזנונים נסגרים", time: "20:45" },
-  { label: "הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
+  { label: "מזנונים נסגרים, הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
   { label: "חופה", time: "21:00" },
-  { label: "מזנונים נפתחים (מנות עיקריות)", time: "21:15", notes: "15-20 דקות ריקודים" },
-  { label: "מנות עיקריות", time: "21:45", notes: "הכלה מחליפה ללוק שני" },
-  { label: "ריקודים", time: "22:15" },
-  { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "23:45", notes: "קיפול הקינוחים" },
+  { label: "מזנונים נפתחים (מנות עיקריות)", time: "21:20", notes: "15-20 דקות ריקודים" },
+  { label: "מנות עיקריות", time: "21:50", notes: "הכלה מחליפה ללוק שני" },
+  { label: "ריקודים", time: "22:20" },
+  { label: "קינוחים", time: "22:50", notes: "קיפול מזנונים" },
+  { label: "אפטר", time: "23:50", notes: "קיפול הקינוחים" },
 ];
 
 const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
@@ -203,17 +202,17 @@ const EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; n
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "19:30" },
   { label: "פתיחת דלתות, ראשונות על השולחן", time: "19:50" },
-  { label: "כתובה", time: "20:10", notes: "לוודא הגעת שני עדים עד השעה 20:00" },
-  { label: "הגשת עיקריות", time: "20:15" },
+  { label: "כתובה", time: "20:30", notes: "לוודא הגעת שני עדים עד השעה 20:20" },
+  { label: "הגשת עיקריות", time: "20:35" },
   {
     label: "סיום הגשת עיקריות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
-    time: "21:15",
+    time: "21:35",
     notes: "יצירת שביל חופה",
   },
-  { label: "חופה", time: "21:30" },
-  { label: "ריקודים", time: "21:50", notes: "הכלה מחליפה ללוק שני" },
-  { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "23:45", notes: "קיפול הקינוחים" },
+  { label: "חופה", time: "21:50" },
+  { label: "ריקודים", time: "22:10", notes: "הכלה מחליפה ללוק שני" },
+  { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
+  { label: "אפטר", time: "23:30", notes: "קיפול הקינוחים" },
 ];
 
 // Every FRIDAY_* schedule below is written assuming קבלת פנים at "12:00" -
@@ -241,57 +240,27 @@ const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: st
   { label: "אפטר", time: "16:00", notes: "קיפול הקינוחים" },
 ];
 
-// Same structure as EVENING_WEDDING_SCHEDULE.
-const FRIDAY_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
-  { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
-  { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
-  { label: "קבלת פנים", time: "12:00" },
-  { label: "כתובה", time: "13:00", notes: "לוודא הגעת שני עדים עד השעה 13:00" },
-  { label: "מזנונים נסגרים", time: "13:15" },
-  { label: "הכנות לחופה והדרכה", time: "13:15", notes: "יצירת שביל חופה" },
-  { label: "חופה", time: "13:30" },
-  { label: "מזנונים נפתחים (מנות עיקריות)", time: "13:45", notes: "15-20 דקות ריקודים" },
-  { label: "מנות עיקריות", time: "14:15", notes: "הכלה מחליפה ללוק שני" },
-  { label: "ריקודים", time: "14:45" },
-  { label: "קינוחים", time: "15:30", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "16:30", notes: "קיפול הקינוחים" },
-];
-
-// Same structure as EVENING_WEDDING_SERVICE_SCHEDULE.
-const FRIDAY_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
-  { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
-  { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
-  { label: "קבלת פנים", time: "12:00" },
-  { label: "כתובה", time: "13:00", notes: "לוודא הגעת שני עדים עד השעה 13:00" },
-  { label: "הכנות לחופה והדרכה", time: "13:15", notes: "יצירת שביל חופה" },
-  { label: "חופה", time: "13:30" },
-  { label: "ראשונות", time: "13:45" },
-  { label: "ריקודים", time: "14:05" },
-  { label: "עיקריות", time: "14:30", notes: "הכלה מחליפה ללוק שני" },
-  { label: "ריקודים", time: "15:00" },
-  { label: "קינוחים", time: "15:30", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "16:30", notes: "קיפול הקינוחים" },
-];
-
 // Mirrors EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE's structure and offsets
-// from קבלת פנים (not FRIDAY_REVERSE_WEDDING_SCHEDULE's own historical
-// times), per the same 2026-09-22 restructuring.
+// from קבלת פנים (not this schedule's own pre-restructure times), per the
+// 2026-09-22 restructuring. There's no non-reverse Friday schedule (venue
+// weddings on Friday are always the reverse format) and no plain FRIDAY_
+// version of the buffet/service schedules either, for the same reason.
 const FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
   { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "12:00" },
   { label: "פתיחת דלתות, ראשונות על השולחן", time: "12:20" },
-  { label: "כתובה", time: "12:40", notes: "לוודא הגעת שני עדים עד השעה 12:30" },
-  { label: "הגשת עיקריות", time: "12:45" },
+  { label: "כתובה", time: "13:00", notes: "לוודא הגעת שני עדים עד השעה 12:50" },
+  { label: "הגשת עיקריות", time: "13:05" },
   {
     label: "סיום הגשת עיקריות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
-    time: "13:45",
+    time: "14:05",
     notes: "יצירת שביל חופה",
   },
-  { label: "חופה", time: "14:00" },
-  { label: "ריקודים", time: "14:20", notes: "הכלה מחליפה ללוק שני" },
-  { label: "קינוחים", time: "15:15", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "16:15", notes: "קיפול הקינוחים" },
+  { label: "חופה", time: "14:20" },
+  { label: "ריקודים", time: "14:40", notes: "הכלה מחליפה ללוק שני" },
+  { label: "קינוחים", time: "15:00", notes: "קיפול מזנונים" },
+  { label: "אפטר", time: "16:00", notes: "קיפול הקינוחים" },
 ];
 
 async function insertSchedule(
@@ -365,14 +334,6 @@ export async function addFridayReverseWeddingSchedule(eventId: string) {
   await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
 }
 
-export async function addFridayWeddingSchedule(eventId: string) {
-  await insertFridaySchedule(eventId, FRIDAY_WEDDING_SCHEDULE);
-}
-
-export async function addFridayWeddingServiceSchedule(eventId: string) {
-  await insertFridaySchedule(eventId, FRIDAY_WEDDING_SERVICE_SCHEDULE);
-}
-
 export async function addFridayReverseWeddingServiceSchedule(eventId: string) {
   await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE);
 }
@@ -380,18 +341,15 @@ export async function addFridayReverseWeddingServiceSchedule(eventId: string) {
 // Called right after a new event is created, so events of a type with a
 // known default schedule start with it pre-filled instead of empty. Other
 // event types are left as before, filled in manually on the timeline page.
-// Every wedding-related type has two variants (evening vs. Friday
-// afternoon) - picked by whether the event date falls on a Friday, since
-// that's what distinguishes them in practice (Friday events end well
-// before evening/Shabbat).
+// "wedding"/"wedding_service" only have one (evening) shape - the venue
+// never actually runs those formats on a Friday, only the reverse ones, so
+// only reverse_wedding/reverse_wedding_service branch by day-of-week.
 export async function applyDefaultSchedule(eventId: string, eventType: string, eventDate?: string | null) {
   const isFriday = isFridayDate(eventDate);
   if (eventType === "wedding") {
-    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_WEDDING_SCHEDULE);
-    else await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE);
+    await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE);
   } else if (eventType === "wedding_service") {
-    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_WEDDING_SERVICE_SCHEDULE);
-    else await insertSchedule(eventId, EVENING_WEDDING_SERVICE_SCHEDULE);
+    await insertSchedule(eventId, EVENING_WEDDING_SERVICE_SCHEDULE);
   } else if (eventType === "reverse_wedding") {
     if (isFriday) await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
     else await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SCHEDULE);
