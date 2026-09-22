@@ -188,35 +188,30 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
     notes: "יצירת שביל חופה",
   },
   { label: "חופה", time: "21:30" },
-  { label: "ריקודים", time: "21:45", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
+  { label: "ריקודים", time: "21:50", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
   { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];
 
 // Reverse + service combined: the "reverse" timing skeleton (food happens
 // before the chuppah, then it's just dancing+dessert after) with the
-// "service" seated-course concept instead of buffets - starters served in
-// the pre-chuppah window, mains served after (no reopening for a second
-// course, mirroring the reverse-buffet version).
+// "service" seated-course concept instead of buffets - both starters and
+// mains are served in the pre-chuppah window, so after the chuppah it's
+// straight to dancing and then dessert (no seated course after the chuppah).
 const EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
   { label: "קבלת פנים", time: "19:30" },
+  { label: "פתיחת דלתות, ראשונות על השולחן", time: "19:50" },
+  { label: "כתובה", time: "20:10", notes: "לוודא הגעת שני עדים עד השעה 20:00" },
+  { label: "הגשת עיקריות", time: "20:15" },
   {
-    label: "פתיחת דלתות והגשת ראשונות",
-    time: "19:50",
-    notes: "30 דק' של אוכל (הריקודים מתחילים תוך כדי)",
-  },
-  { label: "כתובה", time: "20:30", notes: "לוודא הגעת שני עדים עד השעה 20:30" },
-  {
-    label: "סיום הגשת ראשונות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
+    label: "סיום הגשת עיקריות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
     time: "21:15",
     notes: "יצירת שביל חופה",
   },
   { label: "חופה", time: "21:30" },
-  { label: "ריקודים", time: "21:45", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
-  { label: "עיקריות", time: "22:00", notes: "הכלה מחליפה ללוק שני" },
-  { label: "ריקודים", time: "22:30" },
+  { label: "ריקודים", time: "21:50" },
   { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "00:00", notes: "קיפול הקינוחים" },
 ];
@@ -238,7 +233,7 @@ const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: st
     notes: "יצירת שביל חופה",
   },
   { label: "חופה", time: "14:00" },
-  { label: "ריקודים", time: "14:15", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
+  { label: "ריקודים", time: "14:20", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
   { label: "קינוחים", time: "15:00", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "16:00", notes: "קיפול הקינוחים" },
 ];
@@ -280,8 +275,12 @@ const FRIDAY_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: st
   { label: "אפטר", time: "17:00", notes: "קיפול הקינוחים" },
 ];
 
-// Same schedule as EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE, shifted the
-// same way as FRIDAY_REVERSE_WEDDING_SCHEDULE/FRIDAY_WEDDING_SCHEDULE.
+// Friday-afternoon version of the reverse+service schedule (see
+// EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE's comment for the concept) - kept
+// in its original pre-restructure shape (still a separate post-chuppah
+// עיקריות course), since only the ריקודים offset and the "פתיחת מזנון
+// עיקריות" note were asked to change across every service schedule, not the
+// wider Evening-side restructuring.
 const FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
   { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
@@ -298,7 +297,7 @@ const FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; no
     notes: "יצירת שביל חופה",
   },
   { label: "חופה", time: "14:00" },
-  { label: "ריקודים", time: "14:15", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
+  { label: "ריקודים", time: "14:20" },
   { label: "עיקריות", time: "14:30", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "15:00" },
   { label: "קינוחים", time: "15:30", notes: "קיפול מזנונים" },
