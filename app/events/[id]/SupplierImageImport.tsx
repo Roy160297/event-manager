@@ -32,6 +32,7 @@ export function SupplierImageImport({ eventId }: { eventId: string }) {
         formData.set("file", await compressImage(file, 1600, 0.85));
       }
       const result = await parseSupplierImage(formData);
+      if ("error" in result) throw new Error(result.error);
       if (result.length === 0) throw new Error("לא זוהו ספקים בתמונה");
       setSuppliers(result);
     } catch (err) {

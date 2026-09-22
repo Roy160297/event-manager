@@ -484,7 +484,21 @@ export async function applyEventImageUpdate(eventId: string, draft: EventImageUp
   revalidatePath(`/events/${eventId}`);
 }
 
-export async function parseSupplierImage(formData: FormData): Promise<SupplierImportDraft[]> {
+// Returns { error } on failure instead of throwing - Next.js redacts thrown
+// Server Action error messages to a generic string in production regardless
+// of where the throw is caught, so a returned value is the only way the
+// caller sees the real text (e.g. a transient Gemini overload message).
+export async function parseSupplierImage(
+  formData: FormData,
+): Promise<SupplierImportDraft[] | { error: string }> {
+  try {
+    return await parseSupplierImageInner(formData);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "שגיאה בעיבוד התמונה" };
+  }
+}
+
+async function parseSupplierImageInner(formData: FormData): Promise<SupplierImportDraft[]> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     throw new Error("יש לבחור קובץ תמונה");
