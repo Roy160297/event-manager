@@ -1,9 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import {
   addEveningReverseWeddingSchedule,
+  addEveningReverseWeddingServiceSchedule,
   addEveningWeddingSchedule,
   addEveningWeddingServiceSchedule,
   addFridayReverseWeddingSchedule,
+  addFridayReverseWeddingServiceSchedule,
   addFridayWeddingSchedule,
   addFridayWeddingServiceSchedule,
   addTimelineItem,
@@ -104,6 +106,24 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
     }
   }
 
+  async function addEveningReverseServiceDefault() {
+    "use server";
+    try {
+      await addEveningReverseWeddingServiceSchedule(eventId);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
+  }
+
+  async function addFridayReverseServiceDefault() {
+    "use server";
+    try {
+      await addFridayReverseWeddingServiceSchedule(eventId);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
+  }
+
   async function removeAll() {
     "use server";
     await deleteAllTimelineItems(eventId);
@@ -177,6 +197,22 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
                 className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
               >
                 צור לוח זמנים ברירת מחדל - חתונה הפוכה שישי צהריים (מזנונים)
+              </button>
+            </SaveDetailsForm>
+            <SaveDetailsForm action={addEveningReverseServiceDefault} message="לוח הזמנים נוצר בהצלחה">
+              <button
+                type="submit"
+                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+              >
+                צור לוח זמנים ברירת מחדל - חתונה הפוכה ערב (הגשה)
+              </button>
+            </SaveDetailsForm>
+            <SaveDetailsForm action={addFridayReverseServiceDefault} message="לוח הזמנים נוצר בהצלחה">
+              <button
+                type="submit"
+                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+              >
+                צור לוח זמנים ברירת מחדל - חתונה הפוכה שישי צהריים (הגשה)
               </button>
             </SaveDetailsForm>
             {items && items.length > 0 && (
