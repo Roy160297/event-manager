@@ -7,12 +7,14 @@ export function SendWelcomeEmailButton({
   eventId,
   to1,
   to2,
+  managerName,
   defaultSubject,
   defaultBody,
 }: {
   eventId: string;
   to1: string | null;
   to2: string | null;
+  managerName: string | null;
   defaultSubject: string;
   defaultBody: string;
 }) {
@@ -37,6 +39,7 @@ export function SendWelcomeEmailButton({
         eventId={eventId}
         to1={to1}
         to2={to2}
+        managerName={managerName}
         defaultSubject={defaultSubject}
         defaultBody={defaultBody}
         cancelLabel="ביטול"

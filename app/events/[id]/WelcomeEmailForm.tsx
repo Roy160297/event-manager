@@ -9,6 +9,7 @@ export function WelcomeEmailForm({
   eventId,
   to1,
   to2,
+  managerName,
   defaultSubject,
   defaultBody,
   cancelLabel,
@@ -18,6 +19,7 @@ export function WelcomeEmailForm({
   eventId: string;
   to1: string | null;
   to2: string | null;
+  managerName: string | null;
   defaultSubject: string;
   defaultBody: string;
   cancelLabel: string;
@@ -40,6 +42,7 @@ export function WelcomeEmailForm({
       for (const email of toList) formData.append("to", email);
       formData.set("subject", subject);
       formData.set("body", body);
+      if (managerName) formData.set("managerName", managerName);
       if (attachment) formData.set("attachment", attachment);
       const result = await sendWelcomeEmail(eventId, formData);
       if (result) {

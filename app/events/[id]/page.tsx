@@ -157,6 +157,7 @@ export default async function EventOverviewPage({
             eventId={id}
             to1={event.contact_email}
             to2={event.contact_email_2}
+            managerName={welcomeEmailSenderName || null}
             defaultSubject={WELCOME_EMAIL_SUBJECT}
             defaultBody={buildWelcomeEmailBody(welcomeEmailSenderName, welcomeEmailSenderPhone)}
           />

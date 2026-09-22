@@ -14,7 +14,7 @@ import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { extractEventDraftFromImage, applyCarriedReservePercent } from "@/lib/imageImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
-import { WELCOME_EMAIL_ATTACHMENT_FILENAME } from "@/lib/welcomeEmail";
+import { WELCOME_EMAIL_ATTACHMENT_FILENAME, welcomeEmailAttachmentAssetFor } from "@/lib/welcomeEmail";
 import { deleteAllChecklistPhotosForEvent } from "@/app/events/[id]/tasks/actions";
 import type { EventRow, EventType, StaffRow } from "@/lib/types";
 
@@ -95,7 +95,9 @@ export async function sendWelcomeEmail(eventId: string, formData: FormData): Pro
       attachmentFilename = uploadedAttachment.name;
       attachmentBase64 = Buffer.from(await uploadedAttachment.arrayBuffer()).toString("base64");
     } else {
-      const attachmentPath = path.join(process.cwd(), "assets", "wedding-welcome-guidelines.pdf");
+      const managerName = String(formData.get("managerName") ?? "").trim() || null;
+      const assetFilename = welcomeEmailAttachmentAssetFor(managerName);
+      const attachmentPath = path.join(process.cwd(), "assets", assetFilename);
       attachmentBase64 = fs.readFileSync(attachmentPath).toString("base64");
     }
 

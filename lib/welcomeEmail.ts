@@ -2,6 +2,25 @@ export const WELCOME_EMAIL_SUBJECT = "דף הנחיות לפגישה ראשונ�
 
 export const WELCOME_EMAIL_ATTACHMENT_FILENAME = "הנחיות והכנות לאירוע - חתונה בשבע.pdf";
 
+// Each manager's guidelines PDF differs in wording/content - keyed by the
+// exact staff name (see lib/labels.ts's MANAGER_LEGEND_COLOR_OVERRIDES for
+// the same "רועי פוריאן"/"רן קופרמן" spelling elsewhere in the app). Any
+// manager without their own version yet (including רועי פוריאן, whose
+// guidelines are the original default) falls back to the plain default file.
+const WELCOME_EMAIL_ATTACHMENT_ASSET_BY_MANAGER: Record<string, string> = {
+  "ניר חדד": "wedding-welcome-guidelines-nir-hadad.pdf",
+  "רן קופרמן": "wedding-welcome-guidelines-ran-kuperman.pdf",
+};
+const DEFAULT_WELCOME_EMAIL_ATTACHMENT_ASSET = "wedding-welcome-guidelines.pdf";
+
+// Filename under assets/ to read from disk - not the filename shown to the
+// couple, which always stays WELCOME_EMAIL_ATTACHMENT_FILENAME regardless of
+// which manager's version was actually attached.
+export function welcomeEmailAttachmentAssetFor(managerName: string | null): string {
+  const trimmed = managerName?.trim();
+  return (trimmed && WELCOME_EMAIL_ATTACHMENT_ASSET_BY_MANAGER[trimmed]) ?? DEFAULT_WELCOME_EMAIL_ATTACHMENT_ASSET;
+}
+
 // managerName/managerPhone are the assigned event manager's own details (or,
 // if no manager is assigned yet, whoever is sending the email) - the couple
 // should hear from a real name and number, not a hardcoded signature.
