@@ -42,7 +42,7 @@ export default async function ChecklistNotesPage() {
   // notes and summary reports are only useful to review shortly after an
   // event, so a growing all-time list would just get harder to scan.
   const today = todayInIsrael();
-  const sevenDaysAgo = addDaysToDate(today, -7);
+  const tenDaysAgo = addDaysToDate(today, -10);
 
   const supabase = await createClient();
   const { data: notes } = await supabase
@@ -51,7 +51,7 @@ export default async function ChecklistNotesPage() {
     .not("note", "is", null)
     .neq("note", "")
     .is("events.deleted_at", null)
-    .gte("events.event_date", sevenDaysAgo)
+    .gte("events.event_date", tenDaysAgo)
     .lte("events.event_date", today)
     .order("event_date", { referencedTable: "events", ascending: false })
     .returns<NoteWithEvent[]>();
@@ -65,7 +65,7 @@ export default async function ChecklistNotesPage() {
         .from("events")
         .select("id, name, event_type, event_date, report_summary, report_general_notes")
         .is("deleted_at", null)
-        .gte("event_date", sevenDaysAgo)
+        .gte("event_date", tenDaysAgo)
         .lte("event_date", today)
         .order("event_date", { ascending: false })
         .returns<SummaryReportEvent[]>()
@@ -78,7 +78,7 @@ export default async function ChecklistNotesPage() {
     <div className="flex flex-col gap-6">
       <h1 className="font-serif text-2xl font-bold">הערות וסיכומים</h1>
       <p className="text-sm text-foreground/80">
-        הערות מהצ&apos;קליסטים מאירועים ב-7 הימים האחרונים, מרוכזות לפי סוג צ&apos;קליסט.
+        הערות מהצ&apos;קליסטים מאירועים ב-10 הימים האחרונים, מרוכזות לפי סוג צ&apos;קליסט.
       </p>
 
       {readableSections.map((section) => {
