@@ -33,7 +33,7 @@ export function SendWelcomeEmailButton({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-accent bg-accent-soft/40 p-4">
+    <div className="flex w-full flex-col gap-3 rounded-lg border border-accent bg-accent-soft/40 p-4">
       <p className="font-serif text-lg font-bold">שליחת מייל פתיחה לזוג</p>
       <WelcomeEmailForm
         eventId={eventId}

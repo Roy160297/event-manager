@@ -100,7 +100,7 @@ export function WelcomeEmailForm({
         <input
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          className="rounded-md border border-border-classic bg-surface px-3 py-2"
+          className="w-full rounded-md border border-border-classic bg-surface px-3 py-2"
         />
       </label>
 
@@ -109,8 +109,8 @@ export function WelcomeEmailForm({
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          rows={Math.max(20, body.split("\n").length + 4)}
-          className="rounded-md border border-border-classic bg-surface px-3 py-2 font-sans"
+          rows={18}
+          className="w-full rounded-md border border-border-classic bg-surface px-3 py-2 font-sans"
         />
       </label>
 
