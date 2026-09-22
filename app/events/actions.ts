@@ -73,7 +73,8 @@ function escapeHtml(text: string): string {
 
 export async function sendWelcomeEmail(eventId: string, formData: FormData): Promise<string | void> {
   try {
-    const to = [formData.get("to1"), formData.get("to2")]
+    const to = formData
+      .getAll("to")
       .filter((v): v is string => typeof v === "string" && v.trim() !== "")
       .map((v) => v.trim());
     if (to.length === 0) throw new Error("אין כתובת מייל לשליחה");
@@ -83,8 +84,20 @@ export async function sendWelcomeEmail(eventId: string, formData: FormData): Pro
     if (!subject || !body.trim()) throw new Error("נושא ותוכן המייל הם שדות חובה");
 
     const currentStaff = await getCurrentStaff();
-    const attachmentPath = path.join(process.cwd(), "assets", "wedding-welcome-guidelines.pdf");
-    const attachmentBase64 = fs.readFileSync(attachmentPath).toString("base64");
+
+    // Lets the sender swap in a different file for this one send (e.g. a
+    // one-off guideline variant) instead of always attaching the venue's
+    // standard default.
+    const uploadedAttachment = formData.get("attachment");
+    let attachmentFilename = WELCOME_EMAIL_ATTACHMENT_FILENAME;
+    let attachmentBase64: string;
+    if (uploadedAttachment instanceof File && uploadedAttachment.size > 0) {
+      attachmentFilename = uploadedAttachment.name;
+      attachmentBase64 = Buffer.from(await uploadedAttachment.arrayBuffer()).toString("base64");
+    } else {
+      const attachmentPath = path.join(process.cwd(), "assets", "wedding-welcome-guidelines.pdf");
+      attachmentBase64 = fs.readFileSync(attachmentPath).toString("base64");
+    }
 
     await sendChecklistsEmail({
       to,
@@ -92,7 +105,7 @@ export async function sendWelcomeEmail(eventId: string, formData: FormData): Pro
       subject,
       bodyText: escapeHtml(body).replace(/\n/g, "<br/>"),
       replyTo: currentStaff?.email ?? null,
-      attachments: [{ filename: WELCOME_EMAIL_ATTACHMENT_FILENAME, base64: attachmentBase64 }],
+      attachments: [{ filename: attachmentFilename, base64: attachmentBase64 }],
     });
 
     revalidatePath(`/events/${eventId}`);
