@@ -24,6 +24,7 @@ export interface ReminderBodyEvent {
   vegan_meal_count: string | null;
   gluten_free_meal_count: string | null;
   toddlers_under_2_count: string | null;
+  menu_notes: string | null;
 }
 
 export interface CoupleMeetingReminderRule {
@@ -130,6 +131,27 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
       `<li>מנות ללא גלוטן: ${mealField(event.gluten_free_meal_count)}</li>` +
       `<li>ילדים מתחת לגיל 2: ${mealField(event.toddlers_under_2_count)}</li>` +
       `</ul>`,
+  },
+  {
+    key: "additional-info-week-before-sniro",
+    anchor: "event_date",
+    offsetDays: -7,
+    matchMode: "onOrAfter",
+    recipientOverride: "sniro111oshri@gmail.com",
+    dateCondition: (event) => !!event.menu_notes?.trim(),
+    subject: (event) => `מידע נוסף לקראת האירוע של ${event.name} - ${formatDate(event.event_date)}`,
+    body: (event) =>
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}) - המידע הנוסף שמולא לאירוע:<br/>${event.menu_notes}`,
+  },
+  {
+    key: "additional-info-day-before-sniro",
+    anchor: "event_date",
+    offsetDays: -1,
+    recipientOverride: "sniro111oshri@gmail.com",
+    dateCondition: (event) => !!event.menu_notes?.trim(),
+    subject: (event) => `מידע נוסף לקראת האירוע של ${event.name} - ${formatDate(event.event_date)}`,
+    body: (event) =>
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים מחר - המידע הנוסף שמולא לאירוע:<br/>${event.menu_notes}`,
   },
 ];
 

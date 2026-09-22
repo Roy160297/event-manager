@@ -17,6 +17,7 @@ type ReminderableEvent = Pick<
   | "vegan_meal_count"
   | "gluten_free_meal_count"
   | "toddlers_under_2_count"
+  | "menu_notes"
 >;
 
 // Shared by the daily cron route (app/api/cron/couple-meeting-reminders) and

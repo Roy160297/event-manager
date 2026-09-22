@@ -37,6 +37,7 @@ describe("COUPLE_MEETING_REMINDER_RULES", () => {
       vegan_meal_count: "3",
       gluten_free_meal_count: "2",
       toddlers_under_2_count: "1",
+      menu_notes: "בר מרובע, עיצוב לבן",
     };
     for (const rule of COUPLE_MEETING_REMINDER_RULES) {
       const body = rule.body(sampleEvent);
