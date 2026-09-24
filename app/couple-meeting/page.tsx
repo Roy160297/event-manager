@@ -19,13 +19,6 @@ export default async function CoupleMeetingPage() {
       </p>
 
       <div className={cardClass}>
-        <p className="text-sm font-semibold underline">לפני הפגישה</p>
-        <ul className={listClass}>
-          <li>ווידוא הגעה בזמן לפגישה מול הזוג.</li>
-        </ul>
-      </div>
-
-      <div className={cardClass}>
         <p className="text-sm font-semibold underline">נושאים לעבור עליהם בפגישה</p>
         <ul className={listClass}>
           <li>הכרות כללית - פרטים עליהם, על ההורים, ועל העיסוקים שלהם.</li>

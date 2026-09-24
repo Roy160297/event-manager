@@ -68,14 +68,6 @@ const mealField = (value: string | null) => value || "—";
 
 export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
   {
-    key: "meeting-day-arrival-confirmation",
-    anchor: "couple_meeting_date",
-    offsetDays: 0,
-    subject: "תזכורת: פגישת זוג היום",
-    body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום פגישת הזוג - יש לוודא הגעה בזמן לפגישה מול הזוג.`,
-  },
-  {
     key: "post-meeting-followup-tasks",
     anchor: "couple_meeting_date",
     offsetDays: 1,
