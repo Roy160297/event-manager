@@ -133,17 +133,6 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
       `</ul>`,
   },
   {
-    key: "additional-info-week-before-sniro",
-    anchor: "event_date",
-    offsetDays: -7,
-    matchMode: "onOrAfter",
-    recipientOverride: "sniro111oshri@gmail.com",
-    dateCondition: (event) => !!event.menu_notes?.trim(),
-    subject: (event) => `מידע נוסף לקראת האירוע של ${event.name} - ${formatDate(event.event_date)}`,
-    body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}) - המידע הנוסף שמולא לאירוע:<br/>${event.menu_notes}`,
-  },
-  {
     key: "additional-info-event-morning-sniro",
     anchor: "event_date",
     offsetDays: 0,
