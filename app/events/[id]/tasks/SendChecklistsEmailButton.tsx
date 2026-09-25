@@ -46,6 +46,7 @@ function fileDate(eventDate: string | null): string {
 export function SendChecklistsEmailButton({
   event,
   managerName,
+  floorManagerName,
   managerEmail,
   guestCommitment,
   checklists,
@@ -57,6 +58,7 @@ export function SendChecklistsEmailButton({
 }: {
   event: EventRow;
   managerName: string | null;
+  floorManagerName: string | null;
   managerEmail: string | null;
   guestCommitment: string | null;
   // Just the event manager's own closing checklist (see tasks/page.tsx) -
@@ -132,6 +134,7 @@ export function SendChecklistsEmailButton({
         <EventSummaryReportPrintable
           event={event}
           managerName={managerName}
+          floorManagerName={floorManagerName}
           guestCommitment={guestCommitment}
           photoUrls={summaryReportPhotoUrls}
         />

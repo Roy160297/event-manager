@@ -139,6 +139,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
 
   if (!canReadChecklist && !canReadSummary && !canReadTasks && !canReadAnyRoleChecklist) return <NoPermissionNotice />;
 
+  const floorManagerName = staff?.find((member) => member.id === event?.floor_manager_id)?.name ?? null;
+
   const summaryFields: [string, string | number | null][] = [
     ["חברת הפקה", event?.production_company ?? null],
     ["שעת סיום האירוע", event?.report_end_time ?? null],
@@ -149,7 +151,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     ["כמות ילדים (אורחים)", event?.final_children_count ?? null],
     ["מנהל בר", event?.bar_manager_name ?? null],
     ["כמות ברמנים", event?.bartender_count ?? null],
-    ["מנהל פלור", event?.floor_manager_name ?? null],
+    ["מנהל פלור", floorManagerName],
     ["כמות מלצרים", event?.waiter_count ?? null],
     ["כמות טבחים", event?.cook_count ?? null],
     ["כמות מנקי מטבח", event?.kitchen_dishwasher_count ?? null],
@@ -275,6 +277,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         <SendChecklistsEmailButton
           event={event}
           managerName={managerName}
+          floorManagerName={floorManagerName}
           managerEmail={managerEmail}
           guestCommitment={guestCommitment}
           checklists={checklistsForEmail}
@@ -323,6 +326,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           <EventSummaryReportExport
             event={event ?? null}
             managerName={managerName}
+            floorManagerName={floorManagerName}
             guestCommitment={guestCommitment}
             signedByName={summaryReportSignature?.signed_by_name}
             signatureData={summaryReportSignature?.signature_data}
@@ -459,10 +463,6 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               <label className={reportLabelClass}>
                 <span>כמות ברמנים</span>
                 <input name="bartender_count" defaultValue={event?.bartender_count ?? ""} className={inputClass} />
-              </label>
-              <label className={reportLabelClass}>
-                <span>מנהל פלור</span>
-                <input name="floor_manager_name" defaultValue={event?.floor_manager_name ?? "אווה"} className={inputClass} />
               </label>
               <label className={reportLabelClass}>
                 <span>כמות מלצרים</span>

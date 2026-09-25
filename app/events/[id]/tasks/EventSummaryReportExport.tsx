@@ -8,6 +8,7 @@ import type { EventRow } from "@/lib/types";
 export function EventSummaryReportExport({
   event,
   managerName,
+  floorManagerName,
   guestCommitment,
   signedByName,
   signatureData,
@@ -15,6 +16,7 @@ export function EventSummaryReportExport({
 }: {
   event: EventRow | null;
   managerName: string | null;
+  floorManagerName: string | null;
   guestCommitment: string | null;
   signedByName?: string | null;
   signatureData?: string | null;
@@ -32,6 +34,7 @@ export function EventSummaryReportExport({
       <EventSummaryReportPrintable
         event={event}
         managerName={managerName}
+        floorManagerName={floorManagerName}
         guestCommitment={guestCommitment}
         photoUrls={photoUrls}
       />

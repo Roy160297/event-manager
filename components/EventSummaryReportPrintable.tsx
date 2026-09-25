@@ -4,11 +4,13 @@ import type { EventRow } from "@/lib/types";
 export function EventSummaryReportPrintable({
   event,
   managerName,
+  floorManagerName,
   guestCommitment,
   photoUrls,
 }: {
   event: EventRow;
   managerName: string | null;
+  floorManagerName: string | null;
   guestCommitment: string | null;
   photoUrls?: string[];
 }) {
@@ -29,7 +31,7 @@ export function EventSummaryReportPrintable({
     ["כמות ילדים (אורחים)", event.final_children_count],
     ["מנהל בר", event.bar_manager_name],
     ["כמות ברמנים", event.bartender_count],
-    ["מנהל פלור", event.floor_manager_name],
+    ["מנהל פלור", floorManagerName],
     ["כמות מלצרים", event.waiter_count],
     ["כמות טבחים", event.cook_count],
     ["כמות מנקי מטבח", event.kitchen_dishwasher_count],
