@@ -28,11 +28,10 @@ export async function sendDueReminders(
   supabase: ReturnType<typeof createAdminClient>,
   event: ReminderableEvent,
   managerEmail: string | null | undefined,
-  // Which daily cron pass is calling this (see vercel.json - morning,
-  // night, and evening passes). The immediate post-save check has no real
-  // "pass" of its own, so it's treated as the morning one - see runWindow's
-  // doc comment.
-  pass: "morning" | "night" | "evening" = "morning",
+  // Which daily cron pass is calling this (see vercel.json - morning and
+  // evening passes). The immediate post-save check has no real "pass" of its
+  // own, so it's treated as the morning one - see runWindow's doc comment.
+  pass: "morning" | "evening" = "morning",
 ): Promise<{ sent: number; skippedAlreadySent: number }> {
   // Business events don't have a couple/wedding flow, so none of these
   // couple-meeting-anchored reminder rules are relevant to them.

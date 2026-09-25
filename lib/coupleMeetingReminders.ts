@@ -45,16 +45,15 @@ export interface CoupleMeetingReminderRule {
   // Same idea as `condition`, but synchronous and computed straight from the
   // event fields already in hand (e.g. "is event_date a Friday") - no DB call.
   dateCondition?: (event: ReminderBodyEvent) => boolean;
-  // Restricts this rule to a specific daily cron pass (see vercel.json -
-  // there's a morning pass, a night pass fixed at 20:45 Israel time, and an
-  // evening pass). Omitted (the default) means "any pass" - safe because
-  // the reminder_log unique constraint already prevents a rule from sending
-  // twice in one day even if multiple passes evaluate it. Used for rules that
-  // need to land at a specific time of day rather than just on a specific
-  // date - the immediate post-save check (checkRemindersForEvent) always runs
-  // as if it were the morning pass, so a night/evening-only rule never
-  // fires immediately.
-  runWindow?: "morning" | "night" | "evening";
+  // Restricts this rule to a specific daily cron pass (see vercel.json - there's
+  // a morning pass and an evening pass). Omitted (the default) means "any
+  // pass" - safe because the reminder_log unique constraint already prevents
+  // a rule from sending twice in one day even if both passes evaluate it.
+  // Used for rules that need to
+  // land at a specific time of day rather than just on a specific date - the
+  // immediate post-save check (checkRemindersForEvent) always runs as if it
+  // were the morning pass, so an evening-only rule never fires immediately.
+  runWindow?: "morning" | "evening";
   // Sends to this fixed address instead of the event's manager - for
   // reminders meant for a specific staff member regardless of who's managing
   // the event (e.g. the kitchen always wants the meal breakdown).
@@ -135,19 +134,6 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     subject: (event) => `מידע נוסף לקראת האירוע של ${event.name} - ${formatDate(event.event_date)}`,
     body: (event) =>
       `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים היום - המידע הנוסף שמולא לאירוע:<br/>${event.menu_notes}`,
-  },
-  {
-    key: "chiller-to-chuppah-2045",
-    anchor: "event_date",
-    offsetDays: 0,
-    // Fixed at 20:45 Israel time (see vercel.json) - not truly "20 minutes
-    // before the chuppah," since the reminder system only anchors on dates,
-    // not the timeline's per-event chuppah time, but close enough for the
-    // standard evening schedule (chuppah ~21:00-21:30).
-    runWindow: "night",
-    subject: "תזכורת: העלאת צ'ילר לחופה",
-    body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים היום - יש להעלות צ'ילר לחופה.`,
   },
 ];
 
