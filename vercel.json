@@ -5,6 +5,10 @@
       "schedule": "0 5 * * *"
     },
     {
+      "path": "/api/cron/couple-meeting-reminders?pass=night",
+      "schedule": "45 17 * * *"
+    },
+    {
       "path": "/api/cron/couple-meeting-reminders?pass=evening",
       "schedule": "0 15 * * *"
     }

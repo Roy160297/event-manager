@@ -4,9 +4,10 @@ import type { EventRow, StaffRow } from "@/lib/types";
 
 type EventWithManager = EventRow & { staff: Pick<StaffRow, "email"> | null };
 
-// Triggered twice daily by Vercel Cron (see vercel.json) - a morning pass and
-// an evening pass, distinguished by a "?pass=evening" query param on the
-// evening entry (morning is the default, matching sendDueReminders' default).
+// Triggered three times daily by Vercel Cron (see vercel.json) - a morning
+// pass, a night pass fixed at 20:45 Israel time, and an evening pass,
+// distinguished by a "?pass=night"/"?pass=evening" query param (morning
+// is the default, matching sendDueReminders' default).
 // Runs with no logged-in user/session, so it needs the service-role admin
 // client (RLS has nothing to authenticate against here) rather than the
 // normal cookie-based one. This is the backstop for reminders:
@@ -21,7 +22,8 @@ export async function GET(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const pass = new URL(request.url).searchParams.get("pass") === "evening" ? "evening" : "morning";
+  const passParam = new URL(request.url).searchParams.get("pass");
+  const pass = passParam === "evening" ? "evening" : passParam === "night" ? "night" : "morning";
 
   try {
     const supabase = createAdminClient();
