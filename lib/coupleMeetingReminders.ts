@@ -84,8 +84,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     body: (event) =>
       `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום התאריך (שבוע לפני האירוע) - יש לבצע את המשימות הבאות:<ul>` +
       `<li>עדכון ההתחייבות הסופית בפרטי האירוע.</li>` +
-      `<li>פתיחת הושבה.</li>` +
-      `<li>הכנת סקיצה סופית.</li>` +
+      `<li>הכנת סקיצה סופית, עדכון הזוג ופתיחת הושבה.</li>` +
       `</ul>`,
   },
   {
