@@ -82,7 +82,11 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     matchMode: "onOrAfter",
     subject: "תזכורת: עדכון התחייבות סופית",
     body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום התאריך (שבוע לפני האירוע) - יש לעדכן את ההתחייבות הסופית בפרטי האירוע.`,
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}): היום התאריך (שבוע לפני האירוע) - יש לבצע את המשימות הבאות:<ul>` +
+      `<li>עדכון ההתחייבות הסופית בפרטי האירוע.</li>` +
+      `<li>פתיחת הושבה.</li>` +
+      `<li>הכנת סקיצה סופית.</li>` +
+      `</ul>`,
   },
   {
     key: "dj-tzach-ziv-sketch-update",
