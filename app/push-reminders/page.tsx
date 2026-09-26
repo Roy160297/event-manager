@@ -6,24 +6,49 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
 import { actionErrorMessage } from "@/lib/actionError";
+import { PushReminderRecipientFields } from "@/components/PushReminderRecipientFields";
 import { createPushReminderRule, updatePushReminderRule, deletePushReminderRule } from "./actions";
 import type { PushReminderRuleRow } from "@/lib/types";
 
+const RECIPIENT_SUMMARY_LABELS: Record<PushReminderRuleRow["recipient_type"], string> = {
+  event_manager: "מנהל האירוע",
+  floor_manager: "מנהל הפלור של האירוע",
+  role: "תפקיד",
+  fixed_staff: "איש צוות",
+};
+
 export default async function PushRemindersPage() {
   const supabase = await createClient();
-  const [currentStaff, { data: rules }] = await Promise.all([
+  const [currentStaff, { data: rules }, { data: roles }, { data: staff }] = await Promise.all([
     getCurrentStaff(),
     supabase
       .from("push_reminder_rules")
       .select("*")
       .order("created_at", { ascending: true })
       .returns<PushReminderRuleRow[]>(),
+    supabase.from("roles").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
+    supabase.from("staff").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
   ]);
 
   const canReadRules = !!currentStaff && canRead(currentStaff.permissions, "push_reminder_rules");
   const canWriteRules = !!currentStaff && canWrite(currentStaff.permissions, "push_reminder_rules");
 
   if (!canReadRules) return <NoPermissionNotice />;
+
+  const roleList = roles ?? [];
+  const staffList = staff ?? [];
+  const roleNameById = new Map(roleList.map((role) => [role.id, role.name]));
+  const staffNameById = new Map(staffList.map((member) => [member.id, member.name]));
+
+  function recipientSummary(rule: PushReminderRuleRow): string {
+    if (rule.recipient_type === "role") {
+      return `תפקיד: ${(rule.recipient_role_id && roleNameById.get(rule.recipient_role_id)) ?? "לא נבחר"}`;
+    }
+    if (rule.recipient_type === "fixed_staff") {
+      return `איש צוות: ${(rule.recipient_staff_id && staffNameById.get(rule.recipient_staff_id)) ?? "לא נבחר"}`;
+    }
+    return RECIPIENT_SUMMARY_LABELS[rule.recipient_type];
+  }
 
   const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
   const labelClass = "flex flex-col gap-1 text-sm";
@@ -42,9 +67,9 @@ export default async function PushRemindersPage() {
       <div>
         <h1 className="text-2xl font-bold">התראות פוש</h1>
         <p className="text-sm text-foreground/60">
-          כל שורה מגדירה תזכורת שנשלחת כפוש בטלפון למנהל האירוע, מספר דקות לפני/אחרי שלב מסוים בלוח הזמנים של
-          האירוע (למשל &quot;20 דקות לפני חופה&quot;). ניתן להשתמש ב-<code>{"{event_name}"}</code> בתוכן ההתראה כדי
-          שיוחלף בשם האירוע בפועל.
+          כל שורה מגדירה תזכורת שנשלחת כפוש בטלפון, מספר דקות לפני/אחרי שלב מסוים בלוח הזמנים של האירוע (למשל
+          &quot;20 דקות לפני חופה&quot;), לנמען שבוחרים - מנהל האירוע, מנהל הפלור, כל מי שבתפקיד מסוים, או איש צוות
+          קבוע. ניתן להשתמש ב-<code>{"{event_name}"}</code> בתוכן ההתראה כדי שיוחלף בשם האירוע בפועל.
         </p>
       </div>
 
@@ -77,6 +102,7 @@ export default async function PushRemindersPage() {
               <span>תוכן ההתראה</span>
               <textarea name="notification_body" required rows={2} className={inputClass} />
             </label>
+            <PushReminderRecipientFields roles={roleList} staff={staffList} inputClass={inputClass} labelClass={labelClass} />
           </div>
           <button
             type="submit"
@@ -114,7 +140,7 @@ export default async function PushRemindersPage() {
                   </p>
                   <p className="text-sm text-foreground/60">
                     {rule.offset_minutes} דקות {rule.offset_minutes < 0 ? "לפני" : "אחרי"} שלב &quot;{rule.anchor_label}
-                    &quot;
+                    &quot; · נשלח אל: {recipientSummary(rule)}
                   </p>
                 </div>
                 {canWriteRules && (
@@ -167,6 +193,15 @@ export default async function PushRemindersPage() {
                         className={inputClass}
                       />
                     </label>
+                    <PushReminderRecipientFields
+                      roles={roleList}
+                      staff={staffList}
+                      inputClass={inputClass}
+                      labelClass={labelClass}
+                      defaultType={rule.recipient_type}
+                      defaultRoleId={rule.recipient_role_id}
+                      defaultStaffId={rule.recipient_staff_id}
+                    />
                     <label className="flex items-center gap-2 text-sm sm:col-span-2">
                       <input type="checkbox" name="active" defaultChecked={rule.active} />
                       <span>פעילה</span>

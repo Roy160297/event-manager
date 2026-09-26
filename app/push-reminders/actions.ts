@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
+import type { PushReminderRecipientType } from "@/lib/types";
+
+const RECIPIENT_TYPES: PushReminderRecipientType[] = ["event_manager", "floor_manager", "role", "fixed_staff"];
 
 async function assertCanManage() {
   const staff = await getCurrentStaff();
@@ -24,12 +27,29 @@ function readRuleFields(formData: FormData) {
   }
   if (!Number.isFinite(offsetMinutes)) throw new Error("מספר הדקות אינו תקין");
 
+  const recipientTypeRaw = String(formData.get("recipient_type") ?? "");
+  if (!RECIPIENT_TYPES.includes(recipientTypeRaw as PushReminderRecipientType)) {
+    throw new Error("סוג נמען אינו תקין");
+  }
+  const recipientType = recipientTypeRaw as PushReminderRecipientType;
+
+  const recipientRoleId = String(formData.get("recipient_role_id") ?? "").trim() || null;
+  const recipientStaffId = String(formData.get("recipient_staff_id") ?? "").trim() || null;
+  if (recipientType === "role" && !recipientRoleId) throw new Error("יש לבחור תפקיד");
+  if (recipientType === "fixed_staff" && !recipientStaffId) throw new Error("יש לבחור איש צוות");
+
   return {
     title,
     anchor_label: anchorLabel,
     offset_minutes: offsetMinutes,
     notification_title: notificationTitle,
     notification_body: notificationBody,
+    recipient_type: recipientType,
+    // Only the field matching the chosen type is kept - the others are
+    // cleared so a stale role/staff selection can't linger after switching
+    // recipient type back and forth.
+    recipient_role_id: recipientType === "role" ? recipientRoleId : null,
+    recipient_staff_id: recipientType === "fixed_staff" ? recipientStaffId : null,
   };
 }
 

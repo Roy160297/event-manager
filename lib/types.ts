@@ -237,6 +237,8 @@ export interface PushSubscriptionRow {
   created_at: string;
 }
 
+export type PushReminderRecipientType = "event_manager" | "floor_manager" | "role" | "fixed_staff";
+
 export interface PushReminderRuleRow {
   id: string;
   title: string;
@@ -245,5 +247,8 @@ export interface PushReminderRuleRow {
   notification_title: string;
   notification_body: string;
   active: boolean;
+  recipient_type: PushReminderRecipientType;
+  recipient_role_id: string | null;
+  recipient_staff_id: string | null;
   created_at: string;
 }
