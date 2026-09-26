@@ -43,12 +43,12 @@ body {
    through around this block. */
 .theme-private {
   --background: #e3f3e9;
-  --foreground: #1b2a45;
-  --surface: #fbe6d3;
-  --border-classic: #eccba8;
-  --accent: #c97b52;
-  --accent-foreground: #fff8f2;
-  --accent-soft: #f3d5b8;
+  --foreground: #241f1a;
+  --surface: #fffdf9;
+  --border-classic: #e6dab9;
+  --accent: #b8935a;
+  --accent-foreground: #fffdf9;
+  --accent-soft: #f2e6ce;
   background: var(--background);
   color: var(--foreground);
 }

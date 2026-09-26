@@ -6,6 +6,7 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { DateField } from "@/components/DateField";
 import { TimeField } from "@/components/TimeField";
 import { TrashIcon } from "@/components/icons";
+import { SupplierImageImport } from "./SupplierImageImport";
 import type { PrivateEventGuestRow, PrivateEventRow, PrivateEventSupplierRow, PrivateEventType } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(PRIVATE_EVENT_TYPE_LABELS) as PrivateEventType[];
@@ -236,6 +237,10 @@ export default async function PrivateEventOverviewPage({ params }: { params: Pro
             })}
           </ul>
         )}
+
+        <div className="mt-4 border-t border-border-classic pt-3">
+          <SupplierImageImport eventId={id} />
+        </div>
 
         <SaveDetailsForm
           action={addSupplierAction}

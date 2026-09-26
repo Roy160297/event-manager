@@ -15,7 +15,10 @@ export function isPrivateEventsOwner(staff: CurrentStaff | null): boolean {
 }
 
 export const PRIVATE_EVENT_TYPE_LABELS: Record<PrivateEventType, string> = {
-  wedding: "חתונה",
+  wedding: "חתונה - מזנונים",
+  wedding_service: "חתונה - הגשה",
+  reverse_wedding: "חתונה הפוכה - מזנונים",
+  reverse_wedding_service: "חתונה הפוכה - הגשה",
   bar_mitzvah: "בר מצווה",
   bat_mitzvah: "בת מצווה",
   business_event: "אירוע עסקי",

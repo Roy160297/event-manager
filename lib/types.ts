@@ -255,6 +255,9 @@ export interface PushReminderRuleRow {
 
 export type PrivateEventType =
   | "wedding"
+  | "wedding_service"
+  | "reverse_wedding"
+  | "reverse_wedding_service"
   | "bar_mitzvah"
   | "bat_mitzvah"
   | "business_event"
