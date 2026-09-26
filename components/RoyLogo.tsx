@@ -4,7 +4,7 @@
 // any future .theme-private palette change instead of drifting out of sync.
 export function RoyLogo({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 160 182" className={className} aria-hidden="true">
+    <svg viewBox="0 0 160 190" className={className} aria-hidden="true">
       <circle cx="80" cy="72" r="62" fill="var(--surface)" stroke="var(--accent)" strokeWidth="2.5" />
       <circle cx="80" cy="72" r="52" fill="none" stroke="var(--accent)" strokeWidth="0.75" />
       <text
@@ -19,10 +19,10 @@ export function RoyLogo({ className }: { className?: string }) {
       </text>
       <text
         x="80"
-        y="150"
+        y="154"
         textAnchor="middle"
         fontFamily="var(--font-serif)"
-        fontSize="15"
+        fontSize="20"
         letterSpacing="4"
         fill="var(--foreground)"
       >
@@ -30,10 +30,10 @@ export function RoyLogo({ className }: { className?: string }) {
       </text>
       <text
         x="80"
-        y="168"
+        y="176"
         textAnchor="middle"
         fontFamily="var(--font-serif)"
-        fontSize="11"
+        fontSize="15"
         letterSpacing="2"
         fill="var(--accent)"
       >
