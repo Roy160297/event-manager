@@ -227,3 +227,12 @@ export interface ChecklistSignatureRow {
   manager_signed_by_name: string | null;
   manager_signature_data: string | null;
 }
+
+export interface PushSubscriptionRow {
+  id: string;
+  staff_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
+}

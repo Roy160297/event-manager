@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Heebo, Frank_Ruhl_Libre } from "next/font/google";
 import { MainNav } from "@/components/MainNav";
+import { PushNotificationManager } from "@/components/PushNotificationManager";
 import { EventSwitcher } from "@/components/EventSwitcher";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
@@ -66,11 +67,12 @@ export default async function RootLayout({
   const switcherDefaultManagerId = isSelfAManager ? (staff?.id ?? null) : null;
 
   const accountBlock = staff && (
-    <div className="flex items-center gap-2.5 text-sm text-foreground/70">
+    <div className="flex flex-wrap items-center gap-2.5 text-sm text-foreground/70">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
         {staff.name.trim().charAt(0)}
       </span>
       <span className="whitespace-nowrap">{staff.name}</span>
+      <PushNotificationManager />
       <form action={signOut}>
         <button
           type="submit"
