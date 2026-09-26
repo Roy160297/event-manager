@@ -6,6 +6,7 @@ import { MainNav } from "@/components/MainNav";
 import { PushNotificationManager } from "@/components/PushNotificationManager";
 import { EventSwitcher } from "@/components/EventSwitcher";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
+import { RoyLogo } from "@/components/RoyLogo";
 import type { EventRow } from "@/lib/types";
 
 interface StaffSummary {
@@ -72,8 +73,9 @@ export function AppShell({
 
   if (isPrivateMode) {
     const privateTitleLink = (
-      <Link href="/private-events" className="font-serif text-2xl font-bold text-foreground">
-        האירועים הפרטיים שלי
+      <Link href="/private-events" className="flex items-center gap-2.5">
+        <RoyLogo className="h-14 w-14 shrink-0" />
+        <span className="font-serif text-2xl font-bold text-foreground">האירועים הפרטיים שלי</span>
       </Link>
     );
     const PRIVATE_NAV_LINKS = [
