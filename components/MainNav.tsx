@@ -15,6 +15,7 @@ export function MainNav({
   showEventManagementDex = false,
   showMyTasks = false,
   showChecklistNotes = false,
+  showPushReminders = false,
 }: {
   showAdmin?: boolean;
   showCalendar?: boolean;
@@ -22,6 +23,7 @@ export function MainNav({
   showEventManagementDex?: boolean;
   showMyTasks?: boolean;
   showChecklistNotes?: boolean;
+  showPushReminders?: boolean;
 }) {
   const pathname = usePathname();
   const extraLinks = [];
@@ -30,6 +32,7 @@ export function MainNav({
   if (showChecklistNotes) extraLinks.push({ href: "/checklist-notes", label: "הערות וסיכומים" });
   if (showCoupleMeeting) extraLinks.push({ href: "/couple-meeting", label: "פגישה עם זוג" });
   if (showEventManagementDex) extraLinks.push({ href: "/event-management-dex", label: 'סד"פ ניהול אירוע' });
+  if (showPushReminders) extraLinks.push({ href: "/push-reminders", label: "התראות פוש" });
 
   let links = [NAV_LINKS[0], ...extraLinks, NAV_LINKS[1]];
   if (showAdmin) links = [...links, { href: "/admin", label: "ניהול" }];

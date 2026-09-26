@@ -93,6 +93,7 @@ export default async function RootLayout({
       showCoupleMeeting={canRead(staff.permissions, "couple_meeting")}
       showEventManagementDex={canRead(staff.permissions, "event_management_dex")}
       showMyTasks={canRead(staff.permissions, "my_tasks")}
+      showPushReminders={canRead(staff.permissions, "push_reminder_rules")}
       showChecklistNotes={
         canRead(staff.permissions, "closing_checklist") ||
         canRead(staff.permissions, "floor_manager_checklist") ||

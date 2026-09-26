@@ -236,3 +236,14 @@ export interface PushSubscriptionRow {
   auth: string;
   created_at: string;
 }
+
+export interface PushReminderRuleRow {
+  id: string;
+  title: string;
+  anchor_label: string;
+  offset_minutes: number;
+  notification_title: string;
+  notification_body: string;
+  active: boolean;
+  created_at: string;
+}

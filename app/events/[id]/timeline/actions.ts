@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { scheduleSortKey } from "@/lib/labels";
-import { addMinutesToTime, israelWallTimeToUtcISOString, timeToMinutes } from "@/lib/scheduleTime";
+import { addMinutesToTime, timeToMinutes } from "@/lib/scheduleTime";
 import { extractTimelineFromImage, type TimelineImportDraft } from "@/lib/timelineImport";
 import type { TimelineItemRow } from "@/lib/types";
 
@@ -40,6 +40,11 @@ export async function addTimelineItemsFromImport(eventId: string, items: Timelin
 
   const { error } = await supabase.from("timeline_items").insert(rows);
   if (error) throw new Error(error.message);
+
+  for (const item of validItems) {
+    if (item.approx_time?.trim()) await schedulePushRemindersForStep(eventId, item.label.trim(), item.approx_time.trim());
+  }
+
   revalidatePath(`/events/${eventId}/timeline`);
 }
 
@@ -66,6 +71,9 @@ export async function addTimelineItem(eventId: string, formData: FormData) {
   });
 
   if (error) throw new Error(error.message);
+
+  await schedulePushRemindersForStep(eventId, label, approxTime);
+
   revalidatePath(`/events/${eventId}/timeline`);
 }
 
@@ -110,18 +118,31 @@ export async function shiftTimelineFrom(eventId: string, formData: FormData) {
     if (error) throw new Error(error.message);
   }
 
+  // Any shifted step could be the anchor of some active reminder rule -
+  // reschedule each one against its new time, same as editing it directly.
+  for (const [index, item] of toShift.entries()) {
+    const newTime = updates[index].approx_time;
+    if (newTime) await schedulePushRemindersForStep(eventId, item.label, newTime);
+  }
+
   revalidatePath(`/events/${eventId}/timeline`);
 }
 
 export async function deleteTimelineItem(eventId: string, itemId: string) {
   const supabase = await createClient();
+  const { data: item } = await supabase.from("timeline_items").select("label").eq("id", itemId).maybeSingle();
+
   const { error } = await supabase.from("timeline_items").delete().eq("id", itemId);
   if (error) throw new Error(error.message);
+
+  if (item?.label) await cancelPushRemindersForEvent(eventId, item.label);
+
   revalidatePath(`/events/${eventId}/timeline`);
 }
 
 export async function deleteAllTimelineItems(eventId: string) {
   const supabase = await createClient();
+  await cancelPushRemindersForEvent(eventId, null);
   const { error } = await supabase.from("timeline_items").delete().eq("event_id", eventId);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/timeline`);
@@ -136,6 +157,8 @@ export async function updateTimelineItem(eventId: string, itemId: string, formDa
 
   if (!label || !approxTime) throw new Error("כותרת השלב והשעה הם שדות חובה");
 
+  const { data: previous } = await supabase.from("timeline_items").select("label").eq("id", itemId).maybeSingle();
+
   const { error } = await supabase
     .from("timeline_items")
     .update({ label, approx_time: approxTime, notes })
@@ -143,11 +166,11 @@ export async function updateTimelineItem(eventId: string, itemId: string, formDa
 
   if (error) throw new Error(error.message);
 
-  // Editing an existing חופה step (fixing its time, or relabeling some other
-  // step into/out of being "the" חופה step) should reschedule the chiller
-  // reminder the same way creating the default schedule does - not just the
-  // initial insertSchedule/insertFridaySchedule call.
-  if (label === "חופה") await scheduleChillerReminder(eventId, [{ label, time: approxTime }]);
+  // Editing an existing step (fixing its time, or relabeling it into/out of
+  // matching some rule's anchor) should reschedule/cancel the same way
+  // creating the default schedule does - not just insertSchedule's own call.
+  if (previous?.label && previous.label !== label) await cancelPushRemindersForEvent(eventId, previous.label);
+  await schedulePushRemindersForStep(eventId, label, approxTime);
 
   revalidatePath(`/events/${eventId}/timeline`);
 }
@@ -292,34 +315,38 @@ async function insertSchedule(
   const { error } = await supabase.from("timeline_items").insert(rows);
   if (error) throw new Error(error.message);
 
-  await scheduleChillerReminder(eventId, schedule);
+  for (const step of schedule) {
+    await schedulePushRemindersForStep(eventId, step.label, step.time);
+  }
 
   revalidatePath(`/events/${eventId}/timeline`);
 }
 
-// Schedules the one-time "20 minutes before chuppah" push (see
-// schedule_chiller_reminder in the 00000000000056 migration) for whichever
-// step in this template is labeled חופה. Best-effort - a failure here (e.g.
+// Schedules (or reschedules) every active push_reminder_rules row anchored
+// to this step's label, timed relative to its time - see
+// schedule_push_reminders_for_step in the 00000000000058 migration. A no-op
+// if no rule is anchored to this label. Best-effort - a failure here (e.g.
 // app_settings.push_webhook_secret not configured yet) shouldn't block
-// creating the timeline itself.
-async function scheduleChillerReminder(eventId: string, schedule: { label: string; time: string }[]) {
-  const chuppahStep = schedule.find((step) => step.label === "חופה");
-  if (!chuppahStep) return;
-
+// editing the timeline itself.
+async function schedulePushRemindersForStep(eventId: string, label: string, time: string) {
   const supabase = await createClient();
-  const { data: event } = await supabase.from("events").select("event_date").eq("id", eventId).maybeSingle();
-  if (!event?.event_date) return;
-
-  const runAt = addMinutesToTime(chuppahStep.time, -20);
-  if (!runAt) return;
-
   try {
-    await supabase.rpc("schedule_chiller_reminder", {
-      p_event_id: eventId,
-      p_run_at: israelWallTimeToUtcISOString(event.event_date, runAt),
-    });
+    await supabase.rpc("schedule_push_reminders_for_step", { p_event_id: eventId, p_label: label, p_time: time });
   } catch (err) {
-    console.error(`Failed to schedule chiller reminder for event ${eventId}:`, err);
+    console.error(`Failed to schedule push reminders for event ${eventId}, step "${label}":`, err);
+  }
+}
+
+// Cancels any push reminder(s) anchored to p_label for this event (or every
+// push reminder for the event, if p_label is null) - used when a step is
+// deleted or the whole timeline is wiped, so a stale job doesn't fire for a
+// step that no longer exists.
+async function cancelPushRemindersForEvent(eventId: string, label: string | null) {
+  const supabase = await createClient();
+  try {
+    await supabase.rpc("cancel_push_reminders_for_event", { p_event_id: eventId, p_label: label });
+  } catch (err) {
+    console.error(`Failed to cancel push reminders for event ${eventId}:`, err);
   }
 }
 

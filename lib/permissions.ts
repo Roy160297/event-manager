@@ -17,6 +17,7 @@ export const RESOURCES = [
   "my_tasks",
   "menu",
   "calendar",
+  "push_reminder_rules",
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 
@@ -39,6 +40,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   menu: "תפריט",
   calendar: "יומן",
   business_event_checklist: "צ'קליסט סגירה - אירוע עסקי",
+  push_reminder_rules: "ניהול התראות",
 };
 
 export type PermissionMap = Record<Resource, { read: boolean; write: boolean }>;
