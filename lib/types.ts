@@ -270,12 +270,6 @@ export interface PrivateEventRow {
   end_time: string | null;
   hall_name: string | null;
   estimated_guests: string | null;
-  kids_meal_count: string | null;
-  glat_meal_count: string | null;
-  vegetarian_meal_count: string | null;
-  vegan_meal_count: string | null;
-  gluten_free_meal_count: string | null;
-  toddlers_under_2_count: string | null;
   bride_parents_names: string | null;
   groom_parents_names: string | null;
   contact_email: string | null;
@@ -324,4 +318,14 @@ export interface PrivateEventLocationRow {
   location_type: LocationType;
   label: string;
   capacity: number;
+}
+
+export interface PrivateEventSupplierRow {
+  id: string;
+  event_id: string;
+  role: string | null;
+  name: string;
+  phone: string | null;
+  sort_order: number;
+  created_at: string;
 }

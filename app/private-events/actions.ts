@@ -52,12 +52,6 @@ export async function updatePrivateEventDetails(eventId: string, formData: FormD
       end_time: text("end_time"),
       hall_name: text("hall_name"),
       estimated_guests: text("estimated_guests"),
-      kids_meal_count: text("kids_meal_count"),
-      glat_meal_count: text("glat_meal_count"),
-      vegetarian_meal_count: text("vegetarian_meal_count"),
-      vegan_meal_count: text("vegan_meal_count"),
-      gluten_free_meal_count: text("gluten_free_meal_count"),
-      toddlers_under_2_count: text("toddlers_under_2_count"),
       bride_parents_names: text("bride_parents_names"),
       groom_parents_names: text("groom_parents_names"),
       contact_email: text("contact_email"),
@@ -69,6 +63,48 @@ export async function updatePrivateEventDetails(eventId: string, formData: FormD
     .eq("id", eventId);
 
   if (error) return error.message;
+  revalidatePath(`/private-events/${eventId}`);
+}
+
+export async function addSupplier(eventId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const name = String(formData.get("name") ?? "").trim();
+  const role = String(formData.get("role") ?? "").trim() || null;
+  const phone = String(formData.get("phone") ?? "").trim() || null;
+
+  if (!name) throw new Error("שם הספק הוא שדה חובה");
+
+  const { count } = await supabase
+    .from("private_event_suppliers")
+    .select("*", { count: "exact", head: true })
+    .eq("event_id", eventId);
+
+  const { error } = await supabase
+    .from("private_event_suppliers")
+    .insert({ event_id: eventId, name, role, phone, sort_order: count ?? 0 });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/private-events/${eventId}`);
+}
+
+export async function updateSupplier(eventId: string, supplierId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const name = String(formData.get("name") ?? "").trim();
+  const role = String(formData.get("role") ?? "").trim() || null;
+  const phone = String(formData.get("phone") ?? "").trim() || null;
+
+  if (!name) throw new Error("שם הספק הוא שדה חובה");
+
+  const { error } = await supabase.from("private_event_suppliers").update({ name, role, phone }).eq("id", supplierId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/private-events/${eventId}`);
+}
+
+export async function deleteSupplier(eventId: string, supplierId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("private_event_suppliers").delete().eq("id", supplierId);
+  if (error) throw new Error(error.message);
   revalidatePath(`/private-events/${eventId}`);
 }
 
