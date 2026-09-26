@@ -73,9 +73,13 @@ export function AppShell({
 
   if (isPrivateMode) {
     const privateTitleLink = (
-      <Link href="/private-events" className="flex items-center gap-2.5">
-        <RoyLogo className="h-14 w-14 shrink-0" />
-        <span className="font-serif text-2xl font-bold text-foreground">האירועים הפרטיים שלי</span>
+      <Link href="/private-events" className="font-serif text-2xl font-bold text-foreground">
+        האירועים הפרטיים שלי
+      </Link>
+    );
+    const privateLogoLink = (
+      <Link href="/private-events" aria-label="האירועים הפרטיים שלי">
+        <RoyLogo className="h-24 w-24 shrink-0" />
       </Link>
     );
     const PRIVATE_NAV_LINKS = [
@@ -119,12 +123,13 @@ export function AppShell({
               {privateNavEl}
             </div>
 
-            <div className="hidden sm:grid sm:grid-cols-[auto_1fr] sm:items-center sm:gap-x-4 sm:gap-y-2">
+            <div className="hidden sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-x-4 sm:gap-y-2">
               <div className="justify-self-start">{accountBlock}</div>
               <div className="flex min-w-0 flex-col items-center gap-y-2">
                 {privateTitleLink}
                 {privateNavEl}
               </div>
+              <div className="justify-self-end">{privateLogoLink}</div>
             </div>
           </div>
         </header>
