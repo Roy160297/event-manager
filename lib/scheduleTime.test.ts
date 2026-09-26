@@ -4,6 +4,7 @@ import {
   addMinutesToTime,
   fridayEndTime,
   isFriday,
+  israelWallTimeToUtcISOString,
   timeToMinutes,
   todaysEventDate,
 } from "@/lib/scheduleTime";
@@ -80,6 +81,21 @@ describe("timeToMinutes", () => {
 describe("fridayEndTime", () => {
   it("is always 5.5 hours after the given start time", () => {
     expect(fridayEndTime("12:00")).toBe("17:30");
+  });
+});
+
+describe("israelWallTimeToUtcISOString", () => {
+  it("converts a summer (IDT, UTC+3) wall-clock time to UTC", () => {
+    expect(israelWallTimeToUtcISOString("2026-08-14", "20:40")).toBe("2026-08-14T17:40:00.000Z");
+  });
+
+  it("converts a winter (IST, UTC+2) wall-clock time to UTC", () => {
+    expect(israelWallTimeToUtcISOString("2026-01-14", "20:40")).toBe("2026-01-14T18:40:00.000Z");
+  });
+
+  it("rolls the date correctly across a UTC midnight boundary", () => {
+    // 2026-08-14T01:00 in Asia/Jerusalem (IDT, UTC+3) is still 2026-08-13 in UTC.
+    expect(israelWallTimeToUtcISOString("2026-08-14", "01:00")).toBe("2026-08-13T22:00:00.000Z");
   });
 });
 

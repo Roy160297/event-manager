@@ -37,6 +37,41 @@ export function fridayEndTime(startTime: string): string | null {
   return addHoursToTime(startTime, 5.5);
 }
 
+// Converts a wall-clock date+time as understood in Israel (e.g. a schedule
+// step's event_date + approx_time) into the UTC instant it actually
+// corresponds to - needed because Postgres's timestamptz (used to schedule
+// the one-time chiller-reminder push, see schedule_chiller_reminder in the
+// 00000000000056 migration) has no idea "20:40" here means Asia/Jerusalem
+// local time. Standard guess-and-correct approach (no tz database library in
+// this project): treat the wall time as if it were already UTC, see what
+// wall-clock time that same instant renders as in Jerusalem, and shift by
+// the difference - one iteration nails it except right around a DST
+// transition, so two iterations are cheap insurance.
+export function israelWallTimeToUtcISOString(dateStr: string, timeStr: string): string {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const [hour, minute] = timeStr.split(":").map(Number);
+  const targetWall = Date.UTC(year, month - 1, day, hour, minute, 0);
+
+  let guess = targetWall;
+  for (let i = 0; i < 2; i++) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Jerusalem",
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }).formatToParts(new Date(guess));
+    const get = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0);
+    const guessWallAsUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+    guess += targetWall - guessWallAsUtc;
+  }
+
+  return new Date(guess).toISOString();
+}
+
 // Weddings routinely run past midnight (end_time like 03:00), so "today's
 // event" for highlighting purposes shouldn't flip over at local midnight -
 // mirrors scheduleSortKey's same 6am cutoff for schedule-step ordering.

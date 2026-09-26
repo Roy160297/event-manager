@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { scheduleSortKey } from "@/lib/labels";
-import { addMinutesToTime, timeToMinutes } from "@/lib/scheduleTime";
+import { addMinutesToTime, israelWallTimeToUtcISOString, timeToMinutes } from "@/lib/scheduleTime";
 import { extractTimelineFromImage, type TimelineImportDraft } from "@/lib/timelineImport";
 import type { TimelineItemRow } from "@/lib/types";
 
@@ -284,7 +284,36 @@ async function insertSchedule(
 
   const { error } = await supabase.from("timeline_items").insert(rows);
   if (error) throw new Error(error.message);
+
+  await scheduleChillerReminder(eventId, schedule);
+
   revalidatePath(`/events/${eventId}/timeline`);
+}
+
+// Schedules the one-time "20 minutes before chuppah" push (see
+// schedule_chiller_reminder in the 00000000000056 migration) for whichever
+// step in this template is labeled חופה. Best-effort - a failure here (e.g.
+// app_settings.push_webhook_secret not configured yet) shouldn't block
+// creating the timeline itself.
+async function scheduleChillerReminder(eventId: string, schedule: { label: string; time: string }[]) {
+  const chuppahStep = schedule.find((step) => step.label === "חופה");
+  if (!chuppahStep) return;
+
+  const supabase = await createClient();
+  const { data: event } = await supabase.from("events").select("event_date").eq("id", eventId).maybeSingle();
+  if (!event?.event_date) return;
+
+  const runAt = addMinutesToTime(chuppahStep.time, -20);
+  if (!runAt) return;
+
+  try {
+    await supabase.rpc("schedule_chiller_reminder", {
+      p_event_id: eventId,
+      p_run_at: israelWallTimeToUtcISOString(event.event_date, runAt),
+    });
+  } catch (err) {
+    console.error(`Failed to schedule chiller reminder for event ${eventId}:`, err);
+  }
 }
 
 export async function addEveningWeddingSchedule(eventId: string) {
