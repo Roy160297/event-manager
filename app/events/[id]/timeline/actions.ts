@@ -166,7 +166,7 @@ const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: s
   { label: "כתובה", time: "20:30", notes: "לוודא הגעת שני עדים עד השעה 20:30" },
   { label: "הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
   { label: "חופה", time: "21:00" },
-  { label: "ראשונות", time: "21:15" },
+  { label: "ראשונות", time: "21:20" },
   { label: "ריקודים", time: "21:35" },
   { label: "עיקריות", time: "22:00", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "22:30" },
