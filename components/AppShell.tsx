@@ -72,7 +72,7 @@ export function AppShell({
 
   if (isPrivateMode) {
     const privateTitleLink = (
-      <Link href="/private-events" className="font-serif text-2xl font-bold text-accent">
+      <Link href="/private-events" className="font-serif text-2xl font-bold text-foreground">
         האירועים הפרטיים שלי
       </Link>
     );

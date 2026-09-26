@@ -28,10 +28,10 @@ export function SwitchIcon({ className }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <path d="M17 3v4a2 2 0 0 1-2 2H4" />
-      <path d="M7 2 4 5l3 3" />
-      <path d="M7 21v-4a2 2 0 0 1 2-2h11" />
-      <path d="M17 22l3-3-3-3" />
+      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+      <path d="M16 16h5v5" />
     </svg>
   );
 }

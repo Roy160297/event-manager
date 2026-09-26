@@ -46,9 +46,9 @@ body {
   --foreground: #241f1a;
   --surface: #fffdf9;
   --border-classic: #e6dab9;
-  --accent: #f2e9d0;
-  --accent-foreground: #241f1a;
-  --accent-soft: #f8f2e0;
+  --accent: #b8935a;
+  --accent-foreground: #fffdf9;
+  --accent-soft: #f2e6ce;
   background: var(--background);
   color: var(--foreground);
 }
