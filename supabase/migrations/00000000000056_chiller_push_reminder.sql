@@ -1,12 +1,10 @@
 -- Schedules a one-time push notification per event, timed to the event's
 -- actual chuppah time (from timeline_items) minus 20 minutes, instead of a
 -- fixed clock time or a frequent poll - neither of which fit (see the
--- reverted attempts in git history). pg_cron's one-time job form (passing a
--- timestamp instead of a repeating cron expression - it fires once, then
--- removes itself) plus pg_net's async HTTP call is what makes this possible
--- on Vercel's Hobby plan, which only allows crons that run once a day: the
--- "polling" happens once inside Postgres at the exact right moment, not in
--- our own app.
+-- reverted attempts in git history). pg_cron plus pg_net's async HTTP call is
+-- what makes this possible on Vercel's Hobby plan, which only allows crons
+-- that run once a day: the "polling" happens once inside Postgres at the
+-- exact right moment, not in our own app.
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
@@ -35,6 +33,7 @@ declare
   v_job_name text := 'chiller-reminder-' || p_event_id::text;
   v_secret text;
   v_url text := 'https://my-event-manager.vercel.app/api/push/chiller-reminder';
+  v_cron_expr text;
 begin
   if exists (select 1 from cron.job where jobname = v_job_name) then
     perform cron.unschedule(v_job_name);
@@ -52,15 +51,30 @@ begin
     return;
   end if;
 
+  -- pg_cron has no "run once at this exact timestamp" primitive - only
+  -- standard 5-field cron expressions, which have no year component. We
+  -- build an expression matching this exact minute/hour/day/month (pg_cron
+  -- evaluates schedules in UTC) and have the job unschedule itself as its
+  -- first action, so it only ever actually fires the once even though the
+  -- bare pattern would otherwise recur next year.
+  v_cron_expr := format(
+    '%s %s %s %s *',
+    extract(minute from p_run_at at time zone 'UTC')::int,
+    extract(hour from p_run_at at time zone 'UTC')::int,
+    extract(day from p_run_at at time zone 'UTC')::int,
+    extract(month from p_run_at at time zone 'UTC')::int
+  );
+
   perform cron.schedule(
     v_job_name,
-    p_run_at,
+    v_cron_expr,
     format(
-      $job$select net.http_post(
+      $job$select cron.unschedule(%L); select net.http_post(
         url := %L,
         headers := %L::jsonb,
         body := %L::jsonb
       );$job$,
+      v_job_name,
       v_url,
       jsonb_build_object('Authorization', 'Bearer ' || v_secret, 'Content-Type', 'application/json'),
       jsonb_build_object('eventId', p_event_id)
