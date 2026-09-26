@@ -142,6 +142,13 @@ export async function updateTimelineItem(eventId: string, itemId: string, formDa
     .eq("id", itemId);
 
   if (error) throw new Error(error.message);
+
+  // Editing an existing חופה step (fixing its time, or relabeling some other
+  // step into/out of being "the" חופה step) should reschedule the chiller
+  // reminder the same way creating the default schedule does - not just the
+  // initial insertSchedule/insertFridaySchedule call.
+  if (label === "חופה") await scheduleChillerReminder(eventId, [{ label, time: approxTime }]);
+
   revalidatePath(`/events/${eventId}/timeline`);
 }
 
