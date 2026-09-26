@@ -100,50 +100,57 @@ export function PushNotificationManager() {
 
   if (status === "checking" || status === "unsupported") return null;
 
-  if (status === "off") {
-    return (
-      <button
-        type="button"
-        onClick={enable}
-        disabled={busy}
-        className="whitespace-nowrap rounded-full border border-border-classic bg-surface px-3 py-1 text-xs font-medium text-foreground/70 hover:border-accent hover:text-accent disabled:opacity-60"
-      >
-        הפעל התראות
-      </button>
-    );
-  }
+  const isOn = status === "on";
 
-  // "on" - collapsed to a single icon by default (the header already has
-  // several other pills competing for space, especially on a phone) with
-  // the test/disable actions and any status message tucked into a small
-  // absolutely-positioned panel so opening it doesn't push the header down.
+  // Always the same bell icon (the header already has several other pills
+  // competing for space, especially on a phone) - only its color says
+  // on/off, with the actual actions tucked into a small absolutely-
+  // positioned panel so opening it doesn't push the header down.
   return (
     <details className="relative">
       <summary
-        title="התראות פעילות"
-        className="flex h-7 w-7 cursor-pointer list-none items-center justify-center rounded-full border border-border-classic bg-surface text-foreground/70 hover:border-accent hover:text-accent [&::-webkit-details-marker]:hidden"
+        title={isOn ? "התראות פעילות" : "התראות כבויות"}
+        className={
+          "flex h-7 w-7 cursor-pointer list-none items-center justify-center rounded-full border [&::-webkit-details-marker]:hidden " +
+          (isOn
+            ? "border-accent bg-accent text-accent-foreground"
+            : "border-border-classic bg-surface text-foreground/50 hover:border-accent hover:text-accent")
+        }
       >
         <BellIcon className="h-4 w-4" />
       </summary>
       <div className="absolute end-0 top-9 z-10 flex w-max flex-col gap-1.5 rounded-md border border-border-classic bg-surface p-2.5 text-xs shadow-md">
-        <span className="whitespace-nowrap text-foreground/50">התראות פעילות</span>
+        <span className="whitespace-nowrap text-foreground/50">{isOn ? "התראות פעילות" : "התראות כבויות"}</span>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={test}
-            disabled={busy}
-            className="whitespace-nowrap rounded-full border border-border-classic px-2 py-1 text-foreground/70 hover:border-accent hover:text-accent disabled:opacity-60"
-          >
-            שלח בדיקה
-          </button>
-          <button
-            type="button"
-            onClick={disable}
-            disabled={busy}
-            className="whitespace-nowrap text-foreground/50 hover:underline disabled:opacity-60"
-          >
-            כבה
-          </button>
+          {isOn ? (
+            <>
+              <button
+                type="button"
+                onClick={test}
+                disabled={busy}
+                className="whitespace-nowrap rounded-full border border-border-classic px-2 py-1 text-foreground/70 hover:border-accent hover:text-accent disabled:opacity-60"
+              >
+                שלח בדיקה
+              </button>
+              <button
+                type="button"
+                onClick={disable}
+                disabled={busy}
+                className="whitespace-nowrap rounded-full border border-border-classic px-2 py-1 text-foreground/70 hover:border-red-400 hover:text-red-600 disabled:opacity-60"
+              >
+                כבה
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={enable}
+              disabled={busy}
+              className="whitespace-nowrap rounded-full border border-border-classic px-2 py-1 text-foreground/70 hover:border-accent hover:text-accent disabled:opacity-60"
+            >
+              הפעל התראות
+            </button>
+          )}
         </div>
         {message && <span className="whitespace-nowrap text-foreground/60">{message}</span>}
       </div>
