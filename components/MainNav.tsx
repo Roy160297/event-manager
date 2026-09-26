@@ -16,7 +16,6 @@ export function MainNav({
   showMyTasks = false,
   showChecklistNotes = false,
   showPushReminders = false,
-  showPrivateEvents = false,
 }: {
   showAdmin?: boolean;
   showCalendar?: boolean;
@@ -25,7 +24,6 @@ export function MainNav({
   showMyTasks?: boolean;
   showChecklistNotes?: boolean;
   showPushReminders?: boolean;
-  showPrivateEvents?: boolean;
 }) {
   const pathname = usePathname();
   const extraLinks = [];
@@ -38,7 +36,6 @@ export function MainNav({
 
   let links = [NAV_LINKS[0], ...extraLinks, NAV_LINKS[1]];
   if (showAdmin) links = [...links, { href: "/admin", label: "ניהול" }];
-  if (showPrivateEvents) links = [...links, { href: "/private-events", label: "האירועים הפרטיים שלי" }];
 
   return (
     <nav>

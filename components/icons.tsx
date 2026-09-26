@@ -16,6 +16,26 @@ export function BellIcon({ className }: { className?: string }) {
   );
 }
 
+export function SwitchIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M17 3v4a2 2 0 0 1-2 2H4" />
+      <path d="M7 2 4 5l3 3" />
+      <path d="M7 21v-4a2 2 0 0 1 2-2h11" />
+      <path d="M17 22l3-3-3-3" />
+    </svg>
+  );
+}
+
 export function TrashIcon({ className }: { className?: string }) {
   return (
     <svg
