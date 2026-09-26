@@ -42,13 +42,13 @@ body {
    background too, since body's fixed photo background would otherwise show
    through around this block. */
 .theme-private {
-  --background: #e6f4ec;
+  --background: #e3f3e9;
   --foreground: #1e332a;
-  --surface: #ffffff;
-  --border-classic: #bfe0cc;
-  --accent: #3f8f5f;
-  --accent-foreground: #ffffff;
-  --accent-soft: #d7ecdf;
+  --surface: #fbf6e7;
+  --border-classic: #e4d9b4;
+  --accent: #d8c383;
+  --accent-foreground: #1e332a;
+  --accent-soft: #f2e7c4;
   background: var(--background);
   color: var(--foreground);
 }
