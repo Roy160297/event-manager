@@ -8,6 +8,7 @@ import { TrashIcon } from "@/components/icons";
 import { actionErrorMessage } from "@/lib/actionError";
 import { PushReminderRecipientFields } from "@/components/PushReminderRecipientFields";
 import { createPushReminderRule, updatePushReminderRule, deletePushReminderRule } from "./actions";
+import { getKnownTimelineStepLabels } from "@/app/events/[id]/timeline/actions";
 import type { PushReminderRuleRow } from "@/lib/types";
 
 const RECIPIENT_SUMMARY_LABELS: Record<PushReminderRuleRow["recipient_type"], string> = {
@@ -19,7 +20,7 @@ const RECIPIENT_SUMMARY_LABELS: Record<PushReminderRuleRow["recipient_type"], st
 
 export default async function PushRemindersPage() {
   const supabase = await createClient();
-  const [currentStaff, { data: rules }, { data: roles }, { data: staff }] = await Promise.all([
+  const [currentStaff, { data: rules }, { data: roles }, { data: staff }, knownStepLabels] = await Promise.all([
     getCurrentStaff(),
     supabase
       .from("push_reminder_rules")
@@ -28,6 +29,7 @@ export default async function PushRemindersPage() {
       .returns<PushReminderRuleRow[]>(),
     supabase.from("roles").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
     supabase.from("staff").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
+    getKnownTimelineStepLabels(),
   ]);
 
   const canReadRules = !!currentStaff && canRead(currentStaff.permissions, "push_reminder_rules");
@@ -73,6 +75,15 @@ export default async function PushRemindersPage() {
         </p>
       </div>
 
+      {/* Suggestions for "שם השלב בלוח הזמנים" below - autocomplete only, not
+          a restriction, since a step's label still needs to match this
+          EXACTLY to fire; a typo here silently never matches anything. */}
+      <datalist id="timeline-step-labels">
+        {knownStepLabels.map((label) => (
+          <option key={label} value={label} />
+        ))}
+      </datalist>
+
       {canWriteRules && (
         <SaveDetailsForm
           action={addRule}
@@ -88,7 +99,16 @@ export default async function PushRemindersPage() {
             </label>
             <label className={labelClass}>
               <span>שם השלב בלוח הזמנים לעגינה</span>
-              <input name="anchor_label" placeholder="חופה" required className={inputClass} />
+              <input
+                name="anchor_label"
+                placeholder="חופה"
+                required
+                list="timeline-step-labels"
+                className={inputClass}
+              />
+              <span className="text-xs text-foreground/50">
+                חייב להתאים בדיוק לשם השלב בלוח הזמנים, אחרת ההתראה לעולם לא תופעל בלי הודעת שגיאה.
+              </span>
             </label>
             <label className={labelClass}>
               <span>הפרש דקות (שלילי = לפני השלב, חיובי = אחריו)</span>
@@ -167,7 +187,13 @@ export default async function PushRemindersPage() {
                     </label>
                     <label className={labelClass}>
                       <span>שם השלב בלוח הזמנים</span>
-                      <input name="anchor_label" defaultValue={rule.anchor_label} required className={inputClass} />
+                      <input
+                        name="anchor_label"
+                        defaultValue={rule.anchor_label}
+                        required
+                        list="timeline-step-labels"
+                        className={inputClass}
+                      />
                     </label>
                     <label className={labelClass}>
                       <span>הפרש דקות</span>

@@ -422,6 +422,22 @@ export async function applyDefaultSchedule(eventId: string, eventType: string, e
   }
 }
 
+// Every distinct step label across the 6 default templates - offered as
+// autocomplete suggestions for a push reminder rule's anchor_label (see
+// app/push-reminders/page.tsx), since a typo there means the rule silently
+// never matches any real timeline step and just never fires.
+export async function getKnownTimelineStepLabels(): Promise<string[]> {
+  const allSteps = [
+    ...EVENING_WEDDING_SCHEDULE,
+    ...EVENING_WEDDING_SERVICE_SCHEDULE,
+    ...EVENING_REVERSE_WEDDING_SCHEDULE,
+    ...EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE,
+    ...FRIDAY_REVERSE_WEDDING_SCHEDULE,
+    ...FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE,
+  ];
+  return [...new Set(allSteps.map((step) => step.label))].sort((a, b) => a.localeCompare(b, "he"));
+}
+
 function isFridayDate(eventDate?: string | null): boolean {
   if (!eventDate) return false;
   const [year, month, day] = eventDate.split("-").map(Number);
