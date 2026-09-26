@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
-import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
+import { applyDefaultSchedule, schedulePushRemindersForStep } from "@/app/events/[id]/timeline/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { isFriday } from "@/lib/scheduleTime";
@@ -179,6 +179,8 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
   }
   await assertNoDuplicateEventDate(supabase, eventDate, eventId);
 
+  const { data: previous } = await supabase.from("events").select("event_date").eq("id", eventId).maybeSingle();
+
   const { error } = await supabase
     .from("events")
     .update({
@@ -211,6 +213,21 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
 
   if (error) throw new Error(error.message);
   await checkRemindersForEvent(eventId);
+
+  // Any push reminder already scheduled against a timeline step (e.g. "20
+  // minutes before חופה") is pinned to the event's date at schedule time -
+  // moving the event to a new date leaves those jobs firing on the old one
+  // unless every existing step gets rescheduled against the date that just
+  // changed.
+  if (previous?.event_date && previous.event_date !== eventDate) {
+    const { data: timelineItems } = await supabase
+      .from("timeline_items")
+      .select("label, approx_time")
+      .eq("event_id", eventId);
+    for (const item of timelineItems ?? []) {
+      if (item.approx_time) await schedulePushRemindersForStep(eventId, item.label, item.approx_time);
+    }
+  }
 
   revalidatePath("/");
   revalidatePath(`/events/${eventId}`);

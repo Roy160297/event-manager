@@ -328,7 +328,7 @@ async function insertSchedule(
 // if no rule is anchored to this label. Best-effort - a failure here (e.g.
 // app_settings.push_webhook_secret not configured yet) shouldn't block
 // editing the timeline itself.
-async function schedulePushRemindersForStep(eventId: string, label: string, time: string) {
+export async function schedulePushRemindersForStep(eventId: string, label: string, time: string) {
   const supabase = await createClient();
   try {
     await supabase.rpc("schedule_push_reminders_for_step", { p_event_id: eventId, p_label: label, p_time: time });
