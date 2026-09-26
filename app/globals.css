@@ -45,10 +45,10 @@ body {
   --background: #e3f3e9;
   --foreground: #241f1a;
   --surface: #fffdf9;
-  --border-classic: #ddccae;
-  --accent: #9c6b30;
-  --accent-foreground: #fffdf9;
-  --accent-soft: #ecdfc3;
+  --border-classic: #e6dab9;
+  --accent: #f2e9d0;
+  --accent-foreground: #241f1a;
+  --accent-soft: #f8f2e0;
   background: var(--background);
   color: var(--foreground);
 }

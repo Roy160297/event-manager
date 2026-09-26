@@ -119,7 +119,7 @@ export function AppShell({
 
             <div className="hidden sm:grid sm:grid-cols-[auto_1fr] sm:items-center sm:gap-x-4 sm:gap-y-2">
               <div className="justify-self-start">{accountBlock}</div>
-              <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-6 gap-y-2">
+              <div className="flex min-w-0 flex-col items-center gap-y-2">
                 {privateTitleLink}
                 {privateNavEl}
               </div>
