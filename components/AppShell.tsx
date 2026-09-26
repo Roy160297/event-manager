@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MainNav } from "@/components/MainNav";
 import { PushNotificationManager } from "@/components/PushNotificationManager";
@@ -70,13 +71,50 @@ export function AppShell({
   );
 
   if (isPrivateMode) {
+    const isHome = pathname === "/private-events";
+    const privateTitleLink = (
+      <Link href="/private-events" className="font-serif text-2xl font-bold text-accent">
+        האירועים הפרטיים שלי
+      </Link>
+    );
+    const privateNavEl = (
+      <nav>
+        <ul className="flex flex-wrap justify-center gap-2">
+          <li>
+            <Link
+              href="/private-events"
+              aria-current={isHome ? "page" : undefined}
+              className={
+                isHome
+                  ? "whitespace-nowrap rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-foreground"
+                  : "whitespace-nowrap rounded-full px-4 py-1.5 text-sm text-foreground/70 hover:bg-accent-soft hover:text-foreground"
+              }
+            >
+              אירועים
+            </Link>
+          </li>
+        </ul>
+      </nav>
+    );
+
     return (
       <div className="theme-private flex min-h-screen flex-col bg-background">
         <header className="border-b border-border-classic bg-background">
           <div className="mx-auto max-w-5xl px-4 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              {accountBlock}
-              <span className="font-serif text-2xl font-bold text-accent">האירועים הפרטיים שלי</span>
+            <div className="flex flex-col gap-2 sm:hidden">
+              <div className="flex items-center justify-between gap-4">
+                {accountBlock}
+                {privateTitleLink}
+              </div>
+              {privateNavEl}
+            </div>
+
+            <div className="hidden sm:grid sm:grid-cols-[auto_1fr] sm:items-center sm:gap-x-4 sm:gap-y-2">
+              <div className="justify-self-start">{accountBlock}</div>
+              <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                {privateTitleLink}
+                {privateNavEl}
+              </div>
             </div>
           </div>
         </header>
