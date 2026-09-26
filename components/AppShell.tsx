@@ -71,28 +71,36 @@ export function AppShell({
   );
 
   if (isPrivateMode) {
-    const isHome = pathname === "/private-events";
     const privateTitleLink = (
       <Link href="/private-events" className="font-serif text-2xl font-bold text-accent">
         האירועים הפרטיים שלי
       </Link>
     );
+    const PRIVATE_NAV_LINKS = [
+      { href: "/private-events", label: "אירועים" },
+      { href: "/private-events/my-tasks", label: "המשימות שלי" },
+    ];
     const privateNavEl = (
       <nav>
         <ul className="flex flex-wrap justify-center gap-2">
-          <li>
-            <Link
-              href="/private-events"
-              aria-current={isHome ? "page" : undefined}
-              className={
-                isHome
-                  ? "whitespace-nowrap rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-foreground"
-                  : "whitespace-nowrap rounded-full px-4 py-1.5 text-sm text-foreground/70 hover:bg-accent-soft hover:text-foreground"
-              }
-            >
-              אירועים
-            </Link>
-          </li>
+          {PRIVATE_NAV_LINKS.map((link) => {
+            const isActive = link.href === "/private-events" ? pathname === link.href : pathname.startsWith(link.href);
+            return (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={
+                    isActive
+                      ? "whitespace-nowrap rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-foreground"
+                      : "whitespace-nowrap rounded-full px-4 py-1.5 text-sm text-foreground/70 hover:bg-accent-soft hover:text-foreground"
+                  }
+                >
+                  {link.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
     );
