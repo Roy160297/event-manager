@@ -5,6 +5,7 @@ import { PushNotificationManager } from "@/components/PushNotificationManager";
 import { EventSwitcher } from "@/components/EventSwitcher";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
+import { isPrivateEventsOwner } from "@/lib/privateEvents";
 import { signOut } from "@/app/login/actions";
 import { createClient } from "@/lib/supabase/server";
 import { todayInIsrael } from "@/lib/coupleMeetingReminders";
@@ -94,6 +95,7 @@ export default async function RootLayout({
       showEventManagementDex={canRead(staff.permissions, "event_management_dex")}
       showMyTasks={canRead(staff.permissions, "my_tasks")}
       showPushReminders={canRead(staff.permissions, "push_reminder_rules")}
+      showPrivateEvents={isPrivateEventsOwner(staff)}
       showChecklistNotes={
         canRead(staff.permissions, "closing_checklist") ||
         canRead(staff.permissions, "floor_manager_checklist") ||

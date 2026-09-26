@@ -1,0 +1,66 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { parseCsvBuffer, parseExcelBuffer, type ParsedCsv } from "@/lib/csv-import";
+import { mapGuestRows, type GuestColumnMapping } from "@/lib/guestImport";
+
+export async function parseGuestFile(formData: FormData): Promise<ParsedCsv> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("יש לבחור קובץ");
+  }
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const isExcel = /\.xlsx?$/i.test(file.name);
+  return isExcel ? parseExcelBuffer(buffer) : parseCsvBuffer(buffer);
+}
+
+export async function importGuests(eventId: string, rows: Record<string, string>[], mapping: GuestColumnMapping) {
+  const supabase = await createClient();
+
+  const guests = mapGuestRows(rows, mapping).map((guest) => ({ ...guest, event_id: eventId }));
+
+  if (guests.length === 0) {
+    throw new Error("לא נמצאו אורחים תקינים לייבוא — ודאו שהוגדרה עמודת השם");
+  }
+
+  const { error: deleteError } = await supabase.from("private_event_guests").delete().eq("event_id", eventId);
+  if (deleteError) throw new Error(deleteError.message);
+
+  const { error } = await supabase.from("private_event_guests").insert(guests);
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/private-events/${eventId}/guests`);
+}
+
+export async function deleteGuest(eventId: string, guestId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("private_event_guests").delete().eq("id", guestId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/private-events/${eventId}/guests`);
+}
+
+export async function deleteAllGuests(eventId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("private_event_guests").delete().eq("event_id", eventId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/private-events/${eventId}/guests`);
+}
+
+export async function updateGuest(eventId: string, guestId: string, formData: FormData): Promise<string | void> {
+  const supabase = await createClient();
+
+  const name = String(formData.get("name") ?? "").trim();
+  const partySize = Number(formData.get("party_size") ?? 1) || 1;
+  const seatingTable = String(formData.get("seating_table") ?? "").trim() || null;
+
+  if (!name) return "שם האורח הוא שדה חובה";
+
+  const { error } = await supabase
+    .from("private_event_guests")
+    .update({ name, party_size: partySize, seating_table: seatingTable })
+    .eq("id", guestId);
+
+  if (error) return error.message;
+  revalidatePath(`/private-events/${eventId}/guests`);
+}

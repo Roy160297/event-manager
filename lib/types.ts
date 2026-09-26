@@ -252,3 +252,76 @@ export interface PushReminderRuleRow {
   recipient_staff_id: string | null;
   created_at: string;
 }
+
+export type PrivateEventType =
+  | "wedding"
+  | "bar_mitzvah"
+  | "bat_mitzvah"
+  | "business_event"
+  | "other";
+
+export interface PrivateEventRow {
+  id: string;
+  name: string;
+  event_type: PrivateEventType;
+  event_date: string;
+  couple_meeting_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  hall_name: string | null;
+  estimated_guests: string | null;
+  kids_meal_count: string | null;
+  glat_meal_count: string | null;
+  vegetarian_meal_count: string | null;
+  vegan_meal_count: string | null;
+  gluten_free_meal_count: string | null;
+  toddlers_under_2_count: string | null;
+  bride_parents_names: string | null;
+  groom_parents_names: string | null;
+  contact_email: string | null;
+  contact_email_2: string | null;
+  contact_phone: string | null;
+  contact_phone_2: string | null;
+  additional_info: string | null;
+  table_sketch_path: string | null;
+  sketch_seated_chairs_count: string | null;
+  created_at: string;
+}
+
+export interface PrivateEventTaskRow {
+  id: string;
+  event_id: string;
+  title: string;
+  description: string | null;
+  assignee_name: string | null;
+  due_date: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  created_at: string;
+}
+
+export interface PrivateEventTimelineItemRow {
+  id: string;
+  event_id: string;
+  sort_order: number;
+  label: string;
+  approx_time: string | null;
+  notes: string | null;
+}
+
+export interface PrivateEventGuestRow {
+  id: string;
+  event_id: string;
+  name: string;
+  party_size: number;
+  seating_table: string | null;
+  imported_at: string;
+}
+
+export interface PrivateEventLocationRow {
+  id: string;
+  event_id: string;
+  location_type: LocationType;
+  label: string;
+  capacity: number;
+}

@@ -33,3 +33,22 @@ body {
   color: var(--foreground);
   font-family: var(--font-heebo), Arial, Helvetica, sans-serif;
 }
+
+/* Scoped theme for the private-events section only (app/private-events) -
+   redefines the same semantic variables everything else already renders
+   with (bg-surface, border-border-classic, bg-accent, ...), so no component
+   needs its own dark-mode-style variant classes; see the "no dark mode by
+   design" rule this follows the same shape as. Sets its own opaque
+   background too, since body's fixed photo background would otherwise show
+   through around this block. */
+.theme-private {
+  --background: #e6f4ec;
+  --foreground: #1e332a;
+  --surface: #ffffff;
+  --border-classic: #bfe0cc;
+  --accent: #3f8f5f;
+  --accent-foreground: #ffffff;
+  --accent-soft: #d7ecdf;
+  background: var(--background);
+  color: var(--foreground);
+}
