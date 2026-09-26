@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { subscribeToPush, unsubscribeFromPush, sendTestPush } from "@/app/push/actions";
+import { BellIcon } from "@/components/icons";
 
 // VAPID public keys are handed to the browser as a base64url string but the
 // Push API wants raw bytes - same conversion the Web Push spec's own examples
@@ -99,25 +100,39 @@ export function PushNotificationManager() {
 
   if (status === "checking" || status === "unsupported") return null;
 
+  if (status === "off") {
+    return (
+      <button
+        type="button"
+        onClick={enable}
+        disabled={busy}
+        className="whitespace-nowrap rounded-full border border-border-classic bg-surface px-3 py-1 text-xs font-medium text-foreground/70 hover:border-accent hover:text-accent disabled:opacity-60"
+      >
+        הפעל התראות
+      </button>
+    );
+  }
+
+  // "on" - collapsed to a single icon by default (the header already has
+  // several other pills competing for space, especially on a phone) with
+  // the test/disable actions and any status message tucked into a small
+  // absolutely-positioned panel so opening it doesn't push the header down.
   return (
-    <div className="flex items-center gap-1.5">
-      {status === "off" ? (
-        <button
-          type="button"
-          onClick={enable}
-          disabled={busy}
-          className="whitespace-nowrap rounded-full border border-border-classic bg-surface px-3 py-1 text-xs font-medium text-foreground/70 hover:border-accent hover:text-accent disabled:opacity-60"
-        >
-          הפעל התראות
-        </button>
-      ) : (
-        <>
-          <span className="whitespace-nowrap text-xs text-foreground/50">התראות פעילות</span>
+    <details className="relative">
+      <summary
+        title="התראות פעילות"
+        className="flex h-7 w-7 cursor-pointer list-none items-center justify-center rounded-full border border-border-classic bg-surface text-foreground/70 hover:border-accent hover:text-accent [&::-webkit-details-marker]:hidden"
+      >
+        <BellIcon className="h-4 w-4" />
+      </summary>
+      <div className="absolute end-0 top-9 z-10 flex w-max flex-col gap-1.5 rounded-md border border-border-classic bg-surface p-2.5 text-xs shadow-md">
+        <span className="whitespace-nowrap text-foreground/50">התראות פעילות</span>
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={test}
             disabled={busy}
-            className="whitespace-nowrap rounded-full border border-border-classic bg-surface px-2 py-1 text-xs text-foreground/70 hover:border-accent hover:text-accent disabled:opacity-60"
+            className="whitespace-nowrap rounded-full border border-border-classic px-2 py-1 text-foreground/70 hover:border-accent hover:text-accent disabled:opacity-60"
           >
             שלח בדיקה
           </button>
@@ -125,13 +140,13 @@ export function PushNotificationManager() {
             type="button"
             onClick={disable}
             disabled={busy}
-            className="whitespace-nowrap text-xs text-foreground/50 hover:underline disabled:opacity-60"
+            className="whitespace-nowrap text-foreground/50 hover:underline disabled:opacity-60"
           >
             כבה
           </button>
-        </>
-      )}
-      {message && <span className="whitespace-nowrap text-xs text-foreground/60">{message}</span>}
-    </div>
+        </div>
+        {message && <span className="whitespace-nowrap text-foreground/60">{message}</span>}
+      </div>
+    </details>
   );
 }
