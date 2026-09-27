@@ -44,8 +44,14 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!isPublic) {
-    const { data: staff } = await supabase.from("staff").select("role_id").eq("user_id", user.id).maybeSingle();
-    if (!staff?.role_id) {
+    const { data: staff, error } = await supabase.from("staff").select("role_id").eq("user_id", user.id).maybeSingle();
+    if (error) {
+      // A transient DB/network error here must not be treated as "no role
+      // assigned" - that would bounce an already-authorized user to /pending
+      // (and offer only a log-out button) on an ordinary refresh. Fail open
+      // and let the request through; RLS still enforces actual access.
+      console.error(`proxy: staff role lookup failed for user ${user.id}:`, error);
+    } else if (!staff?.role_id) {
       const url = request.nextUrl.clone();
       url.pathname = "/pending";
       return NextResponse.redirect(url);
