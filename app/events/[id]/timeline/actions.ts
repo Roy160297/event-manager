@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { scheduleSortKey } from "@/lib/labels";
-import { addMinutesToTime, timeToMinutes } from "@/lib/scheduleTime";
+import { KETUBAH_STEP_LABEL, addMinutesToTime, ketubahWitnessNote, timeToMinutes } from "@/lib/scheduleTime";
 import { extractTimelineFromImage, type TimelineImportDraft } from "@/lib/timelineImport";
 import type { TimelineItemRow } from "@/lib/types";
 
@@ -30,13 +30,17 @@ export async function addTimelineItemsFromImport(eventId: string, items: Timelin
     .select("*", { count: "exact", head: true })
     .eq("event_id", eventId);
 
-  const rows = validItems.map((item, index) => ({
-    event_id: eventId,
-    label: item.label.trim(),
-    approx_time: item.approx_time?.trim() || null,
-    notes: item.notes?.trim() || null,
-    sort_order: (count ?? 0) + index,
-  }));
+  const rows = validItems.map((item, index) => {
+    const label = item.label.trim();
+    const approxTime = item.approx_time?.trim() || null;
+    return {
+      event_id: eventId,
+      label,
+      approx_time: approxTime,
+      notes: label === KETUBAH_STEP_LABEL && approxTime ? ketubahWitnessNote(approxTime) : item.notes?.trim() || null,
+      sort_order: (count ?? 0) + index,
+    };
+  });
 
   const { error } = await supabase.from("timeline_items").insert(rows);
   if (error) throw new Error(error.message);
@@ -53,7 +57,10 @@ export async function addTimelineItem(eventId: string, formData: FormData) {
 
   const label = String(formData.get("label") ?? "").trim();
   const approxTime = String(formData.get("approx_time") ?? "").trim() || null;
-  const notes = String(formData.get("notes") ?? "").trim() || null;
+  const notes =
+    label === KETUBAH_STEP_LABEL && approxTime
+      ? ketubahWitnessNote(approxTime)
+      : String(formData.get("notes") ?? "").trim() || null;
 
   if (!label || !approxTime) throw new Error("כותרת השלב והשעה הם שדות חובה");
 
@@ -105,15 +112,22 @@ export async function shiftTimelineFrom(eventId: string, formData: FormData) {
   if (fromIndex === -1) throw new Error("השלב שנבחר לא נמצא");
 
   const toShift = items.slice(fromIndex).filter((item) => item.approx_time);
-  const updates = toShift.map((item) => ({
-    id: item.id,
-    approx_time: addMinutesToTime(item.approx_time!, minutes),
-  }));
+  const updates = toShift.map((item) => {
+    const approxTime = addMinutesToTime(item.approx_time!, minutes);
+    return {
+      id: item.id,
+      approx_time: approxTime,
+      notes: item.label === KETUBAH_STEP_LABEL && approxTime ? ketubahWitnessNote(approxTime) : undefined,
+    };
+  });
 
   for (const update of updates) {
     const { error } = await supabase
       .from("timeline_items")
-      .update({ approx_time: update.approx_time })
+      .update({
+        approx_time: update.approx_time,
+        ...(update.notes !== undefined ? { notes: update.notes } : {}),
+      })
       .eq("id", update.id);
     if (error) throw new Error(error.message);
   }
@@ -153,7 +167,10 @@ export async function updateTimelineItem(eventId: string, itemId: string, formDa
 
   const label = String(formData.get("label") ?? "").trim();
   const approxTime = String(formData.get("approx_time") ?? "").trim() || null;
-  const notes = String(formData.get("notes") ?? "").trim() || null;
+  const notes =
+    label === KETUBAH_STEP_LABEL && approxTime
+      ? ketubahWitnessNote(approxTime)
+      : String(formData.get("notes") ?? "").trim() || null;
 
   if (!label || !approxTime) throw new Error("כותרת השלב והשעה הם שדות חובה");
 
@@ -178,8 +195,9 @@ export async function updateTimelineItem(eventId: string, itemId: string, formDa
 const EVENING_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
+  { label: "צילומי משפחות", time: "19:00" },
   { label: "קבלת פנים", time: "19:30" },
-  { label: "כתובה", time: "20:30", notes: "לוודא הגעת שני עדים עד השעה 20:30" },
+  { label: "כתובה", time: "20:30" },
   { label: "מזנונים נסגרים, הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
   { label: "חופה", time: "21:00" },
   { label: "מזנונים נפתחים (מנות עיקריות)", time: "21:20", notes: "15-20 דקות ריקודים" },
@@ -192,8 +210,9 @@ const EVENING_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[
 const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
+  { label: "צילומי משפחות", time: "19:00" },
   { label: "קבלת פנים", time: "19:30" },
-  { label: "כתובה", time: "20:30", notes: "לוודא הגעת שני עדים עד השעה 20:30" },
+  { label: "כתובה", time: "20:30" },
   { label: "הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
   { label: "חופה", time: "21:00" },
   { label: "ראשונות", time: "21:20" },
@@ -207,9 +226,10 @@ const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: s
 const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
+  { label: "צילומי משפחות", time: "19:00" },
   { label: "קבלת פנים", time: "19:30" },
   { label: "פתיחת דלתות ומזנונים ראשיים", time: "19:50" },
-  { label: "כתובה", time: "20:30", notes: "לוודא הגעת שני עדים עד השעה 20:30" },
+  { label: "כתובה", time: "20:30" },
   { label: "סגירת מזנוני חצר", time: "21:05" },
   {
     label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה",
@@ -230,10 +250,11 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
 const EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
+  { label: "צילומי משפחות", time: "19:00" },
   { label: "קבלת פנים", time: "19:30" },
   { label: "פתיחת דלתות, ראשונות על השולחן", time: "19:50" },
   { label: "הגשת עיקריות", time: "20:20" },
-  { label: "כתובה", time: "20:30", notes: "לוודא הגעת שני עדים עד השעה 20:20" },
+  { label: "כתובה", time: "20:30" },
   {
     label: "סיום הגשת עיקריות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
     time: "21:15",
@@ -255,9 +276,10 @@ const EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; n
 const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
   { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
+  { label: "צילומי משפחות", time: "11:30" },
   { label: "קבלת פנים", time: "12:00" },
   { label: "פתיחת דלתות ומזנונים ראשיים", time: "12:20" },
-  { label: "כתובה", time: "13:00", notes: "לוודא הגעת שני עדים עד השעה 13:00" },
+  { label: "כתובה", time: "13:00" },
   { label: "סגירת מזנוני חצר", time: "13:35" },
   {
     label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה",
@@ -278,10 +300,11 @@ const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: st
 const FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
   { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
   { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
+  { label: "צילומי משפחות", time: "11:30" },
   { label: "קבלת פנים", time: "12:00" },
   { label: "פתיחת דלתות, ראשונות על השולחן", time: "12:20" },
   { label: "הגשת עיקריות", time: "12:50" },
-  { label: "כתובה", time: "13:00", notes: "לוודא הגעת שני עדים עד השעה 12:50" },
+  { label: "כתובה", time: "13:00" },
   {
     label: "סיום הגשת עיקריות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
     time: "13:45",
@@ -308,7 +331,7 @@ async function insertSchedule(
     event_id: eventId,
     label: step.label,
     approx_time: step.time,
-    notes: step.notes ?? null,
+    notes: step.label === KETUBAH_STEP_LABEL ? ketubahWitnessNote(step.time) : step.notes ?? null,
     sort_order: (count ?? 0) + index,
   }));
 

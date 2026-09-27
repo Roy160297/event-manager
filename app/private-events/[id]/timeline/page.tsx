@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { addTimelineItem, deleteAllTimelineItems, deleteTimelineItem, shiftTimelineFrom, updateTimelineItem } from "./actions";
+import { TimelineImageImport } from "./TimelineImageImport";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
@@ -48,6 +49,11 @@ export default async function PrivateTimelinePage({ params }: { params: Promise<
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+        <p className="text-sm text-foreground/60">אפשר למלא את לוח הזמנים ידנית למטה, או לייבא אותו מתמונה.</p>
+        <TimelineImageImport eventId={eventId} />
+      </div>
+
       <SaveDetailsForm
         action={addItem}
         message="השלב נוסף בהצלחה"

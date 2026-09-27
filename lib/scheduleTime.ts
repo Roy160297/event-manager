@@ -37,6 +37,17 @@ export function fridayEndTime(startTime: string): string | null {
   return addHoursToTime(startTime, 5.5);
 }
 
+// The כתובה timeline step's note always states "witnesses by 15 minutes
+// before" relative to its own time - computed instead of hand-typed so it
+// can never drift out of sync when the step's time changes (initial
+// schedule, manual edit, Friday's start-time offset, or a bulk shift).
+export const KETUBAH_STEP_LABEL = "כתובה";
+
+export function ketubahWitnessNote(time: string): string | null {
+  const witnessTime = addMinutesToTime(time, -15);
+  return witnessTime ? `לוודא הגעת שני עדים עד השעה ${witnessTime}` : null;
+}
+
 // Weddings routinely run past midnight (end_time like 03:00), so "today's
 // event" for highlighting purposes shouldn't flip over at local midnight -
 // mirrors scheduleSortKey's same 6am cutoff for schedule-step ordering.
