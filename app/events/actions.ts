@@ -260,6 +260,8 @@ export async function updateEventSummaryReport(eventId: string, formData: FormDa
       bar_manager_name: text("bar_manager_name"),
       bartender_count: text("bartender_count"),
       waiter_count: text("waiter_count"),
+      initial_tray_count: text("initial_tray_count"),
+      final_tray_count: text("final_tray_count"),
       cook_count: text("cook_count"),
       kitchen_dishwasher_count: text("kitchen_dishwasher_count"),
       dishwasher_count: text("dishwasher_count"),

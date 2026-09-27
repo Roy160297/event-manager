@@ -33,6 +33,8 @@ export function EventSummaryReportPrintable({
     ["כמות ברמנים", event.bartender_count],
     ["מנהל פלור", floorManagerName],
     ["כמות מלצרים", event.waiter_count],
+    ["כמות מגשים התחלתית", event.initial_tray_count],
+    ["כמות מגשים סופית", event.final_tray_count],
     ["כמות טבחים", event.cook_count],
     ["כמות מנקי מטבח", event.kitchen_dishwasher_count],
     ["כמות שוטפי כלים", event.dishwasher_count],

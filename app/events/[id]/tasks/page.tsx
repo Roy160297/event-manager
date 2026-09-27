@@ -153,6 +153,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     ["כמות ברמנים", event?.bartender_count ?? null],
     ["מנהל פלור", floorManagerName],
     ["כמות מלצרים", event?.waiter_count ?? null],
+    ["כמות מגשים התחלתית", event?.initial_tray_count ?? null],
+    ["כמות מגשים סופית", event?.final_tray_count ?? null],
     ["כמות טבחים", event?.cook_count ?? null],
     ["כמות מנקי מטבח", event?.kitchen_dishwasher_count ?? null],
     ["שעות מנקי מטבח", event?.kitchen_dishwasher_hours ?? null],
@@ -458,7 +460,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               </label>
               <label className={reportLabelClass}>
                 <span>מנהל בר</span>
-                <input name="bar_manager_name" defaultValue={event?.bar_manager_name ?? "דנאל"} className={inputClass} />
+                <input name="bar_manager_name" defaultValue={event?.bar_manager_name ?? ""} className={inputClass} />
               </label>
               <label className={reportLabelClass}>
                 <span>כמות ברמנים</span>
@@ -469,6 +471,22 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <input
                   name="waiter_count"
                   defaultValue={event?.waiter_count ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>כמות מגשים התחלתית</span>
+                <input
+                  name="initial_tray_count"
+                  defaultValue={event?.initial_tray_count ?? ""}
+                  className={inputClass}
+                />
+              </label>
+              <label className={reportLabelClass}>
+                <span>כמות מגשים סופית</span>
+                <input
+                  name="final_tray_count"
+                  defaultValue={event?.final_tray_count ?? ""}
                   className={inputClass}
                 />
               </label>

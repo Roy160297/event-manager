@@ -90,6 +90,8 @@ export interface EventRow {
   bartender_count: string | null;
   floor_manager_name: string | null;
   waiter_count: string | null;
+  initial_tray_count: string | null;
+  final_tray_count: string | null;
   cook_count: string | null;
   kitchen_dishwasher_count: string | null;
   dishwasher_count: string | null;
