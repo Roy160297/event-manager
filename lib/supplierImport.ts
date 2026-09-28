@@ -60,15 +60,23 @@ function isTransientOverload(err: unknown): boolean {
 
 // lite first (fast, and separate capacity from the flash tier), falling
 // back to the slower/more-reliable flash tier if lite itself is overloaded -
-// same two-tier retry as lib/imageImport.ts, which fixed the identical
+// same three-tier retry as lib/imageImport.ts, which fixed the identical
 // "slow, and occasionally fails outright under Gemini load" symptom there.
 const PRIMARY_MODEL = "gemini-flash-lite-latest";
 const FALLBACK_MODEL = "gemini-flash-latest";
+// Pinned to a specific older stable release rather than a "-latest" alias -
+// see lib/imageImport.ts's LAST_RESORT_MODEL comment: during a genuine
+// platform-wide spike the two aliases above can be overloaded together, so a
+// pinned older version (different default traffic target) is worth trying
+// before giving up.
+const LAST_RESORT_MODEL = "gemini-2.0-flash";
 
 const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: PRIMARY_MODEL, delayMsBefore: 0 },
   { model: PRIMARY_MODEL, delayMsBefore: 1000 },
   { model: FALLBACK_MODEL, delayMsBefore: 1500 },
+  { model: FALLBACK_MODEL, delayMsBefore: 2500 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 2000 },
 ];
 
 // Caps the whole retry loop's wall-clock time well under the hosting page's
@@ -76,7 +84,7 @@ const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
 // fails fast into the friendly "busy" message below instead of Vercel
 // hard-killing the function mid-response (which surfaces to the browser as a
 // bare "Failed to fetch" instead of a real error).
-const EXTRACTION_BUDGET_MS = 30_000;
+const EXTRACTION_BUDGET_MS = 36_000;
 const PER_CALL_TIMEOUT_MS = 15_000;
 
 export async function extractSuppliersFromImage(buffer: Buffer, mimeType: string): Promise<SupplierImportDraft[]> {

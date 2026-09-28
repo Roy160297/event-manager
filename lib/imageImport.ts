@@ -218,6 +218,14 @@ function isTransientOverload(err: unknown): boolean {
 // overloaded.
 const PRIMARY_MODEL = "gemini-flash-lite-latest";
 const FALLBACK_MODEL = "gemini-flash-latest";
+// Pinned to a specific older stable release rather than a "-latest" alias -
+// during a genuine platform-wide capacity spike the two aliases above can be
+// overloaded together (this happened in production: the venue hit the
+// "busy, try again" message after both PRIMARY and FALLBACK failed), since
+// they likely route to the same newest-generation model traffic. A pinned
+// older version isn't the default target for that traffic, so it's far less
+// likely to be down at the same moment - worth trying before giving up.
+const LAST_RESORT_MODEL = "gemini-2.0-flash";
 
 function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: string, signal: AbortSignal) {
   return ai.models.generateContent({
@@ -242,7 +250,7 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: st
   });
 }
 
-// Four attempts across two tiers, with growing backoff - a "high demand" 503
+// Six attempts across three tiers, with growing backoff - a "high demand" 503
 // is usually a momentary capacity blip, but it can occasionally last several
 // seconds during a real spike, and this used to give up (surfacing the
 // "busy, try again" error to the user) after only 3 attempts and a single
@@ -250,11 +258,15 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: st
 // silently instead of failing the upload. The lite tier draws from separate
 // capacity from the flash tier, so falling back to it is worth it even
 // before exhausting retries on flash - and worth retrying itself once too.
+// The third (pinned, older) tier only gets tried once both "-latest" tiers
+// have failed twice each - see LAST_RESORT_MODEL's own comment.
 const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: PRIMARY_MODEL, delayMsBefore: 0 },
   { model: PRIMARY_MODEL, delayMsBefore: 1000 },
   { model: FALLBACK_MODEL, delayMsBefore: 1500 },
   { model: FALLBACK_MODEL, delayMsBefore: 2500 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 2000 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 3000 },
 ];
 
 // The page that hosts this upload caps the whole Server Action at 60s
@@ -269,7 +281,7 @@ const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
 // the whole retry loop's wall-clock time (well under 60s) and each
 // individual call within it (via abortSignal) means a stuck call always
 // fails fast into that existing friendly path instead.
-const EXTRACTION_BUDGET_MS = 45_000;
+const EXTRACTION_BUDGET_MS = 50_000;
 const PER_CALL_TIMEOUT_MS = 20_000;
 
 async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: string): Promise<GeminiExtraction> {
