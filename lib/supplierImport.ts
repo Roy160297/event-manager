@@ -72,12 +72,15 @@ const FALLBACK_MODEL = "gemini-flash-latest";
 // names the replacement.)
 const LAST_RESORT_MODEL = "gemini-3.8-flash";
 
+// Round-robins across all three tiers before ever repeating one - see
+// lib/imageImport.ts's EXTRACTION_ATTEMPTS comment: retrying the same tier
+// twice in a row wastes a slot when it's under sustained load rather than a
+// momentary blip, and piles deliberate backoff on top of that even when a
+// different, healthy tier is one call away.
 const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: PRIMARY_MODEL, delayMsBefore: 0 },
-  { model: PRIMARY_MODEL, delayMsBefore: 1000 },
-  { model: FALLBACK_MODEL, delayMsBefore: 1500 },
-  { model: FALLBACK_MODEL, delayMsBefore: 2500 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 2000 },
+  { model: FALLBACK_MODEL, delayMsBefore: 300 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
 ];
 
 // Caps the whole retry loop's wall-clock time well under the hosting page's

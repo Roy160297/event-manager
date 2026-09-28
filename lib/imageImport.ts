@@ -252,23 +252,22 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: st
   });
 }
 
-// Six attempts across three tiers, with growing backoff - a "high demand" 503
-// is usually a momentary capacity blip, but it can occasionally last several
-// seconds during a real spike, and this used to give up (surfacing the
-// "busy, try again" error to the user) after only 3 attempts and a single
-// 1s pause. Widening the window here means more of those spikes resolve
-// silently instead of failing the upload. The lite tier draws from separate
-// capacity from the flash tier, so falling back to it is worth it even
-// before exhausting retries on flash - and worth retrying itself once too.
-// The third (pinned, older) tier only gets tried once both "-latest" tiers
-// have failed twice each - see LAST_RESORT_MODEL's own comment.
+// Round-robins across all three tiers before ever repeating one, with only a
+// short pause between attempts. Retrying the SAME tier twice in a row (the
+// previous design) wastes time and a whole retry slot when that tier is
+// under sustained load rather than a momentary blip - it only reaches the
+// (likely-healthy) next tier on the third attempt, and with 1-3s of
+// deliberate backoff piled on top of that, uploads felt slow even when a
+// working tier was one call away. Hitting a different capacity pool each
+// attempt gets to a healthy one faster, and a short second pass through all
+// three still covers a real multi-tier spike.
 const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: PRIMARY_MODEL, delayMsBefore: 0 },
-  { model: PRIMARY_MODEL, delayMsBefore: 1000 },
-  { model: FALLBACK_MODEL, delayMsBefore: 1500 },
-  { model: FALLBACK_MODEL, delayMsBefore: 2500 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 2000 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 3000 },
+  { model: FALLBACK_MODEL, delayMsBefore: 300 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
+  { model: PRIMARY_MODEL, delayMsBefore: 500 },
+  { model: FALLBACK_MODEL, delayMsBefore: 500 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 500 },
 ];
 
 // The page that hosts this upload caps the whole Server Action at 60s
