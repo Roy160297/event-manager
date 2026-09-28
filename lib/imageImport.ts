@@ -275,23 +275,18 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: st
 // Confirmed live in production that Gemini can put both tiers into
 // simultaneous "high demand" 503s at once - a real platform-wide spike, not
 // a per-tier issue, so no amount of tier-picking alone guarantees success
-// during one. Each 503 comes back in ~1-2s though, so six full round-robin
-// passes (12 attempts) only costs a few seconds more than one pass in the
-// worst case, while meaningfully raising the odds of landing in the window
-// where at least one tier has recovered - still comfortably inside the 50s
-// budget below.
+// during one, and this venue has now hit that squeeze more than once in a
+// single session. Trimmed from six passes to three per explicit request:
+// once a spike is severe enough to survive three round-robin passes, waiting
+// through three more rarely helps and just delays the friendly "busy, try
+// again" message - better to fail fast and let staff retry by hand a moment
+// later than sit through it.
 const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: PRIMARY_MODEL, delayMsBefore: 0 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
   { model: PRIMARY_MODEL, delayMsBefore: 500 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
   { model: PRIMARY_MODEL, delayMsBefore: 700 },
-  { model: FALLBACK_MODEL, delayMsBefore: 300 },
-  { model: PRIMARY_MODEL, delayMsBefore: 900 },
-  { model: FALLBACK_MODEL, delayMsBefore: 300 },
-  { model: PRIMARY_MODEL, delayMsBefore: 1100 },
-  { model: FALLBACK_MODEL, delayMsBefore: 300 },
-  { model: PRIMARY_MODEL, delayMsBefore: 1300 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
 ];
 
@@ -307,8 +302,8 @@ const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
 // the whole retry loop's wall-clock time (well under 60s) and each
 // individual call within it (via abortSignal) means a stuck call always
 // fails fast into that existing friendly path instead.
-const EXTRACTION_BUDGET_MS = 50_000;
-const PER_CALL_TIMEOUT_MS = 20_000;
+const EXTRACTION_BUDGET_MS = 25_000;
+const PER_CALL_TIMEOUT_MS = 12_000;
 
 async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: string): Promise<GeminiExtraction> {
   const startedAt = Date.now();
