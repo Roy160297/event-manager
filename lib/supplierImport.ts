@@ -72,13 +72,20 @@ const FALLBACK_MODEL = "gemini-flash-latest";
 // names the replacement.)
 const LAST_RESORT_MODEL = "gemini-3.8-flash";
 
-// Round-robins across all three tiers before ever repeating one - see
-// lib/imageImport.ts's EXTRACTION_ATTEMPTS comment: retrying the same tier
-// twice in a row wastes a slot when it's under sustained load rather than a
-// momentary blip, and piles deliberate backoff on top of that even when a
-// different, healthy tier is one call away.
+// Round-robins across all three tiers before ever repeating one, three full
+// passes - see lib/imageImport.ts's EXTRACTION_ATTEMPTS comment: retrying
+// the same tier twice in a row wastes a slot when it's under sustained load
+// rather than a momentary blip, and Gemini has been confirmed live to put
+// all three tiers into simultaneous 503s during a real platform-wide spike -
+// several fast passes raise the odds of landing in a recovery window.
 const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: PRIMARY_MODEL, delayMsBefore: 0 },
+  { model: FALLBACK_MODEL, delayMsBefore: 300 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
+  { model: PRIMARY_MODEL, delayMsBefore: 500 },
+  { model: FALLBACK_MODEL, delayMsBefore: 300 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
+  { model: PRIMARY_MODEL, delayMsBefore: 700 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
   { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
 ];

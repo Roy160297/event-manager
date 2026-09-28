@@ -258,16 +258,29 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: st
 // under sustained load rather than a momentary blip - it only reaches the
 // (likely-healthy) next tier on the third attempt, and with 1-3s of
 // deliberate backoff piled on top of that, uploads felt slow even when a
-// working tier was one call away. Hitting a different capacity pool each
-// attempt gets to a healthy one faster, and a short second pass through all
-// three still covers a real multi-tier spike.
+// working tier was one call away.
+//
+// Confirmed live in production that Gemini can put all three tiers into
+// simultaneous "high demand" 503s at once - a real platform-wide spike, not
+// a per-tier issue, so no amount of tier-picking alone guarantees success
+// during one. Each 503 comes back in ~1-2s though, so four full round-robin
+// passes (12 attempts) only costs a few seconds more than one pass in the
+// worst case, while meaningfully raising the odds of landing in the window
+// where at least one tier has recovered - still comfortably inside the 50s
+// budget below.
 const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: PRIMARY_MODEL, delayMsBefore: 0 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
   { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
   { model: PRIMARY_MODEL, delayMsBefore: 500 },
-  { model: FALLBACK_MODEL, delayMsBefore: 500 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 500 },
+  { model: FALLBACK_MODEL, delayMsBefore: 300 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
+  { model: PRIMARY_MODEL, delayMsBefore: 700 },
+  { model: FALLBACK_MODEL, delayMsBefore: 300 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
+  { model: PRIMARY_MODEL, delayMsBefore: 900 },
+  { model: FALLBACK_MODEL, delayMsBefore: 300 },
+  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
 ];
 
 // The page that hosts this upload caps the whole Server Action at 60s
