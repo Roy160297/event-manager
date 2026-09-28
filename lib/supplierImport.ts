@@ -64,12 +64,13 @@ function isTransientOverload(err: unknown): boolean {
 // "slow, and occasionally fails outright under Gemini load" symptom there.
 const PRIMARY_MODEL = "gemini-flash-lite-latest";
 const FALLBACK_MODEL = "gemini-flash-latest";
-// Pinned to a specific older stable release rather than a "-latest" alias -
-// see lib/imageImport.ts's LAST_RESORT_MODEL comment: during a genuine
+// Pinned to a specific stable release rather than a "-latest" alias - see
+// lib/imageImport.ts's LAST_RESORT_MODEL comment: during a genuine
 // platform-wide spike the two aliases above can be overloaded together, so a
-// pinned older version (different default traffic target) is worth trying
-// before giving up.
-const LAST_RESORT_MODEL = "gemini-2.0-flash";
+// pinned version is worth trying before giving up. (Google retires pinned
+// names outright, unlike the aliases - if this 404s, its error message
+// names the replacement.)
+const LAST_RESORT_MODEL = "gemini-3.8-flash";
 
 const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: PRIMARY_MODEL, delayMsBefore: 0 },

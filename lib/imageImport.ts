@@ -218,14 +218,16 @@ function isTransientOverload(err: unknown): boolean {
 // overloaded.
 const PRIMARY_MODEL = "gemini-flash-lite-latest";
 const FALLBACK_MODEL = "gemini-flash-latest";
-// Pinned to a specific older stable release rather than a "-latest" alias -
-// during a genuine platform-wide capacity spike the two aliases above can be
+// Pinned to a specific stable release rather than a "-latest" alias - during
+// a genuine platform-wide capacity spike the two aliases above can be
 // overloaded together (this happened in production: the venue hit the
 // "busy, try again" message after both PRIMARY and FALLBACK failed), since
-// they likely route to the same newest-generation model traffic. A pinned
-// older version isn't the default target for that traffic, so it's far less
-// likely to be down at the same moment - worth trying before giving up.
-const LAST_RESORT_MODEL = "gemini-2.0-flash";
+// they likely route to the same traffic. A pinned version is worth trying
+// before giving up. NOTE: Google retires pinned model names outright (unlike
+// the "-latest" aliases, which just quietly point to a newer model) - if
+// this starts 404ing with "no longer available", the error message itself
+// names the replacement to swap in.
+const LAST_RESORT_MODEL = "gemini-3.8-flash";
 
 function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: string, signal: AbortSignal) {
   return ai.models.generateContent({
