@@ -50,44 +50,50 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Same transient-503-detection as lib/imageImport.ts - a "high demand"
-// overload from Gemini clears within a second or two most of the time.
+// Same as lib/imageImport.ts's isTransientOverload - moves on to the next
+// attempt in the ladder rather than aborting for either a transient 503
+// "high demand" overload, or a 429 RESOURCE_EXHAUSTED (a model-specific
+// rate/quota limit): both mean THIS tier is unavailable right now, not that
+// the whole extraction should fail. Confirmed live that treating only 503s
+// this way was a real bug - a single 429 was throwing immediately and
+// skipping every other (untried) attempt in the ladder.
 function isTransientOverload(err: unknown): boolean {
   if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) return true;
   const message = err instanceof Error ? err.message : String(err);
-  return message.includes("UNAVAILABLE") || message.includes("high demand") || message.includes('"code":503');
+  return (
+    message.includes("UNAVAILABLE") ||
+    message.includes("high demand") ||
+    message.includes('"code":503') ||
+    message.includes('"code":429') ||
+    message.includes("RESOURCE_EXHAUSTED")
+  );
 }
 
 // lite first (fast, and separate capacity from the flash tier), falling
 // back to the slower/more-reliable flash tier if lite itself is overloaded -
-// same three-tier retry as lib/imageImport.ts, which fixed the identical
-// "slow, and occasionally fails outright under Gemini load" symptom there.
+// same round-robin retry as lib/imageImport.ts, which fixed the identical
+// "slow, and occasionally fails outright under Gemini load" symptom there. A
+// third (pinned, non-"-latest") tier was tried here too, but dropped after
+// confirming live that the newest pinned models carry a much harsher
+// free-tier daily quota (20 requests/day) than these two aliases - it
+// exhausted almost immediately under real use and added no resilience.
+
 const PRIMARY_MODEL = "gemini-flash-lite-latest";
 const FALLBACK_MODEL = "gemini-flash-latest";
-// Pinned to a specific stable release rather than a "-latest" alias - see
-// lib/imageImport.ts's LAST_RESORT_MODEL comment: during a genuine
-// platform-wide spike the two aliases above can be overloaded together, so a
-// pinned version is worth trying before giving up. (Google retires pinned
-// names outright, unlike the aliases - if this 404s, its error message
-// names the replacement.)
-const LAST_RESORT_MODEL = "gemini-3.8-flash";
 
-// Round-robins across all three tiers before ever repeating one, three full
+// Round-robins between both tiers before ever repeating one, three full
 // passes - see lib/imageImport.ts's EXTRACTION_ATTEMPTS comment: retrying
 // the same tier twice in a row wastes a slot when it's under sustained load
 // rather than a momentary blip, and Gemini has been confirmed live to put
-// all three tiers into simultaneous 503s during a real platform-wide spike -
+// both tiers into simultaneous 503s during a real platform-wide spike -
 // several fast passes raise the odds of landing in a recovery window.
 const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: PRIMARY_MODEL, delayMsBefore: 0 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
   { model: PRIMARY_MODEL, delayMsBefore: 500 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
   { model: PRIMARY_MODEL, delayMsBefore: 700 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
 ];
 
 // Caps the whole retry loop's wall-clock time well under the hosting page's

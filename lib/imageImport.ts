@@ -198,13 +198,26 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Gemini occasionally comes back with a transient 503 "UNAVAILABLE" (high
-// demand) that clears within a second or two - distinguishing it from a
-// genuine failure lets the caller decide whether a quick retry is worth it.
+// Whether this attempt's failure should move on to the next attempt in the
+// ladder rather than abort the whole extraction. Originally just Gemini's
+// transient 503 "UNAVAILABLE" (high demand), which usually clears within a
+// second or two - but a 429 RESOURCE_EXHAUSTED (a model-specific rate/quota
+// limit) is the same situation in practice: THIS tier is unavailable to us
+// right now, other tiers may well not be. Confirmed live in production that
+// treating only 503s this way was a real bug - a single 429 from one tier
+// was throwing immediately and skipping every other attempt in the ladder
+// (including tiers that had never been tried yet), surfacing Gemini's raw
+// JSON error to the user instead of retrying.
 function isTransientOverload(err: unknown): boolean {
   if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) return true;
   const message = err instanceof Error ? err.message : String(err);
-  return message.includes("UNAVAILABLE") || message.includes("high demand") || message.includes('"code":503');
+  return (
+    message.includes("UNAVAILABLE") ||
+    message.includes("high demand") ||
+    message.includes('"code":503') ||
+    message.includes('"code":429') ||
+    message.includes("RESOURCE_EXHAUSTED")
+  );
 }
 
 // Full-page "ענן" screenshots are dense with many small side-by-side panels,
@@ -218,16 +231,15 @@ function isTransientOverload(err: unknown): boolean {
 // overloaded.
 const PRIMARY_MODEL = "gemini-flash-lite-latest";
 const FALLBACK_MODEL = "gemini-flash-latest";
-// Pinned to a specific stable release rather than a "-latest" alias - during
-// a genuine platform-wide capacity spike the two aliases above can be
-// overloaded together (this happened in production: the venue hit the
-// "busy, try again" message after both PRIMARY and FALLBACK failed), since
-// they likely route to the same traffic. A pinned version is worth trying
-// before giving up. NOTE: Google retires pinned model names outright (unlike
-// the "-latest" aliases, which just quietly point to a newer model) - if
-// this starts 404ing with "no longer available", the error message itself
-// names the replacement to swap in.
-const LAST_RESORT_MODEL = "gemini-3.8-flash";
+// A third tier (a pinned, non-"-latest" model) was tried here as a
+// last-resort fallback, on the theory that a pinned version draws from
+// different capacity than the two aliases above. Dropped after confirming
+// live that the newest pinned models carry a much harsher free-tier daily
+// quota than the two established aliases (20 requests/day, vs. the aliases'
+// much higher limits - see this file's history) - it exhausted almost
+// immediately under real use and added no real resilience, just another way
+// to fail. If Gemini billing ever moves off the free tier, revisit adding
+// one back.
 
 function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: string, signal: AbortSignal) {
   return ai.models.generateContent({
@@ -252,18 +264,18 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: st
   });
 }
 
-// Round-robins across all three tiers before ever repeating one, with only a
+// Round-robins between both tiers before ever repeating one, with only a
 // short pause between attempts. Retrying the SAME tier twice in a row (the
-// previous design) wastes time and a whole retry slot when that tier is
+// original design) wastes time and a whole retry slot when that tier is
 // under sustained load rather than a momentary blip - it only reaches the
-// (likely-healthy) next tier on the third attempt, and with 1-3s of
+// (likely-healthy) other tier on the third attempt, and with 1-3s of
 // deliberate backoff piled on top of that, uploads felt slow even when a
 // working tier was one call away.
 //
-// Confirmed live in production that Gemini can put all three tiers into
+// Confirmed live in production that Gemini can put both tiers into
 // simultaneous "high demand" 503s at once - a real platform-wide spike, not
 // a per-tier issue, so no amount of tier-picking alone guarantees success
-// during one. Each 503 comes back in ~1-2s though, so four full round-robin
+// during one. Each 503 comes back in ~1-2s though, so six full round-robin
 // passes (12 attempts) only costs a few seconds more than one pass in the
 // worst case, while meaningfully raising the odds of landing in the window
 // where at least one tier has recovered - still comfortably inside the 50s
@@ -271,16 +283,16 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: st
 const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
   { model: PRIMARY_MODEL, delayMsBefore: 0 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
   { model: PRIMARY_MODEL, delayMsBefore: 500 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
   { model: PRIMARY_MODEL, delayMsBefore: 700 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
   { model: PRIMARY_MODEL, delayMsBefore: 900 },
   { model: FALLBACK_MODEL, delayMsBefore: 300 },
-  { model: LAST_RESORT_MODEL, delayMsBefore: 300 },
+  { model: PRIMARY_MODEL, delayMsBefore: 1100 },
+  { model: FALLBACK_MODEL, delayMsBefore: 300 },
+  { model: PRIMARY_MODEL, delayMsBefore: 1300 },
+  { model: FALLBACK_MODEL, delayMsBefore: 300 },
 ];
 
 // The page that hosts this upload caps the whole Server Action at 60s
