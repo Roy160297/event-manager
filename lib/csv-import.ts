@@ -32,19 +32,30 @@ export function parseCsvBuffer(buffer: Buffer): ParsedCsv {
 // Venue guest-list exports (e.g. the fixed template used for seating lists)
 // often have a title row above the real headers, e.g. "אורחים" spanning a
 // group of columns with the actual field names one row below it. Scan the
-// first few rows and use whichever has the most non-empty cells as the
-// header row, so both plain single-header sheets and this two-row layout
-// parse correctly without a hardcoded row index.
+// first few rows and use whichever looks most like a header row, so both
+// plain single-header sheets and this two-row layout parse correctly
+// without a hardcoded row index.
 export function parseExcelBuffer(buffer: Buffer): ParsedCsv {
   const workbook = XLSX.read(buffer, { type: "buffer" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: "", blankrows: false });
 
-  const countNonEmpty = (row: unknown[]) => row.filter((cell) => String(cell).trim() !== "").length;
+  // Counting every non-empty cell (rather than just header-like ones) picked
+  // the wrong row on a file with a leading numeric index column: a fully
+  // populated data row (index, name, phone, two numeric time cells) has more
+  // non-empty cells than the actual header row above it (just the field
+  // names, with a blank first cell over the index column), so the first data
+  // row won and got treated as the header. Column labels are virtually
+  // always text, while a data row's index/amount/time cells are numbers, so
+  // counting only non-numeric non-empty cells tells the two apart correctly
+  // in both this case and the original title-row case (a lone text title
+  // still loses to a real header row's several text labels).
+  const countHeaderish = (row: unknown[]) =>
+    row.filter((cell) => typeof cell !== "number" && String(cell).trim() !== "").length;
   let headerRowIndex = 0;
   let bestCount = -1;
   for (let i = 0; i < Math.min(5, matrix.length); i++) {
-    const count = countNonEmpty(matrix[i]);
+    const count = countHeaderish(matrix[i]);
     if (count > bestCount) {
       bestCount = count;
       headerRowIndex = i;

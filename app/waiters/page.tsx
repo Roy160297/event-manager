@@ -6,6 +6,7 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
+import WaitersImportWizard from "./WaitersImportWizard";
 import type { WaiterRow } from "@/lib/types";
 
 const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
@@ -29,6 +30,8 @@ export default async function WaitersPage() {
         רשימת המלצרים היא מאגר קבוע המשמש לשיבוץ בכל האירועים — הוסיפו כאן פעם אחת. תפקיד (מלצר/ראנר)
         נבחר בעת השיבוץ לכל אירוע בנפרד.
       </p>
+
+      {canWriteWaiters && <WaitersImportWizard />}
 
       {canWriteWaiters && (
         <form
