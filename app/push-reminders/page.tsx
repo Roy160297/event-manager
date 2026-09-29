@@ -70,9 +70,9 @@ export default async function PushRemindersPage() {
         <h1 className="text-2xl font-bold">התראות פוש</h1>
         <p className="text-sm text-foreground/80">
           כל שורה מגדירה תזכורת שנשלחת כפוש בטלפון, מספר דקות לפני/אחרי שלב מסוים בלוח הזמנים של האירוע (למשל
-          &quot;20 דקות לפני חופה&quot;), לנמען שבוחרים - מנהל האירוע, מנהל הפלור, כל מי שבתפקיד מסוים, או איש צוות
-          קבוע. ניתן להשתמש ב-<code>{"{event_name}"}</code> בתוכן ההתראה כדי שיוחלף בשם האירוע בפועל, וב-
-          <code>{"{additional_info}"}</code> כדי שיוחלף ב&quot;מידע נוסף&quot; של האירוע הספציפי.
+          &quot;20 דקות לפני חופה&quot;), לנמען שבוחרים. ניתן להשתמש ב-<code>{"{event_name}"}</code>{" "}
+          בתוכן ההתראה כדי שיוחלף בשם האירוע בפועל, וב-<code>{"{additional_info}"}</code>{" "}
+          כדי שיוחלף ב&quot;מידע נוסף&quot; של האירוע הספציפי.
         </p>
       </div>
 
@@ -117,7 +117,7 @@ export default async function PushRemindersPage() {
             </label>
             <label className={labelClass}>
               <span>כותרת ההתראה</span>
-              <input name="notification_title" placeholder="תזכורת: ..." required className={inputClass} />
+              <input name="notification_title" placeholder="תזכורת: יש להעלות צ'ילר לחופה" required className={inputClass} />
             </label>
             <label className={`${labelClass} sm:col-span-2`}>
               <span>תוכן ההתראה</span>
