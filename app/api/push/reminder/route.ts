@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   const [{ data: event }, { data: rule }] = await Promise.all([
     supabase
       .from("events")
-      .select("name, manager_id, floor_manager_id")
+      .select("name, manager_id, floor_manager_id, menu_notes")
       .eq("id", eventId)
       .is("deleted_at", null)
       .maybeSingle(),
@@ -73,7 +73,9 @@ export async function POST(request: Request) {
     return Response.json({ ok: true, sent: 0, reason: "no recipient resolved" });
   }
 
-  const body = rule.notification_body.replaceAll("{event_name}", event.name);
+  const body = rule.notification_body
+    .replaceAll("{event_name}", event.name)
+    .replaceAll("{additional_info}", event.menu_notes?.trim() || "ללא מידע נוסף");
   let sent = 0;
   let total = 0;
   for (const staffId of staffIds) {
