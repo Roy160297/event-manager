@@ -5,7 +5,6 @@ import { LOCATION_TYPE_LABELS, WAITER_ROLE_LABELS } from "@/lib/labels";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
-import TableSketchImportWizard from "./TableSketchImportWizard";
 import TableSketchPhoto from "./TableSketchPhoto";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
@@ -104,12 +103,6 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
         canWrite={canWriteStaffing}
         seatedChairsCount={event?.sketch_seated_chairs_count ?? null}
       />
-
-      {canWriteStaffing && (
-        <div className="flex justify-end rounded-lg border border-border-classic bg-surface p-4">
-          <TableSketchImportWizard eventId={eventId} />
-        </div>
-      )}
 
       {canWriteStaffing && (
         <form

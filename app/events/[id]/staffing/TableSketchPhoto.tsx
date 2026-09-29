@@ -22,17 +22,22 @@ export default function TableSketchPhoto({
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
+    setSuccessMessage(null);
     setIsPending(true);
     const formData = new FormData();
     formData.set("file", file);
     try {
-      await uploadTableSketch(eventId, formData);
+      const { locationsAdded } = await uploadTableSketch(eventId, formData);
+      if (locationsAdded > 0) {
+        setSuccessMessage(`הסקיצה הועלתה, ו-${locationsAdded} שולחנות/עמדות חדשים יובאו ממנה אוטומטית.`);
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ");
@@ -44,6 +49,7 @@ export default function TableSketchPhoto({
 
   async function handleRemove() {
     setError(null);
+    setSuccessMessage(null);
     setIsPending(true);
     try {
       await removeTableSketch(eventId);
@@ -99,6 +105,7 @@ export default function TableSketchPhoto({
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
 
       {sketchUrl ? (
         isPdf ? (
@@ -124,7 +131,8 @@ export default function TableSketchPhoto({
         )
       ) : (
         <p className="text-sm text-foreground/60">
-          העלו תמונה או PDF של סקיצת הפריסה כדי שיהיה ניתן לראות אותה כאן בזמן שיבוץ המלצרים.
+          העלו תמונה או PDF של סקיצת הפריסה כדי שיהיה ניתן לראות אותה כאן בזמן שיבוץ המלצרים. העלאת קובץ PDF
+          מ-iPlan גם מייבאת אוטומטית את רשימת השולחנות והעמדות ממנו.
         </p>
       )}
 

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText } from "@/lib/pdfImport";
-import { parseTableSketchDraft, type TableSketchDraft } from "@/lib/tableSketchImport";
+import { parseTableSketchDraft } from "@/lib/tableSketchImport";
 import type { LocationType, WaiterRole } from "@/lib/types";
 
 export async function createLocation(eventId: string, formData: FormData) {
@@ -23,19 +23,13 @@ export async function createLocation(eventId: string, formData: FormData) {
   revalidatePath(`/events/${eventId}/staffing`);
 }
 
-export async function parseTableSketchImport(formData: FormData): Promise<TableSketchDraft> {
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) throw new Error("יש לבחור קובץ PDF");
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const text = await extractPdfText(buffer);
-  return parseTableSketchDraft(text);
-}
-
-export async function createLocationsFromSketch(
+// Inserts new tables/food stands from a parsed sketch, skipping any
+// label+type already present so re-uploading the same (or a corrected)
+// sketch never creates duplicates. Returns how many were actually added.
+async function createLocationsFromSketch(
   eventId: string,
   draft: { tables: { label: string; capacity: number }[]; foodStands: { label: string }[] },
-) {
+): Promise<number> {
   const supabase = await createClient();
 
   const { data: existingLocations } = await supabase
@@ -66,16 +60,17 @@ export async function createLocationsFromSketch(
       })),
   ];
 
-  if (toInsert.length === 0) return;
+  if (toInsert.length === 0) return 0;
 
   const { error } = await supabase.from("locations").insert(toInsert);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/staffing`);
+  return toInsert.length;
 }
 
 const TABLE_SKETCH_BUCKET = "event-sketches";
 
-export async function uploadTableSketch(eventId: string, formData: FormData) {
+export async function uploadTableSketch(eventId: string, formData: FormData): Promise<{ locationsAdded: number }> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("יש לבחור קובץ");
 
@@ -96,17 +91,23 @@ export async function uploadTableSketch(eventId: string, formData: FormData) {
     .upload(path, buffer, { contentType: file.type || undefined });
   if (uploadError) throw new Error(uploadError.message);
 
-  // Auto-fill the seated-chairs count from the sketch's own occupancy data -
-  // only possible for iPlan PDF exports (image sketches have no extractable
-  // text). Left untouched if parsing fails or finds no tables, so a manager
-  // can still fill it in by hand; still editable afterward either way.
+  // Auto-fill the seated-chairs count AND import the sketch's tables/food
+  // stands into `locations` - both only possible for iPlan PDF exports
+  // (image sketches have no extractable text). This is what used to be a
+  // separate "ייבוא סקיצת שולחנות" wizard the manager had to run as its own
+  // step after uploading; per venue request, uploading the sketch is now the
+  // one action that does both. Left untouched if parsing fails or finds no
+  // tables, so a manager can still fill in the chair count and add locations
+  // by hand either way.
   let seatedChairsCount: string | null = null;
+  let locationsAdded = 0;
   if (ext === "pdf") {
     try {
       const draft = parseTableSketchDraft(await extractPdfText(buffer));
       if (draft.tables.length > 0) {
         seatedChairsCount = String(draft.tables.reduce((sum, t) => sum + t.seated, 0));
       }
+      locationsAdded = await createLocationsFromSketch(eventId, draft);
     } catch {
       // Ignore - falls back to manual entry.
     }
@@ -126,6 +127,7 @@ export async function uploadTableSketch(eventId: string, formData: FormData) {
   }
 
   revalidatePath(`/events/${eventId}/staffing`);
+  return { locationsAdded };
 }
 
 export async function removeTableSketch(eventId: string) {
