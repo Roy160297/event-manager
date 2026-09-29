@@ -14,6 +14,7 @@ export type TaskPriority = "low" | "normal" | "high";
 export type RsvpStatus = "pending" | "confirmed" | "declined";
 export type LocationType = "table" | "food_stand";
 export type WaiterRole = "waiter" | "runner";
+export type WaiterSkill = "runner" | "clearing" | "piloting" | "station" | "table" | "hall_prep" | "door";
 export type PermissionResource =
   | "events"
   | "guests"
@@ -201,6 +202,12 @@ export interface WaiterRow {
   phone: string | null;
   notes: string | null;
   created_at: string;
+}
+
+export interface WaiterSkillRow {
+  id: string;
+  waiter_id: string;
+  skill: WaiterSkill;
 }
 
 export interface LocationRow {

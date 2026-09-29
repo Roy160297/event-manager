@@ -8,6 +8,7 @@ import type {
   TaskPriority,
   TaskStatus,
   WaiterRole,
+  WaiterSkill,
 } from "@/lib/types";
 
 export const MONTH_LABELS = [
@@ -163,6 +164,21 @@ export const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
 export const WAITER_ROLE_LABELS: Record<WaiterRole, string> = {
   waiter: "מלצר/ית",
   runner: "ראנר/פינוי",
+};
+
+// A permanent per-waiter capability matrix (shown as a checkmark grid on the
+// waiters page) - distinct from WaiterRole above, which is the waiter/runner
+// role picked when assigning someone to a table for one specific event.
+export const WAITER_SKILLS: WaiterSkill[] = ["runner", "clearing", "piloting", "station", "table", "hall_prep", "door"];
+
+export const WAITER_SKILL_LABELS: Record<WaiterSkill, string> = {
+  runner: "ראנר",
+  clearing: "פינויים",
+  piloting: "פיילות",
+  station: "עמדה",
+  table: "שולחן",
+  hall_prep: "הכנת אולם",
+  door: "מלצר דלת",
 };
 
 export function formatDate(value: string | null): string {

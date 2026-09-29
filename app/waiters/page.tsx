@@ -7,14 +7,16 @@ import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
 import WaitersImportWizard from "./WaitersImportWizard";
-import type { WaiterRow } from "@/lib/types";
+import { WaiterSkillsGrid } from "./WaiterSkillsGrid";
+import type { WaiterRow, WaiterSkillRow } from "@/lib/types";
 
 const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
 
 export default async function WaitersPage() {
   const supabase = await createClient();
-  const [{ data: waiters }, currentStaff] = await Promise.all([
+  const [{ data: waiters }, { data: skills }, currentStaff] = await Promise.all([
     supabase.from("waiters").select("*").order("name").returns<WaiterRow[]>(),
+    supabase.from("waiter_skills").select("*").returns<WaiterSkillRow[]>(),
     getCurrentStaff(),
   ]);
 
@@ -23,6 +25,11 @@ export default async function WaitersPage() {
 
   if (!canReadWaiters) return <NoPermissionNotice />;
 
+  const skillsByWaiter: Record<string, WaiterSkillRow[]> = {};
+  for (const skill of skills ?? []) {
+    (skillsByWaiter[skill.waiter_id] ??= []).push(skill);
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">מלצרים</h1>
@@ -30,6 +37,19 @@ export default async function WaitersPage() {
         רשימת המלצרים היא מאגר קבוע המשמש לשיבוץ בכל האירועים — הוסיפו כאן פעם אחת. תפקיד (מלצר/ראנר)
         נבחר בעת השיבוץ לכל אירוע בנפרד.
       </p>
+
+      {waiters && waiters.length > 0 && (
+        // Keyed by the waiter-id set so adding/deleting a waiter remounts the
+        // grid and re-derives its checkbox state from fresh props - see
+        // PermissionGrid's identical comment for why (its local state is
+        // otherwise seeded once on mount, with no entry for a new waiter).
+        <WaiterSkillsGrid
+          key={waiters.map((w) => w.id).join(",")}
+          waiters={waiters}
+          skillsByWaiter={skillsByWaiter}
+          readOnly={!canWriteWaiters}
+        />
+      )}
 
       {canWriteWaiters && <WaitersImportWizard />}
 

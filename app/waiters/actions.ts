@@ -4,6 +4,27 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseCsvBuffer, parseExcelBuffer, type ParsedCsv } from "@/lib/csv-import";
 import { mapWaiterRows, type WaiterColumnMapping } from "@/lib/waiterImport";
+import type { WaiterSkill } from "@/lib/types";
+
+// Presence-based (a row means "has this skill") rather than a boolean value,
+// matching waiter_assignments/role_permissions elsewhere in this codebase -
+// toggling on inserts, toggling off deletes.
+export async function setWaiterSkill(waiterId: string, skill: WaiterSkill, hasSkill: boolean) {
+  const supabase = await createClient();
+
+  if (hasSkill) {
+    const { error } = await supabase.from("waiter_skills").upsert(
+      { waiter_id: waiterId, skill },
+      { onConflict: "waiter_id,skill", ignoreDuplicates: true },
+    );
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase.from("waiter_skills").delete().eq("waiter_id", waiterId).eq("skill", skill);
+    if (error) throw new Error(error.message);
+  }
+
+  revalidatePath("/waiters");
+}
 
 export async function parseWaitersFile(formData: FormData): Promise<ParsedCsv> {
   const file = formData.get("file");
