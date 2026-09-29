@@ -73,7 +73,7 @@ export function GuestList({ guests, eventId }: { guests: PrivateEventGuestRow[];
           >
             <ConfirmSubmitButton
               message="למחוק את כל רשימת האורחים של האירוע? לא ניתן לשחזר פעולה זו."
-              className="rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              className="rounded-full border-2 border-red-300 bg-background px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
             >
               מחק את כל רשימת האורחים
             </ConfirmSubmitButton>

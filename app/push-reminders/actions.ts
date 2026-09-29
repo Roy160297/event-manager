@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
+import { sendPushToStaff } from "@/lib/pushNotifications";
 import type { PushReminderRecipientType } from "@/lib/types";
 
 const RECIPIENT_TYPES: PushReminderRecipientType[] = ["event_manager", "floor_manager", "role", "fixed_staff"];
@@ -74,6 +75,29 @@ export async function updatePushReminderRule(ruleId: string, formData: FormData)
 
   if (error) throw new Error(error.message);
   revalidatePath("/push-reminders");
+}
+
+// Always sent only to the current user, never the rule's configured
+// recipient (event manager, a role, etc.) - a test send should never reach
+// real staff. {event_name}/{additional_info} are left unsubstituted since no
+// specific event is driving this send, just a check that the wording/title
+// look right and actually arrive.
+export async function sendTestPushReminderRule(ruleId: string): Promise<{ sent: number; total: number }> {
+  const staff = await getCurrentStaff();
+  if (!staff || !canWrite(staff.permissions, "push_reminder_rules")) {
+    throw new Error("אין לך הרשאה לנהל התראות");
+  }
+
+  const supabase = await createClient();
+  const { data: rule, error } = await supabase
+    .from("push_reminder_rules")
+    .select("notification_title, notification_body")
+    .eq("id", ruleId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!rule) throw new Error("ההתראה לא נמצאה");
+
+  return sendPushToStaff(staff.id, { title: rule.notification_title, body: rule.notification_body });
 }
 
 export async function deletePushReminderRule(ruleId: string) {

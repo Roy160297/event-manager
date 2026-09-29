@@ -8,6 +8,7 @@ import { TrashIcon } from "@/components/icons";
 import { actionErrorMessage } from "@/lib/actionError";
 import { PushReminderRecipientFields } from "@/components/PushReminderRecipientFields";
 import { createPushReminderRule, updatePushReminderRule, deletePushReminderRule } from "./actions";
+import { TestRuleButton } from "./TestRuleButton";
 import { getKnownTimelineStepLabels } from "@/app/events/[id]/timeline/actions";
 import type { PushReminderRuleRow } from "@/lib/types";
 
@@ -167,16 +168,19 @@ export default async function PushRemindersPage() {
                   </p>
                 </div>
                 {canWriteRules && (
-                  <form action={remove}>
-                    <ConfirmSubmitButton
-                      message="למחוק את ההתראה?"
-                      title="מחק התראה"
-                      className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                      <span className="sr-only">מחק</span>
-                    </ConfirmSubmitButton>
-                  </form>
+                  <div className="flex items-start gap-2">
+                    <TestRuleButton ruleId={rule.id} />
+                    <form action={remove}>
+                      <ConfirmSubmitButton
+                        message="למחוק את ההתראה?"
+                        title="מחק התראה"
+                        className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        <span className="sr-only">מחק</span>
+                      </ConfirmSubmitButton>
+                    </form>
+                  </div>
                 )}
               </div>
 

@@ -54,10 +54,10 @@ export function WaiterSkillsGrid({
       <div className="overflow-x-auto rounded-lg border border-border-classic">
         <table className="w-full min-w-max border-collapse text-sm">
           <thead>
-            <tr className="border-b border-border-classic bg-accent-soft/40">
-              <th className="sticky right-0 bg-accent-soft/40 px-3 py-2 text-start font-medium">מלצר/ית</th>
+            <tr className="border-b border-border-classic bg-accent-soft">
+              <th className="sticky right-0 bg-accent-soft px-3 py-2 text-start font-medium">מלצר/ית</th>
               {WAITER_SKILLS.map((skill) => (
-                <th key={skill} className="border-s border-border-classic px-3 py-2 text-center font-medium">
+                <th key={skill} className="border-s border-border-classic bg-accent-soft px-3 py-2 text-center font-medium">
                   {WAITER_SKILL_LABELS[skill]}
                 </th>
               ))}

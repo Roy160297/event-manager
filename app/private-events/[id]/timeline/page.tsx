@@ -104,7 +104,7 @@ export default async function PrivateTimelinePage({ params }: { params: Promise<
         <form action={removeAll}>
           <ConfirmSubmitButton
             message="למחוק את כל השלבים בלוח הזמנים? לא ניתן לשחזר פעולה זו."
-            className="w-full rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+            className="w-full rounded-full border-2 border-red-300 bg-background px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
           >
             מחק את כל השלבים
           </ConfirmSubmitButton>
