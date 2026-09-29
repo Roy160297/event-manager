@@ -167,8 +167,10 @@ export const WAITER_ROLE_LABELS: Record<WaiterRole, string> = {
 };
 
 // A permanent per-waiter capability matrix (shown as a checkmark grid on the
-// waiters page) - distinct from WaiterRole above, which is the waiter/runner
-// role picked when assigning someone to a table for one specific event.
+// waiters page). Also now what a waiter_assignments row's role is chosen
+// from (see the 00000000000064 migration) - assigning someone to a table
+// specifies which of these duties they're covering there. WaiterRole above
+// is only the old waiter/runner default kept for pre-existing rows.
 export const WAITER_SKILLS: WaiterSkill[] = ["runner", "clearing", "piloting", "station", "table", "hall_prep", "door"];
 
 export const WAITER_SKILL_LABELS: Record<WaiterSkill, string> = {
@@ -180,6 +182,10 @@ export const WAITER_SKILL_LABELS: Record<WaiterSkill, string> = {
   hall_prep: "הכנת אולם",
   door: "מלצר דלת",
 };
+
+// Covers both a fresh assignment's role (always a WaiterSkill now) and a
+// legacy row's WaiterRole - skill labels win where the two overlap (runner).
+export const ASSIGNMENT_ROLE_LABELS: Record<string, string> = { ...WAITER_ROLE_LABELS, ...WAITER_SKILL_LABELS };
 
 export function formatDate(value: string | null): string {
   if (!value) return "—";
