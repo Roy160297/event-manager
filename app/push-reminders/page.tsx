@@ -66,9 +66,9 @@ export default async function PushRemindersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
+      <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">התראות פוש</h1>
-        <p className="text-sm text-foreground/80">
+        <p className="rounded-lg border border-border-classic bg-surface p-4 text-sm text-foreground/80">
           כל שורה מגדירה תזכורת שנשלחת כפוש בטלפון, מספר דקות לפני/אחרי שלב מסוים בלוח הזמנים של האירוע (למשל
           &quot;20 דקות לפני חופה&quot;), לנמען שבוחרים. ניתן להשתמש ב-<code>{"{event_name}"}</code>{" "}
           בתוכן ההתראה כדי שיוחלף בשם האירוע בפועל, וב-<code>{"{additional_info}"}</code>{" "}

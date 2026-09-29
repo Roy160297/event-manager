@@ -23,54 +23,88 @@ export async function createLocation(eventId: string, formData: FormData) {
   revalidatePath(`/events/${eventId}/staffing`);
 }
 
-// Inserts new tables/food stands from a parsed sketch, skipping any
-// label+type already present so re-uploading the same (or a corrected)
-// sketch never creates duplicates. Returns how many were actually added.
-async function createLocationsFromSketch(
+// Syncs tables/food stands from a parsed sketch against what the event
+// already has: adds anything new, updates a table's capacity if the sketch's
+// number changed, and removes anything no longer in the sketch - but only if
+// nothing is staffed there yet. A location with a waiter already assigned is
+// left alone even if it's missing from the new sketch, since deleting it
+// would cascade-delete that assignment (locations -> waiter_assignments is
+// on delete cascade) and silently lose real scheduling work over what might
+// just be a sketch mistake. Matches by label+type, since that's the only
+// stable identifier a re-exported sketch gives us.
+async function syncLocationsFromSketch(
   eventId: string,
   draft: { tables: { label: string; capacity: number }[]; foodStands: { label: string }[] },
-): Promise<number> {
+): Promise<{ added: number; updated: number; removed: number }> {
   const supabase = await createClient();
 
-  const { data: existingLocations } = await supabase
-    .from("locations")
-    .select("label, location_type")
-    .eq("event_id", eventId);
+  const [{ data: existingLocations }, { data: assignments }] = await Promise.all([
+    supabase.from("locations").select("id, label, location_type, capacity").eq("event_id", eventId),
+    supabase.from("waiter_assignments").select("location_id").eq("event_id", eventId),
+  ]);
 
-  const existingKeys = new Set(
-    (existingLocations ?? []).map((loc) => `${loc.location_type}:${loc.label}`),
-  );
+  const assignedLocationIds = new Set((assignments ?? []).map((a) => a.location_id));
+  const existingByKey = new Map((existingLocations ?? []).map((loc) => [`${loc.location_type}:${loc.label}`, loc]));
 
-  const toInsert = [
-    ...draft.tables
-      .filter((t) => t.label.trim() && !existingKeys.has(`table:${t.label.trim()}`))
-      .map((t) => ({
-        event_id: eventId,
-        location_type: "table" as const,
-        label: t.label.trim(),
-        capacity: t.capacity,
-      })),
-    ...draft.foodStands
-      .filter((f) => f.label.trim() && !existingKeys.has(`food_stand:${f.label.trim()}`))
-      .map((f) => ({
-        event_id: eventId,
-        location_type: "food_stand" as const,
-        label: f.label.trim(),
-        capacity: 0,
-      })),
+  const draftEntries: { location_type: "table" | "food_stand"; label: string; capacity: number }[] = [
+    ...draft.tables.filter((t) => t.label.trim()).map((t) => ({ location_type: "table" as const, label: t.label.trim(), capacity: t.capacity })),
+    ...draft.foodStands.filter((f) => f.label.trim()).map((f) => ({ location_type: "food_stand" as const, label: f.label.trim(), capacity: 0 })),
   ];
+  const draftKeys = new Set(draftEntries.map((e) => `${e.location_type}:${e.label}`));
 
-  if (toInsert.length === 0) return 0;
+  const toInsert = draftEntries
+    .filter((e) => !existingByKey.has(`${e.location_type}:${e.label}`))
+    .map((e) => ({ event_id: eventId, location_type: e.location_type, label: e.label, capacity: e.capacity }));
 
-  const { error } = await supabase.from("locations").insert(toInsert);
+  const toUpdate = draftEntries.filter((e) => {
+    const existing = existingByKey.get(`${e.location_type}:${e.label}`);
+    return existing && existing.capacity !== e.capacity;
+  });
+
+  const toRemoveIds = (existingLocations ?? [])
+    .filter((loc) => !draftKeys.has(`${loc.location_type}:${loc.label}`) && !assignedLocationIds.has(loc.id))
+    .map((loc) => loc.id);
+
+  if (toInsert.length > 0) {
+    const { error } = await supabase.from("locations").insert(toInsert);
+    if (error) throw new Error(error.message);
+  }
+
+  for (const entry of toUpdate) {
+    const existing = existingByKey.get(`${entry.location_type}:${entry.label}`)!;
+    const { error } = await supabase.from("locations").update({ capacity: entry.capacity }).eq("id", existing.id);
+    if (error) throw new Error(error.message);
+  }
+
+  if (toRemoveIds.length > 0) {
+    const { error } = await supabase.from("locations").delete().in("id", toRemoveIds);
+    if (error) throw new Error(error.message);
+  }
+
+  if (toInsert.length > 0 || toUpdate.length > 0 || toRemoveIds.length > 0) {
+    revalidatePath(`/events/${eventId}/staffing`);
+  }
+
+  return { added: toInsert.length, updated: toUpdate.length, removed: toRemoveIds.length };
+}
+
+// Deletes every table/food stand for the event (and, via cascade, any
+// waiter assignments to them) - an explicit, deliberate reset the manager
+// asked for directly, unlike the sketch-sync above which protects staffed
+// locations from being silently swept away.
+export async function deleteAllLocations(eventId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("locations").delete().eq("event_id", eventId);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/staffing`);
-  return toInsert.length;
 }
 
 const TABLE_SKETCH_BUCKET = "event-sketches";
 
-export async function uploadTableSketch(eventId: string, formData: FormData): Promise<{ locationsAdded: number }> {
+export async function uploadTableSketch(
+  eventId: string,
+  formData: FormData,
+): Promise<{ added: number; updated: number; removed: number }> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("יש לבחור קובץ");
 
@@ -91,23 +125,24 @@ export async function uploadTableSketch(eventId: string, formData: FormData): Pr
     .upload(path, buffer, { contentType: file.type || undefined });
   if (uploadError) throw new Error(uploadError.message);
 
-  // Auto-fill the seated-chairs count AND import the sketch's tables/food
+  // Auto-fill the seated-chairs count AND sync the sketch's tables/food
   // stands into `locations` - both only possible for iPlan PDF exports
   // (image sketches have no extractable text). This is what used to be a
   // separate "ייבוא סקיצת שולחנות" wizard the manager had to run as its own
   // step after uploading; per venue request, uploading the sketch is now the
-  // one action that does both. Left untouched if parsing fails or finds no
-  // tables, so a manager can still fill in the chair count and add locations
-  // by hand either way.
+  // one action that does both, and re-uploading an updated sketch keeps the
+  // table list in sync rather than just piling new rows on top of old ones.
+  // Left untouched if parsing fails or finds no tables, so a manager can
+  // still fill in the chair count and manage locations by hand either way.
   let seatedChairsCount: string | null = null;
-  let locationsAdded = 0;
+  let syncResult = { added: 0, updated: 0, removed: 0 };
   if (ext === "pdf") {
     try {
       const draft = parseTableSketchDraft(await extractPdfText(buffer));
       if (draft.tables.length > 0) {
         seatedChairsCount = String(draft.tables.reduce((sum, t) => sum + t.seated, 0));
       }
-      locationsAdded = await createLocationsFromSketch(eventId, draft);
+      syncResult = await syncLocationsFromSketch(eventId, draft);
     } catch {
       // Ignore - falls back to manual entry.
     }
@@ -127,7 +162,7 @@ export async function uploadTableSketch(eventId: string, formData: FormData): Pr
   }
 
   revalidatePath(`/events/${eventId}/staffing`);
-  return { locationsAdded };
+  return syncResult;
 }
 
 export async function removeTableSketch(eventId: string) {

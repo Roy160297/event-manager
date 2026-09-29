@@ -34,9 +34,13 @@ export default function TableSketchPhoto({
     const formData = new FormData();
     formData.set("file", file);
     try {
-      const { locationsAdded } = await uploadTableSketch(eventId, formData);
-      if (locationsAdded > 0) {
-        setSuccessMessage(`הסקיצה הועלתה, ו-${locationsAdded} שולחנות/עמדות חדשים יובאו ממנה אוטומטית.`);
+      const { added, updated, removed } = await uploadTableSketch(eventId, formData);
+      const parts: string[] = [];
+      if (added > 0) parts.push(`${added} חדשים נוספו`);
+      if (updated > 0) parts.push(`${updated} עודכנו`);
+      if (removed > 0) parts.push(`${removed} לא-מאוישים הוסרו`);
+      if (parts.length > 0) {
+        setSuccessMessage(`הסקיצה הועלתה, ורשימת השולחנות/עמדות סונכרנה: ${parts.join(", ")}.`);
       }
       router.refresh();
     } catch (err) {

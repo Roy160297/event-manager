@@ -1,9 +1,10 @@
-import { assignWaiter, createLocation, deleteLocation, unassignWaiter, updateLocation } from "./actions";
+import { assignWaiter, createLocation, deleteAllLocations, deleteLocation, unassignWaiter, updateLocation } from "./actions";
 import { createClient } from "@/lib/supabase/server";
 import { actionErrorMessage } from "@/lib/actionError";
 import { LOCATION_TYPE_LABELS, WAITER_ROLE_LABELS } from "@/lib/labels";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import TableSketchPhoto from "./TableSketchPhoto";
 import { getCurrentStaff } from "@/lib/auth";
@@ -94,6 +95,11 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
     await createLocation(eventId, formData);
   }
 
+  async function removeAllLocations() {
+    "use server";
+    await deleteAllLocations(eventId);
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <TableSketchPhoto
@@ -148,6 +154,17 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
           >
             הוסף
           </button>
+        </form>
+      )}
+
+      {canWriteStaffing && locations && locations.length > 0 && (
+        <form action={removeAllLocations}>
+          <ConfirmSubmitButton
+            message="למחוק את כל השולחנות והעמדות של האירוע? כל שיבוץ מלצרים קיים יימחק גם הוא. לא ניתן לשחזר פעולה זו."
+            className="w-full rounded-full border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+          >
+            מחק את כל השולחנות והעמדות
+          </ConfirmSubmitButton>
         </form>
       )}
 
