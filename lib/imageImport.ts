@@ -322,20 +322,22 @@ async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: stri
       break;
     } catch (err) {
       lastError = err;
-      if (!isTransientOverload(err)) throw err;
+      // A non-transient error (bad request, auth, schema) is very unlikely to
+      // behave differently on the next tier, so stop burning attempts on it -
+      // but fall through to the same friendly-message handling below rather
+      // than throwing it directly (see that block's comment for why).
+      if (!isTransientOverload(err)) break;
     }
   }
 
   if (!response) {
-    // Callers must return this message rather than throw it: Next.js
-    // redacts thrown Server Action error messages in production regardless
-    // of where the throw is caught. Budget exhaustion with no other error
-    // (lastError still undefined) is itself a form of "too slow right now",
-    // so it gets the same friendly message as a real overload.
-    if (lastError === undefined || isTransientOverload(lastError)) {
-      throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
-    }
-    throw lastError;
+    // Never let Gemini's own error - a raw, English, often JSON-shaped
+    // string - reach the UI: it's meaningless to venue staff and was showing
+    // up verbatim (e.g. a 429 quota message) before this. Always show the
+    // one friendly Hebrew message instead, and log the real cause
+    // server-side (Vercel logs) for whoever actually needs to debug it.
+    if (lastError !== undefined) console.error("Image extraction failed:", lastError);
+    throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
   }
 
   const rawText = response.text;

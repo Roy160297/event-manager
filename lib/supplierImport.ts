@@ -139,15 +139,20 @@ export async function extractSuppliersFromImage(buffer: Buffer, mimeType: string
       break;
     } catch (err) {
       lastError = err;
-      if (!isTransientOverload(err)) throw err;
+      // See lib/imageImport.ts's identical comment: a non-transient error
+      // won't behave differently on the next tier, so stop here rather than
+      // burn more attempts - but still fall through to the friendly message
+      // below instead of throwing the raw error directly.
+      if (!isTransientOverload(err)) break;
     }
   }
 
   if (rawText === undefined) {
-    if (lastError === undefined || isTransientOverload(lastError)) {
-      throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
-    }
-    throw lastError;
+    // Never let Gemini's own error (raw, English, often JSON-shaped) reach
+    // the UI - always the one friendly Hebrew message, with the real cause
+    // logged server-side for debugging.
+    if (lastError !== undefined) console.error("Supplier extraction failed:", lastError);
+    throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
   }
   if (!rawText) throw new Error("לא התקבלה תשובה מ-Gemini");
 

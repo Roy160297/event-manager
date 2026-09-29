@@ -53,20 +53,28 @@ export async function extractTimelineFromImage(buffer: Buffer, mimeType: string)
   if (!apiKey) throw new Error("GEMINI_API_KEY אינו מוגדר בסביבת השרת");
 
   const ai = new GoogleGenAI({ apiKey });
-  const response = await ai.models.generateContent({
-    model: "gemini-flash-lite-latest",
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: PROMPT }, { inlineData: { mimeType, data: buffer.toString("base64") } }],
+  let response: Awaited<ReturnType<typeof ai.models.generateContent>>;
+  try {
+    response = await ai.models.generateContent({
+      model: "gemini-flash-lite-latest",
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: PROMPT }, { inlineData: { mimeType, data: buffer.toString("base64") } }],
+        },
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: RESPONSE_SCHEMA,
+        temperature: 0,
       },
-    ],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: RESPONSE_SCHEMA,
-      temperature: 0,
-    },
-  });
+    });
+  } catch (err) {
+    // Never let Gemini's own error (raw, English, often JSON-shaped) reach
+    // the UI - see lib/imageImport.ts's identical handling for why.
+    console.error("Timeline extraction failed:", err);
+    throw new Error("שירות זיהוי התמונה עמוס כרגע - נסו שוב בעוד רגע.");
+  }
 
   const rawText = response.text;
   if (!rawText) throw new Error("לא התקבלה תשובה מ-Gemini");
