@@ -1,7 +1,8 @@
 import { assignWaiter, createLocation, deleteAllLocations, deleteLocation, unassignWaiter, updateLocation } from "./actions";
+import { AssignWaiterForm } from "./AssignWaiterForm";
 import { createClient } from "@/lib/supabase/server";
 import { actionErrorMessage } from "@/lib/actionError";
-import { LOCATION_TYPE_LABELS, WAITER_ROLE_LABELS } from "@/lib/labels";
+import { ASSIGNMENT_ROLE_LABELS, LOCATION_TYPE_LABELS } from "@/lib/labels";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
@@ -17,10 +18,11 @@ import type {
   WaiterAssignmentRow,
   WaiterRole,
   WaiterRow,
+  WaiterSkill,
+  WaiterSkillRow,
 } from "@/lib/types";
 
 const LOCATION_TYPES = Object.keys(LOCATION_TYPE_LABELS) as LocationType[];
-const WAITER_ROLES = Object.keys(WAITER_ROLE_LABELS) as WaiterRole[];
 
 type AssignmentWithWaiter = WaiterAssignmentRow & { waiters: Pick<WaiterRow, "id" | "name"> | null };
 
@@ -28,34 +30,47 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
   const { id: eventId } = await params;
   const supabase = await createClient();
 
-  const [{ data: locationsRaw }, { data: guests }, { data: waiters }, { data: assignments }, { data: event }, currentStaff] =
-    await Promise.all([
-      supabase
-        .from("locations")
-        .select("*")
-        .eq("event_id", eventId)
-        .order("location_type")
-        .order("label")
-        .returns<LocationRow[]>(),
-      supabase
-        .from("guests")
-        .select("seating_table, party_size")
-        .eq("event_id", eventId)
-        .returns<Pick<GuestRow, "seating_table" | "party_size">[]>(),
-      supabase.from("waiters").select("*").order("name").returns<WaiterRow[]>(),
-      supabase
-        .from("waiter_assignments")
-        .select("*, waiters(id, name)")
-        .eq("event_id", eventId)
-        .returns<AssignmentWithWaiter[]>(),
-      supabase
-        .from("events")
-        .select("table_sketch_path, sketch_seated_chairs_count")
-        .eq("id", eventId)
-        .single()
-        .returns<Pick<EventRow, "table_sketch_path" | "sketch_seated_chairs_count">>(),
-      getCurrentStaff(),
-    ]);
+  const [
+    { data: locationsRaw },
+    { data: guests },
+    { data: waiters },
+    { data: waiterSkills },
+    { data: assignments },
+    { data: event },
+    currentStaff,
+  ] = await Promise.all([
+    supabase
+      .from("locations")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("location_type")
+      .order("label")
+      .returns<LocationRow[]>(),
+    supabase
+      .from("guests")
+      .select("seating_table, party_size")
+      .eq("event_id", eventId)
+      .returns<Pick<GuestRow, "seating_table" | "party_size">[]>(),
+    supabase.from("waiters").select("*").order("name").returns<WaiterRow[]>(),
+    supabase.from("waiter_skills").select("*").returns<WaiterSkillRow[]>(),
+    supabase
+      .from("waiter_assignments")
+      .select("*, waiters(id, name)")
+      .eq("event_id", eventId)
+      .returns<AssignmentWithWaiter[]>(),
+    supabase
+      .from("events")
+      .select("table_sketch_path, sketch_seated_chairs_count")
+      .eq("id", eventId)
+      .single()
+      .returns<Pick<EventRow, "table_sketch_path" | "sketch_seated_chairs_count">>(),
+    getCurrentStaff(),
+  ]);
+
+  const skillsByWaiter: Record<string, WaiterSkill[]> = {};
+  for (const row of waiterSkills ?? []) {
+    (skillsByWaiter[row.waiter_id] ??= []).push(row.skill);
+  }
 
   const canReadStaffing = !!currentStaff && canRead(currentStaff.permissions, "staffing");
   const canWriteStaffing = !!currentStaff && canWrite(currentStaff.permissions, "staffing");
@@ -191,7 +206,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
               eventId,
               location.id,
               String(formData.get("waiter_id") ?? ""),
-              (String(formData.get("role") ?? "waiter")) as WaiterRole,
+              (String(formData.get("role") ?? "waiter")) as WaiterRole | WaiterSkill,
             );
           }
           async function saveLocationEdit(formData: FormData) {
@@ -257,51 +272,19 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
                         title="הסר שיבוץ"
                       >
                         {assignment.waiters?.name}
-                        {assignment.role === "runner" ? ` (${WAITER_ROLE_LABELS.runner})` : ""} ✕
+                        {assignment.role !== "waiter" ? ` (${ASSIGNMENT_ROLE_LABELS[assignment.role] ?? assignment.role})` : ""} ✕
                       </button>
                     </form>
                   ) : (
                     <span key={assignment.id} className="rounded-full bg-accent-soft px-3 py-1 text-sm">
                       {assignment.waiters?.name}
-                      {assignment.role === "runner" ? ` (${WAITER_ROLE_LABELS.runner})` : ""}
+                      {assignment.role !== "waiter" ? ` (${ASSIGNMENT_ROLE_LABELS[assignment.role] ?? assignment.role})` : ""}
                     </span>
                   );
                 })}
 
                 {canWriteStaffing && availableWaiters.length > 0 && (
-                  <form action={addAssignment} className="flex items-center gap-2">
-                    <select
-                      name="waiter_id"
-                      defaultValue=""
-                      className="rounded-md border border-border-classic bg-surface px-2 py-1 text-sm"
-                    >
-                      <option value="" disabled>
-                        שבץ מלצר...
-                      </option>
-                      {availableWaiters.map((waiter) => (
-                        <option key={waiter.id} value={waiter.id}>
-                          {waiter.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      name="role"
-                      defaultValue="waiter"
-                      className="rounded-md border border-border-classic bg-surface px-2 py-1 text-sm"
-                    >
-                      {WAITER_ROLES.map((role) => (
-                        <option key={role} value={role}>
-                          {WAITER_ROLE_LABELS[role]}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="submit"
-                      className="rounded-md border border-border-classic px-2 py-1 text-sm hover:bg-accent-soft"
-                    >
-                      שבץ
-                    </button>
-                  </form>
+                  <AssignWaiterForm waiters={availableWaiters} skillsByWaiter={skillsByWaiter} action={addAssignment} />
                 )}
               </div>
 
