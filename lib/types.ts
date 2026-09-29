@@ -223,7 +223,9 @@ export interface WaiterAssignmentRow {
   event_id: string;
   waiter_id: string;
   location_id: string;
-  role: WaiterRole;
+  // Legacy rows may still carry the old "waiter" default; new assignments are
+  // always a specific WaiterSkill now (see the 00000000000064 migration).
+  role: WaiterRole | WaiterSkill;
 }
 
 export interface ChecklistSignatureRow {
@@ -243,6 +245,14 @@ export interface PushSubscriptionRow {
   endpoint: string;
   p256dh: string;
   auth: string;
+  created_at: string;
+}
+
+export interface PushNotificationLogRow {
+  id: string;
+  staff_id: string;
+  title: string;
+  body: string;
   created_at: string;
 }
 

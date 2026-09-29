@@ -17,9 +17,25 @@ function configureWebPush() {
 // subscription shouldn't block the others. A subscription the push service
 // reports as gone (410) or not found (404) is unsubscribed - the browser
 // dropped it and it'll never succeed again.
+//
+// Also logs the notification (push_notification_log) and points the push
+// payload's url at that log entry's detail page, unless the caller already
+// gave an explicit url - the OS truncates a notification's body to a few
+// lines with no built-in way to see the rest, so tapping it needs somewhere
+// to land that shows the full text instead of just the site's homepage.
 export async function sendPushToStaff(staffId: string, payload: { title: string; body: string; url?: string }) {
   configureWebPush();
   const supabase = createAdminClient();
+
+  let url = payload.url;
+  if (!url) {
+    const { data: logRow } = await supabase
+      .from("push_notification_log")
+      .insert({ staff_id: staffId, title: payload.title, body: payload.body })
+      .select("id")
+      .single();
+    url = logRow ? `/notifications/${logRow.id}` : "/";
+  }
 
   const { data: subscriptions } = await supabase
     .from("push_subscriptions")
@@ -35,7 +51,7 @@ export async function sendPushToStaff(staffId: string, payload: { title: string;
           endpoint: sub.endpoint,
           keys: { p256dh: sub.p256dh, auth: sub.auth },
         },
-        JSON.stringify(payload),
+        JSON.stringify({ title: payload.title, body: payload.body, url }),
       );
       sent++;
     } catch (err) {
