@@ -79,9 +79,10 @@ export async function updatePushReminderRule(ruleId: string, formData: FormData)
 
 // Always sent only to the current user, never the rule's configured
 // recipient (event manager, a role, etc.) - a test send should never reach
-// real staff. {event_name}/{additional_info} are left unsubstituted since no
-// specific event is driving this send, just a check that the wording/title
-// look right and actually arrive.
+// real staff. No specific event is driving this send, so {event_name} and
+// {additional_info} are filled with clearly-labeled example text instead of
+// real data - showing the raw unresolved "{event_name}" syntax read like a
+// bug rather than a preview.
 export async function sendTestPushReminderRule(ruleId: string): Promise<{ sent: number; total: number }> {
   const staff = await getCurrentStaff();
   if (!staff || !canWrite(staff.permissions, "push_reminder_rules")) {
@@ -97,7 +98,11 @@ export async function sendTestPushReminderRule(ruleId: string): Promise<{ sent: 
   if (error) throw new Error(error.message);
   if (!rule) throw new Error("ההתראה לא נמצאה");
 
-  return sendPushToStaff(staff.id, { title: rule.notification_title, body: rule.notification_body });
+  const body = rule.notification_body
+    .replaceAll("{event_name}", "אירוע לדוגמה")
+    .replaceAll("{additional_info}", "זהו מידע נוסף לדוגמה (בהתראה אמיתית יופיע כאן המידע הנוסף של האירוע בפועל)");
+
+  return sendPushToStaff(staff.id, { title: rule.notification_title, body });
 }
 
 export async function deletePushReminderRule(ruleId: string) {
