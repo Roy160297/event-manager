@@ -105,9 +105,7 @@ export default async function PrivateTasksPage({ params }: { params: Promise<{ i
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-col gap-1">
                   <p className="font-medium">{task.title}</p>
-                  {task.status === "done" && task.description && (
-                    <p className="text-sm italic text-green-700">{task.description}</p>
-                  )}
+                  {task.description && <p className="text-sm text-foreground/70">{task.description}</p>}
                   <p className="text-sm text-foreground/60">
                     {task.assignee_name ? `אחראי: ${task.assignee_name}` : "ללא אחראי"}
                     {" · "}
