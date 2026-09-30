@@ -8,7 +8,7 @@ const SUB_NAV = [
   { segment: "tasks", label: "משימות וצ'קליסטים" },
   { segment: "timeline", label: "לוח זמנים" },
   { segment: "guests", label: "אורחים" },
-  { segment: "staffing", label: "סקיצה לאירוע" },
+  { segment: "staffing", label: "סקיצה + מלצרים" },
   { segment: "menu", label: "תפריט" },
 ];
 
