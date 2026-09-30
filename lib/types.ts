@@ -14,7 +14,15 @@ export type TaskPriority = "low" | "normal" | "high";
 export type RsvpStatus = "pending" | "confirmed" | "declined";
 export type LocationType = "table" | "food_stand";
 export type WaiterRole = "waiter" | "runner";
-export type WaiterSkill = "runner" | "clearing" | "piloting" | "station" | "table" | "hall_prep" | "door";
+export type WaiterSkill =
+  | "runner"
+  | "clearing"
+  | "piloting"
+  | "station"
+  | "table"
+  | "hall_prep"
+  | "door"
+  | "family_waiter";
 export type PermissionResource =
   | "events"
   | "guests"

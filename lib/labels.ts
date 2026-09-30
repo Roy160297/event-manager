@@ -171,7 +171,16 @@ export const WAITER_ROLE_LABELS: Record<WaiterRole, string> = {
 // from (see the 00000000000064 migration) - assigning someone to a table
 // specifies which of these duties they're covering there. WaiterRole above
 // is only the old waiter/runner default kept for pre-existing rows.
-export const WAITER_SKILLS: WaiterSkill[] = ["runner", "clearing", "piloting", "station", "table", "hall_prep", "door"];
+export const WAITER_SKILLS: WaiterSkill[] = [
+  "runner",
+  "clearing",
+  "piloting",
+  "station",
+  "table",
+  "hall_prep",
+  "door",
+  "family_waiter",
+];
 
 export const WAITER_SKILL_LABELS: Record<WaiterSkill, string> = {
   runner: "ראנר",
@@ -181,6 +190,7 @@ export const WAITER_SKILL_LABELS: Record<WaiterSkill, string> = {
   table: "שולחן",
   hall_prep: "הכנת אולם",
   door: "מלצר דלת",
+  family_waiter: "מלצרית משפחה",
 };
 
 // Covers both a fresh assignment's role (always a WaiterSkill now) and a
