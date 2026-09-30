@@ -13,13 +13,16 @@ export function WaitersSearchList({ items }: { items: { id: string; name: string
 
   return (
     <div className="flex flex-col gap-3">
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="חיפוש מלצר לפי שם..."
-        className="rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
-      />
+      <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+        <p className="text-sm font-medium">חיפוש מלצר</p>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="חיפוש מלצר לפי שם..."
+          className="rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
+        />
+      </div>
       {filtered.length === 0 ? (
         <p className="text-sm text-foreground/60">לא נמצאו מלצרים תואמים לחיפוש.</p>
       ) : (

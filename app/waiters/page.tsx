@@ -57,26 +57,29 @@ export default async function WaitersPage() {
       {canWriteWaiters && (
         <form
           action={createWaiter}
-          className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4 sm:flex-row sm:items-end"
+          className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
         >
-          <label className="flex flex-1 flex-col gap-1 text-sm">
-            <span>שם</span>
-            <input name="name" required className={inputClass} />
-          </label>
-          <label className="flex flex-1 flex-col gap-1 text-sm">
-            <span>טלפון</span>
-            <input name="phone" className={inputClass} />
-          </label>
-          <label className="flex flex-1 flex-col gap-1 text-sm">
-            <span>הערות</span>
-            <input name="notes" className={inputClass} />
-          </label>
-          <button
-            type="submit"
-            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-          >
-            הוסף מלצר
-          </button>
+          <p className="text-sm font-medium">הוספת מלצר חדש</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex flex-1 flex-col gap-1 text-sm">
+              <span>שם</span>
+              <input name="name" required className={inputClass} />
+            </label>
+            <label className="flex flex-1 flex-col gap-1 text-sm">
+              <span>טלפון</span>
+              <input name="phone" className={inputClass} />
+            </label>
+            <label className="flex flex-1 flex-col gap-1 text-sm">
+              <span>הערות</span>
+              <input name="notes" className={inputClass} />
+            </label>
+            <button
+              type="submit"
+              className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+            >
+              הוסף מלצר
+            </button>
+          </div>
         </form>
       )}
 
