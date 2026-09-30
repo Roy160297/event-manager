@@ -12,5 +12,6 @@ export const CHECKLIST_EMAIL_TO = [
   "chef@house7.co.il",
   "Liran@house7.co.il",
   "snir@house7.co.il",
+  "nir.chadad1994@gmail.com",
 ];
 export const CHECKLIST_EMAIL_CC = ["info@house7.co.il", "omer@house7.co.il", "eve.b@house7.co.il"];
