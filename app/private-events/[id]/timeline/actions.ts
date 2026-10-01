@@ -59,10 +59,10 @@ const EVENING_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
   { label: "צילומי משפחות", time: "19:00" },
   { label: "קבלת פנים", time: "19:30" },
+  { label: "כתובה", time: "20:15" },
   { label: "מזנונים נסגרים, הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
   { label: "חופה", time: "21:00" },
   { label: "מזנונים נפתחים (מנות עיקריות)", time: "21:20", notes: "15-20 דקות ריקודים" },
-  { label: "כתובה", time: "21:45" },
   { label: "מנות עיקריות", time: "21:50", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "22:20" },
   { label: "קינוחים", time: "22:50", notes: "קיפול מזנונים" },
@@ -74,11 +74,11 @@ const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: s
   { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
   { label: "צילומי משפחות", time: "19:00" },
   { label: "קבלת פנים", time: "19:30" },
+  { label: "כתובה", time: "20:15" },
   { label: "הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
   { label: "חופה", time: "21:00" },
   { label: "ראשונות", time: "21:20" },
   { label: "ריקודים", time: "21:35" },
-  { label: "כתובה", time: "21:45" },
   { label: "עיקריות", time: "22:00", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "22:30" },
   { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
@@ -91,6 +91,7 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
   { label: "צילומי משפחות", time: "19:00" },
   { label: "קבלת פנים", time: "19:30" },
   { label: "פתיחת דלתות ומזנונים ראשיים", time: "19:50" },
+  { label: "כתובה", time: "20:15" },
   { label: "סגירת מזנוני חצר", time: "21:05" },
   {
     label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה",
@@ -99,7 +100,6 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
   },
   { label: "חופה", time: "21:30" },
   { label: "ריקודים", time: "21:50", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
-  { label: "כתובה", time: "22:15" },
   { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "23:30", notes: "קיפול הקינוחים" },
 ];
@@ -110,6 +110,7 @@ const EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; n
   { label: "צילומי משפחות", time: "19:00" },
   { label: "קבלת פנים", time: "19:30" },
   { label: "פתיחת דלתות, ראשונות על השולחן", time: "19:50" },
+  { label: "כתובה", time: "20:15" },
   { label: "הגשת עיקריות", time: "20:20" },
   {
     label: "סיום הגשת עיקריות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
@@ -118,7 +119,6 @@ const EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; n
   },
   { label: "חופה", time: "21:30" },
   { label: "ריקודים", time: "21:50", notes: "הכלה מחליפה ללוק שני" },
-  { label: "כתובה", time: "22:15" },
   { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "23:30", notes: "קיפול הקינוחים" },
 ];
@@ -129,6 +129,7 @@ const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: st
   { label: "צילומי משפחות", time: "11:30" },
   { label: "קבלת פנים", time: "12:00" },
   { label: "פתיחת דלתות ומזנונים ראשיים", time: "12:20" },
+  { label: "כתובה", time: "12:45" },
   { label: "סגירת מזנוני חצר", time: "13:35" },
   {
     label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה",
@@ -137,7 +138,6 @@ const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: st
   },
   { label: "חופה", time: "14:00" },
   { label: "ריקודים", time: "14:20", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
-  { label: "כתובה", time: "14:45" },
   { label: "קינוחים", time: "15:00", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "16:00", notes: "קיפול הקינוחים" },
 ];
@@ -148,6 +148,7 @@ const FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; no
   { label: "צילומי משפחות", time: "11:30" },
   { label: "קבלת פנים", time: "12:00" },
   { label: "פתיחת דלתות, ראשונות על השולחן", time: "12:20" },
+  { label: "כתובה", time: "12:45" },
   { label: "הגשת עיקריות", time: "12:50" },
   {
     label: "סיום הגשת עיקריות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
@@ -156,7 +157,6 @@ const FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; no
   },
   { label: "חופה", time: "14:00" },
   { label: "ריקודים", time: "14:20", notes: "הכלה מחליפה ללוק שני" },
-  { label: "כתובה", time: "14:45" },
   { label: "קינוחים", time: "15:00", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "16:00", notes: "קיפול הקינוחים" },
 ];
