@@ -54,8 +54,8 @@ describe("assignManagerColors", () => {
 
 describe("formatDateWithWeekday", () => {
   it("appends the Hebrew weekday letter (Sunday = א')", () => {
-    expect(formatDateWithWeekday("2026-10-11")).toBe("11/10/2026 · א'");
-    expect(formatDateWithWeekday("2026-10-17")).toBe("17/10/2026 · ש'");
+    expect(formatDateWithWeekday("2026-10-11")).toBe("11/10/2026 · יום א'");
+    expect(formatDateWithWeekday("2026-10-17")).toBe("17/10/2026 · יום ש'");
   });
   it("handles empty values", () => {
     expect(formatDateWithWeekday(null)).toBe("—");
