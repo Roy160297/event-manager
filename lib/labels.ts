@@ -204,6 +204,17 @@ export function formatDate(value: string | null): string {
   return `${day}/${month}/${year}`;
 }
 
+const HEBREW_WEEKDAY_LETTERS = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
+
+// "11/10/2026 · א'" - date plus the Hebrew weekday letter (Sunday = א').
+export function formatDateWithWeekday(value: string | null): string {
+  if (!value) return "—";
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return formatDate(value);
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  return `${formatDate(value)} · ${HEBREW_WEEKDAY_LETTERS[weekday]}`;
+}
+
 export function formatTime(value: string | null): string {
   if (!value) return "—";
   return value.slice(0, 5);

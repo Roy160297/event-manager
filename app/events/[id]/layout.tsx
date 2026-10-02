@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDate, getDisplayEventStatus } from "@/lib/labels";
+import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDateWithWeekday, getDisplayEventStatus } from "@/lib/labels";
 import { EventSubNav } from "@/components/EventSubNav";
 import type { EventRow } from "@/lib/types";
 
@@ -35,7 +35,7 @@ export default async function EventLayout({
           )}
         </div>
         <p className="text-sm text-foreground/80">
-          {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+          {EVENT_TYPE_LABELS[event.event_type]} · {formatDateWithWeekday(event.event_date)}
         </p>
       </div>
 

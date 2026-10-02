@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignManagerColors } from "@/lib/labels";
+import { assignManagerColors, formatDateWithWeekday } from "@/lib/labels";
 
 describe("assignManagerColors", () => {
   it("gives each manager a distinct color", () => {
@@ -49,5 +49,15 @@ describe("assignManagerColors", () => {
     const reserved = new Set(["bg-teal-100 text-teal-700", "bg-amber-100 text-amber-700"]);
     expect(reserved.has(colors.get("רן קופרמן")!)).toBe(false);
     expect(reserved.has(colors.get("אחר")!)).toBe(false);
+  });
+});
+
+describe("formatDateWithWeekday", () => {
+  it("appends the Hebrew weekday letter (Sunday = א')", () => {
+    expect(formatDateWithWeekday("2026-10-11")).toBe("11/10/2026 · א'");
+    expect(formatDateWithWeekday("2026-10-17")).toBe("17/10/2026 · ש'");
+  });
+  it("handles empty values", () => {
+    expect(formatDateWithWeekday(null)).toBe("—");
   });
 });
