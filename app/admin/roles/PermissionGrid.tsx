@@ -55,34 +55,34 @@ export function PermissionGrid({
   return (
     <div className="flex flex-col gap-2">
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="overflow-x-auto rounded-lg border border-border-classic">
+      <div className="overflow-x-auto rounded-lg border border-grid-line">
         <table className="w-full min-w-max border-collapse text-sm">
           <thead>
-            <tr className="border-b border-border-classic bg-accent-soft/40">
+            <tr className="border-b border-grid-line bg-accent-soft/40">
               <th className="sticky right-0 bg-accent-soft/40 px-3 py-2 text-start font-medium">קטגוריה</th>
               {roles.map((role) => (
-                <th key={role.id} colSpan={2} className="border-s border-border-classic px-3 py-2 text-center font-medium">
+                <th key={role.id} colSpan={2} className="border-s border-grid-line px-3 py-2 text-center font-medium">
                   {role.name}
                 </th>
               ))}
             </tr>
-            <tr className="border-b border-border-classic text-xs text-foreground/60">
+            <tr className="border-b border-grid-line text-xs text-foreground/60">
               <th className="sticky right-0 bg-background px-3 py-1"></th>
               {roles.map((role) => (
                 <Fragment key={role.id}>
-                  <th className="border-s border-border-classic px-2 py-1 font-normal">קריאה</th>
-                  <th className="px-2 py-1 font-normal">כתיבה</th>
+                  <th className="border-s border-grid-line px-2 py-1 font-normal">קריאה</th>
+                  <th className="border-s border-grid-line px-2 py-1 font-normal">כתיבה</th>
                 </Fragment>
               ))}
             </tr>
           </thead>
           <tbody>
             {RESOURCES.map((resource) => (
-              <tr key={resource} className="border-b border-border-classic last:border-b-0">
+              <tr key={resource} className="border-b border-grid-line last:border-b-0">
                 <td className="sticky right-0 bg-background px-3 py-2 font-medium">{RESOURCE_LABELS[resource]}</td>
                 {roles.map((role) => (
                   <Fragment key={role.id}>
-                    <td className="border-s border-border-classic px-2 py-2 text-center">
+                    <td className="border-s border-grid-line px-2 py-2 text-center">
                       <input
                         type="checkbox"
                         checked={state[role.id][resource].can_read}
@@ -90,7 +90,7 @@ export function PermissionGrid({
                         onChange={(e) => toggle(role.id, resource, "can_read", e.target.checked)}
                       />
                     </td>
-                    <td className="px-2 py-2 text-center">
+                    <td className="border-s border-grid-line px-2 py-2 text-center">
                       <input
                         type="checkbox"
                         checked={state[role.id][resource].can_write}

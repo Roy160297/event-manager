@@ -35,8 +35,8 @@ export default async function WaitersPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">מלצרים</h1>
       <p className="text-sm text-foreground/80">
-        רשימת המלצרים היא מאגר קבוע המשמש לשיבוץ בכל האירועים — הוסיפו כאן פעם אחת. תפקיד (מלצר/ראנר)
-        נבחר בעת השיבוץ לכל אירוע בנפרד.
+        רשימת המלצרים היא מאגר קבוע המשמש לשיבוץ המלצרים באירועים. תפקיד המלצר/ית נבחר בעת השיבוץ
+        לכל אירוע בנפרד.
       </p>
 
       {waiters && waiters.length > 0 && (

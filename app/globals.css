@@ -5,6 +5,7 @@
   --foreground: #241f1a;
   --surface: #fffdf9;
   --border-classic: #ddccae;
+  --grid-line: #b79f72;
   --accent: #9c6b30;
   --accent-foreground: #fffdf9;
   --accent-soft: #ecdfc3;
@@ -15,6 +16,7 @@
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-border-classic: var(--border-classic);
+  --color-grid-line: var(--grid-line);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-soft: var(--accent-soft);
@@ -46,6 +48,7 @@ body {
   --foreground: #456155;
   --surface: #ffffff;
   --border-classic: #b2b9b8;
+  --grid-line: #8c9a9a;
   --accent: #80aaa0;
   --accent-foreground: #456155;
   --accent-soft: #e6edf0;

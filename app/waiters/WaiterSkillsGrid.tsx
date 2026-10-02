@@ -51,13 +51,13 @@ export function WaiterSkillsGrid({
   return (
     <div className="flex flex-col gap-2">
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="overflow-x-auto rounded-lg border border-border-classic">
+      <div className="overflow-x-auto rounded-lg border border-grid-line">
         <table className="w-full min-w-max border-collapse text-sm">
           <thead>
-            <tr className="border-b border-border-classic bg-accent-soft">
+            <tr className="border-b border-grid-line bg-accent-soft">
               <th className="sticky right-0 bg-accent-soft px-3 py-2 text-start font-medium">מלצר/ית</th>
               {WAITER_SKILLS.map((skill) => (
-                <th key={skill} className="border-s border-border-classic bg-accent-soft px-3 py-2 text-center font-medium">
+                <th key={skill} className="border-s border-grid-line bg-accent-soft px-3 py-2 text-center font-medium">
                   {WAITER_SKILL_LABELS[skill]}
                 </th>
               ))}
@@ -65,10 +65,10 @@ export function WaiterSkillsGrid({
           </thead>
           <tbody>
             {waiters.map((waiter) => (
-              <tr key={waiter.id} className="border-b border-border-classic last:border-b-0">
+              <tr key={waiter.id} className="border-b border-grid-line last:border-b-0">
                 <td className="sticky right-0 bg-background px-3 py-2 font-medium">{waiter.name}</td>
                 {WAITER_SKILLS.map((skill) => (
-                  <td key={skill} className="border-s border-border-classic px-2 py-2 text-center">
+                  <td key={skill} className="border-s border-grid-line px-2 py-2 text-center">
                     <input
                       type="checkbox"
                       checked={state[waiter.id][skill]}
