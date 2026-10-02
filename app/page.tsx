@@ -1,3 +1,4 @@
+import { IS_DEMO } from "@/lib/demoMode";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { deleteEvent } from "@/app/events/actions";
@@ -84,14 +85,16 @@ export default async function EventsDashboard({
               >
                 פח מיחזור
               </Link>
-              <a
-                href="https://iplan.co.il/he-IL/corp/sign_in?"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
-              >
-                מעבר ל-iPlan
-              </a>
+              {!IS_DEMO && (
+                <a
+                  href="https://iplan.co.il/he-IL/corp/sign_in?"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+                >
+                  מעבר ל-iPlan
+                </a>
+              )}
             </div>
           </div>
         )}

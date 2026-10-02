@@ -7,6 +7,7 @@ import { PushNotificationManager } from "@/components/PushNotificationManager";
 import { EventSwitcher } from "@/components/EventSwitcher";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { RoyLogo } from "@/components/RoyLogo";
+import { DEMO_VENUE_NAME, IS_DEMO } from "@/lib/demoMode";
 import type { EventRow } from "@/lib/types";
 
 interface StaffSummary {
@@ -135,7 +136,7 @@ export function AppShell({
         </header>
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
         <footer className="border-t border-border-classic bg-background px-4 py-4 text-center text-xs text-foreground/50">
-          © {new Date().getFullYear()} רועי פוריאן. כל הזכויות שמורות.
+          {IS_DEMO ? `© ${new Date().getFullYear()} ${DEMO_VENUE_NAME}` : `© ${new Date().getFullYear()} רועי פוריאן. כל הזכויות שמורות.`}
         </footer>
       </div>
     );
@@ -175,11 +176,18 @@ export function AppShell({
               {navEl}
             </div>
 
-            <div dir="ltr" aria-label="House No. Seven" className="flex items-baseline gap-1.5 justify-self-end text-foreground">
-              <span className="text-2xl font-black uppercase tracking-tight">House</span>
-              <span className="font-serif text-lg italic text-foreground/80">No.</span>
-              <span className="text-2xl font-black uppercase tracking-tight">Seven</span>
-            </div>
+            {IS_DEMO ? (
+              <div dir="ltr" aria-label={DEMO_VENUE_NAME} className="flex items-baseline gap-1.5 justify-self-end text-foreground">
+                <span className="text-2xl font-black uppercase tracking-tight">Demo</span>
+                <span className="text-2xl font-black uppercase tracking-tight">Venue</span>
+              </div>
+            ) : (
+              <div dir="ltr" aria-label="House No. Seven" className="flex items-baseline gap-1.5 justify-self-end text-foreground">
+                <span className="text-2xl font-black uppercase tracking-tight">House</span>
+                <span className="font-serif text-lg italic text-foreground/80">No.</span>
+                <span className="text-2xl font-black uppercase tracking-tight">Seven</span>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -188,7 +196,7 @@ export function AppShell({
       )}
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
       <footer className="border-t border-border-classic bg-background px-4 py-4 text-center text-xs text-foreground/50">
-        © {new Date().getFullYear()} רועי פוריאן. כל הזכויות שמורות.
+        {IS_DEMO ? `© ${new Date().getFullYear()} ${DEMO_VENUE_NAME}` : `© ${new Date().getFullYear()} רועי פוריאן. כל הזכויות שמורות.`}
       </footer>
     </>
   );

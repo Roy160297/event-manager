@@ -1,5 +1,6 @@
 "use client";
 
+import { IS_DEMO } from "@/lib/demoMode";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
@@ -86,14 +87,16 @@ export default function TableSketchPhoto({
             >
               {isPending ? "מעלה..." : sketchUrl ? "החלף סקיצת PDF מ-iPlan" : "העלה סקיצת PDF מ-iPlan"}
             </button>
-            <a
-              href="https://iplan.co.il/he-IL/corp/sign_in?"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
-            >
-              מעבר ל-iPlan
-            </a>
+            {!IS_DEMO && (
+              <a
+                href="https://iplan.co.il/he-IL/corp/sign_in?"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft"
+              >
+                מעבר ל-iPlan
+              </a>
+            )}
             {sketchUrl && (
               <button
                 type="button"
