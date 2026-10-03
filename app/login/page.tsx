@@ -1,4 +1,5 @@
 import { signInWithGoogle } from "./actions";
+import { DEMO_VENUE_NAME, IS_DEMO } from "@/lib/demoMode";
 
 const ERROR_MESSAGES: Record<string, string> = {
   not_authorized: "כתובת האימייל שלך אינה רשומה כאנשי צוות במערכת. פנו למנהל המערכת כדי להוסיף אתכם.",
@@ -18,7 +19,7 @@ export default async function LoginPage({
       <div className="flex w-full max-w-sm flex-col items-center gap-6 rounded-lg border border-border-classic bg-surface p-8 text-center">
         <div>
           <h1 className="font-serif text-2xl font-bold text-accent">ניהול אירועים</h1>
-          <p className="mt-1 text-sm text-foreground/60">מערכת פנימית לצוות House No. Seven</p>
+          <p className="mt-1 text-sm text-foreground/60">מערכת פנימית לצוות {IS_DEMO ? DEMO_VENUE_NAME : "House No. Seven"}</p>
         </div>
 
         {errorMessage && <p className="w-full rounded-md bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p>}
