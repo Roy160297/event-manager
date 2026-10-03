@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 
 // One compact line per table/station: title, assigned-waiter chips, the inline
-// assign form (pick a waiter, press שבץ) and, for editors, a "⋯" toggle that
+// assign form (pick a waiter, press שבץ) and, for editors, an "עריכה" toggle that
 // opens a full-width edit/delete panel underneath. The panels are
 // server-rendered nodes handed in as props so the server actions inside them
 // keep working.
@@ -31,10 +31,9 @@ export function StaffingRow({
             type="button"
             onClick={() => setEditOpen((value) => !value)}
             aria-expanded={editOpen}
-            title="ערוך / מחק"
-            className="shrink-0 rounded-full border border-border-classic px-2.5 py-1 text-xs font-bold hover:bg-accent-soft"
+            className="shrink-0 rounded-full border border-border-classic px-3 py-1 text-xs font-medium hover:bg-accent-soft"
           >
-            ⋯
+            {editOpen ? "סגור" : "עריכה"}
           </button>
         )}
       </div>
