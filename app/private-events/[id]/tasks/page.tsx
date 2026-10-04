@@ -101,7 +101,12 @@ export default async function PrivateTasksPage({ params }: { params: Promise<{ i
           }
 
           return (
-            <li key={task.id} className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+            <li
+              key={task.id}
+              className={`flex flex-col gap-3 rounded-lg border p-4 ${
+                task.status === "done" ? "border-green-300 bg-green-50" : "border-border-classic bg-surface"
+              }`}
+            >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-col gap-1">
                   <p className="font-medium">{task.title}</p>
