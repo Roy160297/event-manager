@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText } from "@/lib/pdfImport";
+import { normalizeWaiterName, parseEventWaiterRoster } from "@/lib/eventWaiterImport";
 import { parseTableSketchDraft } from "@/lib/tableSketchImport";
 import type { LocationType, WaiterRole, WaiterSkill } from "@/lib/types";
 
@@ -236,6 +237,74 @@ export async function assignWaiter(
 export async function unassignWaiter(eventId: string, assignmentId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("waiter_assignments").delete().eq("id", assignmentId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/staffing`);
+}
+
+// Replaces the event's waiter roster with the uploaded file. Anyone in the
+// file who isn't in the permanent pool yet is added to it (names reported
+// back so the UI can tell the user who was new); re-uploading simply swaps
+// the roster, leaving any table assignments already made untouched.
+export async function importEventWaiters(
+  eventId: string,
+  formData: FormData,
+): Promise<{ total: number; addedNames: string[] }> {
+  const supabase = await createClient();
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) throw new Error("יש לבחור קובץ");
+  if (!/\.xlsx?$/i.test(file.name)) throw new Error("יש להעלות קובץ Excel (xlsx)");
+
+  const roster = parseEventWaiterRoster(Buffer.from(await file.arrayBuffer()));
+  if (roster.length === 0) throw new Error("לא נמצאו מלצרים בקובץ");
+
+  const { data: pool, error: poolError } = await supabase
+    .from("waiters")
+    .select("id, name")
+    .returns<{ id: string; name: string }[]>();
+  if (poolError) throw new Error(poolError.message);
+
+  const idByName = new Map((pool ?? []).map((waiter) => [normalizeWaiterName(waiter.name), waiter.id]));
+
+  const missing = roster.filter((waiter) => !idByName.has(normalizeWaiterName(waiter.name)));
+  if (missing.length > 0) {
+    const { data: inserted, error: insertError } = await supabase
+      .from("waiters")
+      .insert(missing.map((waiter) => ({ name: waiter.name, phone: waiter.phone })))
+      .select("id, name")
+      .returns<{ id: string; name: string }[]>();
+    if (insertError) {
+      throw new Error(
+        insertError.message.includes("row-level security")
+          ? "אין הרשאה להוסיף מלצרים חדשים למאגר המלצרים"
+          : insertError.message,
+      );
+    }
+    for (const waiter of inserted ?? []) idByName.set(normalizeWaiterName(waiter.name), waiter.id);
+  }
+
+  const { error: deleteError } = await supabase.from("event_waiters").delete().eq("event_id", eventId);
+  if (deleteError) throw new Error(deleteError.message);
+
+  const { error: rosterError } = await supabase.from("event_waiters").insert(
+    roster.map((waiter) => ({
+      event_id: eventId,
+      waiter_id: idByName.get(normalizeWaiterName(waiter.name)),
+      shift_role: waiter.shiftRole,
+      arrival_time: waiter.arrival,
+      end_time: waiter.end,
+    })),
+  );
+  if (rosterError) throw new Error(rosterError.message);
+
+  revalidatePath(`/events/${eventId}/staffing`);
+  revalidatePath("/waiters");
+  return { total: roster.length, addedNames: missing.map((waiter) => waiter.name) };
+}
+
+export async function clearEventWaiters(eventId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("event_waiters").delete().eq("event_id", eventId);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/staffing`);
 }

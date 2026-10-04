@@ -8,12 +8,14 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import TableSketchPhoto from "./TableSketchPhoto";
+import EventWaitersRoster from "./EventWaitersRoster";
 import { StaffingLocationList } from "./StaffingLocationList";
 import { StaffingRow } from "./StaffingRow";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
 import type {
   EventRow,
+  EventWaiterRow,
   GuestRow,
   LocationRow,
   LocationType,
@@ -37,6 +39,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
     { data: guests },
     { data: waiters },
     { data: waiterSkills },
+    { data: eventWaiters },
     { data: assignments },
     { data: event },
     currentStaff,
@@ -55,6 +58,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
       .returns<Pick<GuestRow, "seating_table" | "party_size">[]>(),
     supabase.from("waiters").select("*").order("name").returns<WaiterRow[]>(),
     supabase.from("waiter_skills").select("*").returns<WaiterSkillRow[]>(),
+    supabase.from("event_waiters").select("*").eq("event_id", eventId).returns<EventWaiterRow[]>(),
     supabase
       .from("waiter_assignments")
       .select("*, waiters(id, name)")
@@ -73,6 +77,24 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
   for (const row of waiterSkills ?? []) {
     (skillsByWaiter[row.waiter_id] ??= []).push(row.skill);
   }
+
+  // Once a roster is uploaded for this event, only those waiters are offered
+  // in the assign dropdowns; with no roster every waiter in the pool is.
+  const rosterByWaiterId = new Map((eventWaiters ?? []).map((entry) => [entry.waiter_id, entry]));
+  const hasRoster = rosterByWaiterId.size > 0;
+  const rosterEntries = (waiters ?? [])
+    .filter((waiter) => rosterByWaiterId.has(waiter.id))
+    .map((waiter) => {
+      const entry = rosterByWaiterId.get(waiter.id)!;
+      return {
+        id: waiter.id,
+        name: waiter.name,
+        shiftRole: entry.shift_role,
+        arrival: entry.arrival_time,
+        end: entry.end_time,
+      };
+    });
+  const selectableWaiters = hasRoster ? (waiters ?? []).filter((waiter) => rosterByWaiterId.has(waiter.id)) : (waiters ?? []);
 
   const canReadStaffing = !!currentStaff && canRead(currentStaff.permissions, "staffing");
   const canWriteStaffing = !!currentStaff && canWrite(currentStaff.permissions, "staffing");
@@ -126,6 +148,8 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
         canWrite={canWriteStaffing}
         seatedChairsCount={event?.sketch_seated_chairs_count ?? null}
       />
+
+      <EventWaitersRoster eventId={eventId} roster={rosterEntries} canWrite={canWriteStaffing} />
 
       {canWriteStaffing && (
         <details className="rounded-lg border border-border-classic bg-surface">
@@ -198,7 +222,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
           items={locations.map((location) => {
             const assignedToLocation = assignments?.filter((a) => a.location_id === location.id) ?? [];
             const assignedWaiterIds = new Set(assignedToLocation.map((a) => a.waiter_id));
-            const availableWaiters = waiters?.filter((w) => !assignedWaiterIds.has(w.id)) ?? [];
+            const availableWaiters = selectableWaiters.filter((w) => !assignedWaiterIds.has(w.id));
             const guestCount = location.location_type === "table" ? guestCountByTable.get(location.label) ?? 0 : null;
 
             async function removeLocation() {

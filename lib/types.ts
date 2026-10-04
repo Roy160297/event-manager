@@ -212,6 +212,15 @@ export interface WaiterRow {
   created_at: string;
 }
 
+export interface EventWaiterRow {
+  id: string;
+  event_id: string;
+  waiter_id: string;
+  shift_role: string | null;
+  arrival_time: string | null;
+  end_time: string | null;
+}
+
 export interface WaiterSkillRow {
   id: string;
   waiter_id: string;
