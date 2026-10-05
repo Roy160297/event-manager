@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MONTH_LABELS } from "@/lib/labels";
+import { MonthSelect } from "./MonthSelect";
 
 function pad(value: number) {
   return String(value).padStart(2, "0");
@@ -23,8 +24,8 @@ export function MonthPicker({ year, month }: { year: number; month: number }) {
           ›
         </Link>
       </div>
-      {/* Phones skip the month list - it pushed the calendar below the fold, and the
-          prev/next month links above the grid already cover moving around. */}
+      <MonthSelect year={year} month={month} />
+      {/* Phones get the dropdown above instead of this list, which pushed the calendar below the fold. */}
       <div className="hidden flex-col gap-1 sm:flex">
         {MONTH_LABELS.map((label, index) => {
           const m = index + 1;
