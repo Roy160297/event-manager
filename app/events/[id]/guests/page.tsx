@@ -25,7 +25,7 @@ export default async function GuestsPage({ params }: { params: Promise<{ id: str
       {canWriteGuests && <GuestCsvImport eventId={eventId} />}
 
       {(!guests || guests.length === 0) && (
-        <p className="text-foreground/60">עדיין לא יובאו אורחים לאירוע זה.</p>
+        <p className="on-photo">עדיין לא יובאו אורחים לאירוע זה.</p>
       )}
 
       {guests && guests.length > 0 && (

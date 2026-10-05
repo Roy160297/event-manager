@@ -18,7 +18,7 @@ export default async function PrivateGuestsPage({ params }: { params: Promise<{ 
     <div className="flex flex-col gap-6">
       <GuestCsvImport eventId={eventId} />
 
-      {(!guests || guests.length === 0) && <p className="text-foreground/60">עדיין לא יובאו אורחים לאירוע זה.</p>}
+      {(!guests || guests.length === 0) && <p className="on-photo">עדיין לא יובאו אורחים לאירוע זה.</p>}
 
       {guests && guests.length > 0 && <GuestList guests={guests} eventId={eventId} />}
     </div>

@@ -23,7 +23,7 @@ export default async function EventLayout({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="text-sm text-foreground/80">
+        <p className="on-photo text-sm">
           <Link href="/">אירועים</Link> / {event.name}
         </p>
         <div className="mt-1 flex items-center justify-between">
@@ -34,7 +34,7 @@ export default async function EventLayout({
             </span>
           )}
         </div>
-        <p className="text-sm text-foreground/80">
+        <p className="on-photo text-sm">
           {EVENT_TYPE_LABELS[event.event_type]} · {formatDateWithWeekday(event.event_date)}
         </p>
       </div>
