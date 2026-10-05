@@ -104,6 +104,11 @@ describe("emailRuleRecipients", () => {
     expect(emailRuleRecipients(rule, { ...event, floor_manager_id: null }, directory)).toEqual([]);
   });
 
+  it("emails a person once even if reached several ways, ignoring case", () => {
+    const rule = { ...none, to_floor_manager: true, recipient_staff_ids: ["f"], extra_emails: "F@X.com" };
+    expect(emailRuleRecipients(rule, event, directory)).toEqual(["F@X.com"]);
+  });
+
   it("splits typed addresses on commas, semicolons and whitespace", () => {
     expect(splitEmails(" a@x.com ,b@x.com; c@x.com ")).toEqual(["a@x.com", "b@x.com", "c@x.com"]);
   });

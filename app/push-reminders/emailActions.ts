@@ -163,9 +163,12 @@ export async function draftEmailRuleFromText(request: string): Promise<EmailRule
   if (text.length > 1000) throw new Error("התיאור ארוך מדי");
 
   const supabase = await createClient();
-  const [{ data: roles }, { data: staff }] = await Promise.all([
-    supabase.from("roles").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
-    supabase.from("staff").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
-  ]);
-  return draftEmailRule(text, { roles: roles ?? [], staff: staff ?? [] });
+  const { data: staff } = await supabase
+    .from("staff")
+    .select("id, name, roles(name)")
+    .order("name")
+    .returns<{ id: string; name: string; roles: { name: string } | null }[]>();
+  return draftEmailRule(text, {
+    staff: (staff ?? []).map((member) => ({ id: member.id, name: member.name, roleName: member.roles?.name ?? null })),
+  });
 }

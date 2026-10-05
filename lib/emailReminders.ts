@@ -151,7 +151,13 @@ export function emailRuleRecipients(
     if (rule.recipient_staff_ids.includes(member.id)) recipients.push(member.email);
     if (member.role_id && rule.recipient_role_ids.includes(member.role_id)) recipients.push(member.email);
   }
-  return [...new Set(recipients.filter((email): email is string => !!email))];
+  // One email per person, however they were reached (e.g. as the floor manager
+  // and also typed in as an extra address) - compared case-insensitively.
+  const unique = new Map<string, string>();
+  for (const email of recipients) {
+    if (email && !unique.has(email.trim().toLowerCase())) unique.set(email.trim().toLowerCase(), email.trim());
+  }
+  return [...unique.values()];
 }
 
 export async function loadActiveEmailReminderRules(supabase: SupabaseClient): Promise<EmailReminderRuleRow[]> {

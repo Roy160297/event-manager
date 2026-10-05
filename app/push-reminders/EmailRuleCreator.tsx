@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { EmailRuleFields } from "./EmailRuleFields";
+import type { StaffOption } from "./EmailRecipientPicker";
 import { draftEmailRuleFromText } from "./emailActions";
 import type { EmailRuleDraft } from "@/lib/ruleDraft";
 
@@ -11,14 +12,12 @@ const MISSING_HIGHLIGHT =
   "[&_input:required:invalid]:border-red-400 [&_select:required:invalid]:border-red-400 [&_textarea:required:invalid]:border-red-400";
 
 export function EmailRuleCreator({
-  roles,
   staff,
   inputClass,
   labelClass,
   createAction,
 }: {
-  roles: { id: string; name: string }[];
-  staff: { id: string; name: string }[];
+  staff: StaffOption[];
   inputClass: string;
   labelClass: string;
   createAction: (formData: FormData) => Promise<string | void>;
@@ -93,7 +92,7 @@ export function EmailRuleCreator({
           </p>
         )}
         <div className="grid gap-3 sm:grid-cols-2">
-          <EmailRuleFields values={draft ?? undefined} roles={roles} staff={staff} inputClass={inputClass} labelClass={labelClass} />
+          <EmailRuleFields values={draft ?? undefined} staff={staff} inputClass={inputClass} labelClass={labelClass} />
         </div>
         <button
           type="submit"

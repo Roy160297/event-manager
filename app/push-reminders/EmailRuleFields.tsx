@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { EmailReminderAnchor } from "@/lib/types";
-import { EmailRecipientPicker } from "./EmailRecipientPicker";
+import { EmailRecipientPicker, type StaffOption } from "./EmailRecipientPicker";
 
 // Form values for one email rule; every field is required (except the
 // recipients, where at least one of the options is), so an empty value means
@@ -18,7 +18,6 @@ export interface EmailRuleValues {
   to_event_manager?: boolean | null;
   to_floor_manager?: boolean | null;
   to_salesperson?: boolean | null;
-  recipient_role_ids?: string[] | null;
   recipient_staff_ids?: string[] | null;
   extra_emails?: string | null;
   subject?: string | null;
@@ -27,14 +26,12 @@ export interface EmailRuleValues {
 
 export function EmailRuleFields({
   values,
-  roles,
   staff,
   inputClass,
   labelClass,
 }: {
   values?: EmailRuleValues;
-  roles: { id: string; name: string }[];
-  staff: { id: string; name: string }[];
+  staff: StaffOption[];
   inputClass: string;
   labelClass: string;
 }) {
@@ -61,7 +58,7 @@ export function EmailRuleFields({
         <span>מספר ימים (שלילי = לפני, חיובי = אחרי, 0 = באותו יום)</span>
         <input name="offset_days" type="number" step={1} defaultValue={values?.offset_days ?? ""} placeholder="-1" required className={inputClass} />
         <span className="text-xs text-foreground/50">
-          כך נקבע &quot;היום המתאים&quot; לשליחה: למשל -1 ביחס לתאריך האירוע = יום לפני האירוע.
+          כך נקבע התאריך שנבחר לשליחה. למשל: -1 ביחס לתאריך האירוע = יום לפני האירוע.
         </span>
       </label>
 
@@ -101,7 +98,7 @@ export function EmailRuleFields({
       )}
 
       <label className={labelClass}>
-        <span>אם היום המתאים כבר עבר (למשל האירוע נוצר באיחור)</span>
+        <span>אם התאריך שנבחר כבר עבר (למשל האירוע נוצר באיחור)</span>
         <select name="match_mode" defaultValue={values?.match_mode ?? ""} required className={inputClass}>
           <option value="" disabled>
             בחרו
@@ -116,18 +113,16 @@ export function EmailRuleFields({
           <option value="" disabled>
             בחרו
           </option>
-          <option value="any">בכל ריצה (בוקר ≈08:00 או ערב ≈18:00, או מיד בשמירת אירוע)</option>
-          <option value="morning">בבוקר (≈08:00)</option>
-          <option value="evening">בערב (≈18:00)</option>
+          <option value="any">מוקדם ככל האפשר בתאריך שנבחר (בדרך כלל בבוקר)</option>
+          <option value="morning">בבוקר (בסביבות 08:00)</option>
+          <option value="evening">בערב (בסביבות 18:00)</option>
         </select>
-        <span className="text-xs text-foreground/50">
-          שעון ישראל. המערכת בודקת פעמיים ביום, בחורף כשעה מוקדם יותר (≈07:00 ו-≈17:00).
-        </span>
+        <span className="text-xs text-foreground/50">שעון ישראל.</span>
       </label>
 
       <fieldset className="flex flex-col gap-2 text-sm sm:col-span-2">
         <legend className="mb-1">נמענים (לפחות אחד)</legend>
-        <EmailRecipientPicker values={values} roles={roles} staff={staff} inputClass={inputClass} />
+        <EmailRecipientPicker values={values} staff={staff} inputClass={inputClass} />
 
         <label className={labelClass}>
           <span>כתובות נוספות (מופרדות בפסיק)</span>

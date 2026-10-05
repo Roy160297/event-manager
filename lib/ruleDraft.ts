@@ -164,7 +164,6 @@ const EMAIL_SCHEMA = {
     to_event_manager: { type: Type.BOOLEAN, nullable: true },
     to_floor_manager: { type: Type.BOOLEAN, nullable: true },
     to_salesperson: { type: Type.BOOLEAN, nullable: true },
-    recipient_role_names: { type: Type.ARRAY, items: { type: Type.STRING } },
     recipient_staff_names: { type: Type.ARRAY, items: { type: Type.STRING } },
     extra_emails: { type: Type.STRING, nullable: true },
     subject: { type: Type.STRING, nullable: true },
@@ -174,7 +173,7 @@ const EMAIL_SCHEMA = {
 
 export async function draftEmailRule(
   request: string,
-  context: { roles: { id: string; name: string }[]; staff: { id: string; name: string }[] },
+  context: { staff: { id: string; name: string; roleName?: string | null }[] },
 ): Promise<EmailRuleDraft> {
   const placeholders = Object.entries(EMAIL_PLACEHOLDERS)
     .map(([key, label]) => `{${key}} = ${label}`)
@@ -193,8 +192,7 @@ Fill these fields (null for anything the request does not say, except where a de
 - match_mode: "exact" (send only on exactly that day) or "on_or_after" (send once, even if the day already passed). Default "exact" unless the request says otherwise.
 - run_window: "any", "morning" or "evening". Default "any" unless the request says morning/evening.
 - to_event_manager / to_floor_manager / to_salesperson: true if the request says the event's manager / the event's floor manager (מנהל פלור) / the event's salesperson (איש מכירות) receives it; otherwise null.
-- recipient_role_names: roles whose every member should receive it, as written in the request (known roles: ${context.roles.map((r) => r.name).join(", ")}); [] if none.
-- recipient_staff_names: specific people who should receive it, as written (known staff: ${context.staff.map((m) => m.name).join(", ")}); [] if none.
+- recipient_staff_names: specific people who should receive it - a request that names a position (e.g. the chef) means the person holding it. Use the name exactly as in this list (name - position): ${context.staff.map((m) => (m.roleName ? `${m.name} (${m.roleName})` : m.name)).join(", ")}; [] if none.
 - extra_emails: comma-separated email addresses written in the request; null if none were written.
 - subject: the email subject in Hebrew. You may use placeholders.
 - body: the email text in Hebrew; use real line breaks and "• " at the start of list lines. Use placeholders for event data instead of writing it out. Placeholders: ${placeholders}.`;
@@ -219,7 +217,7 @@ Fill these fields (null for anything the request does not say, except where a de
     to_event_manager: raw.to_event_manager === true ? true : null,
     to_floor_manager: raw.to_floor_manager === true ? true : null,
     to_salesperson: raw.to_salesperson === true ? true : null,
-    recipient_role_ids: idsOf(namesOf(raw.recipient_role_names), context.roles),
+    recipient_role_ids: [],
     recipient_staff_ids: idsOf(namesOf(raw.recipient_staff_names), context.staff),
     extra_emails: extraEmails,
     subject: text(raw.subject),
@@ -237,7 +235,6 @@ Fill these fields (null for anything the request does not say, except where a de
     draft.to_event_manager ||
     draft.to_floor_manager ||
     draft.to_salesperson ||
-    draft.recipient_role_ids.length > 0 ||
     draft.recipient_staff_ids.length > 0 ||
     !!draft.extra_emails;
   if (!hasRecipient) draft.missing.push("נמענים");

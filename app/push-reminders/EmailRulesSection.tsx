@@ -7,6 +7,7 @@ import { TestEmailRuleButton } from "./TestEmailRuleButton";
 import { EmailRuleFields } from "./EmailRuleFields";
 import { CONDITION_LABELS } from "@/lib/emailReminders";
 import { EmailRuleCreator } from "./EmailRuleCreator";
+import type { StaffOption } from "./EmailRecipientPicker";
 import type { EmailReminderRuleRow } from "@/lib/types";
 
 const ANCHOR_LABELS: Record<EmailReminderRuleRow["anchor"], string> = {
@@ -33,19 +34,11 @@ function describeTiming(rule: EmailReminderRuleRow): string {
   return `${when}${fallback}${once}${window}`;
 }
 
-function describeRecipients(
-  rule: EmailReminderRuleRow,
-  roles: { id: string; name: string }[],
-  staff: { id: string; name: string }[],
-): string {
+function describeRecipients(rule: EmailReminderRuleRow, staff: { id: string; name: string }[]): string {
   const parts: string[] = [];
   if (rule.to_event_manager) parts.push("מנהל האירוע");
   if (rule.to_floor_manager) parts.push("מנהל הפלור");
   if (rule.to_salesperson) parts.push("איש המכירות של האירוע");
-  for (const id of rule.recipient_role_ids) {
-    const name = roles.find((role) => role.id === id)?.name;
-    if (name) parts.push(`תפקיד: ${name}`);
-  }
   for (const id of rule.recipient_staff_ids) {
     const name = staff.find((member) => member.id === id)?.name;
     if (name) parts.push(name);
@@ -56,15 +49,13 @@ function describeRecipients(
 
 export function EmailRulesSection({
   rules,
-  roles,
   staff,
   canWriteRules,
   inputClass,
   labelClass,
 }: {
   rules: EmailReminderRuleRow[];
-  roles: { id: string; name: string }[];
-  staff: { id: string; name: string }[];
+  staff: StaffOption[];
   canWriteRules: boolean;
   inputClass: string;
   labelClass: string;
@@ -88,7 +79,7 @@ export function EmailRulesSection({
         </p>
       </div>
 
-      {canWriteRules && <EmailRuleCreator roles={roles} staff={staff} inputClass={inputClass} labelClass={labelClass} createAction={addRule} />}
+      {canWriteRules && <EmailRuleCreator staff={staff} inputClass={inputClass} labelClass={labelClass} createAction={addRule} />}
 
       {rules.length === 0 && <p className="text-foreground/60">עדיין לא הוגדרו תזכורות באימייל.</p>}
 
@@ -117,7 +108,7 @@ export function EmailRulesSection({
                   </p>
                   <p className="text-sm text-foreground/60">{describeTiming(rule)}</p>
                   <p className="text-sm text-foreground/60">
-                    נשלח אל: {describeRecipients(rule, roles, staff)}
+                    נשלח אל: {describeRecipients(rule, staff)}
                     {rule.condition !== "none" && ` · ${CONDITION_LABELS[rule.condition]}`}
                   </p>
                 </div>
@@ -153,7 +144,6 @@ export function EmailRulesSection({
                             : null,
                         run_window: rule.run_window ?? "any",
                       }}
-                      roles={roles}
                       staff={staff}
                       inputClass={inputClass}
                       labelClass={labelClass}

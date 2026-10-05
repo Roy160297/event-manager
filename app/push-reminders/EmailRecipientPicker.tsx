@@ -11,8 +11,13 @@ interface RecipientValues {
   to_event_manager?: boolean | null;
   to_floor_manager?: boolean | null;
   to_salesperson?: boolean | null;
-  recipient_role_ids?: string[] | null;
   recipient_staff_ids?: string[] | null;
+}
+
+export interface StaffOption {
+  id: string;
+  name: string;
+  roleName?: string | null;
 }
 
 const EVENT_OPTIONS: Option[] = [
@@ -23,30 +28,29 @@ const EVENT_OPTIONS: Option[] = [
 
 // Recipients are picked from a dropdown (like the push-notification form) and
 // accumulate as removable chips, since an email reminder can go to several
-// people at once. The chosen ones are submitted as hidden fields.
+// people at once. The chosen ones are submitted as hidden fields. Only the
+// roles that are assigned per event (manager, floor manager, salesperson) are
+// offered as such; every other position (chef, bar manager...) is the same
+// person every time, so those are picked as fixed staff members.
 export function EmailRecipientPicker({
   values,
-  roles,
   staff,
   inputClass,
 }: {
   values?: RecipientValues;
-  roles: { id: string; name: string }[];
-  staff: { id: string; name: string }[];
+  staff: StaffOption[];
   inputClass: string;
 }) {
   const [selected, setSelected] = useState<string[]>(() => [
     ...(values?.to_event_manager ? ["event_manager"] : []),
     ...(values?.to_floor_manager ? ["floor_manager"] : []),
     ...(values?.to_salesperson ? ["salesperson"] : []),
-    ...(values?.recipient_role_ids ?? []).map((id) => `role:${id}`),
     ...(values?.recipient_staff_ids ?? []).map((id) => `staff:${id}`),
   ]);
 
   const labelOf = (key: string): string => {
     const event = EVENT_OPTIONS.find((option) => option.key === key);
     if (event) return event.label;
-    if (key.startsWith("role:")) return `תפקיד: ${roles.find((role) => `role:${role.id}` === key)?.name ?? ""}`;
     return staff.find((member) => `staff:${member.id}` === key)?.name ?? "איש צוות";
   };
 
@@ -70,21 +74,13 @@ export function EmailRecipientPicker({
             </option>
           ))}
         </optgroup>
-        <optgroup label="כל מי שבתפקיד">
-          {roles
-            .filter((role) => available(`role:${role.id}`))
-            .map((role) => (
-              <option key={role.id} value={`role:${role.id}`}>
-                {role.name}
-              </option>
-            ))}
-        </optgroup>
         <optgroup label="איש צוות קבוע">
           {staff
             .filter((member) => available(`staff:${member.id}`))
             .map((member) => (
               <option key={member.id} value={`staff:${member.id}`}>
                 {member.name}
+                {member.roleName ? ` (${member.roleName})` : ""}
               </option>
             ))}
         </optgroup>
@@ -114,9 +110,6 @@ export function EmailRecipientPicker({
       {selected.includes("event_manager") && <input type="hidden" name="to_event_manager" value="on" />}
       {selected.includes("floor_manager") && <input type="hidden" name="to_floor_manager" value="on" />}
       {selected.includes("salesperson") && <input type="hidden" name="to_salesperson" value="on" />}
-      {idsWithPrefix("role:").map((id) => (
-        <input key={`role-${id}`} type="hidden" name="recipient_role_ids" value={id} />
-      ))}
       {idsWithPrefix("staff:").map((id) => (
         <input key={`staff-${id}`} type="hidden" name="recipient_staff_ids" value={id} />
       ))}
