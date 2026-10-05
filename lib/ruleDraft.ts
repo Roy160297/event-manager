@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { EMAIL_PLACEHOLDERS } from "@/lib/emailReminders";
-import type { EmailReminderAnchor, PushReminderRecipientType } from "@/lib/types";
+import type { EmailReminderAnchor } from "@/lib/types";
 
 // Free text -> a draft push notification / email reminder, for the "describe
 // it in a sentence" box on the reminders page. The model only fills a draft:
@@ -49,13 +49,13 @@ export interface PushRuleDraft {
   offset_minutes: number | null;
   notification_title: string | null;
   notification_body: string | null;
-  recipient_type: PushReminderRecipientType | null;
-  recipient_role_id: string | null;
-  recipient_staff_id: string | null;
+  to_event_manager: boolean | null;
+  to_floor_manager: boolean | null;
+  to_salesperson: boolean | null;
+  recipient_role_ids: string[];
+  recipient_staff_ids: string[];
   missing: string[];
 }
-
-const PUSH_RECIPIENT_TYPES = ["event_manager", "floor_manager", "role", "fixed_staff"] as const;
 
 const PUSH_SCHEMA = {
   type: Type.OBJECT,
@@ -65,8 +65,10 @@ const PUSH_SCHEMA = {
     offset_minutes: { type: Type.INTEGER, nullable: true },
     notification_title: { type: Type.STRING, nullable: true },
     notification_body: { type: Type.STRING, nullable: true },
-    recipient_type: { type: Type.STRING, enum: [...PUSH_RECIPIENT_TYPES], nullable: true },
-    recipient_name: { type: Type.STRING, nullable: true },
+    to_event_manager: { type: Type.BOOLEAN, nullable: true },
+    to_floor_manager: { type: Type.BOOLEAN, nullable: true },
+    to_salesperson: { type: Type.BOOLEAN, nullable: true },
+    recipient_staff_names: { type: Type.ARRAY, items: { type: Type.STRING } },
   },
 };
 
@@ -81,7 +83,7 @@ function matchByName(name: string | null, list: { id: string; name: string }[]):
 
 export async function draftPushRule(
   request: string,
-  context: { stepLabels: string[]; roles: { id: string; name: string }[]; staff: { id: string; name: string }[] },
+  context: { stepLabels: string[]; staff: { id: string; name: string; roleName?: string | null }[] },
 ): Promise<PushRuleDraft> {
   const prompt = `You turn a Hebrew request into a draft push-notification rule for an event venue's management app.
 A rule sends a phone push notification a number of minutes before/after a step in an event's timeline.
@@ -94,14 +96,14 @@ Fill these fields (use null for anything the request does not say - never guess)
 - offset_minutes: integer minutes; NEGATIVE = before the step, POSITIVE = after the step, 0 = at the step. "אחרי תחילת החופה" means anchor "חופה" with a positive offset.
 - notification_title: short push title in Hebrew, starting with "תזכורת:".
 - notification_body: the push text in Hebrew. You may use {event_name} for the event's name and {additional_info} for the event's additional-info text.
-- recipient_type: event_manager (the event's manager), floor_manager (the event's floor manager), role (everyone with a role), fixed_staff (one named staff member) - only if the request says who receives it, otherwise null.
-- recipient_name: for role / fixed_staff, the role or person as written. Known roles: ${context.roles.map((r) => r.name).join(", ")}. Known staff: ${context.staff.map((s) => s.name).join(", ")}.`;
+- to_event_manager / to_floor_manager / to_salesperson: true if the request says the event's manager / the event's floor manager (מנהל פלור) / the event's salesperson (איש מכירות) receives it; otherwise null.
+- recipient_staff_names: specific people who should receive it - a request that names a position (e.g. the chef) means the person holding it. Use the name exactly as in this list (name - position): ${context.staff.map((m) => (m.roleName ? `${m.name} (${m.roleName})` : m.name)).join(", ")}; [] if none.`;
 
   const raw = await generateDraft(prompt, PUSH_SCHEMA);
-  const recipientType = oneOf(raw.recipient_type, PUSH_RECIPIENT_TYPES);
-  const recipientName = text(raw.recipient_name);
-  const roleId = recipientType === "role" ? matchByName(recipientName, context.roles) : null;
-  const staffId = recipientType === "fixed_staff" ? matchByName(recipientName, context.staff) : null;
+  const staffNames = Array.isArray(raw.recipient_staff_names)
+    ? raw.recipient_staff_names.map(text).filter((name): name is string => !!name)
+    : [];
+  const staffIds = [...new Set(staffNames.map((name) => matchByName(name, context.staff)).filter((id): id is string => !!id))];
 
   const draft: PushRuleDraft = {
     title: text(raw.title),
@@ -109,9 +111,11 @@ Fill these fields (use null for anything the request does not say - never guess)
     offset_minutes: integer(raw.offset_minutes),
     notification_title: text(raw.notification_title),
     notification_body: text(raw.notification_body),
-    recipient_type: recipientType,
-    recipient_role_id: roleId,
-    recipient_staff_id: staffId,
+    to_event_manager: raw.to_event_manager === true ? true : null,
+    to_floor_manager: raw.to_floor_manager === true ? true : null,
+    to_salesperson: raw.to_salesperson === true ? true : null,
+    recipient_role_ids: [],
+    recipient_staff_ids: staffIds,
     missing: [],
   };
   if (!draft.title) draft.missing.push("שם פנימי");
@@ -119,9 +123,9 @@ Fill these fields (use null for anything the request does not say - never guess)
   if (draft.offset_minutes === null) draft.missing.push("הפרש דקות");
   if (!draft.notification_title) draft.missing.push("כותרת ההתראה");
   if (!draft.notification_body) draft.missing.push("תוכן ההתראה");
-  if (!recipientType) draft.missing.push("נמען");
-  else if (recipientType === "role" && !roleId) draft.missing.push("תפקיד");
-  else if (recipientType === "fixed_staff" && !staffId) draft.missing.push("איש צוות");
+  if (!draft.to_event_manager && !draft.to_floor_manager && !draft.to_salesperson && staffIds.length === 0) {
+    draft.missing.push("נמענים");
+  }
   return draft;
 }
 

@@ -8,20 +8,13 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
 import { actionErrorMessage } from "@/lib/actionError";
-import { PushReminderRecipientFields } from "@/components/PushReminderRecipientFields";
+import { EmailRecipientPicker } from "./EmailRecipientPicker";
 import { createPushReminderRule, updatePushReminderRule, deletePushReminderRule } from "./actions";
 import { TestRuleButton } from "./TestRuleButton";
 import { EmailRulesSection } from "./EmailRulesSection";
 import { PushRuleCreator } from "./PushRuleCreator";
 import { getKnownTimelineStepLabels } from "@/app/events/[id]/timeline/actions";
 import type { EmailReminderRuleRow, PushReminderRuleRow } from "@/lib/types";
-
-const RECIPIENT_SUMMARY_LABELS: Record<PushReminderRuleRow["recipient_type"], string> = {
-  event_manager: "מנהל האירוע",
-  floor_manager: "מנהל הפלור",
-  role: "תפקיד",
-  fixed_staff: "איש צוות",
-};
 
 const TABS = [
   { key: "push", label: "התראות פוש" },
@@ -61,13 +54,19 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
   const staffNameById = new Map(staffList.map((member) => [member.id, member.name]));
 
   function recipientSummary(rule: PushReminderRuleRow): string {
-    if (rule.recipient_type === "role") {
-      return `תפקיד: ${(rule.recipient_role_id && roleNameById.get(rule.recipient_role_id)) ?? "לא נבחר"}`;
+    const parts: string[] = [];
+    if (rule.to_event_manager) parts.push("מנהל האירוע");
+    if (rule.to_floor_manager) parts.push("מנהל הפלור");
+    if (rule.to_salesperson) parts.push("איש המכירות של האירוע");
+    for (const id of rule.recipient_role_ids) {
+      const name = roleNameById.get(id);
+      if (name) parts.push(`תפקיד: ${name}`);
     }
-    if (rule.recipient_type === "fixed_staff") {
-      return `איש צוות: ${(rule.recipient_staff_id && staffNameById.get(rule.recipient_staff_id)) ?? "לא נבחר"}`;
+    for (const id of rule.recipient_staff_ids) {
+      const name = staffNameById.get(id);
+      if (name) parts.push(name);
     }
-    return RECIPIENT_SUMMARY_LABELS[rule.recipient_type];
+    return parts.join(", ");
   }
 
   const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
@@ -121,7 +120,6 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
 
       {canWriteRules && (
         <PushRuleCreator
-          roles={roleList}
           staff={staffList}
           inputClass={inputClass}
           labelClass={labelClass}
@@ -218,15 +216,10 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
                         className={inputClass}
                       />
                     </label>
-                    <PushReminderRecipientFields
-                      roles={roleList}
-                      staff={staffList}
-                      inputClass={inputClass}
-                      labelClass={labelClass}
-                      defaultType={rule.recipient_type}
-                      defaultRoleId={rule.recipient_role_id}
-                      defaultStaffId={rule.recipient_staff_id}
-                    />
+                    <fieldset className="flex flex-col gap-2 text-sm sm:col-span-2">
+                      <legend className="mb-1">נמענים (לפחות אחד)</legend>
+                      <EmailRecipientPicker values={rule} staff={staffList} inputClass={inputClass} />
+                    </fieldset>
                     <label className="flex items-center gap-2 text-sm sm:col-span-2">
                       <input type="checkbox" name="active" defaultChecked={rule.active} />
                       <span>פעילה</span>

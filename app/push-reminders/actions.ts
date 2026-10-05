@@ -7,9 +7,6 @@ import { canWrite } from "@/lib/permissions";
 import { sendPushToStaff } from "@/lib/pushNotifications";
 import { draftPushRule, type PushRuleDraft } from "@/lib/ruleDraft";
 import { getKnownTimelineStepLabels } from "@/app/events/[id]/timeline/actions";
-import type { PushReminderRecipientType } from "@/lib/types";
-
-const RECIPIENT_TYPES: PushReminderRecipientType[] = ["event_manager", "floor_manager", "role", "fixed_staff"];
 
 async function assertCanManage() {
   const staff = await getCurrentStaff();
@@ -18,7 +15,9 @@ async function assertCanManage() {
   }
 }
 
-function readRuleFields(formData: FormData) {
+// Older rules may target a whole role; that stays as it is on edit (the form
+// no longer offers roles) and still counts as a recipient (hasLegacyRoles).
+function readRuleFields(formData: FormData, hasLegacyRoles = false) {
   const title = String(formData.get("title") ?? "").trim();
   const anchorLabel = String(formData.get("anchor_label") ?? "").trim();
   const offsetMinutes = Number(formData.get("offset_minutes"));
@@ -30,16 +29,13 @@ function readRuleFields(formData: FormData) {
   }
   if (!Number.isFinite(offsetMinutes)) throw new Error("מספר הדקות אינו תקין");
 
-  const recipientTypeRaw = String(formData.get("recipient_type") ?? "");
-  if (!RECIPIENT_TYPES.includes(recipientTypeRaw as PushReminderRecipientType)) {
-    throw new Error("סוג נמען אינו תקין");
+  const toEventManager = formData.get("to_event_manager") === "on";
+  const toFloorManager = formData.get("to_floor_manager") === "on";
+  const toSalesperson = formData.get("to_salesperson") === "on";
+  const staffIds = formData.getAll("recipient_staff_ids").map(String).filter(Boolean);
+  if (!toEventManager && !toFloorManager && !toSalesperson && staffIds.length === 0 && !hasLegacyRoles) {
+    throw new Error("יש לבחור לפחות נמען אחד");
   }
-  const recipientType = recipientTypeRaw as PushReminderRecipientType;
-
-  const recipientRoleId = String(formData.get("recipient_role_id") ?? "").trim() || null;
-  const recipientStaffId = String(formData.get("recipient_staff_id") ?? "").trim() || null;
-  if (recipientType === "role" && !recipientRoleId) throw new Error("יש לבחור תפקיד");
-  if (recipientType === "fixed_staff" && !recipientStaffId) throw new Error("יש לבחור איש צוות");
 
   return {
     title,
@@ -47,12 +43,10 @@ function readRuleFields(formData: FormData) {
     offset_minutes: offsetMinutes,
     notification_title: notificationTitle,
     notification_body: notificationBody,
-    recipient_type: recipientType,
-    // Only the field matching the chosen type is kept - the others are
-    // cleared so a stale role/staff selection can't linger after switching
-    // recipient type back and forth.
-    recipient_role_id: recipientType === "role" ? recipientRoleId : null,
-    recipient_staff_id: recipientType === "fixed_staff" ? recipientStaffId : null,
+    to_event_manager: toEventManager,
+    to_floor_manager: toFloorManager,
+    to_salesperson: toSalesperson,
+    recipient_staff_ids: staffIds,
   };
 }
 
@@ -70,9 +64,17 @@ export async function updatePushReminderRule(ruleId: string, formData: FormData)
   await assertCanManage();
   const supabase = await createClient();
 
+  const { data: existing } = await supabase
+    .from("push_reminder_rules")
+    .select("recipient_role_ids")
+    .eq("id", ruleId)
+    .maybeSingle<{ recipient_role_ids: string[] }>();
   const { error } = await supabase
     .from("push_reminder_rules")
-    .update({ ...readRuleFields(formData), active: formData.get("active") === "on" })
+    .update({
+      ...readRuleFields(formData, (existing?.recipient_role_ids.length ?? 0) > 0),
+      active: formData.get("active") === "on",
+    })
     .eq("id", ruleId);
 
   if (error) throw new Error(error.message);
@@ -124,10 +126,16 @@ export async function draftPushRuleFromText(request: string): Promise<PushRuleDr
   if (text.length > 1000) throw new Error("התיאור ארוך מדי");
 
   const supabase = await createClient();
-  const [{ data: roles }, { data: staff }, stepLabels] = await Promise.all([
-    supabase.from("roles").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
-    supabase.from("staff").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
+  const [{ data: staff }, stepLabels] = await Promise.all([
+    supabase
+      .from("staff")
+      .select("id, name, roles(name)")
+      .order("name")
+      .returns<{ id: string; name: string; roles: { name: string } | null }[]>(),
     getKnownTimelineStepLabels(),
   ]);
-  return draftPushRule(text, { stepLabels, roles: roles ?? [], staff: staff ?? [] });
+  return draftPushRule(text, {
+    stepLabels,
+    staff: (staff ?? []).map((member) => ({ id: member.id, name: member.name, roleName: member.roles?.name ?? null })),
+  });
 }

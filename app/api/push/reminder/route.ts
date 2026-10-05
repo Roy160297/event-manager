@@ -5,32 +5,27 @@ import type { PushReminderRuleRow } from "@/lib/types";
 
 type RuleForRecipients = Pick<
   PushReminderRuleRow,
-  "recipient_type" | "recipient_role_id" | "recipient_staff_id"
+  "to_event_manager" | "to_floor_manager" | "to_salesperson" | "recipient_role_ids" | "recipient_staff_ids"
 >;
-type EventForRecipients = { manager_id: string | null; floor_manager_id: string | null };
+type EventForRecipients = { manager_id: string | null; floor_manager_id: string | null; sales_person_id: string | null };
 
-// A rule's recipient isn't always the event's manager - e.g. a bar-related
-// reminder should go to whoever's in the bar role, not the office. "role"
-// can resolve to several staff members at once (everyone currently holding
-// that role), so this always returns a list.
+// A rule can go to any mix of the event's own manager / floor manager /
+// salesperson and specific staff members (plus, for older rules, everyone
+// holding a role), so this always returns a de-duplicated list.
 async function resolveRecipientStaffIds(
   supabase: SupabaseClient,
   rule: RuleForRecipients,
   event: EventForRecipients,
 ): Promise<string[]> {
-  switch (rule.recipient_type) {
-    case "event_manager":
-      return event.manager_id ? [event.manager_id] : [];
-    case "floor_manager":
-      return event.floor_manager_id ? [event.floor_manager_id] : [];
-    case "fixed_staff":
-      return rule.recipient_staff_id ? [rule.recipient_staff_id] : [];
-    case "role": {
-      if (!rule.recipient_role_id) return [];
-      const { data } = await supabase.from("staff").select("id").eq("role_id", rule.recipient_role_id);
-      return (data ?? []).map((row: { id: string }) => row.id);
-    }
+  const ids = new Set<string>(rule.recipient_staff_ids);
+  if (rule.to_event_manager && event.manager_id) ids.add(event.manager_id);
+  if (rule.to_floor_manager && event.floor_manager_id) ids.add(event.floor_manager_id);
+  if (rule.to_salesperson && event.sales_person_id) ids.add(event.sales_person_id);
+  if (rule.recipient_role_ids.length > 0) {
+    const { data } = await supabase.from("staff").select("id").in("role_id", rule.recipient_role_ids);
+    for (const row of (data ?? []) as { id: string }[]) ids.add(row.id);
   }
+  return [...ids];
 }
 
 // Called by a one-time pg_cron + pg_net job that schedule_push_reminders_for_step()
@@ -53,13 +48,15 @@ export async function POST(request: Request) {
   const [{ data: event }, { data: rule }] = await Promise.all([
     supabase
       .from("events")
-      .select("name, manager_id, floor_manager_id, menu_notes")
+      .select("name, manager_id, floor_manager_id, sales_person_id, menu_notes")
       .eq("id", eventId)
       .is("deleted_at", null)
       .maybeSingle(),
     supabase
       .from("push_reminder_rules")
-      .select("notification_title, notification_body, active, recipient_type, recipient_role_id, recipient_staff_id")
+      .select(
+        "notification_title, notification_body, active, to_event_manager, to_floor_manager, to_salesperson, recipient_role_ids, recipient_staff_ids",
+      )
       .eq("id", ruleId)
       .maybeSingle<PushReminderRuleRow>(),
   ]);

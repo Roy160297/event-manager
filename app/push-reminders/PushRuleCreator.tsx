@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
-import { PushReminderRecipientFields } from "@/components/PushReminderRecipientFields";
+import { EmailRecipientPicker } from "./EmailRecipientPicker";
 import { draftPushRuleFromText } from "./actions";
 import type { PushRuleDraft } from "@/lib/ruleDraft";
 
@@ -12,13 +12,11 @@ const MISSING_HIGHLIGHT =
   "[&_input:required:invalid]:border-red-400 [&_select:required:invalid]:border-red-400 [&_textarea:required:invalid]:border-red-400";
 
 export function PushRuleCreator({
-  roles,
   staff,
   inputClass,
   labelClass,
   createAction,
 }: {
-  roles: { id: string; name: string }[];
   staff: { id: string; name: string }[];
   inputClass: string;
   labelClass: string;
@@ -137,15 +135,10 @@ export function PushRuleCreator({
             <span>תוכן ההתראה</span>
             <textarea name="notification_body" defaultValue={draft?.notification_body ?? ""} required rows={2} className={inputClass} />
           </label>
-          <PushReminderRecipientFields
-            roles={roles}
-            staff={staff}
-            inputClass={inputClass}
-            labelClass={labelClass}
-            defaultType={draft?.recipient_type ?? ""}
-            defaultRoleId={draft?.recipient_role_id}
-            defaultStaffId={draft?.recipient_staff_id}
-          />
+          <fieldset className="flex flex-col gap-2 text-sm sm:col-span-2">
+            <legend className="mb-1">נמענים (לפחות אחד)</legend>
+            <EmailRecipientPicker values={draft ?? undefined} staff={staff} inputClass={inputClass} />
+          </fieldset>
         </div>
         <button
           type="submit"

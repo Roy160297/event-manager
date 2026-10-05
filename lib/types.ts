@@ -286,6 +286,11 @@ export interface PushReminderRuleRow {
   recipient_type: PushReminderRecipientType;
   recipient_role_id: string | null;
   recipient_staff_id: string | null;
+  to_event_manager: boolean;
+  to_floor_manager: boolean;
+  to_salesperson: boolean;
+  recipient_role_ids: string[];
+  recipient_staff_ids: string[];
   created_at: string;
 }
 
