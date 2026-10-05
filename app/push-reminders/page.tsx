@@ -9,8 +9,9 @@ import { actionErrorMessage } from "@/lib/actionError";
 import { PushReminderRecipientFields } from "@/components/PushReminderRecipientFields";
 import { createPushReminderRule, updatePushReminderRule, deletePushReminderRule } from "./actions";
 import { TestRuleButton } from "./TestRuleButton";
+import { EmailRulesSection } from "./EmailRulesSection";
 import { getKnownTimelineStepLabels } from "@/app/events/[id]/timeline/actions";
-import type { PushReminderRuleRow } from "@/lib/types";
+import type { EmailReminderRuleRow, PushReminderRuleRow } from "@/lib/types";
 
 const RECIPIENT_SUMMARY_LABELS: Record<PushReminderRuleRow["recipient_type"], string> = {
   event_manager: "מנהל האירוע",
@@ -21,13 +22,19 @@ const RECIPIENT_SUMMARY_LABELS: Record<PushReminderRuleRow["recipient_type"], st
 
 export default async function PushRemindersPage() {
   const supabase = await createClient();
-  const [currentStaff, { data: rules }, { data: roles }, { data: staff }, knownStepLabels] = await Promise.all([
+  const [currentStaff, { data: rules }, { data: emailRules }, { data: roles }, { data: staff }, knownStepLabels] =
+    await Promise.all([
     getCurrentStaff(),
     supabase
       .from("push_reminder_rules")
       .select("*")
       .order("created_at", { ascending: true })
       .returns<PushReminderRuleRow[]>(),
+    supabase
+      .from("email_reminder_rules")
+      .select("*")
+      .order("created_at", { ascending: true })
+      .returns<EmailReminderRuleRow[]>(),
     supabase.from("roles").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
     supabase.from("staff").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
     getKnownTimelineStepLabels(),
@@ -252,6 +259,15 @@ export default async function PushRemindersPage() {
           );
         })}
       </ul>
+
+      <hr className="border-border-classic" />
+
+      <EmailRulesSection
+        rules={emailRules ?? []}
+        canWriteRules={canWriteRules}
+        inputClass={inputClass}
+        labelClass={labelClass}
+      />
     </div>
   );
 }

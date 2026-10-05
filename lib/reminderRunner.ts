@@ -1,7 +1,15 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendReminderEmail } from "@/lib/reminderEmail";
-import { COUPLE_MEETING_REMINDER_RULES, addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
-import type { EventRow } from "@/lib/types";
+import { todayInIsrael } from "@/lib/coupleMeetingReminders";
+import {
+  emailRuleRecipients,
+  isEmailRuleConditionMet,
+  loadActiveEmailReminderRules,
+  renderEmailBody,
+  renderEmailSubject,
+  resolveEmailTargetDate,
+} from "@/lib/emailReminders";
+import type { EmailReminderRuleRow, EventRow } from "@/lib/types";
 
 type ReminderableEvent = Pick<
   EventRow,
@@ -18,77 +26,68 @@ type ReminderableEvent = Pick<
   | "gluten_free_meal_count"
   | "toddlers_under_2_count"
   | "menu_notes"
-  | "sales_person_id"
 >;
 
 // Shared by the daily cron route (app/api/cron/couple-meeting-reminders) and
 // the "check right now" call after creating/saving an event - same
 // claim-then-send logic either way, just fed one event at a time here so the
 // cron can still do its own single bulk query instead of N+1ing this.
+// The rules come from the email_reminder_rules table; the cron loads them once
+// and passes them in, otherwise they're loaded here.
 export async function sendDueReminders(
   supabase: ReturnType<typeof createAdminClient>,
   event: ReminderableEvent,
   managerEmail: string | null | undefined,
   // Which daily cron pass is calling this (see vercel.json - morning and
   // evening passes). The immediate post-save check has no real "pass" of its
-  // own, so it's treated as the morning one - see runWindow's doc comment.
+  // own, so it's treated as the morning one - see the run_window rule field.
   pass: "morning" | "evening" = "morning",
   salespersonEmail?: string | null,
+  rules?: EmailReminderRuleRow[],
 ): Promise<{ sent: number; skippedAlreadySent: number }> {
   // Business events don't have a couple/wedding flow, so none of these
   // couple-meeting-anchored reminder rules are relevant to them.
   if (event.event_type === "business_event") return { sent: 0, skippedAlreadySent: 0 };
 
+  const activeRules = rules ?? (await loadActiveEmailReminderRules(supabase));
   const today = todayInIsrael();
   let sent = 0;
   let skippedAlreadySent = 0;
 
-  for (const rule of COUPLE_MEETING_REMINDER_RULES) {
-    if (rule.runWindow && rule.runWindow !== pass) continue;
+  for (const rule of activeRules) {
+    if (rule.run_window && rule.run_window !== pass) continue;
 
-    const anchorDate = rule.anchor === "couple_meeting_date" ? event.couple_meeting_date : event.event_date;
-    const targetDate = rule.resolveTargetDate
-      ? rule.resolveTargetDate(event)
-      : anchorDate
-        ? addDaysToDate(anchorDate, rule.offsetDays)
-        : null;
+    const targetDate = resolveEmailTargetDate(rule, event);
     if (!targetDate) continue;
-    const isDue = rule.matchMode === "onOrAfter" ? today >= targetDate : today === targetDate;
+
+    // "exact" fires only on the single day today === target - if that day has
+    // already passed (e.g. the event was created/edited with fewer days left
+    // than the offset), it's missed for good. "on_or_after" fires the first
+    // day today is on or past the target, and at most once ever for that
+    // event - catches events entering the window "already late".
+    const isDue = rule.match_mode === "on_or_after" ? today >= targetDate : today === targetDate;
     if (!isDue) continue;
 
-    // onOrAfter has no upper bound on its own - without this, a rule that
-    // never fired for some old event (e.g. it had no manager assigned back
-    // when its exact day passed) would "catch up" and send today even
-    // though the event itself is long over. Only worth catching up while
-    // the event hasn't happened yet.
-    if (rule.matchMode === "onOrAfter" && event.event_date < today) continue;
+    // on_or_after has no upper bound on its own - without this, a rule that
+    // never fired for some old event would "catch up" and send today even
+    // though the event itself is long over.
+    if (rule.match_mode === "on_or_after" && event.event_date < today) continue;
 
-    if (rule.dateCondition && !rule.dateCondition(event)) continue;
-    if (rule.condition && !(await rule.condition(supabase, event.id))) continue;
+    if (!(await isEmailRuleConditionMet(rule, event, supabase))) continue;
 
-    // Most rules go to whoever manages the event; a rule can override that
-    // with a fixed recipient instead (e.g. always the kitchen, regardless of
-    // who's managing) - skip entirely if neither is available.
-    const recipients = rule.recipientOverride
-      ? [rule.recipientOverride]
-      : managerEmail
-        ? [managerEmail]
-        : [];
-    if (rule.includeSalesperson && salespersonEmail) recipients.push(salespersonEmail);
+    const recipients = emailRuleRecipients(rule, managerEmail, salespersonEmail);
     if (recipients.length === 0) continue;
     const to = recipients.join(", ");
 
-    // "onOrAfter" rules (e.g. an event created/edited with fewer days left
-    // than the offset, so the exact target day already passed) fire at most
-    // once ever per event - checked separately since the reminder_log unique
-    // constraint below only catches same-day duplicates, not "already sent
-    // on some earlier day."
-    if (rule.matchMode === "onOrAfter") {
+    // on_or_after rules fire at most once ever per event - checked separately
+    // since the reminder_log unique constraint below only catches same-day
+    // duplicates, not "already sent on some earlier day."
+    if (rule.match_mode === "on_or_after") {
       const { count } = await supabase
         .from("reminder_log")
         .select("*", { count: "exact", head: true })
         .eq("event_id", event.id)
-        .eq("rule_key", rule.key);
+        .eq("rule_key", rule.rule_key);
       if ((count ?? 0) > 0) {
         skippedAlreadySent++;
         continue;
@@ -100,7 +99,7 @@ export async function sendDueReminders(
     // immediate post-save check can't double-send even if they race.
     const { error: claimError } = await supabase
       .from("reminder_log")
-      .insert({ event_id: event.id, rule_key: rule.key, sent_date: today });
+      .insert({ event_id: event.id, rule_key: rule.rule_key, sent_date: today });
 
     if (claimError) {
       if (claimError.code === "23505") skippedAlreadySent++;
@@ -110,8 +109,8 @@ export async function sendDueReminders(
     try {
       await sendReminderEmail({
         to,
-        subject: typeof rule.subject === "function" ? rule.subject(event) : rule.subject,
-        bodyText: rule.body(event),
+        subject: renderEmailSubject(rule.subject, event),
+        bodyText: renderEmailBody(rule.body, event),
       });
       sent++;
     } catch (err) {
@@ -119,8 +118,8 @@ export async function sendDueReminders(
       // it so a transient failure (bad credentials, Gmail hiccup) gets
       // retried on the next pass instead of being silently lost forever.
       // Logged (not swallowed) so it's visible in Vercel's function logs.
-      await supabase.from("reminder_log").delete().eq("event_id", event.id).eq("rule_key", rule.key).eq("sent_date", today);
-      console.error(`Failed to send reminder "${rule.key}" for event ${event.id}:`, err);
+      await supabase.from("reminder_log").delete().eq("event_id", event.id).eq("rule_key", rule.rule_key).eq("sent_date", today);
+      console.error(`Failed to send reminder "${rule.rule_key}" for event ${event.id}:`, err);
     }
   }
 

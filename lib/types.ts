@@ -289,6 +289,28 @@ export interface PushReminderRuleRow {
   created_at: string;
 }
 
+export type EmailReminderAnchor = "couple_meeting_date" | "event_date";
+export type EmailReminderCondition = "none" | "additional_info_filled" | "supplier_dj_tzach_ziv";
+
+export interface EmailReminderRuleRow {
+  id: string;
+  rule_key: string;
+  title: string;
+  anchor: EmailReminderAnchor;
+  offset_days: number;
+  fallback_offset_days: number | null;
+  match_mode: "exact" | "on_or_after";
+  run_window: "morning" | "evening" | null;
+  condition: EmailReminderCondition;
+  to_event_manager: boolean;
+  to_salesperson: boolean;
+  extra_emails: string | null;
+  subject: string;
+  body: string;
+  active: boolean;
+  created_at: string;
+}
+
 export type PrivateEventType =
   | "wedding"
   | "wedding_service"

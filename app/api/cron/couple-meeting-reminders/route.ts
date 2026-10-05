@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendDueReminders } from "@/lib/reminderRunner";
+import { loadActiveEmailReminderRules } from "@/lib/emailReminders";
 import type { EventRow, StaffRow } from "@/lib/types";
 
 type EventWithManager = EventRow & {
@@ -38,12 +39,14 @@ export async function GET(request: Request) {
       return Response.json({ error: error.message }, { status: 500 });
     }
 
+    const rules = await loadActiveEmailReminderRules(supabase);
+
     let sent = 0;
     let skippedAlreadySent = 0;
 
     for (const event of events ?? []) {
       try {
-        const result = await sendDueReminders(supabase, event, event.staff?.email, pass, event.sales?.email);
+        const result = await sendDueReminders(supabase, event, event.staff?.email, pass, event.sales?.email, rules);
         sent += result.sent;
         skippedAlreadySent += result.skippedAlreadySent;
       } catch (err) {
