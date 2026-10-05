@@ -5,9 +5,17 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { sendReminderEmail } from "@/lib/reminderEmail";
-import { renderEmailBody, renderEmailSubject, splitEmails, type EmailReminderEvent } from "@/lib/emailReminders";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { todayInIsrael } from "@/lib/coupleMeetingReminders";
+import {
+  renderEmailBody,
+  renderEmailSubject,
+  resolveEmailTargetDate,
+  splitEmails,
+  type EmailReminderEvent,
+} from "@/lib/emailReminders";
 import { draftEmailRule, type EmailRuleDraft } from "@/lib/ruleDraft";
-import type { EmailReminderAnchor } from "@/lib/types";
+import type { EmailReminderAnchor, EmailReminderRuleRow } from "@/lib/types";
 
 const ANCHORS: EmailReminderAnchor[] = ["couple_meeting_date", "event_date"];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -86,17 +94,51 @@ function readEmailRuleFields(formData: FormData) {
   };
 }
 
+// A new reminder catches up: an event created (or edited) after the chosen
+// date has passed, but that hasn't happened yet, still gets it once,
+// immediately. To keep that from firing for every event that already exists
+// the moment the rule is created, the upcoming events whose date has already
+// passed are marked as handled up front - only events from here on catch up.
+async function markMissedEventsAsHandled(rule: EmailReminderRuleRow) {
+  try {
+    const admin = createAdminClient();
+    const today = todayInIsrael();
+    const { data: events } = await admin
+      .from("events")
+      .select("id, event_type, event_date, couple_meeting_date")
+      .is("deleted_at", null)
+      .gte("event_date", today)
+      .returns<{ id: string; event_type: string; event_date: string; couple_meeting_date: string | null }[]>();
+
+    const missed = (events ?? []).filter((event) => {
+      if (event.event_type === "business_event") return false;
+      const target = resolveEmailTargetDate(rule, event);
+      return !!target && target < today;
+    });
+    if (missed.length === 0) return;
+
+    await admin
+      .from("reminder_log")
+      .insert(missed.map((event) => ({ event_id: event.id, rule_key: rule.rule_key, sent_date: today })));
+  } catch (err) {
+    console.error(`markMissedEventsAsHandled failed for rule ${rule.rule_key}:`, err);
+  }
+}
+
 export async function createEmailReminderRule(formData: FormData) {
   await assertCanManage();
   const supabase = await createClient();
-  const { error } = await supabase.from("email_reminder_rules").insert({
-    ...readEmailRuleFields(formData),
-    // A new reminder goes out only on its exact date. (Editing a rule leaves
-    // this alone, so the built-in "catch up once if the date was missed"
-    // reminders keep behaving as before.)
-    match_mode: "exact",
-  });
+  const { data: rule, error } = await supabase
+    .from("email_reminder_rules")
+    .insert({
+      ...readEmailRuleFields(formData),
+      rule_key: `custom-${crypto.randomUUID()}`,
+      match_mode: "on_or_after",
+    })
+    .select("*")
+    .single<EmailReminderRuleRow>();
   if (error) throw new Error(error.message);
+  await markMissedEventsAsHandled(rule);
   revalidatePath("/push-reminders");
 }
 

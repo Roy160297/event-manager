@@ -29,7 +29,7 @@ function describeTiming(rule: EmailReminderRuleRow): string {
             : `${Math.abs(rule.fallback_offset_days)} ימים ${rule.fallback_offset_days < 0 ? "לפני" : "אחרי"} האירוע`
         })`
       : "";
-  const once = rule.match_mode === "on_or_after" ? " · נשלח פעם אחת, גם אם המועד כבר עבר" : "";
+  const once = rule.match_mode === "on_or_after" ? " · אם האירוע נוסף אחרי התאריך - נשלח מיד, פעם אחת" : "";
   const window = rule.run_window === "morning" ? " · בבוקר" : rule.run_window === "evening" ? " · בערב" : "";
   return `${when}${fallback}${once}${window}`;
 }
