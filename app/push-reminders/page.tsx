@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TAB_NAV_CLASS, tabLinkClass } from "@/components/tabStyles";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
@@ -84,17 +85,13 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">התראות ותזכורות</h1>
-        <nav className="flex gap-1 border-b border-border-classic">
+        <nav className={TAB_NAV_CLASS}>
           {TABS.map((item) => (
             <Link
               key={item.key}
               href={`/push-reminders?tab=${item.key}`}
               aria-current={tab === item.key ? "page" : undefined}
-              className={
-                tab === item.key
-                  ? "border-b-2 border-accent px-3 py-2 text-sm font-medium text-accent"
-                  : "border-b-2 border-transparent px-3 py-2 text-sm hover:text-accent"
-              }
+              className={tabLinkClass(tab === item.key)}
             >
               {item.label}
             </Link>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { TAB_NAV_CLASS, tabLinkClass } from "@/components/tabStyles";
 
 const LINKS = [
   { href: "/admin/users", label: "משתמשים" },
@@ -12,7 +13,7 @@ export function AdminNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="mt-3 flex gap-1 border-b border-border-classic">
+    <nav className={`mt-3 ${TAB_NAV_CLASS}`}>
       {LINKS.map((link) => {
         const isActive = pathname.startsWith(link.href);
         return (
@@ -20,11 +21,7 @@ export function AdminNav() {
             key={link.href}
             href={link.href}
             aria-current={isActive ? "page" : undefined}
-            className={
-              isActive
-                ? "border-b-2 border-accent px-3 py-2 text-sm font-medium text-accent"
-                : "border-b-2 border-transparent px-3 py-2 text-sm hover:text-accent"
-            }
+            className={tabLinkClass(isActive)}
           >
             {link.label}
           </Link>

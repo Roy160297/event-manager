@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { TAB_NAV_CLASS, tabLinkClass } from "./tabStyles";
 
 const SUB_NAV = [
   { segment: "", label: "סקירה" },
@@ -17,7 +18,7 @@ export function EventSubNav({ eventId }: { eventId: string }) {
   const base = `/events/${eventId}`;
 
   return (
-    <nav className="flex flex-wrap gap-1 border-b border-border-classic pb-1">
+    <nav className={TAB_NAV_CLASS}>
       {SUB_NAV.map((item) => {
         const href = `${base}/${item.segment}`;
         const isActive = item.segment === "" ? pathname === base || pathname === `${base}/` : pathname.startsWith(href);
@@ -26,11 +27,7 @@ export function EventSubNav({ eventId }: { eventId: string }) {
             key={item.segment}
             href={href}
             aria-current={isActive ? "page" : undefined}
-            className={
-              isActive
-                ? "rounded-md bg-accent-soft px-3 py-2 text-sm font-semibold text-accent"
-                : "rounded-md bg-background px-3 py-2 text-sm text-foreground/85 hover:text-foreground"
-            }
+            className={tabLinkClass(isActive)}
           >
             {item.label}
           </Link>
