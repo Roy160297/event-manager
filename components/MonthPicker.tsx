@@ -7,7 +7,7 @@ function pad(value: number) {
 
 export function MonthPicker({ year, month }: { year: number; month: number }) {
   return (
-    <div className="flex w-full flex-col gap-3 rounded-lg border border-border-classic bg-surface p-3 sm:w-44">
+    <div className="flex w-full flex-col gap-3 rounded-lg border border-border-classic bg-surface p-2 sm:w-44 sm:p-3">
       <div className="flex items-center justify-between">
         <Link
           href={`/calendar?month=${year - 1}-${pad(month)}`}
@@ -23,7 +23,9 @@ export function MonthPicker({ year, month }: { year: number; month: number }) {
           ›
         </Link>
       </div>
-      <div className="flex flex-col gap-1">
+      {/* Phones skip the month list - it pushed the calendar below the fold, and the
+          prev/next month links above the grid already cover moving around. */}
+      <div className="hidden flex-col gap-1 sm:flex">
         {MONTH_LABELS.map((label, index) => {
           const m = index + 1;
           const isActive = m === month;
