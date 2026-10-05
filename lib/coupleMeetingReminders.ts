@@ -25,12 +25,20 @@ export interface ReminderBodyEvent {
   gluten_free_meal_count: string | null;
   toddlers_under_2_count: string | null;
   menu_notes: string | null;
+  couple_meeting_date: string | null;
 }
 
 export interface CoupleMeetingReminderRule {
   key: string;
   anchor: ReminderAnchor;
   offsetDays: number;
+  // Replaces anchor/offsetDays when a rule's due date depends on more than one
+  // field (e.g. "day after the couple meeting, or a week before the event when
+  // no meeting date was entered"). Return null when no date can be computed.
+  resolveTargetDate?: (event: ReminderBodyEvent) => string | null;
+  // Also sends to the event's salesperson (when they have an email on file),
+  // in addition to recipientOverride.
+  includeSalesperson?: boolean;
   // "exact" (default): fires only on the single day today === anchor+offset -
   // if that day has already passed (e.g. the event was created/edited with
   // fewer days left than the offset), it's missed for good.
@@ -137,6 +145,22 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     subject: (event) => `מידע נוסף לקראת האירוע של ${event.name} - ${formatDate(event.event_date)}`,
     body: (event) =>
       `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים היום - המידע הנוסף שמולא לאירוע:<br/>${event.menu_notes}`,
+  },
+  {
+    key: "additional-info-post-meeting",
+    anchor: "event_date",
+    offsetDays: -7,
+    matchMode: "onOrAfter",
+    // A day after the couple meeting; with no meeting date entered, a week
+    // before the event instead.
+    resolveTargetDate: (event) =>
+      event.couple_meeting_date ? addDaysToDate(event.couple_meeting_date, 1) : addDaysToDate(event.event_date, -7),
+    includeSalesperson: true,
+    recipientOverride: "sniro111oshri@gmail.com",
+    dateCondition: (event) => !!event.menu_notes?.trim(),
+    subject: (event) => `מידע נוסף על האירוע של ${event.name} - ${formatDate(event.event_date)}`,
+    body: (event) =>
+      `לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}) - המידע הנוסף שמולא לאירוע:<br/>${event.menu_notes}`,
   },
 ];
 

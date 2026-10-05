@@ -30,6 +30,7 @@ describe("COUPLE_MEETING_REMINDER_RULES", () => {
       name: "שי קטש וגיל מזרחי",
       event_type: "wedding" as const,
       event_date: "2026-08-14",
+      couple_meeting_date: null,
       estimated_guests: "200+14",
       kids_meal_count: "10",
       glat_meal_count: "5",
@@ -49,5 +50,36 @@ describe("COUPLE_MEETING_REMINDER_RULES", () => {
   it("marks the final-commitment rule as onOrAfter, so an event created/edited with fewer days left than the offset still fires", () => {
     const rule = COUPLE_MEETING_REMINDER_RULES.find((r) => r.key === "final-commitment-and-sketch-update");
     expect(rule?.matchMode).toBe("onOrAfter");
+  });
+
+  describe("additional-info-post-meeting", () => {
+    const rule = COUPLE_MEETING_REMINDER_RULES.find((r) => r.key === "additional-info-post-meeting")!;
+    const base = {
+      name: "x",
+      event_type: "wedding" as const,
+      event_date: "2026-08-14",
+      estimated_guests: null,
+      kids_meal_count: null,
+      glat_meal_count: null,
+      vegetarian_meal_count: null,
+      vegan_meal_count: null,
+      gluten_free_meal_count: null,
+      toddlers_under_2_count: null,
+      menu_notes: "הערה",
+    };
+
+    it("is due the day after the couple meeting when a meeting date is set", () => {
+      expect(rule.resolveTargetDate!({ ...base, couple_meeting_date: "2026-07-01" })).toBe("2026-07-02");
+    });
+
+    it("falls back to a week before the event when there is no meeting date", () => {
+      expect(rule.resolveTargetDate!({ ...base, couple_meeting_date: null })).toBe("2026-08-07");
+    });
+
+    it("only fires when the additional info is filled in, and also goes to the salesperson", () => {
+      expect(rule.dateCondition!({ ...base, couple_meeting_date: null })).toBe(true);
+      expect(rule.dateCondition!({ ...base, couple_meeting_date: null, menu_notes: "  " })).toBe(false);
+      expect(rule.includeSalesperson).toBe(true);
+    });
   });
 });

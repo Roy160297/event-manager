@@ -18,6 +18,7 @@ type ReminderableEvent = Pick<
   | "gluten_free_meal_count"
   | "toddlers_under_2_count"
   | "menu_notes"
+  | "sales_person_id"
 >;
 
 // Shared by the daily cron route (app/api/cron/couple-meeting-reminders) and
@@ -32,6 +33,7 @@ export async function sendDueReminders(
   // evening passes). The immediate post-save check has no real "pass" of its
   // own, so it's treated as the morning one - see runWindow's doc comment.
   pass: "morning" | "evening" = "morning",
+  salespersonEmail?: string | null,
 ): Promise<{ sent: number; skippedAlreadySent: number }> {
   // Business events don't have a couple/wedding flow, so none of these
   // couple-meeting-anchored reminder rules are relevant to them.
@@ -45,9 +47,12 @@ export async function sendDueReminders(
     if (rule.runWindow && rule.runWindow !== pass) continue;
 
     const anchorDate = rule.anchor === "couple_meeting_date" ? event.couple_meeting_date : event.event_date;
-    if (!anchorDate) continue;
-
-    const targetDate = addDaysToDate(anchorDate, rule.offsetDays);
+    const targetDate = rule.resolveTargetDate
+      ? rule.resolveTargetDate(event)
+      : anchorDate
+        ? addDaysToDate(anchorDate, rule.offsetDays)
+        : null;
+    if (!targetDate) continue;
     const isDue = rule.matchMode === "onOrAfter" ? today >= targetDate : today === targetDate;
     if (!isDue) continue;
 
@@ -64,8 +69,14 @@ export async function sendDueReminders(
     // Most rules go to whoever manages the event; a rule can override that
     // with a fixed recipient instead (e.g. always the kitchen, regardless of
     // who's managing) - skip entirely if neither is available.
-    const to = rule.recipientOverride ?? managerEmail;
-    if (!to) continue;
+    const recipients = rule.recipientOverride
+      ? [rule.recipientOverride]
+      : managerEmail
+        ? [managerEmail]
+        : [];
+    if (rule.includeSalesperson && salespersonEmail) recipients.push(salespersonEmail);
+    if (recipients.length === 0) continue;
+    const to = recipients.join(", ");
 
     // "onOrAfter" rules (e.g. an event created/edited with fewer days left
     // than the offset, so the exact target day already passed) fire at most
@@ -127,14 +138,14 @@ export async function checkRemindersForEvent(eventId: string): Promise<void> {
     const supabase = createAdminClient();
     const { data: event } = await supabase
       .from("events")
-      .select("*, staff!manager_id(email)")
+      .select("*, staff!manager_id(email), sales:staff!sales_person_id(email)")
       .eq("id", eventId)
       .is("deleted_at", null)
-      .returns<(EventRow & { staff: { email: string | null } | null })[]>()
+      .returns<(EventRow & { staff: { email: string | null } | null; sales: { email: string | null } | null })[]>()
       .maybeSingle();
 
     if (!event) return;
-    await sendDueReminders(supabase, event, event.staff?.email);
+    await sendDueReminders(supabase, event, event.staff?.email, "morning", event.sales?.email);
   } catch (err) {
     // Swallow - see comment above - but still log so a broken admin client
     // (e.g. missing SUPABASE_SERVICE_ROLE_KEY) doesn't fail invisibly.

@@ -11,7 +11,7 @@ import { EventManagerFilter } from "@/components/EventManagerFilter";
 import { TrashIcon } from "@/components/icons";
 import { getCurrentStaff } from "@/lib/auth";
 import { getEventManagerCandidates } from "@/lib/staff";
-import { canWrite } from "@/lib/permissions";
+import { canRead, canWrite } from "@/lib/permissions";
 import type { EventRow } from "@/lib/types";
 
 export default async function EventsDashboard({
@@ -36,6 +36,7 @@ export default async function EventsDashboard({
   if (!currentStaff) return <NoPermissionNotice />;
 
   const canWriteEvents = canWrite(currentStaff.permissions, "events");
+  const canReadEvents = canRead(currentStaff.permissions, "events");
 
   // Default (no ?manager param yet) is "my events" when the logged-in staff
   // member is themselves an event-manager candidate; ?manager=all is the
@@ -58,46 +59,54 @@ export default async function EventsDashboard({
           <h1 className="font-serif text-2xl font-bold">אירועים</h1>
           <EventManagerFilter managers={managers ?? []} defaultManagerId={isSelfAManager ? currentStaff.id : null} />
         </div>
-        {canWriteEvents && (
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/events/import-image"
-              className="rounded-full border-2 border-accent bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
-            >
-              יצירת אירוע מצילום מסך &quot;ענן&quot; מ-iPlan
-            </Link>
-            <Link
-              href="/events/new"
-              className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-            >
-              + אירוע חדש
-            </Link>
-            <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {canWriteEvents && (
+            <>
+              <Link
+                href="/events/import-image"
+                className="rounded-full border-2 border-accent bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
+              >
+                יצירת אירוע מצילום מסך &quot;ענן&quot; מ-iPlan
+              </Link>
+              <Link
+                href="/events/new"
+                className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+              >
+                + אירוע חדש
+              </Link>
+            </>
+          )}
+          <div className="flex gap-2">
+            {canReadEvents && (
               <Link
                 href="/events/archive"
                 className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
               >
                 ארכיון
               </Link>
-              <Link
-                href="/events/trash"
-                className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
-              >
-                פח מיחזור
-              </Link>
-              {!IS_DEMO && (
-                <a
-                  href="https://iplan.co.il/he-IL/corp/sign_in?"
-                  target="_blank"
-                  rel="noopener noreferrer"
+            )}
+            {canWriteEvents && (
+              <>
+                <Link
+                  href="/events/trash"
                   className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
                 >
-                  מעבר ל-iPlan
-                </a>
-              )}
-            </div>
+                  פח מיחזור
+                </Link>
+                {!IS_DEMO && (
+                  <a
+                    href="https://iplan.co.il/he-IL/corp/sign_in?"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+                  >
+                    מעבר ל-iPlan
+                  </a>
+                )}
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {error && (

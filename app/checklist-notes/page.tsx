@@ -17,7 +17,14 @@ const CHECKLIST_SECTIONS: { key: PermissionResource; label: string }[] = [
 type NoteWithEvent = {
   checklist_key: string;
   note: string | null;
-  events: { id: string; name: string; event_type: EventType; event_date: string; deleted_at: string | null } | null;
+  events: {
+    id: string;
+    name: string;
+    event_type: EventType;
+    event_date: string;
+    estimated_guests: string | null;
+    deleted_at: string | null;
+  } | null;
 };
 
 type SummaryReportEvent = {
@@ -25,9 +32,12 @@ type SummaryReportEvent = {
   name: string;
   event_type: EventType;
   event_date: string;
+  estimated_guests: string | null;
   report_summary: string | null;
   report_general_notes: string | null;
 };
+
+const guestsLabel = (guests: string | null) => (guests?.trim() ? ` · ${guests.trim()} אורחים` : "");
 
 export default async function ChecklistNotesPage() {
   const currentStaff = await getCurrentStaff();
@@ -47,7 +57,7 @@ export default async function ChecklistNotesPage() {
   const supabase = await createClient();
   const { data: notes } = await supabase
     .from("role_checklist_notes")
-    .select("checklist_key, note, events!inner(id, name, event_type, event_date, deleted_at)")
+    .select("checklist_key, note, events!inner(id, name, event_type, event_date, estimated_guests, deleted_at)")
     .not("note", "is", null)
     .neq("note", "")
     .is("events.deleted_at", null)
@@ -63,7 +73,7 @@ export default async function ChecklistNotesPage() {
   const { data: summaryReportEventsRaw } = canReadSummaryReport
     ? await supabase
         .from("events")
-        .select("id, name, event_type, event_date, report_summary, report_general_notes")
+        .select("id, name, event_type, event_date, estimated_guests, report_summary, report_general_notes")
         .is("deleted_at", null)
         .gte("event_date", tenDaysAgo)
         .lte("event_date", today)
@@ -109,6 +119,7 @@ export default async function ChecklistNotesPage() {
                       <span className="text-foreground/60">
                         {" "}
                         · {EVENT_TYPE_LABELS[row.events!.event_type]} · {formatDate(row.events!.event_date)}
+                        {guestsLabel(row.events!.estimated_guests)}
                       </span>
                     </p>
                     <p className="mt-1 whitespace-pre-wrap text-sm">{row.note}</p>
@@ -140,6 +151,7 @@ export default async function ChecklistNotesPage() {
                     <span className="text-foreground/60">
                       {" "}
                       · {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+                      {guestsLabel(event.estimated_guests)}
                     </span>
                   </p>
                   {event.report_summary && (

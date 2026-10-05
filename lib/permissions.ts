@@ -22,7 +22,7 @@ export const RESOURCES = [
 export type Resource = (typeof RESOURCES)[number];
 
 export const RESOURCE_LABELS: Record<Resource, string> = {
-  events: "סקירה",
+  events: "אירועים (סקירה)",
   tasks: "משימות",
   timeline: "לוח זמנים",
   guests: "אורחים",
