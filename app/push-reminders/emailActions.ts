@@ -7,10 +7,9 @@ import { canWrite } from "@/lib/permissions";
 import { sendReminderEmail } from "@/lib/reminderEmail";
 import { renderEmailBody, renderEmailSubject, splitEmails, type EmailReminderEvent } from "@/lib/emailReminders";
 import { draftEmailRule, type EmailRuleDraft } from "@/lib/ruleDraft";
-import type { EmailReminderAnchor, EmailReminderCondition } from "@/lib/types";
+import type { EmailReminderAnchor } from "@/lib/types";
 
 const ANCHORS: EmailReminderAnchor[] = ["couple_meeting_date", "event_date"];
-const CONDITIONS: EmailReminderCondition[] = ["none", "additional_info_filled", "supplier_dj_tzach_ziv"];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function assertCanManage() {
@@ -59,16 +58,16 @@ function readEmailRuleFields(formData: FormData) {
   if (!["any", "morning", "evening"].includes(runWindowRaw)) throw new Error("יש לבחור שעת שליחה");
   const runWindow = runWindowRaw === "any" ? null : (runWindowRaw as "morning" | "evening");
 
-  const condition = String(formData.get("condition") ?? "none") as EmailReminderCondition;
-  if (!CONDITIONS.includes(condition)) throw new Error("התנאי אינו תקין");
-
   const extraEmails = splitEmails(String(formData.get("extra_emails") ?? ""));
   const invalid = extraEmails.find((email) => !EMAIL_PATTERN.test(email));
   if (invalid) throw new Error(`כתובת אימייל לא תקינה: ${invalid}`);
 
   const toEventManager = formData.get("to_event_manager") === "on";
+  const toFloorManager = formData.get("to_floor_manager") === "on";
   const toSalesperson = formData.get("to_salesperson") === "on";
-  if (!toEventManager && !toSalesperson && extraEmails.length === 0) {
+  const roleIds = formData.getAll("recipient_role_ids").map(String).filter(Boolean);
+  const staffIds = formData.getAll("recipient_staff_ids").map(String).filter(Boolean);
+  if (!toEventManager && !toFloorManager && !toSalesperson && roleIds.length === 0 && staffIds.length === 0 && extraEmails.length === 0) {
     throw new Error("יש לבחור לפחות נמען אחד");
   }
 
@@ -79,9 +78,11 @@ function readEmailRuleFields(formData: FormData) {
     fallback_offset_days: fallbackOffsetDays,
     match_mode: matchMode,
     run_window: runWindow,
-    condition,
     to_event_manager: toEventManager,
+    to_floor_manager: toFloorManager,
     to_salesperson: toSalesperson,
+    recipient_role_ids: roleIds,
+    recipient_staff_ids: staffIds,
     extra_emails: extraEmails.length > 0 ? extraEmails.join(", ") : null,
     subject,
     body,
@@ -160,5 +161,11 @@ export async function draftEmailRuleFromText(request: string): Promise<EmailRule
   const text = request.trim();
   if (!text) throw new Error("יש לכתוב מה התזכורת צריכה לעשות");
   if (text.length > 1000) throw new Error("התיאור ארוך מדי");
-  return draftEmailRule(text);
+
+  const supabase = await createClient();
+  const [{ data: roles }, { data: staff }] = await Promise.all([
+    supabase.from("roles").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
+    supabase.from("staff").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
+  ]);
+  return draftEmailRule(text, { roles: roles ?? [], staff: staff ?? [] });
 }

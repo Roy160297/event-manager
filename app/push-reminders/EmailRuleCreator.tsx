@@ -11,10 +11,14 @@ const MISSING_HIGHLIGHT =
   "[&_input:required:invalid]:border-red-400 [&_select:required:invalid]:border-red-400 [&_textarea:required:invalid]:border-red-400";
 
 export function EmailRuleCreator({
+  roles,
+  staff,
   inputClass,
   labelClass,
   createAction,
 }: {
+  roles: { id: string; name: string }[];
+  staff: { id: string; name: string }[];
   inputClass: string;
   labelClass: string;
   createAction: (formData: FormData) => Promise<string | void>;
@@ -53,12 +57,12 @@ export function EmailRuleCreator({
     <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
       <div className="flex flex-col gap-2">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">תארו במילים את התזכורת</span>
+          <span className="font-medium">תארו במלל חופשי את התזכורת שתרצו ליצור</span>
           <textarea
             value={request}
             onChange={(e) => setRequest(e.target.value)}
             rows={2}
-            placeholder="למשל: שלח לי אימייל יומיים לפני כל אירוע שבו הדיג'י הוא צח זיו, שיזכיר לעדכן את הסקיצה"
+            placeholder="למשל: שלח למנהל האירוע יום לפני האירוע תזכורת לוודא שכל הציוד מוכן"
             className={inputClass}
           />
         </label>
@@ -89,7 +93,7 @@ export function EmailRuleCreator({
           </p>
         )}
         <div className="grid gap-3 sm:grid-cols-2">
-          <EmailRuleFields values={draft ?? undefined} inputClass={inputClass} labelClass={labelClass} />
+          <EmailRuleFields values={draft ?? undefined} roles={roles} staff={staff} inputClass={inputClass} labelClass={labelClass} />
         </div>
         <button
           type="submit"

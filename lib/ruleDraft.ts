@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { EMAIL_PLACEHOLDERS } from "@/lib/emailReminders";
-import type { EmailReminderAnchor, EmailReminderCondition, PushReminderRecipientType } from "@/lib/types";
+import type { EmailReminderAnchor, PushReminderRecipientType } from "@/lib/types";
 
 // Free text -> a draft push notification / email reminder, for the "describe
 // it in a sentence" box on the reminders page. The model only fills a draft:
@@ -135,9 +135,11 @@ export interface EmailRuleDraft {
   fallback_offset_days: number | null;
   match_mode: "exact" | "on_or_after" | null;
   run_window: "any" | "morning" | "evening" | null;
-  condition: EmailReminderCondition | null;
   to_event_manager: boolean | null;
+  to_floor_manager: boolean | null;
   to_salesperson: boolean | null;
+  recipient_role_ids: string[];
+  recipient_staff_ids: string[];
   extra_emails: string | null;
   subject: string | null;
   body: string | null;
@@ -147,7 +149,6 @@ export interface EmailRuleDraft {
 const EMAIL_ANCHORS = ["event_date", "couple_meeting_date"] as const;
 const EMAIL_MATCH_MODES = ["exact", "on_or_after"] as const;
 const EMAIL_RUN_WINDOWS = ["any", "morning", "evening"] as const;
-const EMAIL_CONDITIONS = ["none", "additional_info_filled", "supplier_dj_tzach_ziv"] as const;
 const EMAIL_FALLBACK_MODES = ["skip", "event"] as const;
 
 const EMAIL_SCHEMA = {
@@ -160,16 +161,21 @@ const EMAIL_SCHEMA = {
     fallback_offset_days: { type: Type.INTEGER, nullable: true },
     match_mode: { type: Type.STRING, enum: [...EMAIL_MATCH_MODES], nullable: true },
     run_window: { type: Type.STRING, enum: [...EMAIL_RUN_WINDOWS], nullable: true },
-    condition: { type: Type.STRING, enum: [...EMAIL_CONDITIONS], nullable: true },
     to_event_manager: { type: Type.BOOLEAN, nullable: true },
+    to_floor_manager: { type: Type.BOOLEAN, nullable: true },
     to_salesperson: { type: Type.BOOLEAN, nullable: true },
+    recipient_role_names: { type: Type.ARRAY, items: { type: Type.STRING } },
+    recipient_staff_names: { type: Type.ARRAY, items: { type: Type.STRING } },
     extra_emails: { type: Type.STRING, nullable: true },
     subject: { type: Type.STRING, nullable: true },
     body: { type: Type.STRING, nullable: true },
   },
 };
 
-export async function draftEmailRule(request: string): Promise<EmailRuleDraft> {
+export async function draftEmailRule(
+  request: string,
+  context: { roles: { id: string; name: string }[]; staff: { id: string; name: string }[] },
+): Promise<EmailRuleDraft> {
   const placeholders = Object.entries(EMAIL_PLACEHOLDERS)
     .map(([key, label]) => `{${key}} = ${label}`)
     .join(", ");
@@ -186,8 +192,9 @@ Fill these fields (null for anything the request does not say, except where a de
 - fallback_offset_days: when fallback_mode is "event", the days relative to the EVENT date (e.g. -7); otherwise null.
 - match_mode: "exact" (send only on exactly that day) or "on_or_after" (send once, even if the day already passed). Default "exact" unless the request says otherwise.
 - run_window: "any", "morning" or "evening". Default "any" unless the request says morning/evening.
-- condition: "none", "additional_info_filled" (only if the event's additional info was filled in) or "supplier_dj_tzach_ziv". Default "none" unless the request states a condition.
-- to_event_manager / to_salesperson: true/false ONLY if the request says who receives it (the event's manager / the event's salesperson); null if it does not say who. If it names specific people, set both to false.
+- to_event_manager / to_floor_manager / to_salesperson: true if the request says the event's manager / the event's floor manager (מנהל פלור) / the event's salesperson (איש מכירות) receives it; otherwise null.
+- recipient_role_names: roles whose every member should receive it, as written in the request (known roles: ${context.roles.map((r) => r.name).join(", ")}); [] if none.
+- recipient_staff_names: specific people who should receive it, as written (known staff: ${context.staff.map((m) => m.name).join(", ")}); [] if none.
 - extra_emails: comma-separated email addresses written in the request; null if none were written.
 - subject: the email subject in Hebrew. You may use placeholders.
 - body: the email text in Hebrew; use real line breaks and "• " at the start of list lines. Use placeholders for event data instead of writing it out. Placeholders: ${placeholders}.`;
@@ -197,6 +204,9 @@ Fill these fields (null for anything the request does not say, except where a de
   const fallbackMode = anchor === "couple_meeting_date" ? oneOf(raw.fallback_mode, EMAIL_FALLBACK_MODES) : null;
   const fallbackOffset = fallbackMode === "event" ? integer(raw.fallback_offset_days) : null;
   const extraEmails = text(raw.extra_emails);
+  const namesOf = (value: unknown) => (Array.isArray(value) ? value.map(text).filter((name): name is string => !!name) : []);
+  const idsOf = (names: string[], list: { id: string; name: string }[]) =>
+    [...new Set(names.map((name) => matchByName(name, list)).filter((id): id is string => !!id))];
 
   const draft: EmailRuleDraft = {
     title: text(raw.title),
@@ -206,9 +216,11 @@ Fill these fields (null for anything the request does not say, except where a de
     fallback_offset_days: fallbackOffset,
     match_mode: oneOf(raw.match_mode, EMAIL_MATCH_MODES),
     run_window: oneOf(raw.run_window, EMAIL_RUN_WINDOWS),
-    condition: oneOf(raw.condition, EMAIL_CONDITIONS),
-    to_event_manager: typeof raw.to_event_manager === "boolean" ? raw.to_event_manager : null,
-    to_salesperson: typeof raw.to_salesperson === "boolean" ? raw.to_salesperson : null,
+    to_event_manager: raw.to_event_manager === true ? true : null,
+    to_floor_manager: raw.to_floor_manager === true ? true : null,
+    to_salesperson: raw.to_salesperson === true ? true : null,
+    recipient_role_ids: idsOf(namesOf(raw.recipient_role_names), context.roles),
+    recipient_staff_ids: idsOf(namesOf(raw.recipient_staff_names), context.staff),
     extra_emails: extraEmails,
     subject: text(raw.subject),
     body: text(raw.body),
@@ -221,8 +233,13 @@ Fill these fields (null for anything the request does not say, except where a de
   if (draft.fallback_mode === "event" && draft.fallback_offset_days === null) draft.missing.push("ימים ביחס לתאריך האירוע");
   if (!draft.match_mode) draft.missing.push("אם המועד כבר עבר");
   if (!draft.run_window) draft.missing.push("שעת שליחה");
-  if (!draft.condition) draft.missing.push("תנאי");
-  const hasRecipient = draft.to_event_manager || draft.to_salesperson || !!draft.extra_emails;
+  const hasRecipient =
+    draft.to_event_manager ||
+    draft.to_floor_manager ||
+    draft.to_salesperson ||
+    draft.recipient_role_ids.length > 0 ||
+    draft.recipient_staff_ids.length > 0 ||
+    !!draft.extra_emails;
   if (!hasRecipient) draft.missing.push("נמענים");
   if (!draft.subject) draft.missing.push("נושא האימייל");
   if (!draft.body) draft.missing.push("תוכן האימייל");

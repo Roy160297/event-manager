@@ -5,6 +5,8 @@ import {
   emailRuleRecipients,
   isEmailRuleConditionMet,
   loadActiveEmailReminderRules,
+  loadStaffDirectory,
+  type StaffDirectoryEntry,
   renderEmailBody,
   renderEmailSubject,
   resolveEmailTargetDate,
@@ -26,6 +28,9 @@ type ReminderableEvent = Pick<
   | "gluten_free_meal_count"
   | "toddlers_under_2_count"
   | "menu_notes"
+  | "manager_id"
+  | "floor_manager_id"
+  | "sales_person_id"
 >;
 
 // Shared by the daily cron route (app/api/cron/couple-meeting-reminders) and
@@ -37,19 +42,19 @@ type ReminderableEvent = Pick<
 export async function sendDueReminders(
   supabase: ReturnType<typeof createAdminClient>,
   event: ReminderableEvent,
-  managerEmail: string | null | undefined,
   // Which daily cron pass is calling this (see vercel.json - morning and
   // evening passes). The immediate post-save check has no real "pass" of its
   // own, so it's treated as the morning one - see the run_window rule field.
   pass: "morning" | "evening" = "morning",
-  salespersonEmail?: string | null,
   rules?: EmailReminderRuleRow[],
+  directory?: StaffDirectoryEntry[],
 ): Promise<{ sent: number; skippedAlreadySent: number }> {
   // Business events don't have a couple/wedding flow, so none of these
   // couple-meeting-anchored reminder rules are relevant to them.
   if (event.event_type === "business_event") return { sent: 0, skippedAlreadySent: 0 };
 
   const activeRules = rules ?? (await loadActiveEmailReminderRules(supabase));
+  const staffDirectory = directory ?? (await loadStaffDirectory(supabase));
   const today = todayInIsrael();
   let sent = 0;
   let skippedAlreadySent = 0;
@@ -75,7 +80,7 @@ export async function sendDueReminders(
 
     if (!(await isEmailRuleConditionMet(rule, event, supabase))) continue;
 
-    const recipients = emailRuleRecipients(rule, managerEmail, salespersonEmail);
+    const recipients = emailRuleRecipients(rule, event, staffDirectory);
     if (recipients.length === 0) continue;
     const to = recipients.join(", ");
 
@@ -137,14 +142,14 @@ export async function checkRemindersForEvent(eventId: string): Promise<void> {
     const supabase = createAdminClient();
     const { data: event } = await supabase
       .from("events")
-      .select("*, staff!manager_id(email), sales:staff!sales_person_id(email)")
+      .select("*")
       .eq("id", eventId)
       .is("deleted_at", null)
-      .returns<(EventRow & { staff: { email: string | null } | null; sales: { email: string | null } | null })[]>()
+      .returns<EventRow[]>()
       .maybeSingle();
 
     if (!event) return;
-    await sendDueReminders(supabase, event, event.staff?.email, "morning", event.sales?.email);
+    await sendDueReminders(supabase, event);
   } catch (err) {
     // Swallow - see comment above - but still log so a broken admin client
     // (e.g. missing SUPABASE_SERVICE_ROLE_KEY) doesn't fail invisibly.

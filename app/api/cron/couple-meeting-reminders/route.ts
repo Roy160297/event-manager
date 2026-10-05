@@ -1,12 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendDueReminders } from "@/lib/reminderRunner";
-import { loadActiveEmailReminderRules } from "@/lib/emailReminders";
-import type { EventRow, StaffRow } from "@/lib/types";
-
-type EventWithManager = EventRow & {
-  staff: Pick<StaffRow, "email"> | null;
-  sales: Pick<StaffRow, "email"> | null;
-};
+import { loadActiveEmailReminderRules, loadStaffDirectory } from "@/lib/emailReminders";
+import type { EventRow } from "@/lib/types";
 
 // Triggered twice daily by Vercel Cron (see vercel.json) - a morning pass and
 // an evening pass, distinguished by a "?pass=evening" query param on the
@@ -31,22 +26,23 @@ export async function GET(request: Request) {
     const supabase = createAdminClient();
     const { data: events, error } = await supabase
       .from("events")
-      .select("*, staff!manager_id(email), sales:staff!sales_person_id(email)")
+      .select("*")
       .is("deleted_at", null)
-      .returns<EventWithManager[]>();
+      .returns<EventRow[]>();
 
     if (error) {
       return Response.json({ error: error.message }, { status: 500 });
     }
 
     const rules = await loadActiveEmailReminderRules(supabase);
+    const directory = await loadStaffDirectory(supabase);
 
     let sent = 0;
     let skippedAlreadySent = 0;
 
     for (const event of events ?? []) {
       try {
-        const result = await sendDueReminders(supabase, event, event.staff?.email, pass, event.sales?.email, rules);
+        const result = await sendDueReminders(supabase, event, pass, rules, directory);
         sent += result.sent;
         skippedAlreadySent += result.skippedAlreadySent;
       } catch (err) {

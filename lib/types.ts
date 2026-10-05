@@ -303,7 +303,10 @@ export interface EmailReminderRuleRow {
   run_window: "morning" | "evening" | null;
   condition: EmailReminderCondition;
   to_event_manager: boolean;
+  to_floor_manager: boolean;
   to_salesperson: boolean;
+  recipient_role_ids: string[];
+  recipient_staff_ids: string[];
   extra_emails: string | null;
   subject: string;
   body: string;

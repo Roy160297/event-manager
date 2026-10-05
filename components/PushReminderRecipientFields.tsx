@@ -5,7 +5,7 @@ import type { PushReminderRecipientType } from "@/lib/types";
 
 const RECIPIENT_LABELS: Record<PushReminderRecipientType, string> = {
   event_manager: "מנהל האירוע",
-  floor_manager: "מנהל הפלור של האירוע",
+  floor_manager: "מנהל הפלור",
   role: "כל מי שבתפקיד...",
   fixed_staff: "איש צוות קבוע",
 };

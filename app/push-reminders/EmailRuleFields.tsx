@@ -1,16 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { EmailReminderAnchor, EmailReminderCondition } from "@/lib/types";
+import type { EmailReminderAnchor } from "@/lib/types";
 
-export const CONDITION_LABELS: Record<EmailReminderCondition, string> = {
-  none: "ללא תנאי",
-  additional_info_filled: "רק אם מולא מידע נוסף באירוע",
-  supplier_dj_tzach_ziv: "רק אם הדיג'י באירוע הוא צח זיו",
-};
-
-// Form values for one email rule; every field is required, so an empty value
-// means "not chosen yet" (a blank new rule, or something an AI draft left out).
+// Form values for one email rule; every field is required (except the
+// recipients, where at least one of the options is), so an empty value means
+// "not chosen yet" - a blank new rule, or something an AI draft left out.
 export interface EmailRuleValues {
   title?: string | null;
   anchor?: EmailReminderAnchor | null;
@@ -19,20 +14,29 @@ export interface EmailRuleValues {
   fallback_offset_days?: number | null;
   match_mode?: "exact" | "on_or_after" | null;
   run_window?: "any" | "morning" | "evening" | null;
-  condition?: EmailReminderCondition | null;
   to_event_manager?: boolean | null;
+  to_floor_manager?: boolean | null;
   to_salesperson?: boolean | null;
+  recipient_role_ids?: string[] | null;
+  recipient_staff_ids?: string[] | null;
   extra_emails?: string | null;
   subject?: string | null;
   body?: string | null;
 }
 
+const chipClass =
+  "flex items-center gap-1.5 rounded-full border border-border-classic bg-background px-3 py-1 text-sm";
+
 export function EmailRuleFields({
   values,
+  roles,
+  staff,
   inputClass,
   labelClass,
 }: {
   values?: EmailRuleValues;
+  roles: { id: string; name: string }[];
+  staff: { id: string; name: string }[];
   inputClass: string;
   labelClass: string;
 }) {
@@ -43,7 +47,7 @@ export function EmailRuleFields({
     <>
       <label className={`${labelClass} sm:col-span-2`}>
         <span>שם פנימי</span>
-        <input name="title" defaultValue={values?.title ?? ""} placeholder="למשל: תזכורת לעדכון סקיצה" required className={inputClass} />
+        <input name="title" defaultValue={values?.title ?? ""} placeholder="למשל: תזכורת לוודא ציוד" required className={inputClass} />
       </label>
       <label className={labelClass}>
         <span>נשלח ביחס ל...</span>
@@ -58,6 +62,9 @@ export function EmailRuleFields({
       <label className={labelClass}>
         <span>מספר ימים (שלילי = לפני, חיובי = אחרי, 0 = באותו יום)</span>
         <input name="offset_days" type="number" step={1} defaultValue={values?.offset_days ?? ""} placeholder="-1" required className={inputClass} />
+        <span className="text-xs text-foreground/50">
+          כך נקבע &quot;היום המתאים&quot; לשליחה: למשל -1 ביחס לתאריך האירוע = יום לפני האירוע.
+        </span>
       </label>
 
       {anchor === "couple_meeting_date" && (
@@ -96,13 +103,13 @@ export function EmailRuleFields({
       )}
 
       <label className={labelClass}>
-        <span>אם המועד כבר עבר</span>
+        <span>אם היום המתאים כבר עבר (למשל האירוע נוצר באיחור)</span>
         <select name="match_mode" defaultValue={values?.match_mode ?? ""} required className={inputClass}>
           <option value="" disabled>
             בחרו
           </option>
-          <option value="exact">לשלוח רק בדיוק ביום המתאים</option>
-          <option value="on_or_after">לשלוח פעם אחת ביום המתאים או אחריו</option>
+          <option value="exact">לא לשלוח</option>
+          <option value="on_or_after">לשלוח מיד, פעם אחת</option>
         </select>
       </label>
       <label className={labelClass}>
@@ -111,39 +118,72 @@ export function EmailRuleFields({
           <option value="" disabled>
             בחרו
           </option>
-          <option value="any">בכל ריצה של המערכת</option>
-          <option value="morning">בבוקר</option>
-          <option value="evening">בערב</option>
+          <option value="any">בכל ריצה (בוקר ≈08:00 או ערב ≈18:00, או מיד בשמירת אירוע)</option>
+          <option value="morning">בבוקר (≈08:00)</option>
+          <option value="evening">בערב (≈18:00)</option>
         </select>
+        <span className="text-xs text-foreground/50">
+          שעון ישראל. המערכת בודקת פעמיים ביום, בחורף כשעה מוקדם יותר (≈07:00 ו-≈17:00).
+        </span>
       </label>
-      <label className={labelClass}>
-        <span>תנאי</span>
-        <select name="condition" defaultValue={values?.condition ?? ""} required className={inputClass}>
-          <option value="" disabled>
-            בחרו
-          </option>
-          {Object.entries(CONDITION_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <fieldset className="flex flex-col gap-1 text-sm sm:col-span-2">
+
+      <fieldset className="flex flex-col gap-2 text-sm sm:col-span-2">
         <legend className="mb-1">נמענים (לפחות אחד)</legend>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="to_event_manager" defaultChecked={values?.to_event_manager ?? false} />
-          <span>מנהל האירוע</span>
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="to_salesperson" defaultChecked={values?.to_salesperson ?? false} />
-          <span>איש המכירות של האירוע</span>
-        </label>
-        <label className={`${labelClass} mt-1`}>
+        <div className="flex flex-wrap gap-2">
+          <label className={chipClass}>
+            <input type="checkbox" name="to_event_manager" defaultChecked={values?.to_event_manager ?? false} />
+            <span>מנהל האירוע</span>
+          </label>
+          <label className={chipClass}>
+            <input type="checkbox" name="to_floor_manager" defaultChecked={values?.to_floor_manager ?? false} />
+            <span>מנהל הפלור</span>
+          </label>
+          <label className={chipClass}>
+            <input type="checkbox" name="to_salesperson" defaultChecked={values?.to_salesperson ?? false} />
+            <span>איש המכירות של האירוע</span>
+          </label>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-foreground/70">כל מי שבתפקיד:</span>
+          <div className="flex flex-wrap gap-2">
+            {roles.map((role) => (
+              <label key={role.id} className={chipClass}>
+                <input
+                  type="checkbox"
+                  name="recipient_role_ids"
+                  value={role.id}
+                  defaultChecked={values?.recipient_role_ids?.includes(role.id) ?? false}
+                />
+                <span>{role.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-foreground/70">אנשי צוות:</span>
+          <div className="flex flex-wrap gap-2">
+            {staff.map((member) => (
+              <label key={member.id} className={chipClass}>
+                <input
+                  type="checkbox"
+                  name="recipient_staff_ids"
+                  value={member.id}
+                  defaultChecked={values?.recipient_staff_ids?.includes(member.id) ?? false}
+                />
+                <span>{member.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <label className={labelClass}>
           <span>כתובות נוספות (מופרדות בפסיק)</span>
           <input name="extra_emails" defaultValue={values?.extra_emails ?? ""} placeholder="name@example.com, other@example.com" className={inputClass} />
         </label>
       </fieldset>
+
       <label className={`${labelClass} sm:col-span-2`}>
         <span>נושא האימייל</span>
         <input name="subject" defaultValue={values?.subject ?? ""} required className={inputClass} />

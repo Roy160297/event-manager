@@ -58,7 +58,7 @@ export function PushRuleCreator({
     <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
       <div className="flex flex-col gap-2">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">תארו במילים את ההתראה</span>
+          <span className="font-medium">תארו במלל חופשי את ההתראה שתרצו ליצור</span>
           <textarea
             value={request}
             onChange={(e) => setRequest(e.target.value)}

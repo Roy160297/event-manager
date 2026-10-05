@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDaysToDate } from "@/lib/coupleMeetingReminders";
 import { hasDjTzachZivSupplier } from "@/lib/djSketchReminder";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
-import type { EmailReminderRuleRow, EventType } from "@/lib/types";
+import type { EmailReminderCondition, EmailReminderRuleRow, EventType } from "@/lib/types";
 
 // The event fields a reminder's due date, condition or text can draw on.
 export interface EmailReminderEvent {
@@ -20,6 +20,12 @@ export interface EmailReminderEvent {
   toddlers_under_2_count: string | null;
   menu_notes: string | null;
 }
+
+export const CONDITION_LABELS: Record<EmailReminderCondition, string> = {
+  none: "ללא תנאי",
+  additional_info_filled: "רק אם מולא מידע נוסף באירוע",
+  supplier_dj_tzach_ziv: "רק אם הדיג'י באירוע הוא צח זיו",
+};
 
 // {placeholder} -> description, shown as help on the management page.
 export const EMAIL_PLACEHOLDERS: Record<string, string> = {
@@ -113,15 +119,39 @@ export function splitEmails(value: string | null | undefined): string[] {
     .filter(Boolean);
 }
 
+export interface StaffDirectoryEntry {
+  id: string;
+  email: string | null;
+  role_id: string | null;
+}
+
+export async function loadStaffDirectory(supabase: SupabaseClient): Promise<StaffDirectoryEntry[]> {
+  const { data, error } = await supabase.from("staff").select("id, email, role_id").returns<StaffDirectoryEntry[]>();
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+// Everyone a rule should email for this event: the roles of the event itself
+// (manager / floor manager / salesperson), every member of the chosen roles,
+// the chosen staff members and any typed-in addresses - de-duplicated.
 export function emailRuleRecipients(
-  rule: Pick<EmailReminderRuleRow, "to_event_manager" | "to_salesperson" | "extra_emails">,
-  managerEmail: string | null | undefined,
-  salespersonEmail: string | null | undefined,
+  rule: Pick<
+    EmailReminderRuleRow,
+    "to_event_manager" | "to_floor_manager" | "to_salesperson" | "recipient_role_ids" | "recipient_staff_ids" | "extra_emails"
+  >,
+  event: { manager_id: string | null; floor_manager_id: string | null; sales_person_id: string | null },
+  directory: StaffDirectoryEntry[],
 ): string[] {
-  const recipients = [...splitEmails(rule.extra_emails)];
-  if (rule.to_event_manager && managerEmail) recipients.push(managerEmail);
-  if (rule.to_salesperson && salespersonEmail) recipients.push(salespersonEmail);
-  return [...new Set(recipients)];
+  const emailOf = (staffId: string | null) => directory.find((member) => member.id === staffId)?.email ?? null;
+  const recipients: (string | null)[] = [...splitEmails(rule.extra_emails)];
+  if (rule.to_event_manager) recipients.push(emailOf(event.manager_id));
+  if (rule.to_floor_manager) recipients.push(emailOf(event.floor_manager_id));
+  if (rule.to_salesperson) recipients.push(emailOf(event.sales_person_id));
+  for (const member of directory) {
+    if (rule.recipient_staff_ids.includes(member.id)) recipients.push(member.email);
+    if (member.role_id && rule.recipient_role_ids.includes(member.role_id)) recipients.push(member.email);
+  }
+  return [...new Set(recipients.filter((email): email is string => !!email))];
 }
 
 export async function loadActiveEmailReminderRules(supabase: SupabaseClient): Promise<EmailReminderRuleRow[]> {

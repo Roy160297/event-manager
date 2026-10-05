@@ -79,17 +79,32 @@ describe("rendering", () => {
 });
 
 describe("emailRuleRecipients", () => {
-  it("combines the extra addresses with the manager and salesperson, without duplicates", () => {
-    const rule = { to_event_manager: true, to_salesperson: true, extra_emails: "a@x.com, b@x.com;a@x.com" };
-    expect(emailRuleRecipients(rule, "m@x.com", "s@x.com")).toEqual(["a@x.com", "b@x.com", "m@x.com", "s@x.com"]);
+  const directory = [
+    { id: "m", email: "m@x.com", role_id: "r-manager" },
+    { id: "f", email: "f@x.com", role_id: "r-floor" },
+    { id: "s", email: "s@x.com", role_id: "r-sales" },
+    { id: "b", email: "b@x.com", role_id: "r-bar" },
+    { id: "nomail", email: null, role_id: "r-bar" },
+  ];
+  const event = { manager_id: "m", floor_manager_id: "f", sales_person_id: "s" };
+  const none = { to_event_manager: false, to_floor_manager: false, to_salesperson: false, recipient_role_ids: [], recipient_staff_ids: [], extra_emails: null };
+
+  it("picks the event's manager, floor manager and salesperson", () => {
+    const rule = { ...none, to_event_manager: true, to_floor_manager: true, to_salesperson: true };
+    expect(emailRuleRecipients(rule, event, directory)).toEqual(["m@x.com", "f@x.com", "s@x.com"]);
   });
 
-  it("skips a missing manager/salesperson email", () => {
-    const rule = { to_event_manager: true, to_salesperson: true, extra_emails: null };
-    expect(emailRuleRecipients(rule, null, undefined)).toEqual([]);
+  it("adds everyone in the chosen roles, chosen staff and typed addresses, without duplicates", () => {
+    const rule = { ...none, to_event_manager: true, recipient_role_ids: ["r-bar"], recipient_staff_ids: ["m"], extra_emails: "a@x.com, a@x.com" };
+    expect(emailRuleRecipients(rule, event, directory)).toEqual(["a@x.com", "m@x.com", "b@x.com"]);
   });
 
-  it("splits on commas, semicolons and whitespace", () => {
+  it("skips people without an email and events without that role assigned", () => {
+    const rule = { ...none, to_floor_manager: true, recipient_staff_ids: ["nomail"] };
+    expect(emailRuleRecipients(rule, { ...event, floor_manager_id: null }, directory)).toEqual([]);
+  });
+
+  it("splits typed addresses on commas, semicolons and whitespace", () => {
     expect(splitEmails(" a@x.com ,b@x.com; c@x.com ")).toEqual(["a@x.com", "b@x.com", "c@x.com"]);
   });
 });

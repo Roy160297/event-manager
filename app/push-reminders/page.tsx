@@ -18,7 +18,7 @@ import type { EmailReminderRuleRow, PushReminderRuleRow } from "@/lib/types";
 
 const RECIPIENT_SUMMARY_LABELS: Record<PushReminderRuleRow["recipient_type"], string> = {
   event_manager: "מנהל האירוע",
-  floor_manager: "מנהל הפלור של האירוע",
+  floor_manager: "מנהל הפלור",
   role: "תפקיד",
   fixed_staff: "איש צוות",
 };
@@ -103,6 +103,7 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
       {tab === "push" && (
         <>
       <div className="flex flex-col gap-1">
+        <h2 className="text-xl font-bold">התראות אוטומטיות לטלפון</h2>
         <p className="text-sm text-foreground/80">
           כל שורה מגדירה תזכורת שנשלחת כפוש בטלפון, מספר דקות לפני/אחרי שלב מסוים בלוח הזמנים של האירוע (למשל
           &quot;20 דקות לפני חופה&quot;), לנמען שבוחרים.
@@ -248,7 +249,7 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
 
       {tab === "email" && (
         <EmailRulesSection
-          rules={emailRules ?? []}
+          rules={emailRules ?? []} roles={roleList} staff={staffList}
           canWriteRules={canWriteRules}
           inputClass={inputClass}
           labelClass={labelClass}
