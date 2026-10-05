@@ -46,7 +46,7 @@ export function MainNav({
 
   return (
     <nav>
-      <ul className="flex flex-wrap justify-center gap-2">
+      <ul className="grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:justify-center sm:gap-1">
         {links.map((link) => {
           const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
           return (
@@ -56,11 +56,11 @@ export function MainNav({
                 aria-current={isActive ? "page" : undefined}
                 className={
                   isActive
-                    ? "flex items-center gap-1.5 whitespace-nowrap rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-foreground"
-                    : "flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-1.5 text-sm text-foreground/70 hover:bg-accent-soft hover:text-foreground"
+                    ? "flex flex-col items-center gap-1 rounded-xl bg-accent px-1 py-2 text-center text-xs font-semibold leading-tight text-accent-foreground sm:flex-row sm:gap-1.5 sm:whitespace-nowrap sm:rounded-full sm:px-3 sm:py-1.5 sm:text-sm"
+                    : "flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-center text-xs leading-tight text-foreground/70 hover:bg-accent-soft hover:text-foreground sm:flex-row sm:gap-1.5 sm:whitespace-nowrap sm:rounded-full sm:px-3 sm:py-1.5 sm:text-sm"
                 }
               >
-                <NavIcon name={link.icon} className="h-4 w-4 shrink-0" />
+                <NavIcon name={link.icon} className="h-5 w-5 shrink-0 sm:h-4 sm:w-4" />
                 {link.label}
               </Link>
             </li>
