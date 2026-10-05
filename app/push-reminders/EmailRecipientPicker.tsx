@@ -17,7 +17,6 @@ interface RecipientValues {
 export interface StaffOption {
   id: string;
   name: string;
-  roleName?: string | null;
 }
 
 const EVENT_OPTIONS: Option[] = [
@@ -80,7 +79,6 @@ export function EmailRecipientPicker({
             .map((member) => (
               <option key={member.id} value={`staff:${member.id}`}>
                 {member.name}
-                {member.roleName ? ` (${member.roleName})` : ""}
               </option>
             ))}
         </optgroup>

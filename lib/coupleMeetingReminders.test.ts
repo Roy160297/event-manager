@@ -73,8 +73,15 @@ describe("rendering", () => {
     expect(html).toBe("אירוע <strong>שי קטש וגיל מזרחי</strong>:<br/>שורה ראשונה<br/>שורה &lt;שנייה&gt; &amp; עוד");
   });
 
+  it("adds the event automatically when the text never mentions its name", () => {
+    expect(renderEmailSubject("להעלות צ'ילר לחופה", event)).toBe("להעלות צ'ילר לחופה - שי קטש וגיל מזרחי");
+    expect(renderEmailBody("להעלות צ'ילר לחופה", event)).toBe(
+      "להעלות צ'ילר לחופה<br/><br/>האירוע: <strong>שי קטש וגיל מזרחי</strong> (בתאריך 14/08/2026)",
+    );
+  });
+
   it("shows a dash for empty counts and leaves unknown placeholders alone", () => {
-    expect(renderEmailBody("{glat_meal_count} {nope}", event)).toBe("— {nope}");
+    expect(renderEmailBody("{event_name} {glat_meal_count} {nope}", event)).toBe("<strong>שי קטש וגיל מזרחי</strong> — {nope}");
   });
 });
 

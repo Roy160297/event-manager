@@ -46,7 +46,7 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
       .order("created_at", { ascending: true })
       .returns<EmailReminderRuleRow[]>(),
     supabase.from("roles").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
-    supabase.from("staff").select("id, name, role_id").order("name").returns<{ id: string; name: string; role_id: string | null }[]>(),
+    supabase.from("staff").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
     getKnownTimelineStepLabels(),
   ]);
 
@@ -57,13 +57,6 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
 
   const roleList = roles ?? [];
   const staffList = staff ?? [];
-  // For the email-recipient dropdown, staff are shown with their position
-  // (e.g. "דותן (שף)") so it's easy to find "the chef" among them.
-  const emailStaffList = (staff ?? []).map((member) => ({
-    id: member.id,
-    name: member.name,
-    roleName: (member.role_id && roleList.find((role) => role.id === member.role_id)?.name) || null,
-  }));
   const roleNameById = new Map(roleList.map((role) => [role.id, role.name]));
   const staffNameById = new Map(staffList.map((member) => [member.id, member.name]));
 
@@ -256,7 +249,7 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
 
       {tab === "email" && (
         <EmailRulesSection
-          rules={emailRules ?? []} staff={emailStaffList}
+          rules={emailRules ?? []} staff={staffList}
           canWriteRules={canWriteRules}
           inputClass={inputClass}
           labelClass={labelClass}

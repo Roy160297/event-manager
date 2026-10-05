@@ -71,8 +71,14 @@ function replacePlaceholders(template: string, values: Record<string, string>, w
   return out + literal(template.slice(last));
 }
 
+// Reminders written as plain text ("להעלות צ'ילר לחופה") carry no placeholders,
+// and the reader would not know which event it is about - so when the text
+// doesn't mention the event name itself, the event is added automatically.
+const mentionsEventName = (template: string) => template.includes("{event_name}");
+
 export function renderEmailSubject(template: string, event: EmailReminderEvent): string {
-  return replacePlaceholders(template, emailPlaceholderValues(event), (_key, value) => value, (text) => text);
+  const withEvent = mentionsEventName(template) ? template : `${template} - {event_name}`;
+  return replacePlaceholders(withEvent, emailPlaceholderValues(event), (_key, value) => value, (text) => text);
 }
 
 const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -81,8 +87,9 @@ const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "
 // bolded, and line breaks (including inside the additional-info value) become
 // <br/>.
 export function renderEmailBody(template: string, event: EmailReminderEvent): string {
+  const withEvent = mentionsEventName(template) ? template : `${template}\n\nהאירוע: {event_name} (בתאריך {event_date})`;
   const html = replacePlaceholders(
-    template,
+    withEvent,
     emailPlaceholderValues(event),
     (key, value) => (key === "event_name" ? `<strong>${escapeHtml(value)}</strong>` : escapeHtml(value)),
     escapeHtml,
