@@ -117,7 +117,6 @@ export function EmailRuleFields({
           <option value="morning">בבוקר (בסביבות 08:00)</option>
           <option value="evening">בערב (בסביבות 18:00)</option>
         </select>
-        <span className="text-xs text-foreground/50">שעון ישראל.</span>
       </label>
 
       <fieldset className="flex flex-col gap-2 text-sm sm:col-span-2">
