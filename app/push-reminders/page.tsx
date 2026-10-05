@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
@@ -20,7 +21,14 @@ const RECIPIENT_SUMMARY_LABELS: Record<PushReminderRuleRow["recipient_type"], st
   fixed_staff: "איש צוות",
 };
 
-export default async function PushRemindersPage() {
+const TABS = [
+  { key: "push", label: "התראות פוש" },
+  { key: "email", label: "תזכורות באימייל" },
+] as const;
+
+export default async function PushRemindersPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab: tabParam } = await searchParams;
+  const tab: (typeof TABS)[number]["key"] = tabParam === "email" ? "email" : "push";
   const supabase = await createClient();
   const [currentStaff, { data: rules }, { data: emailRules }, { data: roles }, { data: staff }, knownStepLabels] =
     await Promise.all([
@@ -74,8 +82,29 @@ export default async function PushRemindersPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold">התראות ותזכורות</h1>
+        <nav className="flex gap-1 border-b border-border-classic">
+          {TABS.map((item) => (
+            <Link
+              key={item.key}
+              href={`/push-reminders?tab=${item.key}`}
+              aria-current={tab === item.key ? "page" : undefined}
+              className={
+                tab === item.key
+                  ? "border-b-2 border-accent px-3 py-2 text-sm font-medium text-accent"
+                  : "border-b-2 border-transparent px-3 py-2 text-sm hover:text-accent"
+              }
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+
+      {tab === "push" && (
+        <>
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold">התראות פוש</h1>
         <p className="text-sm text-foreground/80">
           כל שורה מגדירה תזכורת שנשלחת כפוש בטלפון, מספר דקות לפני/אחרי שלב מסוים בלוח הזמנים של האירוע (למשל
           &quot;20 דקות לפני חופה&quot;), לנמען שבוחרים.
@@ -259,15 +288,17 @@ export default async function PushRemindersPage() {
           );
         })}
       </ul>
+        </>
+      )}
 
-      <hr className="border-border-classic" />
-
-      <EmailRulesSection
-        rules={emailRules ?? []}
-        canWriteRules={canWriteRules}
-        inputClass={inputClass}
-        labelClass={labelClass}
-      />
+      {tab === "email" && (
+        <EmailRulesSection
+          rules={emailRules ?? []}
+          canWriteRules={canWriteRules}
+          inputClass={inputClass}
+          labelClass={labelClass}
+        />
+      )}
     </div>
   );
 }

@@ -32,7 +32,7 @@ export function MainNav({
   if (showChecklistNotes) extraLinks.push({ href: "/checklist-notes", label: "הערות וסיכומים" });
   if (showCoupleMeeting) extraLinks.push({ href: "/couple-meeting", label: "פגישה עם זוג" });
   if (showEventManagementDex) extraLinks.push({ href: "/event-management-dex", label: 'סד"פ ניהול אירוע' });
-  if (showPushReminders) extraLinks.push({ href: "/push-reminders", label: "התראות פוש" });
+  if (showPushReminders) extraLinks.push({ href: "/push-reminders", label: "התראות ותזכורות" });
 
   let links = [NAV_LINKS[0], ...extraLinks, NAV_LINKS[1]];
   if (showAdmin) links = [...links, { href: "/admin", label: "ניהול" }];
