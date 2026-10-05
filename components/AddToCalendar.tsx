@@ -24,10 +24,13 @@ export function AddToCalendar({
   monthLabel,
   icsUrl,
   events,
+  ownOnly = false,
 }: {
   monthLabel: string;
   icsUrl: string;
   events: CalendarPreviewEvent[];
+  // Event managers are offered only the events they manage.
+  ownOnly?: boolean;
 }) {
   const [target, setTarget] = useState<"google" | "apple" | null>(null);
 
@@ -67,11 +70,11 @@ export function AddToCalendar({
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="font-serif text-lg font-bold">
-              הוספה ליומן {target === "google" ? "גוגל" : "אפל"} - {monthLabel}
+              הוספה ליומן {target === "google" ? "גוגל" : "אפל"} - {monthLabel}{ownOnly ? " (האירועים שלך)" : ""}
             </h2>
 
             {events.length === 0 ? (
-              <p className="text-sm text-foreground/70">אין אירועים בחודש הזה.</p>
+              <p className="text-sm text-foreground/70">{ownOnly ? "אין לך אירועים בחודש הזה." : "אין אירועים בחודש הזה."}</p>
             ) : (
               <>
                 <p className="text-sm text-foreground/70">{events.length} אירועים יתווספו:</p>

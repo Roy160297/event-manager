@@ -4,6 +4,7 @@ import { canRead } from "@/lib/permissions";
 import { buildCalendarFeed, type FeedEvent } from "@/lib/calendarFeed";
 import { totalGuestCount } from "@/lib/guestCount";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { getEventManagerCandidates } from "@/lib/staff";
 import type { EventRow, StaffRow } from "@/lib/types";
 
 type EventWithManager = EventRow & { staff: Pick<StaffRow, "name"> | null };
@@ -27,16 +28,21 @@ export async function GET(request: Request) {
   const [year, monthNumber] = month.split("-").map(Number);
   const nextMonth = monthNumber === 12 ? `${year + 1}-01` : `${year}-${String(monthNumber + 1).padStart(2, "0")}`;
 
+  // Event managers get only the events they manage (same rule as the
+  // preview on the calendar page); everyone else with calendar access gets all.
+  const managerCandidates = await getEventManagerCandidates();
+  const isEventManager = managerCandidates.some((manager) => manager.id === currentStaff.id);
+
   const supabase = await createClient();
-  const { data: events, error } = await supabase
+  let query = supabase
     .from("events")
     .select("*, staff!manager_id(name)")
     .is("deleted_at", null)
     .neq("status", "canceled")
     .gte("event_date", `${month}-01`)
-    .lt("event_date", `${nextMonth}-01`)
-    .order("event_date", { ascending: true })
-    .returns<EventWithManager[]>();
+    .lt("event_date", `${nextMonth}-01`);
+  if (isEventManager) query = query.eq("manager_id", currentStaff.id);
+  const { data: events, error } = await query.order("event_date", { ascending: true }).returns<EventWithManager[]>();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
 

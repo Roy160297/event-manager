@@ -132,8 +132,11 @@ export default async function CalendarPage({
   // What the "add to calendar" preview lists and the .ics download contains
   // for this month (canceled events are left out of both).
   const hhmm = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  // An event manager only adds their own events; everyone else gets the lot.
+  const isEventManager = managerCandidates.some((manager) => manager.id === currentStaff.id);
   const previewEvents: CalendarPreviewEvent[] = (events ?? [])
     .filter((event) => event.status !== "canceled")
+    .filter((event) => !isEventManager || event.manager_id === currentStaff.id)
     .map((event) => ({
       id: event.id,
       dateLabel: formatDateWithWeekday(event.event_date),
@@ -169,6 +172,7 @@ export default async function CalendarPage({
           monthLabel={`${MONTH_LABELS[month - 1]} ${year}`}
           icsUrl={`/api/calendar/feed?month=${year}-${pad(month)}`}
           events={previewEvents}
+          ownOnly={isEventManager}
         />
 
         <CalendarGrid cells={cells} todayStr={todayStr} managerLegend={managerLegend} />
