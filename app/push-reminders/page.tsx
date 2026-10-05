@@ -104,7 +104,7 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
         <>
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-bold">התראות אוטומטיות לטלפון</h2>
-        <p className="text-sm text-foreground/80">
+        <p className="on-photo text-sm">
           כל שורה מגדירה תזכורת שנשלחת כפוש בטלפון, מספר דקות לפני/אחרי שלב מסוים בלוח הזמנים של האירוע (למשל
           &quot;20 דקות לפני חופה&quot;), לנמען שבוחרים.
         </p>
@@ -129,7 +129,7 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
         />
       )}
 
-      {(!rules || rules.length === 0) && <p className="text-foreground/60">עדיין לא הוגדרו התראות.</p>}
+      {(!rules || rules.length === 0) && <p className="on-photo">עדיין לא הוגדרו התראות.</p>}
 
       <ul className="flex flex-col gap-2">
         {rules?.map((rule) => {

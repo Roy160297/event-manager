@@ -73,7 +73,7 @@ export function EmailRulesSection({
     <section className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-bold">תזכורות אוטומטיות באימייל</h2>
-        <p className="text-sm text-foreground/80">
+        <p className="on-photo text-sm">
           כל שורה מגדירה אימייל שנשלח אוטומטית בתאריך שנגזר מהאירוע (למשל &quot;יום לפני האירוע&quot; או &quot;יום אחרי
           פגישת הזוג&quot;), אל הנמענים שבוחרים. האימייל נשלח פעם אחת לכל אירוע ביום המתאים.
         </p>
@@ -81,7 +81,7 @@ export function EmailRulesSection({
 
       {canWriteRules && <EmailRuleCreator staff={staff} inputClass={inputClass} labelClass={labelClass} createAction={addRule} />}
 
-      {rules.length === 0 && <p className="text-foreground/60">עדיין לא הוגדרו תזכורות באימייל.</p>}
+      {rules.length === 0 && <p className="on-photo">עדיין לא הוגדרו תזכורות באימייל.</p>}
 
       <ul className="flex flex-col gap-2">
         {rules.map((rule) => {

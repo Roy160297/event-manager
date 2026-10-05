@@ -27,11 +27,11 @@ export default async function PrivateEventLayout({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="text-sm text-foreground/80">
+        <p className="on-photo text-sm">
           <Link href="/private-events">האירועים הפרטיים שלי</Link> / {event.name}
         </p>
         <h1 className="font-serif text-2xl font-bold">{event.name}</h1>
-        <p className="text-sm text-foreground/80">
+        <p className="on-photo text-sm">
           {PRIVATE_EVENT_TYPE_LABELS[event.event_type]} · {formatDateWithWeekday(event.event_date)}
           {event.hall_name && ` · ${event.hall_name}`}
         </p>

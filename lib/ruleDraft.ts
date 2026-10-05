@@ -139,7 +139,6 @@ export interface EmailRuleDraft {
   to_salesperson: boolean | null;
   recipient_role_ids: string[];
   recipient_staff_ids: string[];
-  extra_emails: string | null;
   subject: string | null;
   body: string | null;
   missing: string[];
@@ -162,7 +161,6 @@ const EMAIL_SCHEMA = {
     to_floor_manager: { type: Type.BOOLEAN, nullable: true },
     to_salesperson: { type: Type.BOOLEAN, nullable: true },
     recipient_staff_names: { type: Type.ARRAY, items: { type: Type.STRING } },
-    extra_emails: { type: Type.STRING, nullable: true },
     subject: { type: Type.STRING, nullable: true },
     body: { type: Type.STRING, nullable: true },
   },
@@ -189,7 +187,6 @@ Fill these fields (null for anything the request does not say, except where a de
 - run_window: "any", "morning" or "evening". Default "any" unless the request says morning/evening.
 - to_event_manager / to_floor_manager / to_salesperson: true if the request says the event's manager / the event's floor manager (מנהל פלור) / the event's salesperson (איש מכירות) receives it; otherwise null.
 - recipient_staff_names: specific people who should receive it - a request that names a position (e.g. the chef) means the person holding it. Use the name exactly as in this list (name - position): ${context.staff.map((m) => (m.roleName ? `${m.name} (${m.roleName})` : m.name)).join(", ")}; [] if none.
-- extra_emails: comma-separated email addresses written in the request; null if none were written.
 - subject: the email subject in Hebrew. You may use placeholders.
 - body: the email text in Hebrew; use real line breaks and "• " at the start of list lines. Use placeholders for event data instead of writing it out. Placeholders: ${placeholders}.`;
 
@@ -197,7 +194,6 @@ Fill these fields (null for anything the request does not say, except where a de
   const anchor = oneOf(raw.anchor, EMAIL_ANCHORS);
   const fallbackMode = anchor === "couple_meeting_date" ? oneOf(raw.fallback_mode, EMAIL_FALLBACK_MODES) : null;
   const fallbackOffset = fallbackMode === "event" ? integer(raw.fallback_offset_days) : null;
-  const extraEmails = text(raw.extra_emails);
   const namesOf = (value: unknown) => (Array.isArray(value) ? value.map(text).filter((name): name is string => !!name) : []);
   const idsOf = (names: string[], list: { id: string; name: string }[]) =>
     [...new Set(names.map((name) => matchByName(name, list)).filter((id): id is string => !!id))];
@@ -214,7 +210,6 @@ Fill these fields (null for anything the request does not say, except where a de
     to_salesperson: raw.to_salesperson === true ? true : null,
     recipient_role_ids: [],
     recipient_staff_ids: idsOf(namesOf(raw.recipient_staff_names), context.staff),
-    extra_emails: extraEmails,
     subject: text(raw.subject),
     body: text(raw.body),
     missing: [],
@@ -229,8 +224,7 @@ Fill these fields (null for anything the request does not say, except where a de
     draft.to_event_manager ||
     draft.to_floor_manager ||
     draft.to_salesperson ||
-    draft.recipient_staff_ids.length > 0 ||
-    !!draft.extra_emails;
+    draft.recipient_staff_ids.length > 0;
   if (!hasRecipient) draft.missing.push("נמענים");
   if (!draft.subject) draft.missing.push("נושא האימייל");
   if (!draft.body) draft.missing.push("תוכן האימייל");

@@ -24,6 +24,15 @@
   --font-serif: var(--font-frank-ruhl);
 }
 
+/* Short explanatory text that sits straight on the page's photo background:
+   a soft cream panel behind it so it stays readable. */
+@utility on-photo {
+  background-color: color-mix(in srgb, var(--surface) 88%, transparent);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--foreground);
+}
+
 body {
   background:
     linear-gradient(rgba(242, 232, 210, 0.8), rgba(242, 232, 210, 0.8)),

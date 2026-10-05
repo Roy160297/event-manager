@@ -11,14 +11,12 @@ import {
   renderEmailBody,
   renderEmailSubject,
   resolveEmailTargetDate,
-  splitEmails,
   type EmailReminderEvent,
 } from "@/lib/emailReminders";
 import { draftEmailRule, type EmailRuleDraft } from "@/lib/ruleDraft";
 import type { EmailReminderAnchor, EmailReminderRuleRow } from "@/lib/types";
 
 const ANCHORS: EmailReminderAnchor[] = ["couple_meeting_date", "event_date"];
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function assertCanManage() {
   const staff = await getCurrentStaff();
@@ -36,7 +34,10 @@ function optionalInteger(raw: FormDataEntryValue | null, label: string): number 
   return value;
 }
 
-function readEmailRuleFields(formData: FormData) {
+// Typed-in addresses are no longer offered (recipients are picked from the
+// list), but a few existing rules still carry some; those are left exactly as
+// they are on edit and still count as a recipient (hasLegacyExtras).
+function readEmailRuleFields(formData: FormData, hasLegacyExtras = false) {
   const title = String(formData.get("title") ?? "").trim();
   const subject = String(formData.get("subject") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
@@ -64,16 +65,12 @@ function readEmailRuleFields(formData: FormData) {
   if (!["any", "morning", "evening"].includes(runWindowRaw)) throw new Error("יש לבחור שעת שליחה");
   const runWindow = runWindowRaw === "any" ? null : (runWindowRaw as "morning" | "evening");
 
-  const extraEmails = splitEmails(String(formData.get("extra_emails") ?? ""));
-  const invalid = extraEmails.find((email) => !EMAIL_PATTERN.test(email));
-  if (invalid) throw new Error(`כתובת אימייל לא תקינה: ${invalid}`);
-
   const toEventManager = formData.get("to_event_manager") === "on";
   const toFloorManager = formData.get("to_floor_manager") === "on";
   const toSalesperson = formData.get("to_salesperson") === "on";
   const roleIds = formData.getAll("recipient_role_ids").map(String).filter(Boolean);
   const staffIds = formData.getAll("recipient_staff_ids").map(String).filter(Boolean);
-  if (!toEventManager && !toFloorManager && !toSalesperson && roleIds.length === 0 && staffIds.length === 0 && extraEmails.length === 0) {
+  if (!toEventManager && !toFloorManager && !toSalesperson && roleIds.length === 0 && staffIds.length === 0 && !hasLegacyExtras) {
     throw new Error("יש לבחור לפחות נמען אחד");
   }
 
@@ -88,7 +85,6 @@ function readEmailRuleFields(formData: FormData) {
     to_salesperson: toSalesperson,
     recipient_role_ids: roleIds,
     recipient_staff_ids: staffIds,
-    extra_emails: extraEmails.length > 0 ? extraEmails.join(", ") : null,
     subject,
     body,
   };
@@ -145,9 +141,14 @@ export async function createEmailReminderRule(formData: FormData) {
 export async function updateEmailReminderRule(ruleId: string, formData: FormData) {
   await assertCanManage();
   const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("email_reminder_rules")
+    .select("extra_emails")
+    .eq("id", ruleId)
+    .maybeSingle<{ extra_emails: string | null }>();
   const { error } = await supabase
     .from("email_reminder_rules")
-    .update({ ...readEmailRuleFields(formData), active: formData.get("active") === "on" })
+    .update({ ...readEmailRuleFields(formData, !!existing?.extra_emails), active: formData.get("active") === "on" })
     .eq("id", ruleId);
   if (error) throw new Error(error.message);
   revalidatePath("/push-reminders");

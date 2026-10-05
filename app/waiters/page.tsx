@@ -34,7 +34,7 @@ export default async function WaitersPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">מלצרים</h1>
-      <p className="text-sm text-foreground/80">
+      <p className="on-photo text-sm">
         רשימת המלצרים היא מאגר קבוע המשמש לשיבוץ המלצרים באירועים. תפקיד המלצר/ית נבחר בעת השיבוץ
         לכל אירוע בנפרד.
       </p>
@@ -84,7 +84,7 @@ export default async function WaitersPage() {
       )}
 
       {(!waiters || waiters.length === 0) && (
-        <p className="text-foreground/60">עדיין לא נוספו מלצרים למאגר.</p>
+        <p className="on-photo">עדיין לא נוספו מלצרים למאגר.</p>
       )}
 
       <WaitersSearchList

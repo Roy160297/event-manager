@@ -18,7 +18,6 @@ export interface EmailRuleValues {
   to_floor_manager?: boolean | null;
   to_salesperson?: boolean | null;
   recipient_staff_ids?: string[] | null;
-  extra_emails?: string | null;
   subject?: string | null;
   body?: string | null;
 }
@@ -111,11 +110,6 @@ export function EmailRuleFields({
       <fieldset className="flex flex-col gap-2 text-sm sm:col-span-2">
         <legend className="mb-1">נמענים (לפחות אחד)</legend>
         <EmailRecipientPicker values={values} staff={staff} inputClass={inputClass} />
-
-        <label className={labelClass}>
-          <span>כתובות נוספות (מופרדות בפסיק)</span>
-          <input name="extra_emails" defaultValue={values?.extra_emails ?? ""} placeholder="name@example.com, other@example.com" className={inputClass} />
-        </label>
       </fieldset>
 
       <label className={`${labelClass} sm:col-span-2`}>

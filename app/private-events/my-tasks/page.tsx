@@ -33,7 +33,7 @@ export default async function PrivateMyTasksPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="font-serif text-2xl font-bold">המשימות שלי</h1>
-      <p className="text-sm text-foreground/80">כל המשימות הפתוחות, מכל האירועים הפרטיים.</p>
+      <p className="on-photo text-sm">כל המשימות הפתוחות, מכל האירועים הפרטיים.</p>
 
       {error && <p className="rounded-md bg-red-50 p-4 text-sm text-red-700">שגיאה בטעינת המשימות: {error.message}</p>}
 
