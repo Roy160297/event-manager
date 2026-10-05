@@ -44,29 +44,37 @@ export function MainNav({
   let links = [NAV_LINKS[0], ...extraLinks, NAV_LINKS[1]];
   if (showAdmin) links = [...links, { href: "/admin", label: "ניהול", icon: "admin" }];
 
+  const renderLink = (link: NavLink) => {
+    const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+    return (
+      <li key={link.href}>
+        <Link
+          href={link.href}
+          aria-current={isActive ? "page" : undefined}
+          className={
+            isActive
+              ? "flex flex-col items-center gap-1 rounded-xl bg-accent px-1 py-2 text-center text-xs font-semibold leading-tight text-accent-foreground sm:flex-row sm:gap-1.5 sm:whitespace-nowrap sm:rounded-full sm:px-3 sm:py-1.5 sm:text-sm"
+              : "flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-center text-xs leading-tight text-foreground/70 hover:bg-accent-soft hover:text-foreground sm:flex-row sm:gap-1.5 sm:whitespace-nowrap sm:rounded-full sm:px-3 sm:py-1.5 sm:text-sm"
+          }
+        >
+          <NavIcon name={link.icon} className="h-5 w-5 shrink-0 sm:h-4 sm:w-4" />
+          {link.label}
+        </Link>
+      </li>
+    );
+  };
+
+  // Desktop: always two evenly split rows (e.g. 5 + 4) instead of letting the
+  // links wrap wherever they run out of room and strand one on its own line.
+  const firstRowCount = Math.ceil(links.length / 2);
+
   return (
     <nav>
-      <ul className="grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:justify-center sm:gap-1">
-        {links.map((link) => {
-          const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
-          return (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                aria-current={isActive ? "page" : undefined}
-                className={
-                  isActive
-                    ? "flex flex-col items-center gap-1 rounded-xl bg-accent px-1 py-2 text-center text-xs font-semibold leading-tight text-accent-foreground sm:flex-row sm:gap-1.5 sm:whitespace-nowrap sm:rounded-full sm:px-3 sm:py-1.5 sm:text-sm"
-                    : "flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-center text-xs leading-tight text-foreground/70 hover:bg-accent-soft hover:text-foreground sm:flex-row sm:gap-1.5 sm:whitespace-nowrap sm:rounded-full sm:px-3 sm:py-1.5 sm:text-sm"
-                }
-              >
-                <NavIcon name={link.icon} className="h-5 w-5 shrink-0 sm:h-4 sm:w-4" />
-                {link.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <ul className="grid grid-cols-3 gap-1.5 sm:hidden">{links.map(renderLink)}</ul>
+      <div className="hidden flex-col items-center gap-1 sm:flex">
+        <ul className="flex justify-center gap-1">{links.slice(0, firstRowCount).map(renderLink)}</ul>
+        <ul className="flex justify-center gap-1">{links.slice(firstRowCount).map(renderLink)}</ul>
+      </div>
     </nav>
   );
 }
