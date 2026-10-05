@@ -6,7 +6,6 @@ export interface FeedEvent {
   typeLabel: string;
   date: string; // YYYY-MM-DD
   startTime: string | null; // HH:MM or HH:MM:SS
-  endTime: string | null;
   canceled: boolean;
   managerName: string | null;
   salesPersonName: string | null;
@@ -59,12 +58,6 @@ function foldLine(line: string): string {
 
 const compactDate = (date: string) => date.replaceAll("-", "");
 
-function nextDay(date: string): string {
-  const [year, month, day] = date.split("-").map(Number);
-  const next = new Date(Date.UTC(year, month - 1, day + 1));
-  return next.toISOString().slice(0, 10);
-}
-
 function minutesOf(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + (minutes || 0);
@@ -73,24 +66,20 @@ function minutesOf(time: string): number {
 const localDateTime = (date: string, minutes: number) =>
   `${compactDate(date)}T${String(Math.floor(minutes / 60)).padStart(2, "0")}${String(minutes % 60).padStart(2, "0")}00`;
 
-// Events with no start time become all-day entries. An end at or before the
-// start means the event runs past midnight (a wedding ending at 01:00), and
-// a missing end defaults to 5 hours after the start.
+// Calendar entries use the event's start time (19:30 when none is set) and
+// always end at 23:55 - the venue's events are all entered as ending that
+// evening, and a later end would spill the entry onto the next date.
+export const DEFAULT_START_MINUTES = 19 * 60 + 30;
+export const FIXED_END_MINUTES = 23 * 60 + 55;
+
 function eventTimes(event: FeedEvent): string[] {
-  if (!event.startTime) {
-    return [`DTSTART;VALUE=DATE:${compactDate(event.date)}`, `DTEND;VALUE=DATE:${compactDate(nextDay(event.date))}`];
-  }
-  const start = minutesOf(event.startTime);
-  let endDate = event.date;
-  let end = event.endTime ? minutesOf(event.endTime) : start + 5 * 60;
-  if (end <= start && event.endTime) end += 24 * 60;
-  if (end >= 24 * 60) {
-    endDate = nextDay(event.date);
-    end -= 24 * 60;
-  }
+  const start = event.startTime ? minutesOf(event.startTime) : DEFAULT_START_MINUTES;
+  // A start at/after the fixed end (a very late event) would give an end
+  // before the start; keep a minimal one-hour entry within the day instead.
+  const end = start < FIXED_END_MINUTES ? FIXED_END_MINUTES : Math.min(start + 60, 24 * 60 - 1);
   return [
     `DTSTART;TZID=Asia/Jerusalem:${localDateTime(event.date, start)}`,
-    `DTEND;TZID=Asia/Jerusalem:${localDateTime(endDate, end)}`,
+    `DTEND;TZID=Asia/Jerusalem:${localDateTime(event.date, end)}`,
   ];
 }
 

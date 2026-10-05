@@ -63,8 +63,7 @@ export default async function ChecklistNotesPage() {
     .is("events.deleted_at", null)
     .gte("events.event_date", tenDaysAgo)
     .lte("events.event_date", today)
-    .order("event_date", { referencedTable: "events", ascending: false })
-    .returns<NoteWithEvent[]>();
+        .returns<NoteWithEvent[]>();
 
   // The summary report's "summary"/"general notes" live directly on the
   // events table (not role_checklist_notes, which the 4 role checklists
@@ -77,7 +76,7 @@ export default async function ChecklistNotesPage() {
         .is("deleted_at", null)
         .gte("event_date", tenDaysAgo)
         .lte("event_date", today)
-        .order("event_date", { ascending: false })
+        .order("event_date", { ascending: true })
         .returns<SummaryReportEvent[]>()
     : { data: null };
   const summaryReportEvents = (summaryReportEventsRaw ?? []).filter(
@@ -92,9 +91,10 @@ export default async function ChecklistNotesPage() {
       </p>
 
       {readableSections.map((section) => {
-        const sectionNotes = (notes ?? []).filter(
-          (row) => row.checklist_key === section.key && row.events,
-        );
+        // Oldest first, so the list reads chronologically down the page.
+        const sectionNotes = (notes ?? [])
+          .filter((row) => row.checklist_key === section.key && row.events)
+          .sort((a, b) => a.events!.event_date.localeCompare(b.events!.event_date));
 
         return (
           <div
@@ -113,7 +113,7 @@ export default async function ChecklistNotesPage() {
                     className="border-t border-border-classic pt-3 first:border-0 first:pt-0"
                   >
                     <p className="text-sm font-medium">
-                      <Link href={`/events/${row.events!.id}/tasks`} className="text-accent hover:underline">
+                      <Link href={`/events/${row.events!.id}`} className="text-accent hover:underline">
                         {row.events!.name}
                       </Link>
                       <span className="text-foreground/60">
@@ -145,7 +145,7 @@ export default async function ChecklistNotesPage() {
                   className="flex flex-col gap-1.5 border-t border-border-classic pt-3 first:border-0 first:pt-0"
                 >
                   <p className="text-sm font-medium">
-                    <Link href={`/events/${event.id}/tasks`} className="text-accent hover:underline">
+                    <Link href={`/events/${event.id}`} className="text-accent hover:underline">
                       {event.name}
                     </Link>
                     <span className="text-foreground/60">

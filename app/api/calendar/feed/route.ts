@@ -35,7 +35,6 @@ export async function GET(request: Request) {
       typeLabel: EVENT_TYPE_LABELS[event.event_type],
       date: event.event_date,
       startTime: event.start_time,
-      endTime: event.end_time,
       canceled: event.status === "canceled",
       managerName: event.staff?.name ?? null,
       salesPersonName: event.sales_person_name,

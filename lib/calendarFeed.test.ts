@@ -7,7 +7,6 @@ const base: FeedEvent = {
   typeLabel: "חתונה",
   date: "2026-10-11",
   startTime: "19:30:00",
-  endTime: "01:00:00",
   canceled: false,
   managerName: "רן",
   salesPersonName: null,
@@ -27,18 +26,23 @@ describe("calendarFeedToken", () => {
 });
 
 describe("buildCalendarFeed", () => {
-  it("rolls an end time past midnight into the next day", () => {
+  it("uses the event's start time and always ends at 23:55", () => {
     const feed = buildCalendarFeed([base], new Date("2026-10-01T00:00:00Z"));
     expect(feed).toContain("DTSTART;TZID=Asia/Jerusalem:20261011T193000");
-    expect(feed).toContain("DTEND;TZID=Asia/Jerusalem:20261012T010000");
+    expect(feed).toContain("DTEND;TZID=Asia/Jerusalem:20261011T235500");
   });
 
-  it("defaults to a 5 hour duration and emits all-day entries without a start time", () => {
-    const noEnd = buildCalendarFeed([{ ...base, endTime: null }]);
-    expect(noEnd).toContain("DTEND;TZID=Asia/Jerusalem:20261012T003000");
-    const allDay = buildCalendarFeed([{ ...base, startTime: null, endTime: null }]);
-    expect(allDay).toContain("DTSTART;VALUE=DATE:20261011");
-    expect(allDay).toContain("DTEND;VALUE=DATE:20261012");
+  it("defaults to 19:30 when the event has no start time", () => {
+    const feed = buildCalendarFeed([{ ...base, startTime: null }]);
+    expect(feed).toContain("DTSTART;TZID=Asia/Jerusalem:20261011T193000");
+    expect(feed).toContain("DTEND;TZID=Asia/Jerusalem:20261011T235500");
+    expect(feed).not.toContain("VALUE=DATE");
+  });
+
+  it("keeps the end after the start for a very late start", () => {
+    const feed = buildCalendarFeed([{ ...base, startTime: "23:58:00" }]);
+    expect(feed).toContain("DTSTART;TZID=Asia/Jerusalem:20261011T235800");
+    expect(feed).toContain("DTEND;TZID=Asia/Jerusalem:20261011T235900");
   });
 
   it("marks canceled events and escapes text", () => {
