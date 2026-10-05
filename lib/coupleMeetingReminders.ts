@@ -74,6 +74,11 @@ export interface CoupleMeetingReminderRule {
 
 const mealField = (value: string | null) => value || "—";
 
+// The additional-info field is multi-line free text; dropped straight into an
+// HTML email its line breaks would collapse into one run-on paragraph.
+const notesToHtml = (notes: string | null) =>
+  (notes ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\r?\n/g, "<br/>");
+
 export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
   {
     key: "post-meeting-followup-tasks",
@@ -144,7 +149,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     dateCondition: (event) => !!event.menu_notes?.trim(),
     subject: (event) => `מידע נוסף לקראת האירוע של ${event.name} - ${formatDate(event.event_date)}`,
     body: (event) =>
-      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים היום - המידע הנוסף שמולא לאירוע:<br/>${event.menu_notes}`,
+      `תזכורת לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}), המתקיים היום - המידע הנוסף שמולא לאירוע:<br/>${notesToHtml(event.menu_notes)}`,
   },
   {
     key: "additional-info-post-meeting",
@@ -160,7 +165,7 @@ export const COUPLE_MEETING_REMINDER_RULES: CoupleMeetingReminderRule[] = [
     dateCondition: (event) => !!event.menu_notes?.trim(),
     subject: (event) => `מידע נוסף על האירוע של ${event.name} - ${formatDate(event.event_date)}`,
     body: (event) =>
-      `לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}) - המידע הנוסף שמולא לאירוע:<br/>${event.menu_notes}`,
+      `לגבי האירוע של <strong>${event.name}</strong> (בתאריך ${formatDate(event.event_date)}) - המידע הנוסף שמולא לאירוע:<br/>${notesToHtml(event.menu_notes)}`,
   },
 ];
 
