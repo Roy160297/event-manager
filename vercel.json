@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)supabase' ':(exclude)docs' ':(exclude)*.md' ':(exclude)*.test.ts'",
   "crons": [
     {
       "path": "/api/cron/couple-meeting-reminders",
