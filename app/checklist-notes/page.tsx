@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
+import { totalGuestCount } from "@/lib/guestCount";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
@@ -37,7 +38,10 @@ type SummaryReportEvent = {
   report_general_notes: string | null;
 };
 
-const guestsLabel = (guests: string | null) => (guests?.trim() ? ` · ${guests.trim()} אורחים` : "");
+const guestsLabel = (guests: string | null) => {
+  const total = totalGuestCount(guests);
+  return total ? ` · ${total} אורחים` : "";
+};
 
 export default async function ChecklistNotesPage() {
   const currentStaff = await getCurrentStaff();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCalendarFeed, calendarFeedToken, isValidCalendarFeedToken, type FeedEvent } from "./calendarFeed";
+import { buildCalendarFeed, type FeedEvent } from "./calendarFeed";
 
 const base: FeedEvent = {
   id: "abc",
@@ -13,17 +13,6 @@ const base: FeedEvent = {
   estimatedGuests: "300",
   url: "https://example.com/events/abc",
 };
-
-describe("calendarFeedToken", () => {
-  it("is stable per secret and validated in constant time", () => {
-    const token = calendarFeedToken("secret");
-    expect(token).toBe(calendarFeedToken("secret"));
-    expect(token).not.toBe(calendarFeedToken("other"));
-    expect(isValidCalendarFeedToken(token, "secret")).toBe(true);
-    expect(isValidCalendarFeedToken("nope", "secret")).toBe(false);
-    expect(isValidCalendarFeedToken(null, "secret")).toBe(false);
-  });
-});
 
 describe("buildCalendarFeed", () => {
   it("uses the event's start time and always ends at 23:55", () => {

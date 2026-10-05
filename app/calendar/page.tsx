@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { assignManagerColors, getDisplayEventStatus, MONTH_LABELS, UNASSIGNED_MANAGER_COLOR } from "@/lib/labels";
+import { EVENT_TYPE_LABELS, assignManagerColors, formatDateWithWeekday, getDisplayEventStatus, MONTH_LABELS, UNASSIGNED_MANAGER_COLOR } from "@/lib/labels";
 import { getHebrewDatesByDate, getHolidaysByDate } from "@/lib/hebrewCalendar";
 import { CalendarGrid, type CalendarCell, type CalendarEvent, type ManagerLegendEntry } from "@/components/CalendarGrid";
 import { MonthPicker } from "@/components/MonthPicker";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
-import { calendarFeedToken } from "@/lib/calendarFeed";
+import { AddToCalendar, type CalendarPreviewEvent } from "@/components/AddToCalendar";
+import { DEFAULT_START_MINUTES, FIXED_END_MINUTES } from "@/lib/calendarFeed";
 import { getEventManagerCandidates } from "@/lib/staff";
 import type { EventRow, StaffRow } from "@/lib/types";
 
@@ -129,14 +129,18 @@ export default async function CalendarPage({
   const next = shiftMonth(year, month, 1);
   const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Subscription links for Google/Apple Calendar. Built from the host the
-  // request actually came in on so it's right on any deployment.
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const requestHeaders = await headers();
-  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
-  const feedPath = serviceKey && host ? `${host}/api/calendar/feed?token=${calendarFeedToken(serviceKey)}` : null;
-  const webcalUrl = feedPath ? `webcal://${feedPath}` : null;
-  const googleUrl = webcalUrl ? `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}` : null;
+  // What the "add to calendar" preview lists and the .ics download contains
+  // for this month (canceled events are left out of both).
+  const hhmm = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  const previewEvents: CalendarPreviewEvent[] = (events ?? [])
+    .filter((event) => event.status !== "canceled")
+    .map((event) => ({
+      id: event.id,
+      dateLabel: formatDateWithWeekday(event.event_date),
+      name: event.name,
+      typeLabel: EVENT_TYPE_LABELS[event.event_type],
+      timeLabel: `${event.start_time ? event.start_time.slice(0, 5) : hhmm(DEFAULT_START_MINUTES)}–${hhmm(FIXED_END_MINUTES)}`,
+    }));
 
   return (
     <div className="flex flex-col gap-6 sm:flex-row">
@@ -161,33 +165,11 @@ export default async function CalendarPage({
           </Link>
         </div>
 
-        {webcalUrl && googleUrl && (
-          <details className="rounded-lg border border-border-classic bg-surface">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-medium">הוספת האירועים ליומן גוגל / אפל</summary>
-            <div className="flex flex-col gap-3 border-t border-border-classic p-4">
-              <div className="flex flex-wrap gap-2">
-                <a
-                  href={googleUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full border-2 border-accent bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
-                >
-                  הוסף ליומן גוגל
-                </a>
-                <a
-                  href={webcalUrl}
-                  className="rounded-full border-2 border-accent bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
-                >
-                  הוסף ליומן אפל
-                </a>
-              </div>
-              <p className="text-xs text-foreground/60">
-                היומן מתווסף כמנוי: כל האירועים מופיעים בו ומתעדכנים אוטומטית כשמוסיפים או משנים אירוע (גוגל מרענן
-                מנויים בעיכוב של עד כמה שעות). הקישור מכיל סוד גישה - אין לפרסם אותו מחוץ לצוות.
-              </p>
-            </div>
-          </details>
-        )}
+        <AddToCalendar
+          monthLabel={`${MONTH_LABELS[month - 1]} ${year}`}
+          icsUrl={`/api/calendar/feed?month=${year}-${pad(month)}`}
+          events={previewEvents}
+        />
 
         <CalendarGrid cells={cells} todayStr={todayStr} managerLegend={managerLegend} />
       </div>

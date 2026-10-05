@@ -1,5 +1,3 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-
 export interface FeedEvent {
   id: string;
   name: string;
@@ -11,21 +9,6 @@ export interface FeedEvent {
   salesPersonName: string | null;
   estimatedGuests: string | null;
   url: string;
-}
-
-// The feed is read by Google/Apple Calendar, which can't send a login
-// session, so access is a secret in the URL instead. It's derived from the
-// service-role key (HMAC) rather than stored separately: stable across
-// deploys, nothing new to configure, and rotating the key rotates the feed.
-export function calendarFeedToken(secret: string): string {
-  return createHmac("sha256", secret).update("calendar-feed-v1").digest("hex").slice(0, 32);
-}
-
-export function isValidCalendarFeedToken(provided: string | null, secret: string): boolean {
-  if (!provided) return false;
-  const expected = Buffer.from(calendarFeedToken(secret));
-  const actual = Buffer.from(provided);
-  return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
 function escapeText(value: string): string {
