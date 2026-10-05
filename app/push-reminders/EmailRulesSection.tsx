@@ -44,7 +44,7 @@ function describeRecipients(
   if (rule.to_salesperson) parts.push("איש המכירות של האירוע");
   for (const id of rule.recipient_role_ids) {
     const name = roles.find((role) => role.id === id)?.name;
-    if (name) parts.push(`כל ה${name}`);
+    if (name) parts.push(`תפקיד: ${name}`);
   }
   for (const id of rule.recipient_staff_ids) {
     const name = staff.find((member) => member.id === id)?.name;

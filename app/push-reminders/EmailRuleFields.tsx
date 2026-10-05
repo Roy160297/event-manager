@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { EmailReminderAnchor } from "@/lib/types";
+import { EmailRecipientPicker } from "./EmailRecipientPicker";
 
 // Form values for one email rule; every field is required (except the
 // recipients, where at least one of the options is), so an empty value means
@@ -23,9 +24,6 @@ export interface EmailRuleValues {
   subject?: string | null;
   body?: string | null;
 }
-
-const chipClass =
-  "flex items-center gap-1.5 rounded-full border border-border-classic bg-background px-3 py-1 text-sm";
 
 export function EmailRuleFields({
   values,
@@ -129,54 +127,7 @@ export function EmailRuleFields({
 
       <fieldset className="flex flex-col gap-2 text-sm sm:col-span-2">
         <legend className="mb-1">נמענים (לפחות אחד)</legend>
-        <div className="flex flex-wrap gap-2">
-          <label className={chipClass}>
-            <input type="checkbox" name="to_event_manager" defaultChecked={values?.to_event_manager ?? false} />
-            <span>מנהל האירוע</span>
-          </label>
-          <label className={chipClass}>
-            <input type="checkbox" name="to_floor_manager" defaultChecked={values?.to_floor_manager ?? false} />
-            <span>מנהל הפלור</span>
-          </label>
-          <label className={chipClass}>
-            <input type="checkbox" name="to_salesperson" defaultChecked={values?.to_salesperson ?? false} />
-            <span>איש המכירות של האירוע</span>
-          </label>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <span className="text-foreground/70">כל מי שבתפקיד:</span>
-          <div className="flex flex-wrap gap-2">
-            {roles.map((role) => (
-              <label key={role.id} className={chipClass}>
-                <input
-                  type="checkbox"
-                  name="recipient_role_ids"
-                  value={role.id}
-                  defaultChecked={values?.recipient_role_ids?.includes(role.id) ?? false}
-                />
-                <span>{role.name}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <span className="text-foreground/70">אנשי צוות:</span>
-          <div className="flex flex-wrap gap-2">
-            {staff.map((member) => (
-              <label key={member.id} className={chipClass}>
-                <input
-                  type="checkbox"
-                  name="recipient_staff_ids"
-                  value={member.id}
-                  defaultChecked={values?.recipient_staff_ids?.includes(member.id) ?? false}
-                />
-                <span>{member.name}</span>
-              </label>
-            ))}
-          </div>
-        </div>
+        <EmailRecipientPicker values={values} roles={roles} staff={staff} inputClass={inputClass} />
 
         <label className={labelClass}>
           <span>כתובות נוספות (מופרדות בפסיק)</span>
