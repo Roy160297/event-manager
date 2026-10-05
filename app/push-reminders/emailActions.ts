@@ -6,6 +6,7 @@ import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { sendReminderEmail } from "@/lib/reminderEmail";
 import { renderEmailBody, renderEmailSubject, splitEmails, type EmailReminderEvent } from "@/lib/emailReminders";
+import { draftEmailRule, type EmailRuleDraft } from "@/lib/ruleDraft";
 import type { EmailReminderAnchor, EmailReminderCondition } from "@/lib/types";
 
 const ANCHORS: EmailReminderAnchor[] = ["couple_meeting_date", "event_date"];
@@ -41,12 +42,22 @@ function readEmailRuleFields(formData: FormData) {
   if (offsetDays === null) throw new Error("יש להזין מספר ימים");
   // Only meaningful when anchored on the couple meeting; cleared otherwise so
   // a stale value can't linger after switching the anchor.
-  const fallbackOffsetDays =
-    anchor === "couple_meeting_date" ? optionalInteger(formData.get("fallback_offset_days"), "מספר הימים החלופי") : null;
+  let fallbackOffsetDays: number | null = null;
+  if (anchor === "couple_meeting_date") {
+    const fallbackMode = String(formData.get("fallback_mode") ?? "");
+    if (fallbackMode === "event") {
+      fallbackOffsetDays = optionalInteger(formData.get("fallback_offset_days"), "מספר הימים החלופי");
+      if (fallbackOffsetDays === null) throw new Error("יש להזין ימים ביחס לתאריך האירוע");
+    } else if (fallbackMode !== "skip") {
+      throw new Error("יש לבחור מה לעשות אם לא הוזן תאריך פגישה");
+    }
+  }
 
-  const matchMode = formData.get("match_mode") === "on_or_after" ? "on_or_after" : "exact";
+  const matchMode = String(formData.get("match_mode") ?? "");
+  if (matchMode !== "exact" && matchMode !== "on_or_after") throw new Error("יש לבחור מה לעשות אם המועד כבר עבר");
   const runWindowRaw = String(formData.get("run_window") ?? "");
-  const runWindow = runWindowRaw === "morning" || runWindowRaw === "evening" ? runWindowRaw : null;
+  if (!["any", "morning", "evening"].includes(runWindowRaw)) throw new Error("יש לבחור שעת שליחה");
+  const runWindow = runWindowRaw === "any" ? null : (runWindowRaw as "morning" | "evening");
 
   const condition = String(formData.get("condition") ?? "none") as EmailReminderCondition;
   if (!CONDITIONS.includes(condition)) throw new Error("התנאי אינו תקין");
@@ -140,4 +151,14 @@ export async function sendTestEmailReminderRule(ruleId: string): Promise<{ to: s
     bodyText: renderEmailBody(rule.body, SAMPLE_EVENT),
   });
   return { to: staff.email };
+}
+
+// Free-text request -> a draft for the "new email reminder" form. Creates
+// nothing: the user reviews the draft and completes the missing fields first.
+export async function draftEmailRuleFromText(request: string): Promise<EmailRuleDraft> {
+  await assertCanManage();
+  const text = request.trim();
+  if (!text) throw new Error("יש לכתוב מה התזכורת צריכה לעשות");
+  if (text.length > 1000) throw new Error("התיאור ארוך מדי");
+  return draftEmailRule(text);
 }

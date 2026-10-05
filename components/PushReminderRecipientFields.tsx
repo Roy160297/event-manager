@@ -15,7 +15,7 @@ export function PushReminderRecipientFields({
   staff,
   inputClass,
   labelClass,
-  defaultType = "event_manager",
+  defaultType = "",
   defaultRoleId,
   defaultStaffId,
 }: {
@@ -23,11 +23,12 @@ export function PushReminderRecipientFields({
   staff: { id: string; name: string }[];
   inputClass: string;
   labelClass: string;
-  defaultType?: PushReminderRecipientType;
+  // "" = nothing chosen yet (a new rule): the select is required, so the user must pick.
+  defaultType?: PushReminderRecipientType | "";
   defaultRoleId?: string | null;
   defaultStaffId?: string | null;
 }) {
-  const [type, setType] = useState<PushReminderRecipientType>(defaultType);
+  const [type, setType] = useState<PushReminderRecipientType | "">(defaultType);
 
   return (
     <>
@@ -37,8 +38,12 @@ export function PushReminderRecipientFields({
           name="recipient_type"
           value={type}
           onChange={(e) => setType(e.target.value as PushReminderRecipientType)}
+          required
           className={inputClass}
         >
+          <option value="" disabled>
+            בחרו נמען
+          </option>
           {Object.entries(RECIPIENT_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
               {label}

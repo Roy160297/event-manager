@@ -12,6 +12,7 @@ import { PushReminderRecipientFields } from "@/components/PushReminderRecipientF
 import { createPushReminderRule, updatePushReminderRule, deletePushReminderRule } from "./actions";
 import { TestRuleButton } from "./TestRuleButton";
 import { EmailRulesSection } from "./EmailRulesSection";
+import { PushRuleCreator } from "./PushRuleCreator";
 import { getKnownTimelineStepLabels } from "@/app/events/[id]/timeline/actions";
 import type { EmailReminderRuleRow, PushReminderRuleRow } from "@/lib/types";
 
@@ -106,10 +107,6 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
           כל שורה מגדירה תזכורת שנשלחת כפוש בטלפון, מספר דקות לפני/אחרי שלב מסוים בלוח הזמנים של האירוע (למשל
           &quot;20 דקות לפני חופה&quot;), לנמען שבוחרים.
         </p>
-        <p className="text-sm text-foreground/80">
-          ניתן להשתמש ב-<code>{"{event_name}"}</code> בתוכן ההתראה כדי שיוחלף בשם האירוע בפועל, וב-
-          <code>{"{additional_info}"}</code> כדי שיוחלף ב&quot;מידע נוסף&quot; של האירוע הספציפי.
-        </p>
       </div>
 
       {/* Suggestions for "שם השלב בלוח הזמנים" below - autocomplete only, not
@@ -122,52 +119,13 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
       </datalist>
 
       {canWriteRules && (
-        <SaveDetailsForm
-          action={addRule}
-          message="ההתראה נוצרה בהצלחה"
-          clearOnSuccess
-          className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
-        >
-          <p className="text-sm font-medium">התראה חדשה</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className={labelClass}>
-              <span>שם פנימי</span>
-              <input name="title" placeholder="למשל: העלאת צ'ילר לחופה" required autoFocus className={inputClass} />
-            </label>
-            <label className={labelClass}>
-              <span>שם השלב בלוח הזמנים לעגינה</span>
-              <input
-                name="anchor_label"
-                placeholder="חופה"
-                required
-                list="timeline-step-labels"
-                className={inputClass}
-              />
-              <span className="text-xs text-foreground/50">
-                חייב להתאים בדיוק לשם השלב בלוח הזמנים, אחרת ההתראה לעולם לא תופעל בלי הודעת שגיאה.
-              </span>
-            </label>
-            <label className={labelClass}>
-              <span>הפרש דקות (שלילי = לפני השלב, חיובי = אחריו)</span>
-              <input name="offset_minutes" type="number" placeholder="-20" required className={inputClass} />
-            </label>
-            <label className={labelClass}>
-              <span>כותרת ההתראה</span>
-              <input name="notification_title" placeholder="תזכורת: יש להעלות צ'ילר לחופה" required className={inputClass} />
-            </label>
-            <label className={`${labelClass} sm:col-span-2`}>
-              <span>תוכן ההתראה</span>
-              <textarea name="notification_body" required rows={2} className={inputClass} />
-            </label>
-            <PushReminderRecipientFields roles={roleList} staff={staffList} inputClass={inputClass} labelClass={labelClass} />
-          </div>
-          <button
-            type="submit"
-            className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-          >
-            הוסף התראה
-          </button>
-        </SaveDetailsForm>
+        <PushRuleCreator
+          roles={roleList}
+          staff={staffList}
+          inputClass={inputClass}
+          labelClass={labelClass}
+          createAction={addRule}
+        />
       )}
 
       {(!rules || rules.length === 0) && <p className="text-foreground/60">עדיין לא הוגדרו התראות.</p>}

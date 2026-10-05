@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { sendPushToStaff } from "@/lib/pushNotifications";
+import { draftPushRule, type PushRuleDraft } from "@/lib/ruleDraft";
+import { getKnownTimelineStepLabels } from "@/app/events/[id]/timeline/actions";
 import type { PushReminderRecipientType } from "@/lib/types";
 
 const RECIPIENT_TYPES: PushReminderRecipientType[] = ["event_manager", "floor_manager", "role", "fixed_staff"];
@@ -111,4 +113,21 @@ export async function deletePushReminderRule(ruleId: string) {
   const { error } = await supabase.from("push_reminder_rules").delete().eq("id", ruleId);
   if (error) throw new Error(error.message);
   revalidatePath("/push-reminders");
+}
+
+// Free-text request -> a draft for the "new push notification" form. Creates
+// nothing: the user reviews the draft and completes the missing fields first.
+export async function draftPushRuleFromText(request: string): Promise<PushRuleDraft> {
+  await assertCanManage();
+  const text = request.trim();
+  if (!text) throw new Error("יש לכתוב מה ההתראה צריכה לעשות");
+  if (text.length > 1000) throw new Error("התיאור ארוך מדי");
+
+  const supabase = await createClient();
+  const [{ data: roles }, { data: staff }, stepLabels] = await Promise.all([
+    supabase.from("roles").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
+    supabase.from("staff").select("id, name").order("name").returns<{ id: string; name: string }[]>(),
+    getKnownTimelineStepLabels(),
+  ]);
+  return draftPushRule(text, { stepLabels, roles: roles ?? [], staff: staff ?? [] });
 }
