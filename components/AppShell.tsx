@@ -54,7 +54,7 @@ export function AppShell({
   const workspaceSwitcher = isPrivateEventsOwner && <WorkspaceSwitcher isPrivateMode={isPrivateMode} />;
 
   const accountBlock = staff && (
-    <div className="flex flex-wrap items-center gap-2.5 text-sm text-foreground/70">
+    <div className="flex flex-wrap items-center gap-2 text-sm text-foreground/70 sm:gap-2.5">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
         {staff.name.trim().charAt(0)}
       </span>
@@ -142,7 +142,22 @@ export function AppShell({
     );
   }
 
-  const titleEl = <span className="font-serif text-2xl font-bold text-accent">ניהול אירועים</span>;
+  const titleEl = <span className="whitespace-nowrap font-serif text-xl font-bold text-accent sm:text-2xl">ניהול אירועים</span>;
+
+  // Smaller version of the venue logo for the phone header (the full-size one
+  // lives in the desktop grid below).
+  const mobileLogo = IS_DEMO ? (
+    <div dir="ltr" aria-label={DEMO_VENUE_NAME} className="flex shrink-0 items-baseline gap-1 text-foreground">
+      <span className="text-lg font-black uppercase tracking-tight">Demo</span>
+      <span className="text-lg font-black uppercase tracking-tight">Venue</span>
+    </div>
+  ) : (
+    <div dir="ltr" aria-label="House No. Seven" className="flex shrink-0 items-baseline gap-1 text-foreground">
+      <span className="text-lg font-black uppercase tracking-tight">House</span>
+      <span className="font-serif text-sm italic text-foreground/80">No.</span>
+      <span className="text-lg font-black uppercase tracking-tight">Seven</span>
+    </div>
+  );
 
   const navEl = staff && (
     <MainNav
@@ -161,20 +176,18 @@ export function AppShell({
       <header className="border-b border-border-classic bg-background">
         <div className="mx-auto max-w-5xl px-4 py-3">
           <div className="flex flex-col gap-2 sm:hidden">
-            <div className="flex items-center justify-between gap-4">
-              {accountBlock}
+            <div className="flex items-center justify-between gap-3">
               {titleEl}
+              {mobileLogo}
             </div>
+            {accountBlock}
             {navEl}
           </div>
 
           <div className="hidden sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-x-4 sm:gap-y-2">
             <div className="justify-self-start">{accountBlock}</div>
 
-            <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-6 gap-y-2">
-              {titleEl}
-              {navEl}
-            </div>
+            <div className="flex min-w-0 items-center justify-center">{titleEl}</div>
 
             {IS_DEMO ? (
               <div dir="ltr" aria-label={DEMO_VENUE_NAME} className="flex items-baseline gap-1.5 justify-self-end text-foreground">
@@ -188,6 +201,11 @@ export function AppShell({
                 <span className="text-2xl font-black uppercase tracking-tight">Seven</span>
               </div>
             )}
+
+            {/* The nav gets the full header width on its own row, so its nine
+                links fit in two rows instead of wrapping inside the narrow
+                centre column between the account block and the logo. */}
+            <div className="col-span-3">{navEl}</div>
           </div>
         </div>
       </header>
