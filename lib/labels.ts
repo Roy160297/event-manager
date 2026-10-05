@@ -90,6 +90,7 @@ export const UNASSIGNED_MANAGER_COLOR = "bg-neutral-200 text-neutral-700";
 const MANAGER_LEGEND_COLOR_OVERRIDES: Record<string, string> = {
   "רועי פוריאן": "bg-teal-100 text-teal-700",
   שניר: "bg-amber-100 text-amber-700",
+  "שניר אושרי": "bg-amber-100 text-amber-700",
 };
 const MANAGER_LEGEND_EXCLUDED = new Set(["לירן", "ירון"]);
 

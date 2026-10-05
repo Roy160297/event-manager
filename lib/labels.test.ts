@@ -2,6 +2,13 @@ import { describe, expect, it } from "vitest";
 import { assignManagerColors, formatDateWithWeekday } from "@/lib/labels";
 
 describe("assignManagerColors", () => {
+  it("gives שניר אושרי amber, clearly apart from the purple/pink the other managers get", () => {
+    const colors = assignManagerColors(["ניר חדד", "רועי פוריאן", "רן קופרמן", "שניר אושרי"]);
+    expect(colors.get("שניר אושרי")).toBe("bg-amber-100 text-amber-700");
+    expect(colors.get("רן קופרמן")).toBe("bg-purple-100 text-purple-700");
+    expect(colors.get("ניר חדד")).toBe("bg-blue-100 text-blue-700");
+  });
+
   it("gives each manager a distinct color", () => {
     const colors = assignManagerColors(["רועי", "רן"]);
     expect(colors.get("רועי")).toBeTruthy();
