@@ -52,8 +52,6 @@ function readEmailRuleFields(formData: FormData) {
     }
   }
 
-  const matchMode = String(formData.get("match_mode") ?? "");
-  if (matchMode !== "exact" && matchMode !== "on_or_after") throw new Error("יש לבחור מה לעשות אם המועד כבר עבר");
   const runWindowRaw = String(formData.get("run_window") ?? "");
   if (!["any", "morning", "evening"].includes(runWindowRaw)) throw new Error("יש לבחור שעת שליחה");
   const runWindow = runWindowRaw === "any" ? null : (runWindowRaw as "morning" | "evening");
@@ -76,7 +74,6 @@ function readEmailRuleFields(formData: FormData) {
     anchor,
     offset_days: offsetDays,
     fallback_offset_days: fallbackOffsetDays,
-    match_mode: matchMode,
     run_window: runWindow,
     to_event_manager: toEventManager,
     to_floor_manager: toFloorManager,
@@ -92,7 +89,13 @@ function readEmailRuleFields(formData: FormData) {
 export async function createEmailReminderRule(formData: FormData) {
   await assertCanManage();
   const supabase = await createClient();
-  const { error } = await supabase.from("email_reminder_rules").insert(readEmailRuleFields(formData));
+  const { error } = await supabase.from("email_reminder_rules").insert({
+    ...readEmailRuleFields(formData),
+    // A new reminder goes out only on its exact date. (Editing a rule leaves
+    // this alone, so the built-in "catch up once if the date was missed"
+    // reminders keep behaving as before.)
+    match_mode: "exact",
+  });
   if (error) throw new Error(error.message);
   revalidatePath("/push-reminders");
 }

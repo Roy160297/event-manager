@@ -13,7 +13,6 @@ export interface EmailRuleValues {
   offset_days?: number | null;
   fallback_mode?: "skip" | "event" | null;
   fallback_offset_days?: number | null;
-  match_mode?: "exact" | "on_or_after" | null;
   run_window?: "any" | "morning" | "evening" | null;
   to_event_manager?: boolean | null;
   to_floor_manager?: boolean | null;
@@ -97,16 +96,6 @@ export function EmailRuleFields({
         </>
       )}
 
-      <label className={labelClass}>
-        <span>אם התאריך שנבחר כבר עבר (למשל האירוע נוצר באיחור)</span>
-        <select name="match_mode" defaultValue={values?.match_mode ?? ""} required className={inputClass}>
-          <option value="" disabled>
-            בחרו
-          </option>
-          <option value="exact">לא לשלוח</option>
-          <option value="on_or_after">לשלוח מיד, פעם אחת</option>
-        </select>
-      </label>
       <label className={labelClass}>
         <span>שעת שליחה</span>
         <select name="run_window" defaultValue={values?.run_window ?? ""} required className={inputClass}>

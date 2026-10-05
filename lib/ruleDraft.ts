@@ -133,7 +133,6 @@ export interface EmailRuleDraft {
   offset_days: number | null;
   fallback_mode: "skip" | "event" | null;
   fallback_offset_days: number | null;
-  match_mode: "exact" | "on_or_after" | null;
   run_window: "any" | "morning" | "evening" | null;
   to_event_manager: boolean | null;
   to_floor_manager: boolean | null;
@@ -147,7 +146,6 @@ export interface EmailRuleDraft {
 }
 
 const EMAIL_ANCHORS = ["event_date", "couple_meeting_date"] as const;
-const EMAIL_MATCH_MODES = ["exact", "on_or_after"] as const;
 const EMAIL_RUN_WINDOWS = ["any", "morning", "evening"] as const;
 const EMAIL_FALLBACK_MODES = ["skip", "event"] as const;
 
@@ -159,7 +157,6 @@ const EMAIL_SCHEMA = {
     offset_days: { type: Type.INTEGER, nullable: true },
     fallback_mode: { type: Type.STRING, enum: [...EMAIL_FALLBACK_MODES], nullable: true },
     fallback_offset_days: { type: Type.INTEGER, nullable: true },
-    match_mode: { type: Type.STRING, enum: [...EMAIL_MATCH_MODES], nullable: true },
     run_window: { type: Type.STRING, enum: [...EMAIL_RUN_WINDOWS], nullable: true },
     to_event_manager: { type: Type.BOOLEAN, nullable: true },
     to_floor_manager: { type: Type.BOOLEAN, nullable: true },
@@ -189,7 +186,6 @@ Fill these fields (null for anything the request does not say, except where a de
 - offset_days: integer days; NEGATIVE = before the anchor, POSITIVE = after, 0 = on the same day. "שבוע לפני" = -7.
 - fallback_mode: only when anchor is couple_meeting_date - "event" if the request says what to do when no meeting date was entered, "skip" if it should not be sent without one; null for event_date anchors or if not said.
 - fallback_offset_days: when fallback_mode is "event", the days relative to the EVENT date (e.g. -7); otherwise null.
-- match_mode: "exact" (send only on exactly that day) or "on_or_after" (send once, even if the day already passed). Default "exact" unless the request says otherwise.
 - run_window: "any", "morning" or "evening". Default "any" unless the request says morning/evening.
 - to_event_manager / to_floor_manager / to_salesperson: true if the request says the event's manager / the event's floor manager (מנהל פלור) / the event's salesperson (איש מכירות) receives it; otherwise null.
 - recipient_staff_names: specific people who should receive it - a request that names a position (e.g. the chef) means the person holding it. Use the name exactly as in this list (name - position): ${context.staff.map((m) => (m.roleName ? `${m.name} (${m.roleName})` : m.name)).join(", ")}; [] if none.
@@ -212,7 +208,6 @@ Fill these fields (null for anything the request does not say, except where a de
     offset_days: integer(raw.offset_days),
     fallback_mode: fallbackMode,
     fallback_offset_days: fallbackOffset,
-    match_mode: oneOf(raw.match_mode, EMAIL_MATCH_MODES),
     run_window: oneOf(raw.run_window, EMAIL_RUN_WINDOWS),
     to_event_manager: raw.to_event_manager === true ? true : null,
     to_floor_manager: raw.to_floor_manager === true ? true : null,
@@ -229,7 +224,6 @@ Fill these fields (null for anything the request does not say, except where a de
   if (draft.offset_days === null) draft.missing.push("מספר ימים");
   if (draft.anchor === "couple_meeting_date" && !draft.fallback_mode) draft.missing.push("מה לעשות אם אין תאריך פגישה");
   if (draft.fallback_mode === "event" && draft.fallback_offset_days === null) draft.missing.push("ימים ביחס לתאריך האירוע");
-  if (!draft.match_mode) draft.missing.push("אם המועד כבר עבר");
   if (!draft.run_window) draft.missing.push("שעת שליחה");
   const hasRecipient =
     draft.to_event_manager ||
