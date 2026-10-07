@@ -32,11 +32,30 @@ export function PushNotificationManager() {
 
   useEffect(() => {
     if (status !== "checking") return;
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => registration.pushManager.getSubscription())
-      .then((subscription) => setStatus(subscription ? "on" : "off"))
-      .catch(() => setStatus("unsupported"));
+    // Keeps the server's copy of this device in sync with the browser's: a
+    // device row gets deleted when the push service reports it gone (e.g.
+    // after installing the site as an app, or a browser update), so a
+    // subscription the browser still holds is re-saved, and a granted
+    // permission with no subscription is re-subscribed without another tap.
+    async function sync() {
+      const registration = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!subscription && publicKey && Notification.permission === "granted") {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        });
+      }
+      if (subscription) {
+        await subscribeToPush(subscription.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }).catch(
+          () => undefined,
+        );
+      }
+      setStatus(subscription ? "on" : "off");
+    }
+    sync().catch(() => setStatus("unsupported"));
   }, [status]);
 
   async function enable() {
