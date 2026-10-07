@@ -65,5 +65,5 @@ export const config = {
   // Excludes /api - route handlers there (e.g. the cron reminders endpoint)
   // authenticate themselves (a shared secret, not a user session) and must
   // stay reachable with no logged-in user, unlike every page route.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api|fonts/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|api|fonts/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2)$).*)"],
 };
