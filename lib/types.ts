@@ -141,6 +141,8 @@ export interface StaffRow {
   id: string;
   name: string;
   email: string | null;
+  // Optional separate address for reminder emails; `email` is the sign-in one.
+  notification_email: string | null;
   phone: string | null;
   user_id: string | null;
   role_id: string | null;

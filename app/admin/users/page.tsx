@@ -103,6 +103,9 @@ export default async function UsersPage() {
                   <div className="min-w-0">
                     <p className="font-medium">{member.name}</p>
                     <p className="text-sm text-foreground/60">{member.email ?? "— אין אימייל, לא ניתן להתחבר —"}</p>
+                    {member.notification_email && (
+                      <p className="text-xs text-foreground/50">תזכורות באימייל נשלחות אל: {member.notification_email}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <span
@@ -148,6 +151,16 @@ export default async function UsersPage() {
                           name="email"
                           defaultValue={member.email ?? ""}
                           required
+                          className="rounded-md border border-border-classic bg-surface px-3 py-2"
+                        />
+                      </label>
+                      <label className="flex flex-1 flex-col gap-1 text-sm">
+                        <span>אימייל לקבלת תזכורות (לא חובה)</span>
+                        <input
+                          type="email"
+                          name="notification_email"
+                          defaultValue={member.notification_email ?? ""}
+                          placeholder="אם ריק - נשלח לאימייל ההתחברות"
                           className="rounded-md border border-border-classic bg-surface px-3 py-2"
                         />
                       </label>

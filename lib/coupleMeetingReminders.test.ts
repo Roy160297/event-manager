@@ -3,6 +3,7 @@ import { EVENT_TYPE_LABELS } from "@/lib/labels";
 import { addDaysToDate } from "@/lib/coupleMeetingReminders";
 import {
   emailRuleRecipients,
+  reminderEmailOf,
   renderEmailBody,
   renderEmailSubject,
   resolveEmailTargetDate,
@@ -118,5 +119,12 @@ describe("emailRuleRecipients", () => {
 
   it("splits typed addresses on commas, semicolons and whitespace", () => {
     expect(splitEmails(" a@x.com ,b@x.com; c@x.com ")).toEqual(["a@x.com", "b@x.com", "c@x.com"]);
+  });
+
+  it("sends to the separate reminders address when set, otherwise the sign-in address", () => {
+    expect(reminderEmailOf({ email: "eva@gmail.com", notification_email: "eva@work.co.il" })).toBe("eva@work.co.il");
+    expect(reminderEmailOf({ email: "eva@gmail.com", notification_email: "  " })).toBe("eva@gmail.com");
+    expect(reminderEmailOf({ email: "eva@gmail.com", notification_email: null })).toBe("eva@gmail.com");
+    expect(reminderEmailOf({ email: null })).toBeNull();
   });
 });

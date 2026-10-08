@@ -8,6 +8,7 @@ import { sendReminderEmail } from "@/lib/reminderEmail";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { todayInIsrael } from "@/lib/coupleMeetingReminders";
 import {
+  reminderEmailOf,
   renderEmailBody,
   renderEmailSubject,
   resolveEmailTargetDate,
@@ -181,9 +182,15 @@ const SAMPLE_EVENT: EmailReminderEvent = {
 // should never reach real staff - and filled with clearly-labeled sample data.
 export async function sendTestEmailReminderRule(ruleId: string): Promise<{ to: string }> {
   const staff = await assertCanManage();
-  if (!staff.email) throw new Error("לא מוגדרת כתובת אימייל למשתמש שלך");
-
   const supabase = await createClient();
+  const { data: self } = await supabase
+    .from("staff")
+    .select("email, notification_email")
+    .eq("id", staff.id)
+    .maybeSingle<{ email: string | null; notification_email: string | null }>();
+  const to = self ? reminderEmailOf(self) : staff.email;
+  if (!to) throw new Error("לא מוגדרת כתובת אימייל למשתמש שלך");
+
   const { data: rule, error } = await supabase
     .from("email_reminder_rules")
     .select("subject, body")
@@ -193,11 +200,11 @@ export async function sendTestEmailReminderRule(ruleId: string): Promise<{ to: s
   if (!rule) throw new Error("התזכורת לא נמצאה");
 
   await sendReminderEmail({
-    to: staff.email,
+    to,
     subject: `[בדיקה] ${renderEmailSubject(rule.subject, SAMPLE_EVENT)}`,
     bodyText: renderEmailBody(rule.body, SAMPLE_EVENT),
   });
-  return { to: staff.email };
+  return { to };
 }
 
 // Free-text request -> a draft for the "new email reminder" form. Creates

@@ -132,10 +132,19 @@ export interface StaffDirectoryEntry {
   role_id: string | null;
 }
 
+// Where reminder emails for a staff member go: their separate reminders
+// address if they set one, otherwise the address they sign in with.
+export function reminderEmailOf(member: { email: string | null; notification_email?: string | null }): string | null {
+  return member.notification_email?.trim() || member.email;
+}
+
 export async function loadStaffDirectory(supabase: SupabaseClient): Promise<StaffDirectoryEntry[]> {
-  const { data, error } = await supabase.from("staff").select("id, email, role_id").returns<StaffDirectoryEntry[]>();
+  const { data, error } = await supabase
+    .from("staff")
+    .select("id, email, notification_email, role_id")
+    .returns<(StaffDirectoryEntry & { notification_email: string | null })[]>();
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []).map((member) => ({ id: member.id, email: reminderEmailOf(member), role_id: member.role_id }));
 }
 
 // Everyone a rule should email for this event: the roles of the event itself

@@ -30,11 +30,15 @@ export async function updateStaffDetails(staffId: string, formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const phone = String(formData.get("phone") ?? "").trim() || null;
+  const notificationEmail = String(formData.get("notification_email") ?? "").trim().toLowerCase() || null;
 
   if (!name) throw new Error("שם הוא שדה חובה");
   if (!email) throw new Error("כתובת אימייל היא שדה חובה כדי לאפשר התחברות");
 
-  const { error } = await supabase.from("staff").update({ name, email, phone }).eq("id", staffId);
+  const { error } = await supabase
+    .from("staff")
+    .update({ name, email, phone, notification_email: notificationEmail })
+    .eq("id", staffId);
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/users");
