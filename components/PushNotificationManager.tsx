@@ -49,9 +49,22 @@ export function PushNotificationManager() {
         });
       }
       if (subscription) {
-        await subscribeToPush(subscription.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }).catch(
-          () => undefined,
-        );
+        // Once per browser session - it only has to repair a row the server
+        // dropped, not run a server request on every full page load.
+        const syncedKey = `push-synced:${subscription.endpoint}`;
+        let alreadySynced = false;
+        try {
+          alreadySynced = sessionStorage.getItem(syncedKey) === "1";
+        } catch {}
+        if (!alreadySynced) {
+          await subscribeToPush(subscription.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } })
+            .then(() => {
+              try {
+                sessionStorage.setItem(syncedKey, "1");
+              } catch {}
+            })
+            .catch(() => undefined);
+        }
       }
       setStatus(subscription ? "on" : "off");
     }

@@ -23,14 +23,18 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims verifies the session token's signature locally (the project
+  // signs with an asymmetric key) instead of calling the Auth server like
+  // getUser does - that call ran on every request, including each link
+  // prefetch, and was the largest fixed cost of every page navigation. It
+  // still refreshes an expired token. RLS keeps enforcing access regardless.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub ?? null;
 
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
 
-  if (!user) {
+  if (!userId) {
     if (isPublic) return response;
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -44,13 +48,13 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!isPublic) {
-    const { data: staff, error } = await supabase.from("staff").select("role_id").eq("user_id", user.id).maybeSingle();
+    const { data: staff, error } = await supabase.from("staff").select("role_id").eq("user_id", userId).maybeSingle();
     if (error) {
       // A transient DB/network error here must not be treated as "no role
       // assigned" - that would bounce an already-authorized user to /pending
       // (and offer only a log-out button) on an ordinary refresh. Fail open
       // and let the request through; RLS still enforces actual access.
-      console.error(`proxy: staff role lookup failed for user ${user.id}:`, error);
+      console.error(`proxy: staff role lookup failed for user ${userId}:`, error);
     } else if (!staff?.role_id) {
       const url = request.nextUrl.clone();
       url.pathname = "/pending";

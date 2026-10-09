@@ -28,30 +28,32 @@ const NO_PERMISSIONS: PermissionMap = Object.fromEntries(
 // from scratch, multiplying an already-multi-query chain 2-3x per navigation.
 export const getCurrentStaff = cache(async (): Promise<CurrentStaff | null> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  // Local token verification (no Auth-server round trip) - see proxy.ts.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
+  if (!userId) return null;
 
+  // One request for the staff row, its role and the role's permissions
+  // (embedded) instead of three sequential round trips.
   const { data: staff } = await supabase
     .from("staff")
-    .select("id, name, email, role_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
+    .select("id, name, email, role_id, roles(name, role_permissions(resource, can_read, can_write))")
+    .eq("user_id", userId)
+    .maybeSingle<{
+      id: string;
+      name: string;
+      email: string | null;
+      role_id: string | null;
+      roles: { name: string; role_permissions: RolePermissionRow[] } | null;
+    }>();
   if (!staff) return null;
 
   if (!staff.role_id) {
     return { id: staff.id, name: staff.name, email: staff.email, roleId: null, roleName: null, permissions: NO_PERMISSIONS };
   }
 
-  const [{ data: role }, { data: rolePermissions }] = await Promise.all([
-    supabase.from("roles").select("name").eq("id", staff.role_id).maybeSingle(),
-    supabase
-      .from("role_permissions")
-      .select("resource, can_read, can_write")
-      .eq("role_id", staff.role_id)
-      .returns<RolePermissionRow[]>(),
-  ]);
+  const role = staff.roles;
+  const rolePermissions = role?.role_permissions;
 
   const permissions: PermissionMap = { ...NO_PERMISSIONS };
   for (const perm of rolePermissions ?? []) {
