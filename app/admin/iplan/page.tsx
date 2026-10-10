@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentStaff } from "@/lib/auth";
+import { canWrite } from "@/lib/permissions";
+import { requestSyncNow, setSyncInterval } from "./actions";
 
 interface StatusRow {
   last_ping_at: string | null;
@@ -6,7 +9,18 @@ interface StatusRow {
   last_status: string | null;
   last_error: string | null;
   last_summary: { counts?: Record<string, number>; skipped?: string[] } | null;
+  interval_minutes: number;
+  run_requested_at: string | null;
+  last_run_at: string | null;
 }
+
+const INTERVAL_OPTIONS = [
+  { minutes: 60, label: "כל שעה" },
+  { minutes: 120, label: "כל שעתיים" },
+  { minutes: 180, label: "כל 3 שעות" },
+  { minutes: 360, label: "כל 6 שעות" },
+  { minutes: 720, label: "כל 12 שעות" },
+];
 
 interface LogRow {
   id: string;
@@ -54,7 +68,7 @@ function agoText(minutes: number | null): string {
 
 export default async function IplanSyncPage() {
   const supabase = await createClient();
-  const [{ data: status }, { data: log }] = await Promise.all([
+  const [{ data: status }, { data: log }, currentStaff] = await Promise.all([
     supabase.from("iplan_sync_status").select("*").eq("id", true).maybeSingle<StatusRow>(),
     supabase
       .from("iplan_sync_log")
@@ -62,7 +76,11 @@ export default async function IplanSyncPage() {
       .order("created_at", { ascending: false })
       .limit(50)
       .returns<LogRow[]>(),
+    getCurrentStaff(),
   ]);
+  const canManage = !!currentStaff && canWrite(currentStaff.permissions, "admin");
+  const pendingRequest =
+    !!status?.run_requested_at && (!status.last_run_at || status.run_requested_at > status.last_run_at);
 
   const sinceOk = minutesAgo(status?.last_ok_at ?? null);
   const sincePing = minutesAgo(status?.last_ping_at ?? null);
@@ -108,6 +126,40 @@ export default async function IplanSyncPage() {
           </details>
         )}
       </section>
+
+      {canManage && (
+        <section className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+          <form action={setSyncInterval} className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1 text-sm">
+              <span>תדירות הסנכרון (בין 7:00 ל-22:00)</span>
+              <select
+                name="interval_minutes"
+                defaultValue={status?.interval_minutes ?? 180}
+                className="rounded-md border border-border-classic bg-surface px-3 py-2"
+              >
+                {INTERVAL_OPTIONS.map((option) => (
+                  <option key={option.minutes} value={option.minutes}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="submit" className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft">
+              שמור
+            </button>
+          </form>
+          <form action={requestSyncNow} className="flex flex-wrap items-center gap-3">
+            <button type="submit" className="rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft">
+              סנכרן עכשיו
+            </button>
+            <span className="text-sm text-foreground/60">
+              {pendingRequest
+                ? "הבקשה נרשמה - הסנכרון יתחיל בדקות הקרובות (התוסף בודק אחת ל-15 דקות)."
+                : "התוסף בודק אחת ל-15 דקות אם הגיע הזמן; הלחיצה גורמת לו לרוץ בבדיקה הבאה."}
+            </span>
+          </form>
+        </section>
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="text-lg font-bold">מה השתנה לאחרונה</h2>

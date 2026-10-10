@@ -5,13 +5,14 @@
   class LoginRequired extends Error {}
 
   const NEAR_DAYS = 45; // events this close are re-read every pass
-  const FAR_EVERY_MS = 6 * 60 * 60 * 1000; // the rest only every few hours
+  const FAR_EVERY_MS = 12 * 60 * 60 * 1000; // the rest only every few hours
   const MONTHS_AHEAD = 8;
   const BATCH = 10;
-  const PAUSE_MS = 250; // be gentle with iPlan
+  const PAUSE_MS = 250; // base pause between requests; each one is randomised
 
   const cfg = () => root.IPLAN_SYNC_CONFIG;
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  // A pause between 1.2x and 3x the base, so the requests are not evenly spaced.
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms * (1.2 + Math.random() * 1.8)));
   const base = () => `https://app.iplan.co.il/he-IL/corp/companies/${cfg().companyId}`;
 
   function israelToday() {
@@ -78,9 +79,16 @@
     return response.json();
   }
 
-  // options.force: also re-read the far-off events now (a manual click).
+  // options.manual: a click on the icon - go to iPlan now and re-read the far-off
+  // events too. Otherwise the site decides whether it is time (and whether to
+  // re-read everything), so the pace can be changed from the site.
   async function run(storage, options) {
-    const force = !!(options && options.force);
+    let force = !!(options && options.manual);
+    if (!force) {
+      const decision = await post({ status: "poll" });
+      if (!decision.run) return { status: "idle", message: "לא נדרש סנכרון כרגע" };
+      force = !!decision.force;
+    }
     const today = israelToday();
     const saved = await storage.get(["lastFar"]);
     const doFar = force || !saved.lastFar || Date.now() - saved.lastFar > FAR_EVERY_MS;

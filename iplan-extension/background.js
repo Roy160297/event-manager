@@ -11,10 +11,11 @@ async function ensureOffscreen() {
   });
 }
 
-async function runSync(force) {
+async function runSync(manual) {
   try {
     await ensureOffscreen();
-    const result = await chrome.runtime.sendMessage({ type: "run-sync", force: !!force });
+    const result = await chrome.runtime.sendMessage({ type: "run-sync", manual: !!manual });
+    if (result?.status === "idle") return; // not time yet - leave the badge as it was
     const text = result?.status === "ok" ? "" : "!";
     await chrome.action.setBadgeText({ text });
     await chrome.action.setBadgeBackgroundColor({ color: "#b91c1c" });
@@ -26,16 +27,17 @@ async function runSync(force) {
 }
 
 function schedule() {
+  // Only a cheap "is it time?" question to the site - iPlan is visited when it says so.
   chrome.alarms.create(ALARM, { periodInMinutes: 15, delayInMinutes: 1 });
 }
 
 chrome.runtime.onInstalled.addListener(() => {
   schedule();
-  runSync(true);
+  runSync(false);
 });
 chrome.runtime.onStartup.addListener(() => {
   schedule();
-  runSync(true);
+  runSync(false);
 });
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM) runSync();

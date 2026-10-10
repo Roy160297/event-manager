@@ -6,6 +6,7 @@ import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { sendPushToStaff } from "@/lib/pushNotifications";
 import { todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { buildIplanPayload, isIplanPagePayload } from "@/lib/iplanPages";
+import { shouldRunSync } from "@/lib/iplanSchedule";
 import { formatDate } from "@/lib/labels";
 import {
   describeChanges,
@@ -288,6 +289,34 @@ export async function POST(request: Request) {
   }
 
   const supabase = createAdminClient();
+
+  // The extension's regular wake-up: only answers whether it is time to go to
+  // iPlan (see lib/iplanSchedule.ts), so the pace is set here, not in the
+  // extension.
+  if (body.status === "poll") {
+    const { data: row } = await supabase
+      .from("iplan_sync_status")
+      .select("last_run_at, interval_minutes, active_from_hour, active_to_hour, run_requested_at")
+      .eq("id", true)
+      .maybeSingle<{
+        last_run_at: string | null;
+        interval_minutes: number;
+        active_from_hour: number;
+        active_to_hour: number;
+        run_requested_at: string | null;
+      }>();
+    await supabase.from("iplan_sync_status").update({ last_ping_at: new Date().toISOString() }).eq("id", true);
+    const decision = shouldRunSync({
+      now: new Date(),
+      lastRunAt: row?.last_run_at ? new Date(row.last_run_at) : null,
+      intervalMinutes: row?.interval_minutes ?? 180,
+      activeFromHour: row?.active_from_hour ?? 7,
+      activeToHour: row?.active_to_hour ?? 22,
+      runRequestedAt: row?.run_requested_at ? new Date(row.run_requested_at) : null,
+    });
+    return Response.json({ ok: true, ...decision });
+  }
+
   const dry = body.dry_run === true;
   const status = body.status === "login_required" || body.status === "error" ? body.status : "ok";
   const now = new Date().toISOString();
@@ -349,6 +378,7 @@ export async function POST(request: Request) {
     .from("iplan_sync_status")
     .update({
       last_ping_at: now,
+      last_run_at: now,
       ...(status === "ok" ? { last_ok_at: now } : {}),
       last_status: status,
       last_error: status === "ok" ? null : (body.error ?? null),
