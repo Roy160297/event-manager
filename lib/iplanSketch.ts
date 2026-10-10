@@ -172,6 +172,13 @@ export function parseSketchHtml(html: string): ParsedSketch {
   return { shapes, background_url: parseBackground(html), patterns: parsePatterns(html, shapes) };
 }
 
+// Captioned shapes that are part of the hall, not a place a waiter works.
+const NOT_A_STAND = ["רחבת ריקודים", "וילון"];
+
+// Bumped whenever the way a sketch is turned into tables / stands changes, so
+// the next run applies already-seen sketches again.
+export const SKETCH_LOGIC_VERSION = 2;
+
 // The table / food-stand list the staffing page works with (the same shape the
 // PDF import produces): every seatable shape is a table, and any other shape
 // with a caption of its own ("בשר כפול", "סלטים") is a food stand.
@@ -188,7 +195,7 @@ export function sketchDraft(sketch: ParsedSketch): SketchDraft {
   const seen = new Set<string>();
   const foodStands: { label: string }[] = [];
   for (const shape of sketch.shapes) {
-    if (shape.seatable || !shape.shape_text || shape.shape_text === "רחבת ריקודים") continue;
+    if (shape.seatable || !shape.shape_text || NOT_A_STAND.some((word) => shape.shape_text.includes(word) || shape.name.includes(word))) continue;
     if (seen.has(shape.shape_text)) continue;
     seen.add(shape.shape_text);
     foodStands.push({ label: shape.shape_text });

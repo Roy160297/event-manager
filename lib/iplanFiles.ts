@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseExcelBuffer } from "@/lib/csv-import";
 import { guessGuestMapping, mapGuestRows } from "@/lib/guestImport";
-import { parseSketchHtml, renderSketchSvg, seatedTotal, sketchDraft, sketchSummary } from "@/lib/iplanSketch";
+import { parseSketchHtml, renderSketchSvg, seatedTotal, SKETCH_LOGIC_VERSION, sketchDraft, sketchSummary } from "@/lib/iplanSketch";
 import { fetchSketchAssets } from "@/lib/iplanSketchAssets";
 import { syncLocationsFromSketch } from "@/lib/sketchSync";
 
@@ -36,7 +36,7 @@ export async function applyIplanSketch(
     return { action: "skipped", detail: "לא נמצאו שולחנות או עמדות בסקיצה" };
   }
   const summary = sketchSummary(draft);
-  const hash = hashOf(sketch);
+  const hash = hashOf({ sketch, version: SKETCH_LOGIC_VERSION });
 
   const { data: event } = await supabase
     .from("events")

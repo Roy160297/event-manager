@@ -101,6 +101,14 @@ describe("sketchDraft", () => {
     expect(draft.foodStands).toEqual([{ label: "בשר כפול" }, { label: "סלטים" }]);
   });
 
+  it("does not list the curtain (or the dance floor) as a stand", () => {
+    const withCurtain = [
+      html,
+      shapeAttr({ x: 5, y: 5, rotate_angle: 0, height: 20, width: 400, seatable: false, shape_text: "וילון שחור - למחיצה", z_index: 1, id: "20", name: "וילון" }),
+    ].join("\n");
+    expect(sketchDraft(parseSketchHtml(withCurtain)).foodStands).toEqual([{ label: "בשר כפול" }, { label: "סלטים" }]);
+  });
+
   it("totals the seated chairs and summarises the hall", () => {
     expect(seatedTotal(draft)).toBe(7);
     expect(sketchSummary(draft)).toBe("2 שולחנות (27 מקומות), 2 עמדות אוכל");
