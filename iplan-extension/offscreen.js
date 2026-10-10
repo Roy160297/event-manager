@@ -6,7 +6,7 @@ const remoteStorage = {
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type !== "run-sync") return false;
-  IplanSync.run(remoteStorage)
+  IplanSync.run(remoteStorage, { force: !!message.force })
     .then(sendResponse)
     .catch((err) => sendResponse({ status: "error", message: err instanceof Error ? err.message : String(err) }));
   return true;

@@ -1,12 +1,13 @@
 // One sync pass: read the closed upcoming events from iPlan (read-only GETs,
-// using the browser's own logged-in session) and send what changed to the app.
+// using the browser's own logged-in session) and hand the raw pages to the
+// site, which works out what changed. Deliberately thin - see parse.js.
 (function (root) {
   class LoginRequired extends Error {}
 
   const NEAR_DAYS = 45; // events this close are re-read every pass
   const FAR_EVERY_MS = 6 * 60 * 60 * 1000; // the rest only every few hours
   const MONTHS_AHEAD = 8;
-  const BATCH = 15;
+  const BATCH = 10;
   const PAUSE_MS = 250; // be gentle with iPlan
 
   const cfg = () => root.IPLAN_SYNC_CONFIG;
@@ -56,78 +57,13 @@
     return [...found.values()];
   }
 
-  function isFridayDate(isoDate) {
-    return !!isoDate && new Date(`${isoDate}T00:00:00Z`).getUTCDay() === 5;
-  }
-
-  // The venue only runs the "reverse" wedding format on Fridays, and iPlan
-  // marks it only through the schedule form attached to the event - so a
-  // Friday wedding counts as reverse even before that form exists.
-  function mapEventType(typeLabel, serviceStyle, isReverse, isoDate) {
-    const label = typeLabel || "";
-    if (label.includes("חתונה")) {
-      const service = serviceStyle === "הגשה";
-      if (isReverse || isFridayDate(isoDate)) return service ? "reverse_wedding_service" : "reverse_wedding";
-      return service ? "wedding_service" : "wedding";
-    }
-    if (label.includes("בר מצווה")) return "bar_mitzvah";
-    if (label.includes("בת מצווה")) return "bat_mitzvah";
-    if (label.includes("עסקי")) return "business_event";
-    return "other";
-  }
-
-  // Same shape the screenshot import reads off iPlan's event screen.
-  function buildPayload(item, quick, cloud) {
-    const bride = cloud.users.find((u) => u.role === "כלה") || null;
-    const groom = cloud.users.find((u) => u.role === "חתן") || null;
-    const isWedding = (quick.typeLabel || "").includes("חתונה") && (bride || groom);
-    const staffByRole = (role) => quick.staff.find((s) => s.role === role)?.name || null;
-    const contacts = [bride, groom].filter(Boolean);
-    // "עדיין לא נקבע" (not decided yet) is not a style.
-    const style = cloud.serviceStyle === "מזנונים" || cloud.serviceStyle === "הגשה" ? cloud.serviceStyle : null;
-
-    return {
-      iplan_event_id: item.id,
-      confirmed: quick.status === "סגור",
-      title: quick.title,
-      floor_manager_name: staffByRole("מנהל פלור"),
-      extraction: {
-        bride_name: isWedding ? (bride && bride.name) || null : quick.title,
-        groom_name: isWedding ? (groom && groom.name) || null : null,
-        event_type: mapEventType(quick.typeLabel, style, cloud.isReverse, quick.date),
-        event_date: quick.date,
-        start_time: quick.startTime,
-        end_time: quick.endTime,
-        event_manager_name: staffByRole("מנהל אירוע"),
-        sales_person_name: staffByRole("מכירות"),
-        service_style: style,
-        contact_phone: (contacts[0] && contacts[0].phone) || null,
-        contact_phone_2: (contacts[1] && contacts[1].phone) || null,
-        contact_email: (contacts[0] && contacts[0].email) || null,
-        contact_email_2: (contacts[1] && contacts[1].email) || null,
-        // Until the client signs a commitment the number in use is the contract
-        // minimum (what is entered by hand today) - without a reserve on top.
-        guests_secure: cloud.commitmentReceived ? cloud.guestsSecure : cloud.minimumGuests,
-        guests_reserve: cloud.guestsReserve,
-        guests_reserve_percent: cloud.commitmentReceived && cloud.guestsReserve == null ? cloud.reservePercent : null,
-        kids_meals: cloud.kids,
-        glat_meals: cloud.glat,
-        vegetarian_meals: cloud.vegetarian,
-        vegan_meals: cloud.vegan,
-        gluten_free_meals: cloud.glutenFree,
-        toddlers_under_2: cloud.toddlers,
-        source_type: "iplan_screen",
-      },
-    };
-  }
-
   async function readEvent(item) {
-    const quick = root.IplanParse.parseQuickView(await iplanGet(`https://app.iplan.co.il${item.quickViewUrl}`, false));
-    if (!quick.date) throw new Error("מבנה כרטיס האירוע ב-iPlan השתנה (לא נמצא תאריך)");
-    const cloud = quick.cloudId
-      ? root.IplanParse.parseCloud(await iplanGet(`${base()}/client/events/${quick.cloudId}`, false))
-      : root.IplanParse.parseCloud("");
-    return buildPayload(item, quick, cloud);
+    const quick = root.IplanParse.dumpPage(await iplanGet(`https://app.iplan.co.il${item.quickViewUrl}`, false));
+    const cloudId = quick.hrefs.map((href) => href.match(/client\/events\/(\d+)(?:$|\?)/)).find(Boolean);
+    const cloud = cloudId
+      ? root.IplanParse.dumpPage(await iplanGet(`${base()}/client/events/${cloudId[1]}`, false))
+      : null;
+    return { id: item.id, date: item.date, quick, cloud };
   }
 
   async function post(body) {
@@ -142,32 +78,31 @@
     return response.json();
   }
 
-  // dryRun: only ask the app what it would do (nothing is written anywhere).
+  // options.force: also re-read the far-off events now (a manual click).
   async function run(storage, options) {
-    const dryRun = !!(options && options.dryRun);
+    const force = !!(options && options.force);
     const today = israelToday();
-    const saved = dryRun ? {} : await storage.get(["hashes", "lastFar"]);
-    const hashes = saved.hashes || {};
-    const doFar = dryRun || !saved.lastFar || Date.now() - saved.lastFar > FAR_EVERY_MS;
+    const saved = await storage.get(["lastFar"]);
+    const doFar = force || !saved.lastFar || Date.now() - saved.lastFar > FAR_EVERY_MS;
 
     let items;
     try {
       items = await collectClosedEvents(today);
     } catch (err) {
       const login = err instanceof LoginRequired;
-      if (!dryRun) await post({ status: login ? "login_required" : "error", error: login ? "iPlan מבקשת התחברות מחדש" : String(err.message || err) });
+      await post({ status: login ? "login_required" : "error", error: login ? "iPlan מבקשת התחברות מחדש" : String(err.message || err) });
       return { status: login ? "login_required" : "error", message: login ? "נדרשת התחברות ל-iPlan" : String(err.message || err) };
     }
 
     const todo = items.filter((item) => doFar || daysBetween(today, item.date) <= NEAR_DAYS);
-    const payloads = [];
+    const pages = [];
     const errors = [];
     for (const item of todo) {
       try {
-        payloads.push(await readEvent(item));
+        pages.push(await readEvent(item));
       } catch (err) {
         if (err instanceof LoginRequired) {
-          if (!dryRun) await post({ status: "login_required", error: "iPlan מבקשת התחברות מחדש" });
+          await post({ status: "login_required", error: "iPlan מבקשת התחברות מחדש" });
           return { status: "login_required", message: "נדרשת התחברות ל-iPlan" };
         }
         errors.push(`${item.id}: ${err.message || err}`);
@@ -175,32 +110,17 @@
       await sleep(PAUSE_MS);
     }
 
-    const changed = dryRun ? payloads : payloads.filter((p) => hashes[p.iplan_event_id] !== JSON.stringify(p));
-    const batches = changed.length ? [] : [[]];
-    for (let i = 0; i < changed.length; i += BATCH) batches.push(changed.slice(i, i + BATCH));
+    const error = errors.length ? errors.slice(0, 5).join(" | ") : undefined;
+    const batches = pages.length ? [] : [[]];
+    for (let i = 0; i < pages.length; i += BATCH) batches.push(pages.slice(i, i + BATCH));
+    for (const batch of batches) await post({ status: "ok", pages: batch, error });
 
-    // The very first run imports everything already in iPlan - the app skips
-    // its "new event" notifications for that one pass.
-    const initial = !dryRun && Object.keys(hashes).length === 0;
-    const allResults = [];
-    for (const events of batches) {
-      const answer = await post({ status: "ok", events, dry_run: dryRun, initial, error: errors.length ? errors.slice(0, 5).join(" | ") : undefined });
-      for (const result of answer.results || []) {
-        allResults.push(result);
-        if (dryRun || result.action === "skipped") continue;
-        const payload = events.find((p) => p.iplan_event_id === result.iplan_event_id);
-        if (payload) hashes[payload.iplan_event_id] = JSON.stringify(payload);
-      }
-    }
-
-    if (!dryRun) await storage.set({ hashes, ...(doFar ? { lastFar: Date.now() } : {}) });
+    if (doFar) await storage.set({ lastFar: Date.now() });
     return {
       status: "ok",
-      message: `נבדקו ${payloads.length} אירועים, ${changed.length} נשלחו${errors.length ? `, ${errors.length} שגיאות` : ""}`,
-      results: allResults,
-      errors,
+      message: `נבדקו ${pages.length} אירועים${errors.length ? `, ${errors.length} שגיאות` : ""}`,
     };
   }
 
-  root.IplanSync = { run, buildPayload, mapEventType, LoginRequired };
+  root.IplanSync = { run, LoginRequired };
 })(typeof self !== "undefined" ? self : window);

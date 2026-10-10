@@ -11,10 +11,10 @@ async function ensureOffscreen() {
   });
 }
 
-async function runSync() {
+async function runSync(force) {
   try {
     await ensureOffscreen();
-    const result = await chrome.runtime.sendMessage({ type: "run-sync" });
+    const result = await chrome.runtime.sendMessage({ type: "run-sync", force: !!force });
     const text = result?.status === "ok" ? "" : "!";
     await chrome.action.setBadgeText({ text });
     await chrome.action.setBadgeBackgroundColor({ color: "#b91c1c" });
@@ -31,16 +31,16 @@ function schedule() {
 
 chrome.runtime.onInstalled.addListener(() => {
   schedule();
-  runSync();
+  runSync(true);
 });
 chrome.runtime.onStartup.addListener(() => {
   schedule();
-  runSync();
+  runSync(true);
 });
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM) runSync();
 });
-chrome.action.onClicked.addListener(() => runSync());
+chrome.action.onClicked.addListener(() => runSync(true));
 
 // The offscreen document has no chrome.storage, so it asks this worker to
 // read and write the sync state (which events were already sent).

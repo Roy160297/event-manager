@@ -5,6 +5,7 @@ import { applyDefaultSchedule, schedulePushRemindersForStep } from "@/app/events
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { sendPushToStaff } from "@/lib/pushNotifications";
 import { todayInIsrael } from "@/lib/coupleMeetingReminders";
+import { buildIplanPayload, isIplanPagePayload } from "@/lib/iplanPages";
 import { formatDate } from "@/lib/labels";
 import {
   describeChanges,
@@ -279,7 +280,7 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  let body: { status?: string; error?: string; events?: unknown[]; dry_run?: boolean; initial?: boolean };
+  let body: { status?: string; error?: string; events?: unknown[]; pages?: unknown[]; dry_run?: boolean; initial?: boolean };
   try {
     body = await request.json();
   } catch {
@@ -298,10 +299,26 @@ export async function POST(request: Request) {
     .maybeSingle<{ last_status: string | null }>();
 
   const results: ItemResult[] = [];
-  if (status === "ok" && Array.isArray(body.events)) {
+  // The extension sends raw page dumps ("pages"); they are turned into events
+  // here so that changes in how iPlan's pages are read ship with the site.
+  const incoming: unknown[] = [];
+  for (const page of Array.isArray(body.pages) ? body.pages : []) {
+    if (!isIplanPagePayload(page)) {
+      results.push({ iplan_event_id: "?", action: "skipped", detail: "מבנה דף לא תקין" });
+      continue;
+    }
+    try {
+      incoming.push(buildIplanPayload(page));
+    } catch (err) {
+      results.push({ iplan_event_id: page.id, action: "skipped", detail: err instanceof Error ? err.message : "קריאת הדף נכשלה" });
+    }
+  }
+  if (Array.isArray(body.events)) incoming.push(...body.events);
+
+  if (status === "ok" && incoming.length > 0) {
     const { data: staff } = await supabase.from("staff").select("id, name");
     const today = todayInIsrael();
-    for (const item of body.events) {
+    for (const item of incoming) {
       try {
         results.push(await processEvent(supabase, staff ?? [], today, item, dry, body.initial !== true));
       } catch (err) {
