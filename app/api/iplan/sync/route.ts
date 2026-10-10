@@ -7,7 +7,7 @@ import { sendPushToStaff } from "@/lib/pushNotifications";
 import { todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { applyIplanGuests, applyIplanSketch, type FileResult } from "@/lib/iplanFiles";
 import { buildIplanPayload, isIplanPagePayload } from "@/lib/iplanPages";
-import { shouldRunSync } from "@/lib/iplanSchedule";
+import { israelDate, shouldRunSync } from "@/lib/iplanSchedule";
 import { formatDate } from "@/lib/labels";
 import {
   describeChanges,
@@ -345,7 +345,10 @@ export async function POST(request: Request) {
     for (const event of events ?? []) {
       const iplanId = event.iplan_event_id as string;
       if (manual || !event.iplan_sketch_synced_at) sketch.push(iplanId);
-      if (event.event_date === today && (manual || !event.iplan_guests_synced_at)) guests.push(iplanId);
+      // The guest list is for the day itself (a pull from an earlier day does
+      // not count), but a manual run may fetch it a day ahead.
+      const guestsSyncedOnTheDay = event.iplan_guests_synced_at && israelDate(new Date(event.iplan_guests_synced_at as string)) >= (event.event_date as string);
+      if ((event.event_date === today && !guestsSyncedOnTheDay) || manual) guests.push(iplanId);
     }
     return Response.json({ ok: true, sketch, guests });
   }
