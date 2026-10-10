@@ -52,6 +52,11 @@ export async function sendPushToStaff(staffId: string, payload: { title: string;
           keys: { p256dh: sub.p256dh, auth: sub.auth },
         },
         JSON.stringify({ title: payload.title, body: payload.body, url }),
+        // "high" urgency: with the default (normal) Android holds a push back
+        // while the phone is idle/dozing, which made notifications arrive on
+        // the computer but not on the phone. The TTL drops a reminder that
+        // couldn't be delivered within an hour instead of showing it hours late.
+        { urgency: "high", TTL: 3600 },
       );
       sent++;
     } catch (err) {
