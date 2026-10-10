@@ -177,9 +177,12 @@
     const batches = changed.length ? [] : [[]];
     for (let i = 0; i < changed.length; i += BATCH) batches.push(changed.slice(i, i + BATCH));
 
+    // The very first run imports everything already in iPlan - the app skips
+    // its "new event" notifications for that one pass.
+    const initial = !dryRun && Object.keys(hashes).length === 0;
     const allResults = [];
     for (const events of batches) {
-      const answer = await post({ status: "ok", events, dry_run: dryRun, error: errors.length ? errors.slice(0, 5).join(" | ") : undefined });
+      const answer = await post({ status: "ok", events, dry_run: dryRun, initial, error: errors.length ? errors.slice(0, 5).join(" | ") : undefined });
       for (const result of answer.results || []) {
         allResults.push(result);
         if (dryRun || result.action === "skipped") continue;

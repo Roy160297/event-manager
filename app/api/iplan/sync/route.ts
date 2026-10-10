@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { applyDefaultSchedule, schedulePushRemindersForStep } from "@/app/events/[id]/timeline/actions";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { sendPushToStaff } from "@/lib/pushNotifications";
-import { todayInIsrael } from "@/lib/coupleMeetingReminders";
+import { addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { formatDate } from "@/lib/labels";
 import {
   describeChanges,
@@ -31,6 +31,11 @@ interface EventRowLite {
   manager_id: string | null;
   iplan_data: IplanSnapshot | null;
 }
+
+// Events further out than this get their default schedule later (see
+// ensureSchedules): creating a schedule schedules a push-reminder job per
+// step, which is wasted work months ahead of an event.
+const SCHEDULE_WITHIN_DAYS = 45;
 
 interface ItemResult {
   iplan_event_id: string;
@@ -95,6 +100,7 @@ async function processEvent(
   today: string,
   item: unknown,
   dry: boolean,
+  notify: boolean,
 ): Promise<ItemResult> {
   if (!isIplanEventPayload(item)) return { iplan_event_id: "?", action: "skipped", detail: "מבנה נתונים לא תקין" };
   const iplanId = item.iplan_event_id;
@@ -162,13 +168,15 @@ async function processEvent(
     revalidatePath("/");
     revalidatePath(`/events/${linked.id}`);
 
-    await notifyManager(
-      supabase,
-      (update.manager_id as string | null | undefined) ?? linked.manager_id,
-      linked.id,
-      `עודכן מ-iPlan: ${linked.name}`,
-      describeChanges(changes),
-    );
+    if (notify) {
+      await notifyManager(
+        supabase,
+        (update.manager_id as string | null | undefined) ?? linked.manager_id,
+        linked.id,
+        `עודכן מ-iPlan: ${linked.name}`,
+        describeChanges(changes),
+      );
+    }
     return { iplan_event_id: iplanId, action: "updated", detail: [describeChanges(changes), ...warnings].join(" | ") };
   }
 
@@ -212,19 +220,52 @@ async function processEvent(
     .single<{ id: string; manager_id: string | null }>();
   if (error || !created) return { iplan_event_id: iplanId, action: "skipped", detail: error?.message ?? "יצירה נכשלה" };
 
-  await applyDefaultSchedule(created.id, incoming.event_type, incoming.event_date, supabase);
+  if (incoming.event_date <= addDaysToDate(today, SCHEDULE_WITHIN_DAYS)) {
+    await applyDefaultSchedule(created.id, incoming.event_type, incoming.event_date, supabase);
+  }
   await checkRemindersForEvent(created.id);
   await logChange(supabase, created.id, incoming.name, "created", []);
   revalidatePath("/");
 
-  await notifyManager(
-    supabase,
-    created.manager_id,
-    created.id,
-    `אירוע חדש מ-iPlan: ${incoming.name}`,
-    `${formatDate(incoming.event_date)} - האירוע נוצר אוטומטית ומחכה לך באתר.`,
-  );
+  if (notify) {
+    await notifyManager(
+      supabase,
+      created.manager_id,
+      created.id,
+      `אירוע חדש מ-iPlan: ${incoming.name}`,
+      `${formatDate(incoming.event_date)} - האירוע נוצר אוטומטית ומחכה לך באתר.`,
+    );
+  }
   return { iplan_event_id: iplanId, action: "created", detail: incoming.name };
+}
+
+// Synced events that have come within SCHEDULE_WITHIN_DAYS and still have no
+// timeline get the default schedule for their type now.
+async function ensureSchedules(supabase: Admin, today: string) {
+  const { data: events } = await supabase
+    .from("events")
+    .select("id, event_type, event_date")
+    .not("iplan_event_id", "is", null)
+    .is("deleted_at", null)
+    .gte("event_date", today)
+    .lte("event_date", addDaysToDate(today, SCHEDULE_WITHIN_DAYS));
+  if (!events || events.length === 0) return;
+  const { data: withTimeline } = await supabase
+    .from("timeline_items")
+    .select("event_id")
+    .in(
+      "event_id",
+      events.map((event) => event.id as string),
+    );
+  const have = new Set((withTimeline ?? []).map((row) => row.event_id as string));
+  for (const event of events) {
+    if (have.has(event.id as string)) continue;
+    try {
+      await applyDefaultSchedule(event.id as string, event.event_type as string, event.event_date as string, supabase);
+    } catch (err) {
+      console.error(`iPlan sync: default schedule failed for event ${event.id}:`, err);
+    }
+  }
 }
 
 export async function POST(request: Request) {
@@ -232,7 +273,7 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  let body: { status?: string; error?: string; events?: unknown[]; dry_run?: boolean };
+  let body: { status?: string; error?: string; events?: unknown[]; dry_run?: boolean; initial?: boolean };
   try {
     body = await request.json();
   } catch {
@@ -256,7 +297,7 @@ export async function POST(request: Request) {
     const today = todayInIsrael();
     for (const item of body.events) {
       try {
-        results.push(await processEvent(supabase, staff ?? [], today, item, dry));
+        results.push(await processEvent(supabase, staff ?? [], today, item, dry, body.initial !== true));
       } catch (err) {
         console.error("iPlan sync: event failed:", err);
         results.push({
@@ -271,6 +312,14 @@ export async function POST(request: Request) {
   // A dry run only reports what would happen - nothing is written, including
   // the heartbeat.
   if (dry) return Response.json({ ok: true, dry_run: true, results });
+
+  if (status === "ok") {
+    try {
+      await ensureSchedules(supabase, todayInIsrael());
+    } catch (err) {
+      console.error("iPlan sync: ensureSchedules failed:", err);
+    }
+  }
 
   const counts = results.reduce<Record<string, number>>((acc, r) => ({ ...acc, [r.action]: (acc[r.action] ?? 0) + 1 }), {});
   await supabase
