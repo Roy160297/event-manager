@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
+import { IS_DEMO } from "@/lib/demoMode";
 import { canWrite } from "@/lib/permissions";
 import { requestSyncNow, setSyncInterval } from "./actions";
 
@@ -83,13 +84,14 @@ export default async function IplanSyncPage() {
   const pendingRequest =
     !!status?.run_requested_at && (!status.last_run_at || status.run_requested_at > status.last_run_at);
 
-  const sinceOk = minutesAgo(status?.last_ok_at ?? null);
-  const sincePing = minutesAgo(status?.last_ping_at ?? null);
+  // The demo has no extension behind it: always show a healthy, recent sync.
+  const sinceOk = IS_DEMO ? 12 : minutesAgo(status?.last_ok_at ?? null);
+  const sincePing = IS_DEMO ? 3 : minutesAgo(status?.last_ping_at ?? null);
   // The extension reports every ~15 minutes; a long silence means it stopped
   // (computer off or asleep, Chrome closed) even if it never reported a problem.
   const stale = sincePing == null || sincePing > 90;
-  const loginNeeded = status?.last_status === "login_required";
-  const failing = status?.last_status === "error";
+  const loginNeeded = !IS_DEMO && status?.last_status === "login_required";
+  const failing = !IS_DEMO && status?.last_status === "error";
 
   const tone = loginNeeded || failing || stale ? "border-red-300 bg-red-50 text-red-800" : "border-green-300 bg-green-50 text-green-800";
   const headline = loginNeeded
