@@ -6,21 +6,31 @@ import { parseSketchHtml, renderSketchSvg, seatedTotal, sketchDraft, sketchSumma
 
 // Shapes as they appear in iPlan's sketch print page: JSON inside an attribute,
 // quotes written as &quot;.
-function shapeAttr(model: Record<string, unknown>): string {
-  return `<g class="sketch_shape" data-init_model="${JSON.stringify(model).replace(/"/g, "&quot;")}"></g>`;
+function shapeAttr(model: Record<string, unknown>, body = ""): string {
+  return `<g class="sketch_shape" data-init_model="${JSON.stringify(model).replace(/"/g, "&quot;")}">${body}</g>`;
 }
 
+const imageBody = (id: number) =>
+  `<g class="geometry" fill="#ffffff" stroke="#000000" stroke-width="0"><image x="0" y="0" width="210" height="210" xlink:href="https://iplan-uuc-production.s3.amazonaws.com/public/venue_sketch/shapes/${id}/original.png?1676444550" /></g>`;
+const geometryBody = (fill: string) =>
+  `<g class="geometry" fill="${fill}" stroke="#000000" stroke-width="16"><rect x="0" y="0" width="730.0" height="900.0" /></g><foreignObject class="shape_text_foreign_object" data-text_color="#ffffff"></foreignObject>`;
+const background = [
+  '<image class="main_image" x="0" y="0" width="7200.0" height="7200.0" xlink:href="https://iplan-uuc-production.s3.amazonaws.com/public/venue_sketch/sketches/1196_main.jpg?1" data-type="color"/>',
+  '<image class="main_image" x="0" y="0" width="7200.0" height="7200.0" xlink:href="https://iplan-uuc-production.s3.amazonaws.com/public/venue_sketch/sketches/1196_print.jpg?2" data-type="black_white" />',
+].join("\n");
+
 const html = [
-  shapeAttr({ x: 2048.05, y: 2591.89, rotate_angle: 0, height: 900, width: 730, seatable: false, shape_text: "רחבת ריקודים", z_index: 15, id: "1", name: "רחבת ריקודים" }),
+  background,
+  shapeAttr({ x: 2048.05, y: 2591.89, rotate_angle: 0, height: 900, width: 730, seatable: false, shape_text: "רחבת ריקודים", z_index: 15, id: "1", name: "רחבת ריקודים" }, geometryBody("#d6d6d6")),
   shapeAttr({ x: 4832.96, y: 5444.03, rotate_angle: 0, height: 360, width: 289, seatable: false, shape_text: "", z_index: 21, id: "2", name: "חופה" }),
-  shapeAttr({ x: 2177.21, y: 1906.83, rotate_angle: 0, height: 90, width: 420, seatable: false, shape_text: "בשר כפול", z_index: 123, id: "3", name: "מזנון מטבח פתוח 420/90" }),
+  shapeAttr({ x: 2177.21, y: 1906.83, rotate_angle: 0, height: 90, width: 420, seatable: false, shape_text: "בשר כפול", z_index: 123, id: "3", name: "מזנון מטבח פתוח 420/90" }, geometryBody("#006633")),
   shapeAttr({ x: 2829.71, y: 1892.72, rotate_angle: 0, height: 90, width: 300, seatable: false, shape_text: "סלטים", z_index: 143, id: "4", name: "מזנון מטבח פתוח 300/90" }),
   shapeAttr({ x: 2310.05, y: 3513.16, rotate_angle: 0, height: 206, width: 206, seatable: false, shape_text: "", z_index: 131, id: "5", name: "עמדת DJ" }),
   shapeAttr({
     x: 3302.43, y: 3339.5, rotate_angle: 180, height: 210, width: 210, seatable: true, shape_text: "", z_index: 39, id: "6",
     name: "שולחן עגול מפה - 9 כסאות", dimensions_without_chairs: false,
     table: { id: 1, num: 15, optioned: false, seats_count: 9, seated_total_guests_count: 7, seated_optioned_guests_count: 2 },
-  }),
+  }, imageBody(10422)),
   shapeAttr({
     x: 1026.32, y: 2541.06, rotate_angle: 0, height: 170, width: 391, seatable: true, shape_text: "", z_index: 136, id: "7",
     name: "שולחן הושבה 16", dimensions_without_chairs: true, width_without_chairs: 390, height_without_chairs: 90,
@@ -39,8 +49,40 @@ describe("parseSketchHtml", () => {
     expect(sketch.shapes.find((shape) => shape.id === "7")).toMatchObject({ width_without_chairs: 390, height_without_chairs: 90 });
   });
 
+  it("reads how iPlan draws each shape and the hall's background image", () => {
+    const sketch = parseSketchHtml(html);
+    expect(sketch.background_url).toBe("https://iplan-uuc-production.s3.amazonaws.com/public/venue_sketch/sketches/1196_print.jpg");
+    expect(sketch.shapes.find((shape) => shape.id === "6")).toMatchObject({ image_model_id: 10422 });
+    expect(sketch.shapes.find((shape) => shape.id === "3")).toMatchObject({
+      image_model_id: null,
+      geometry: { tag: "rect", fill: "#006633", stroke: "#000000", stroke_width: 16 },
+      text_color: "#ffffff",
+    });
+  });
+
+  it("reads texture fills and the tile size they need", () => {
+    const withPattern = [
+      "<pattern id='pattern_65' patternUnits='userSpaceOnUse' width='100' height='100'><image/></pattern>",
+      shapeAttr(
+        { x: 0, y: 0, rotate_angle: 0, height: 90, width: 420, seatable: false, shape_text: "סלטים", z_index: 1, id: "9", name: "מזנון" },
+        '<g class="geometry" fill="url(#pattern_65)" stroke="#000000" stroke-width="0"><rect x="0" y="0" width="420" height="90" /></g>',
+      ),
+    ].join("\n");
+    const sketch = parseSketchHtml(withPattern);
+    expect(sketch.patterns).toEqual([{ id: 65, width: 100, height: 100 }]);
+    const assets = { background: null, images: new Map<number, string>(), patterns: new Map([[65, "data:image/jpeg;base64,CCCC"]]) };
+    expect(renderSketchSvg(sketch, assets)).toContain('<pattern id="pattern_65"');
+    // without the texture picture the stand is tinted instead of left unfilled
+    expect(renderSketchSvg(sketch, { ...assets, patterns: new Map() })).toContain('fill="#cfe3cf"');
+  });
+
+  it("never accepts a picture from a host other than iPlan's asset bucket", () => {
+    const evil = '<image class="main_image" xlink:href="https://evil.example.com/x.jpg" data-type="black_white"/>';
+    expect(parseSketchHtml(evil).background_url).toBeNull();
+  });
+
   it("ignores a broken attribute and a page without a sketch", () => {
-    expect(parseSketchHtml('<g data-init_model="{not json"></g>').shapes).toEqual([]);
+    expect(parseSketchHtml('<g class="sketch_shape" data-init_model="{not json"></g>').shapes).toEqual([]);
     expect(parseSketchHtml("<html></html>").shapes).toEqual([]);
   });
 });
@@ -71,12 +113,28 @@ describe("renderSketchSvg", () => {
     expect(svg.startsWith("<svg")).toBe(true);
     expect(svg).toContain(">15</text>");
     expect(svg).toContain(">בשר כפול</text>");
-    expect(svg).toContain(">DJ</text>");
+    expect(svg).toContain(">בשר כפול</text>");
     expect(svg).toContain("rotate(180");
   });
 
+  it("shows how many are seated at each table, the way iPlan does", () => {
+    const svg = renderSketchSvg(parseSketchHtml(html));
+    expect(svg).toContain(">5+2/9</text>");
+    expect(svg).toContain(">0/18</text>");
+  });
+
+  it("uses the shape's own picture and the background when they were fetched", () => {
+    const assets = { background: "data:image/jpeg;base64,AAAA", images: new Map([[10422, "data:image/png;base64,BBBB"]]), patterns: new Map<number, string>() };
+    const svg = renderSketchSvg(parseSketchHtml(html), assets);
+    expect(svg).toContain('<image id="m10422"');
+    expect(svg).toContain('<use href="#m10422"');
+    expect(svg).toContain('href="data:image/jpeg;base64,AAAA"');
+    // geometry shapes keep iPlan's own colours
+    expect(svg).toContain('fill="#006633"');
+  });
+
   it("still produces a valid drawing for an empty sketch", () => {
-    expect(renderSketchSvg({ shapes: [] })).toContain("viewBox");
+    expect(renderSketchSvg({ shapes: [], background_url: null, patterns: [] })).toContain("viewBox");
   });
 });
 

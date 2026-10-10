@@ -2,12 +2,15 @@
 // its position, size and rotation; tables with number and seat count), not as a
 // picture. The extension sends the sketch's print page as raw HTML; this reads
 // the shapes out of it, lists the tables / food stands for the staffing page,
-// and draws a simple SVG of the hall.
+// and draws the hall as an SVG that looks like iPlan's own: the hall's
+// background image, each shape's own picture (tables with their chairs, DJ
+// booth, chuppah...) and the table numbers with how many are seated.
 
 export interface SketchTable {
   num: number;
   seats_count: number;
   seated_total_guests_count: number;
+  seated_optioned_guests_count: number;
 }
 
 export interface SketchShape {
@@ -24,16 +27,26 @@ export interface SketchShape {
   width_without_chairs: number | null;
   height_without_chairs: number | null;
   table: SketchTable | null;
+  // How iPlan draws it: the picture of its shape model (a public image) or a
+  // plain filled geometry.
+  image_model_id: number | null;
+  geometry: { tag: "rect" | "ellipse"; fill: string; stroke: string; stroke_width: number } | null;
+  text_color: string | null;
 }
 
 export interface ParsedSketch {
   shapes: SketchShape[];
+  background_url: string | null;
+  // Texture fills ("pattern_65") that shapes use, with the tile size.
+  patterns: { id: number; width: number; height: number }[];
 }
 
 export interface SketchDraft {
   tables: { label: string; capacity: number; seated: number }[];
   foodStands: { label: string }[];
 }
+
+const ASSET_HOST = "iplan-uuc-production.s3.amazonaws.com";
 
 function decodeEntities(value: string): string {
   return value
@@ -49,16 +62,86 @@ function num(value: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function attr(source: string, name: string): string | null {
+  const match = source.match(new RegExp(`${name}="([^"]*)"`));
+  return match ? match[1] : null;
+}
+
+// Only iPlan's own public asset bucket is ever fetched.
+export function assetUrl(candidate: string | null): string | null {
+  if (!candidate) return null;
+  try {
+    const url = new URL(decodeEntities(candidate));
+    if (url.protocol !== "https:" || url.hostname !== ASSET_HOST) return null;
+    return `${url.origin}${url.pathname}`;
+  } catch {
+    return null;
+  }
+}
+
+export function shapeImageUrl(modelId: number): string {
+  return `https://${ASSET_HOST}/public/venue_sketch/shapes/${modelId}/original.png`;
+}
+
+export function patternImageUrl(patternId: number): string {
+  return `https://${ASSET_HOST}/public/venue_sketch/fill_patterns/${patternId}/original.jpg`;
+}
+
+export function patternIdOf(fill: string): number | null {
+  const match = fill.match(/^url\(#pattern_(\d+)\)$/);
+  return match ? Number(match[1]) : null;
+}
+
+function parsePatterns(html: string, shapes: SketchShape[]): ParsedSketch["patterns"] {
+  const used = new Set(shapes.map((shape) => (shape.geometry ? patternIdOf(shape.geometry.fill) : null)).filter((id): id is number => id !== null));
+  const found: ParsedSketch["patterns"] = [];
+  for (const id of used) {
+    const tag = html.match(new RegExp(`<pattern id=['"]pattern_${id}['"][^>]*>`));
+    const width = tag ? Number(tag[0].match(/width=['"](\d+)['"]/)?.[1]) : NaN;
+    const height = tag ? Number(tag[0].match(/height=['"](\d+)['"]/)?.[1]) : NaN;
+    if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) found.push({ id, width, height });
+  }
+  return found;
+}
+
+function parseBackground(html: string): string | null {
+  const found: Record<string, string> = {};
+  for (const tag of html.matchAll(/<image[^>]*class="main_image"[^>]*>/g)) {
+    const href = assetUrl(attr(tag[0], "xlink:href") ?? attr(tag[0], "href"));
+    const type = attr(tag[0], "data-type");
+    if (href && type) found[type] = href;
+  }
+  return found.black_white ?? found.color ?? null;
+}
+
 export function parseSketchHtml(html: string): ParsedSketch {
+  const starts = [...html.matchAll(/<g class="sketch_shape" data-init_model="([^"]*)"/g)];
   const shapes: SketchShape[] = [];
-  for (const match of html.matchAll(/data-init_model="([^"]*)"/g)) {
+  starts.forEach((match, index) => {
     let raw: Record<string, unknown>;
     try {
       raw = JSON.parse(decodeEntities(match[1]));
     } catch {
-      continue;
+      return;
     }
-    if (typeof raw !== "object" || raw === null) continue;
+    if (typeof raw !== "object" || raw === null) return;
+
+    // What follows the shape's tag up to the next shape is how it is drawn.
+    const from = (match.index ?? 0) + match[0].length;
+    const to = Math.min(index + 1 < starts.length ? (starts[index + 1].index ?? html.length) : html.length, from + 6000);
+    const body = html.slice(from, to);
+
+    const imageId = body.match(/shapes\/(\d+)\/original\./);
+    const geometryTag = body.match(/<g class="geometry"([^>]*)>\s*<(\w+)/);
+    const geometry = geometryTag
+      ? {
+          tag: (geometryTag[2] === "ellipse" || geometryTag[2] === "circle" ? "ellipse" : "rect") as "rect" | "ellipse",
+          fill: attr(geometryTag[1], "fill") ?? "#ffffff",
+          stroke: attr(geometryTag[1], "stroke") ?? "#000000",
+          stroke_width: num(attr(geometryTag[1], "stroke-width"), 0),
+        }
+      : null;
+
     const table = raw.table as Record<string, unknown> | undefined;
     shapes.push({
       id: String(raw.id ?? ""),
@@ -78,11 +161,15 @@ export function parseSketchHtml(html: string): ParsedSketch {
             num: num(table.num),
             seats_count: num(table.seats_count),
             seated_total_guests_count: num(table.seated_total_guests_count),
+            seated_optioned_guests_count: num(table.seated_optioned_guests_count),
           }
         : null,
+      image_model_id: imageId ? Number(imageId[1]) : null,
+      geometry,
+      text_color: attr(body, "data-text_color"),
     });
-  }
-  return { shapes };
+  });
+  return { shapes, background_url: parseBackground(html), patterns: parsePatterns(html, shapes) };
 }
 
 // The table / food-stand list the staffing page works with (the same shape the
@@ -118,6 +205,13 @@ export function sketchSummary(draft: SketchDraft): string {
   return `${draft.tables.length} שולחנות (${seats} מקומות), ${draft.foodStands.length} עמדות אוכל`;
 }
 
+// Pictures to embed in the drawing (as data URIs, so the SVG stands alone).
+export interface SketchAssets {
+  background: string | null;
+  images: Map<number, string>;
+  patterns: Map<number, string>;
+}
+
 type Kind = "table" | "dance" | "bar" | "dj" | "chuppah" | "stand" | "other";
 
 function kindOf(shape: SketchShape): Kind {
@@ -130,7 +224,8 @@ function kindOf(shape: SketchShape): Kind {
   return "other";
 }
 
-const FILL: Record<Kind, { fill: string; stroke: string }> = {
+// Used only for a shape whose own picture could not be fetched.
+const FALLBACK: Record<Kind, { fill: string; stroke: string }> = {
   table: { fill: "#d9c3a0", stroke: "#8a6d3b" },
   dance: { fill: "#e6edfb", stroke: "#9db0e0" },
   bar: { fill: "#fbe0d2", stroke: "#d49a7c" },
@@ -159,53 +254,68 @@ function rotatedBounds(shape: SketchShape) {
   return { minX: cx - halfW, maxX: cx + halfW, minY: cy - halfH, maxY: cy + halfH };
 }
 
-function labelOf(shape: SketchShape, kind: Kind): string {
-  if (kind === "table") return String(shape.table?.num ?? "");
-  if (kind === "dance") return "רחבה";
-  if (kind === "dj") return "DJ";
-  if (kind === "chuppah") return shape.name === "חופה" ? "חופה" : "";
-  if (kind === "bar") return "בר";
-  if (kind === "stand") return shape.shape_text;
-  return "";
+// iPlan's own "seated/seats" caption: "6+2/9" when some are optioned.
+function occupancyOf(table: SketchTable): string {
+  const seated = table.seated_total_guests_count - table.seated_optioned_guests_count;
+  const optioned = table.seated_optioned_guests_count;
+  return `${seated}${optioned > 0 ? `+${optioned}` : ""}/${table.seats_count}`;
 }
 
-function shapeSvg(shape: SketchShape): { body: string; text: string } {
-  const kind = kindOf(shape);
-  const { fill, stroke } = FILL[kind];
+function captionOf(shape: SketchShape): { main: string; sub: string } {
+  if (shape.seatable && shape.table) return { main: String(shape.table.num), sub: occupancyOf(shape.table) };
+  return { main: shape.shape_text, sub: "" };
+}
+
+function shapeSvg(shape: SketchShape, assets: SketchAssets | null): { body: string; text: string } {
   const cx = shape.x + shape.width / 2;
   const cy = shape.y + shape.height / 2;
-  const round_ = shape.name.includes("עגול");
   const transform = shape.rotate_angle ? ` transform="rotate(${round(shape.rotate_angle)} ${round(cx)} ${round(cy)})"` : "";
 
-  const body = (w: number, h: number, f: string, s: string, opacity = 1) =>
-    round_
-      ? `<ellipse cx="${round(cx)}" cy="${round(cy)}" rx="${round(w / 2)}" ry="${round(h / 2)}" fill="${f}" stroke="${s}" stroke-width="6" opacity="${opacity}"/>`
-      : `<rect x="${round(cx - w / 2)}" y="${round(cy - h / 2)}" width="${round(w)}" height="${round(h)}" rx="${kind === "table" ? 14 : 8}" fill="${f}" stroke="${s}" stroke-width="6" opacity="${opacity}"/>`;
-
-  let shapes = "";
-  if (kind === "table") {
-    // The shape's box includes the chairs: draw that as a pale band with the
-    // table itself inside it.
-    const innerW = shape.width_without_chairs ?? shape.width * 0.62;
-    const innerH = shape.height_without_chairs ?? shape.height * 0.62;
-    shapes = body(shape.width, shape.height, "#f3ece0", "#d8cbb4") + body(innerW, innerH, fill, stroke);
+  let body: string;
+  if (shape.image_model_id !== null && assets?.images.has(shape.image_model_id)) {
+    body = `<use href="#m${shape.image_model_id}" transform="translate(${round(shape.x)} ${round(shape.y)}) scale(${round(shape.width)} ${round(shape.height)})"/>`;
+  } else if (shape.geometry && shape.image_model_id === null) {
+    const g = shape.geometry;
+    // A texture that could not be fetched falls back to a plain tint.
+    const patternId = patternIdOf(g.fill);
+    const fill = patternId !== null && !assets?.patterns.has(patternId) ? "#cfe3cf" : g.fill;
+    body =
+      g.tag === "ellipse"
+        ? `<ellipse cx="${round(cx)}" cy="${round(cy)}" rx="${round(shape.width / 2)}" ry="${round(shape.height / 2)}" fill="${escapeXml(fill)}" stroke="${escapeXml(g.stroke)}" stroke-width="${g.stroke_width}"/>`
+        : `<rect x="${round(shape.x)}" y="${round(shape.y)}" width="${round(shape.width)}" height="${round(shape.height)}" fill="${escapeXml(fill)}" stroke="${escapeXml(g.stroke)}" stroke-width="${g.stroke_width}"/>`;
   } else {
-    shapes = body(shape.width, shape.height, fill, stroke);
+    // No picture available: a plain stand-in in the colours of the shape's kind.
+    const kind = kindOf(shape);
+    const { fill, stroke } = FALLBACK[kind];
+    const round_ = shape.name.includes("עגול");
+    const w = shape.width_without_chairs ?? shape.width;
+    const h = shape.height_without_chairs ?? shape.height;
+    body = round_
+      ? `<ellipse cx="${round(cx)}" cy="${round(cy)}" rx="${round(w / 2)}" ry="${round(h / 2)}" fill="${fill}" stroke="${stroke}" stroke-width="6"/>`
+      : `<rect x="${round(cx - w / 2)}" y="${round(cy - h / 2)}" width="${round(w)}" height="${round(h)}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="6"/>`;
   }
 
-  const label = labelOf(shape, kind);
+  const { main, sub } = captionOf(shape);
   let text = "";
-  if (label) {
-    const longest = Math.max(label.length, 1);
-    const size = Math.max(24, Math.min(kind === "table" ? 84 : 64, shape.height * 0.5, (Math.max(shape.width, shape.height) * 0.9) / longest * 1.5));
-    text = `<text x="${round(cx)}" y="${round(cy)}" font-size="${round(size)}" text-anchor="middle" dominant-baseline="central" fill="#3a2e1c" font-weight="${kind === "table" ? 700 : 600}">${escapeXml(label)}</text>`;
+  if (main) {
+    const color = escapeXml(shape.text_color ?? "#000000");
+    const tableLike = shape.seatable;
+    const fit = (Math.max(shape.width, shape.height) * 0.9) / Math.max(main.length, 1) * 1.5;
+    const size = Math.max(24, Math.min(tableLike ? 64 : 56, shape.height * 0.5, fit));
+    const upper = sub ? cy - size * 0.28 : cy;
+    text = `<text x="${round(cx)}" y="${round(upper)}" font-size="${round(size)}" text-anchor="middle" dominant-baseline="central" fill="${color}" font-weight="${tableLike ? 700 : 600}">${escapeXml(main)}</text>`;
+    if (sub) {
+      text += `<text x="${round(cx)}" y="${round(cy + size * 0.55)}" font-size="${round(size * 0.62)}" text-anchor="middle" dominant-baseline="central" fill="${color}">${escapeXml(sub)}</text>`;
+    }
   }
-  return { body: `<g${transform}>${shapes}</g>`, text };
+  return { body: `<g${transform}>${body}</g>`, text };
 }
 
-export function renderSketchSvg(sketch: ParsedSketch): string {
+const SKETCH_CANVAS = 7200;
+
+export function renderSketchSvg(sketch: ParsedSketch, assets: SketchAssets | null = null): string {
   const shapes = [...sketch.shapes].sort((a, b) => a.z_index - b.z_index);
-  const margin = 120;
+  const margin = assets?.background ? 320 : 120;
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -223,16 +333,36 @@ export function renderSketchSvg(sketch: ParsedSketch): string {
     maxX = 1000;
     maxY = 600;
   }
-  const drawn = shapes.map(shapeSvg);
+  const drawn = shapes.map((shape) => shapeSvg(shape, assets));
   const x = round(minX - margin);
   const y = round(minY - margin);
   const w = round(maxX - minX + margin * 2);
   const h = round(maxY - minY + margin * 2);
+
+  // Each shape picture is defined once (unit-sized, stretched where it is used).
+  const defs = assets
+    ? [...assets.images.entries()]
+        .map(([id, uri]) => `<image id="m${id}" width="1" height="1" preserveAspectRatio="none" href="${uri}"/>`)
+        .join("") +
+      sketch.patterns
+        .filter((pattern) => assets.patterns.has(pattern.id))
+        .map(
+          (pattern) =>
+            `<pattern id="pattern_${pattern.id}" patternUnits="userSpaceOnUse" width="${pattern.width}" height="${pattern.height}"><image x="0" y="0" width="${pattern.width}" height="${pattern.height}" href="${assets.patterns.get(pattern.id)}"/></pattern>`,
+        )
+        .join("")
+    : "";
+  const background = assets?.background
+    ? `<image x="0" y="0" width="${SKETCH_CANVAS}" height="${SKETCH_CANVAS}" href="${assets.background}"/>`
+    : "";
+
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" width="${Math.round(w / 4)}" height="${Math.round(h / 4)}" font-family="Arial, Helvetica, sans-serif">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" width="${Math.round(w / 3)}" height="${Math.round(h / 3)}" font-family="Arial, Helvetica, sans-serif">` +
+    (defs ? `<defs>${defs}</defs>` : "") +
     `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#ffffff"/>` +
-    // Captions last, so a shape drawn later never covers an earlier one's label.
+    background +
     drawn.map((part) => part.body).join("") +
+    // Captions last, so a shape drawn later never covers an earlier one's label.
     drawn.map((part) => part.text).join("") +
     `</svg>`
   );

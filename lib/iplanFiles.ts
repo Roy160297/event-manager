@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseExcelBuffer } from "@/lib/csv-import";
 import { guessGuestMapping, mapGuestRows } from "@/lib/guestImport";
 import { parseSketchHtml, renderSketchSvg, seatedTotal, sketchDraft, sketchSummary } from "@/lib/iplanSketch";
+import { fetchSketchAssets } from "@/lib/iplanSketchAssets";
 import { syncLocationsFromSketch } from "@/lib/sketchSync";
 
 // What the extension reads from an event's own iPlan pages besides the event
@@ -51,10 +52,11 @@ export async function applyIplanSketch(
   }
   if (dry) return { action: "applied", detail: summary };
 
+  const assets = await fetchSketchAssets(sketch);
   const path = `${eventId}/sketch-${Date.now()}.svg`;
   const { error: uploadError } = await supabase.storage
     .from(SKETCH_BUCKET)
-    .upload(path, Buffer.from(renderSketchSvg(sketch), "utf-8"), { contentType: "image/svg+xml" });
+    .upload(path, Buffer.from(renderSketchSvg(sketch, assets), "utf-8"), { contentType: "image/svg+xml" });
   if (uploadError) return { action: "skipped", detail: `העלאת הסקיצה נכשלה: ${uploadError.message}` };
 
   const synced = await syncLocationsFromSketch(supabase, eventId, draft);
@@ -65,7 +67,9 @@ export async function applyIplanSketch(
       table_sketch_path: path,
       // The number of seated chairs is only meaningful once guests are seated.
       ...(seated > 0 ? { sketch_seated_chairs_count: String(seated) } : {}),
-      iplan_sketch_hash: hash,
+      // Left empty when some pictures could not be fetched, so a later run
+      // draws the sketch again instead of treating it as done.
+      iplan_sketch_hash: assets.complete ? hash : null,
       iplan_sketch_synced_at: now,
     })
     .eq("id", eventId);
