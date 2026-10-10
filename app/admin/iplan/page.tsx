@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { IS_DEMO } from "@/lib/demoMode";
 import { canWrite } from "@/lib/permissions";
-import { requestSyncNow, setSyncInterval } from "./actions";
+import { requestSyncNow, setSyncEnabled, setSyncInterval } from "./actions";
 
 interface StatusRow {
   last_ping_at: string | null;
@@ -11,6 +11,7 @@ interface StatusRow {
   last_error: string | null;
   last_summary: { counts?: Record<string, number>; skipped?: string[] } | null;
   interval_minutes: number;
+  enabled: boolean;
   run_requested_at: string | null;
   last_run_at: string | null;
 }
@@ -92,11 +93,14 @@ export default async function IplanSyncPage() {
   // The extension reports every ~15 minutes; a long silence means it stopped
   // (computer off or asleep, Chrome closed) even if it never reported a problem.
   const stale = sincePing == null || sincePing > 90;
+  const off = !IS_DEMO && status?.enabled !== true;
   const loginNeeded = !IS_DEMO && status?.last_status === "login_required";
   const failing = !IS_DEMO && status?.last_status === "error";
 
-  const tone = loginNeeded || failing || stale ? "border-red-300 bg-red-50 text-red-800" : "border-green-300 bg-green-50 text-green-800";
-  const headline = loginNeeded
+  const tone = off ? "border-border-classic bg-surface text-foreground" : loginNeeded || failing || stale ? "border-red-300 bg-red-50 text-red-800" : "border-green-300 bg-green-50 text-green-800";
+  const headline = off
+    ? "הסנכרון כבוי"
+    : loginNeeded
     ? "iPlan מבקשת התחברות מחדש - הסנכרון עצור"
     : failing
       ? "הסנכרון נתקל בשגיאה"
@@ -134,6 +138,19 @@ export default async function IplanSyncPage() {
 
       {canManage && (
         <section className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+          <form action={setSyncEnabled} className="flex flex-col gap-2">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input type="checkbox" name="enabled" defaultChecked={IS_DEMO || status?.enabled === true} />
+              סנכרון iPlan פעיל
+            </label>
+            <p className="text-sm text-foreground/60">
+              תנאי השימוש של iPlan אוסרים משיכת מידע אוטומטית ללא אישור בכתב. כשהמתג כבוי, התוסף לא קורא דבר מ-iPlan והאתר
+              לא מקבל ממנו כלום.
+            </p>
+            <button type="submit" className="self-start rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft">
+              שמור
+            </button>
+          </form>
           <form action={setSyncInterval} className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-sm">
               <span>תדירות הסנכרון (בשעות היום בלבד)</span>

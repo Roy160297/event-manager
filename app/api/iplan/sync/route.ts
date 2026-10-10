@@ -303,6 +303,9 @@ export async function POST(request: Request) {
   // The extension's regular wake-up: only answers whether it is time to go to
   // iPlan (see lib/iplanSchedule.ts), so the pace is set here, not in the
   // extension.
+  const { data: switchRow } = await supabase.from("iplan_sync_status").select("enabled").eq("id", true).maybeSingle<{ enabled: boolean }>();
+  const enabled = switchRow?.enabled === true;
+
   if (body.status === "poll") {
     const { data: row } = await supabase
       .from("iplan_sync_status")
@@ -316,6 +319,7 @@ export async function POST(request: Request) {
         run_requested_at: string | null;
       }>();
     await supabase.from("iplan_sync_status").update({ last_ping_at: new Date().toISOString() }).eq("id", true);
+    if (!enabled) return Response.json({ ok: true, run: false, disabled: true });
     const decision = shouldRunSync({
       now: new Date(),
       lastRunAt: row?.last_run_at ? new Date(row.last_run_at) : null,
@@ -326,6 +330,9 @@ export async function POST(request: Request) {
     });
     return Response.json({ ok: true, ...decision });
   }
+
+  // Switched off: nothing the extension reads is accepted.
+  if (!enabled) return Response.json({ ok: false, disabled: true, error: "סנכרון iPlan כבוי בהגדרות האתר" }, { status: 423 });
 
   // After reading the events, the extension asks which per-event files are due
   // (the sketch the day before, the guest list on the day) - decided here so the

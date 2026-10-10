@@ -101,8 +101,10 @@
   // re-read everything), so the pace can be changed from the site.
   async function run(storage, options) {
     let force = !!(options && options.manual);
+    // Always ask the site first - it can be switched off there.
+    const decision = await post({ status: "poll", manual: force });
+    if (decision.disabled) return { status: "idle", message: "הסנכרון כבוי בהגדרות האתר" };
     if (!force) {
-      const decision = await post({ status: "poll" });
       if (!decision.run) return { status: "idle", message: "לא נדרש סנכרון כרגע" };
       force = !!decision.force;
     }
