@@ -9,6 +9,9 @@ export interface IplanEventPayload {
   iplan_event_id: string;
   // Closed/committed in iPlan. Open leads and drafts are ignored.
   confirmed: boolean;
+  // The event title as typed in iPlan ("<couple> - <producer / notes>"). It is
+  // more complete than the registered users, which are often just one partner.
+  title?: string | null;
   extraction: GeminiExtraction;
   floor_manager_name?: string | null;
 }
@@ -74,6 +77,14 @@ const FIELD_LABELS: Record<keyof IplanSnapshot, string> = {
 
 const SNAPSHOT_FIELDS = Object.keys(FIELD_LABELS) as (keyof IplanSnapshot)[];
 
+// Weddings are named after the couple only - what follows " - " in iPlan's
+// title is the producer or a note. Other event types keep the whole title.
+export function eventNameFromTitle(title: string, eventType: string): string {
+  const trimmed = title.trim();
+  if (eventType.includes("wedding")) return trimmed.split(/\s+-\s+/)[0].trim();
+  return trimmed;
+}
+
 export function snapshotFromPayload(payload: IplanEventPayload): IplanSnapshot {
   const draft = buildImageImportDraft(payload.extraction);
   const snapshot = { floor_manager_name: payload.floor_manager_name?.trim() || null } as IplanSnapshot;
@@ -81,6 +92,7 @@ export function snapshotFromPayload(payload: IplanEventPayload): IplanSnapshot {
     if (field === "floor_manager_name") continue;
     (snapshot as unknown as Record<string, unknown>)[field] = draft[field as keyof ImageImportDraft];
   }
+  if (payload.title?.trim()) snapshot.name = eventNameFromTitle(payload.title, draft.event_type);
   return snapshot;
 }
 

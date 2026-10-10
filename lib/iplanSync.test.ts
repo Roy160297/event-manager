@@ -4,6 +4,7 @@ import {
   describeChanges,
   diffSnapshots,
   eventInsertFromSnapshot,
+  eventNameFromTitle,
   eventUpdateForChanges,
   isIplanEventPayload,
   matchStaffByName,
@@ -57,6 +58,21 @@ describe("snapshotFromPayload", () => {
     const snapshot = snapshotFromPayload(payload());
     expect(snapshot.name).toBe("מאיה ברק ודניאל רז");
     expect(snapshot.estimated_guests).toBe("200+14");
+  });
+});
+
+describe("eventNameFromTitle", () => {
+  it("keeps only the couple for weddings, dropping the producer note", () => {
+    expect(eventNameFromTitle("שחר מיי ואייל הופמן - וניצן רנגיני", "wedding")).toBe("שחר מיי ואייל הופמן");
+    expect(eventNameFromTitle("דנה שאול ואיתן גבאי - שלי האמא", "reverse_wedding_service")).toBe("דנה שאול ואיתן גבאי");
+  });
+  it("keeps the whole title for other events and for hyphenated names", () => {
+    expect(eventNameFromTitle("ארט B הפקות - פנטה ריי / ליטל", "business_event")).toBe("ארט B הפקות - פנטה ריי / ליטל");
+    expect(eventNameFromTitle("בת-אל קפלן וזאקרי הירש", "wedding")).toBe("בת-אל קפלן וזאקרי הירש");
+  });
+  it("is used as the event name when the payload carries a title", () => {
+    const snapshot = snapshotFromPayload({ ...payload({ bride_name: "דנה", groom_name: null }), title: "דנה שאול ואיתן גבאי - שלי האמא" });
+    expect(snapshot.name).toBe("דנה שאול ואיתן גבאי");
   });
 });
 

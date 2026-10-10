@@ -56,11 +56,18 @@
     return [...found.values()];
   }
 
-  function mapEventType(typeLabel, serviceStyle, isReverse) {
+  function isFridayDate(isoDate) {
+    return !!isoDate && new Date(`${isoDate}T00:00:00Z`).getUTCDay() === 5;
+  }
+
+  // The venue only runs the "reverse" wedding format on Fridays, and iPlan
+  // marks it only through the schedule form attached to the event - so a
+  // Friday wedding counts as reverse even before that form exists.
+  function mapEventType(typeLabel, serviceStyle, isReverse, isoDate) {
     const label = typeLabel || "";
     if (label.includes("חתונה")) {
       const service = serviceStyle === "הגשה";
-      if (isReverse) return service ? "reverse_wedding_service" : "reverse_wedding";
+      if (isReverse || isFridayDate(isoDate)) return service ? "reverse_wedding_service" : "reverse_wedding";
       return service ? "wedding_service" : "wedding";
     }
     if (label.includes("בר מצווה")) return "bar_mitzvah";
@@ -76,21 +83,24 @@
     const isWedding = (quick.typeLabel || "").includes("חתונה") && (bride || groom);
     const staffByRole = (role) => quick.staff.find((s) => s.role === role)?.name || null;
     const contacts = [bride, groom].filter(Boolean);
+    // "עדיין לא נקבע" (not decided yet) is not a style.
+    const style = cloud.serviceStyle === "מזנונים" || cloud.serviceStyle === "הגשה" ? cloud.serviceStyle : null;
 
     return {
       iplan_event_id: item.id,
       confirmed: quick.status === "סגור",
+      title: quick.title,
       floor_manager_name: staffByRole("מנהל פלור"),
       extraction: {
         bride_name: isWedding ? (bride && bride.name) || null : quick.title,
         groom_name: isWedding ? (groom && groom.name) || null : null,
-        event_type: mapEventType(quick.typeLabel, cloud.serviceStyle, cloud.isReverse),
+        event_type: mapEventType(quick.typeLabel, style, cloud.isReverse, quick.date),
         event_date: quick.date,
         start_time: quick.startTime,
         end_time: quick.endTime,
         event_manager_name: staffByRole("מנהל אירוע"),
         sales_person_name: staffByRole("מכירות"),
-        service_style: cloud.serviceStyle,
+        service_style: style,
         contact_phone: (contacts[0] && contacts[0].phone) || null,
         contact_phone_2: (contacts[1] && contacts[1].phone) || null,
         contact_email: (contacts[0] && contacts[0].email) || null,
