@@ -32,6 +32,17 @@ describe("shouldRunSync", () => {
     expect(shouldRunSync({ ...base, now: at("2026-10-10T08:00:00Z"), lastRunAt }).run).toBe(true);
   });
 
+  it("in daily mode runs once per day, in the morning window", () => {
+    const daily = { ...base, intervalMinutes: 1440, activeFromHour: 8 };
+    const yesterday = at("2026-10-09T06:00:00Z"); // 09:00 Israel, yesterday
+    // 07:30 Israel: before the window opens
+    expect(shouldRunSync({ ...daily, now: at("2026-10-10T04:30:00Z"), lastRunAt: yesterday }).run).toBe(false);
+    // 09:00 Israel: window open (jitter is under 21 minutes)
+    expect(shouldRunSync({ ...daily, now: at("2026-10-10T06:00:00Z"), lastRunAt: yesterday }).run).toBe(true);
+    // already ran today
+    expect(shouldRunSync({ ...daily, now: at("2026-10-10T12:00:00Z"), lastRunAt: at("2026-10-10T06:00:00Z") }).run).toBe(false);
+  });
+
   it("runs a requested sync at once, even at night", () => {
     const lastRunAt = at("2026-10-10T20:00:00Z");
     const runRequestedAt = at("2026-10-10T21:00:00Z");

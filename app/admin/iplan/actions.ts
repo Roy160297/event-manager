@@ -23,7 +23,7 @@ export async function requestSyncNow() {
 export async function setSyncInterval(formData: FormData) {
   await assertCanManage();
   const minutes = Number(formData.get("interval_minutes"));
-  if (![60, 120, 180, 360, 720].includes(minutes)) throw new Error("תדירות לא תקינה");
+  if (![60, 120, 180, 360, 720, 1440].includes(minutes)) throw new Error("תדירות לא תקינה");
   const supabase = await createClient();
   const { error } = await supabase.from("iplan_sync_status").update({ interval_minutes: minutes }).eq("id", true);
   if (error) throw new Error(error.message);

@@ -20,6 +20,7 @@ const INTERVAL_OPTIONS = [
   { minutes: 180, label: "כל 3 שעות" },
   { minutes: 360, label: "כל 6 שעות" },
   { minutes: 720, label: "כל 12 שעות" },
+  { minutes: 1440, label: "פעם ביום, בבוקר" },
 ];
 
 interface LogRow {
@@ -131,7 +132,7 @@ export default async function IplanSyncPage() {
         <section className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
           <form action={setSyncInterval} className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span>תדירות הסנכרון (בין 7:00 ל-22:00)</span>
+              <span>תדירות הסנכרון (בשעות היום בלבד)</span>
               <select
                 name="interval_minutes"
                 defaultValue={status?.interval_minutes ?? 180}

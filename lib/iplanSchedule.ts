@@ -11,6 +11,13 @@ export interface ScheduleInput {
   runRequestedAt: Date | null;
 }
 
+// An interval of a day or more means "once a day, in the morning".
+export const DAILY_MINUTES = 1440;
+
+export function israelDate(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(date);
+}
+
 export function israelHour(date: Date): number {
   return Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jerusalem", hour: "2-digit", hour12: false }).format(date)) % 24;
 }
@@ -32,6 +39,14 @@ export function shouldRunSync(input: ScheduleInput): { run: boolean; force: bool
   if (hour < input.activeFromHour || hour >= input.activeToHour) return { run: false, force: false };
 
   if (!lastRunAt) return { run: true, force: false };
+
+  if (input.intervalMinutes >= DAILY_MINUTES) {
+    // Once per Israeli calendar day, starting a few (varying) minutes after the
+    // morning window opens - so the visit does not fall on the same minute daily.
+    if (israelDate(lastRunAt) >= israelDate(now)) return { run: false, force: false };
+    const minutesIntoDay = hour * 60 + Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jerusalem", minute: "2-digit" }).format(now));
+    return { run: minutesIntoDay >= input.activeFromHour * 60 + jitterMinutes(lastRunAt), force: false };
+  }
   const elapsedMinutes = (now.getTime() - lastRunAt.getTime()) / 60000;
   return { run: elapsedMinutes >= input.intervalMinutes + jitterMinutes(lastRunAt), force: false };
 }
