@@ -42,6 +42,20 @@
     return text;
   }
 
+  // A file download (the guest list), returned as base64 so it can travel in JSON.
+  async function iplanGetBase64(url) {
+    const response = await fetch(url, { credentials: "include" });
+    if ((response.redirected && /sign_in/.test(response.url)) || response.status === 401 || response.status === 403) {
+      throw new LoginRequired();
+    }
+    if (!response.ok) throw new Error(`iPlan החזירה שגיאה ${response.status}`);
+    if (/text\/html/.test(response.headers.get("content-type") || "")) throw new LoginRequired();
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(binary);
+  }
+
   async function collectClosedEvents(today) {
     const [startYear, startMonth] = today.split("-").map(Number);
     const found = new Map();
@@ -58,9 +72,12 @@
     return [...found.values()];
   }
 
+  const cloudIds = new Map(); // iPlan event id -> id of its "cloud" page, used for the per-event files
+
   async function readEvent(item) {
     const quick = root.IplanParse.dumpPage(await iplanGet(`https://app.iplan.co.il${item.quickViewUrl}`, false));
     const cloudId = quick.hrefs.map((href) => href.match(/client\/events\/(\d+)(?:$|\?)/)).find(Boolean);
+    if (cloudId) cloudIds.set(item.id, cloudId[1]);
     const cloud = cloudId
       ? root.IplanParse.dumpPage(await iplanGet(`${base()}/client/events/${cloudId[1]}`, false))
       : null;
@@ -116,6 +133,36 @@
         errors.push(`${item.id}: ${err.message || err}`);
       }
       await sleep(PAUSE_MS);
+    }
+
+    // Per-event files the site says are due: the hall sketch the day before the
+    // event, the guest list on the day. The site works out what they contain.
+    try {
+      const due = await post({ status: "due", manual: !!(options && options.manual) });
+      const wanted = [
+        ...(due.sketch || []).map((id) => ["sketch", id]),
+        ...(due.guests || []).map((id) => ["guests", id]),
+      ];
+      for (const [kind, id] of wanted) {
+        const cloudId = cloudIds.get(id);
+        if (!cloudId) continue;
+        try {
+          const file =
+            kind === "sketch"
+              ? { html: await iplanGet(`${base()}/client/events/${cloudId}/venue_design/sketch/export.print`, false) }
+              : { base64: await iplanGetBase64(`${base()}/client/events/${cloudId}/reports/invitations.xls`) };
+          await post({ status: "files", files: [{ iplan_event_id: id, kind, ...file }] });
+        } catch (err) {
+          if (err instanceof LoginRequired) {
+            await post({ status: "login_required", error: "iPlan מבקשת התחברות מחדש" });
+            return { status: "login_required", message: "נדרשת התחברות ל-iPlan" };
+          }
+          errors.push(`${kind} ${id}: ${err.message || err}`);
+        }
+        await sleep(PAUSE_MS);
+      }
+    } catch (err) {
+      errors.push(`קבצי אירוע: ${err.message || err}`);
     }
 
     const error = errors.length ? errors.slice(0, 5).join(" | ") : undefined;

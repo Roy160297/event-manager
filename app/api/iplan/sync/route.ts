@@ -5,6 +5,7 @@ import { applyDefaultSchedule, schedulePushRemindersForStep } from "@/app/events
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { sendPushToStaff } from "@/lib/pushNotifications";
 import { todayInIsrael } from "@/lib/coupleMeetingReminders";
+import { applyIplanGuests, applyIplanSketch, type FileResult } from "@/lib/iplanFiles";
 import { buildIplanPayload, isIplanPagePayload } from "@/lib/iplanPages";
 import { shouldRunSync } from "@/lib/iplanSchedule";
 import { formatDate } from "@/lib/labels";
@@ -90,8 +91,8 @@ async function logChange(
   supabase: Admin,
   eventId: string | null,
   eventName: string,
-  kind: "created" | "updated" | "linked",
-  changes: FieldChange[],
+  kind: "created" | "updated" | "linked" | "sketch" | "guests",
+  changes: Pick<FieldChange, "label" | "from" | "to">[],
 ) {
   await supabase.from("iplan_sync_log").insert({ event_id: eventId, event_name: eventName, kind, changes });
 }
@@ -281,7 +282,16 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  let body: { status?: string; error?: string; events?: unknown[]; pages?: unknown[]; dry_run?: boolean; initial?: boolean };
+  let body: {
+    status?: string;
+    error?: string;
+    events?: unknown[];
+    pages?: unknown[];
+    files?: unknown[];
+    manual?: boolean;
+    dry_run?: boolean;
+    initial?: boolean;
+  };
   try {
     body = await request.json();
   } catch {
@@ -315,6 +325,77 @@ export async function POST(request: Request) {
       runRequestedAt: row?.run_requested_at ? new Date(row.run_requested_at) : null,
     });
     return Response.json({ ok: true, ...decision });
+  }
+
+  // After reading the events, the extension asks which per-event files are due
+  // (the sketch the day before, the guest list on the day) - decided here so the
+  // timing can change without touching the extension.
+  if (body.status === "due") {
+    const today = todayInIsrael();
+    const tomorrow = new Date(Date.parse(today) + 86400000).toISOString().slice(0, 10);
+    const { data: events } = await supabase
+      .from("events")
+      .select("iplan_event_id, event_date, iplan_sketch_synced_at, iplan_guests_synced_at")
+      .not("iplan_event_id", "is", null)
+      .is("deleted_at", null)
+      .in("event_date", [today, tomorrow]);
+    const manual = body.manual === true;
+    const sketch: string[] = [];
+    const guests: string[] = [];
+    for (const event of events ?? []) {
+      const iplanId = event.iplan_event_id as string;
+      if (manual || !event.iplan_sketch_synced_at) sketch.push(iplanId);
+      if (event.event_date === today && (manual || !event.iplan_guests_synced_at)) guests.push(iplanId);
+    }
+    return Response.json({ ok: true, sketch, guests });
+  }
+
+  if (body.status === "files") {
+    const dryFiles = body.dry_run === true;
+    const results: (FileResult & { iplan_event_id: string; kind: string })[] = [];
+    for (const file of Array.isArray(body.files) ? body.files : []) {
+      const item = file as { iplan_event_id?: unknown; kind?: unknown; html?: unknown; base64?: unknown };
+      const iplanId = typeof item.iplan_event_id === "string" ? item.iplan_event_id : "?";
+      const kind = item.kind === "sketch" || item.kind === "guests" ? item.kind : null;
+      if (!kind) {
+        results.push({ iplan_event_id: iplanId, kind: "?", action: "skipped", detail: "סוג קובץ לא מוכר" });
+        continue;
+      }
+      try {
+        const { data: event } = await supabase
+          .from("events")
+          .select("id, name")
+          .eq("iplan_event_id", iplanId)
+          .is("deleted_at", null)
+          .maybeSingle<{ id: string; name: string }>();
+        if (!event) {
+          results.push({ iplan_event_id: iplanId, kind, action: "skipped", detail: "האירוע לא מקושר" });
+          continue;
+        }
+        let result: FileResult;
+        if (kind === "sketch") {
+          result =
+            typeof item.html === "string" && item.html.length > 0
+              ? await applyIplanSketch(supabase, event.id, item.html, dryFiles)
+              : { action: "skipped", detail: "לא התקבלה סקיצה" };
+        } else {
+          result =
+            typeof item.base64 === "string" && item.base64.length > 0
+              ? await applyIplanGuests(supabase, event.id, item.base64, dryFiles)
+              : { action: "skipped", detail: "לא התקבל קובץ הזמנות" };
+        }
+        if (!dryFiles && result.action === "applied" && result.change) {
+          await logChange(supabase, event.id, event.name, kind, [result.change]);
+          revalidatePath(`/events/${event.id}/staffing`);
+          revalidatePath(`/events/${event.id}/guests`);
+        }
+        results.push({ iplan_event_id: iplanId, kind, ...result });
+      } catch (err) {
+        console.error("iPlan sync: file failed:", err);
+        results.push({ iplan_event_id: iplanId, kind, action: "skipped", detail: err instanceof Error ? err.message : "שגיאה לא צפויה" });
+      }
+    }
+    return Response.json({ ok: true, results });
   }
 
   const dry = body.dry_run === true;

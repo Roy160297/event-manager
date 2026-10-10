@@ -2,25 +2,8 @@
 
 import { useState } from "react";
 import { importGuests, parseGuestFile } from "./actions";
-import { mapGuestRows, type GuestColumnMapping } from "@/lib/guestImport";
+import { guessGuestMapping, mapGuestRows, type GuestColumnMapping } from "@/lib/guestImport";
 import type { ParsedCsv } from "@/lib/csv-import";
-
-// The guest-list template is fixed, so columns are always detected by these
-// known header aliases rather than asking the user to map them by hand.
-const ALIASES: Record<keyof GuestColumnMapping, string[]> = {
-  name: ["שם פרטי+שם משפחה", "שם", "שם אורח", "שם מלא"],
-  party_size: ["הושבו בשולחן", "מספר סועדים", "סועדים", "כמות"],
-  seating_table: ["שולחן", "שולחן הושבה", "מספר שולחן"],
-};
-
-function guessMapping(headers: string[]): Partial<GuestColumnMapping> {
-  const mapping: Partial<GuestColumnMapping> = {};
-  for (const key of Object.keys(ALIASES) as (keyof GuestColumnMapping)[]) {
-    const match = headers.find((header) => ALIASES[key].includes(header.trim()));
-    if (match) mapping[key] = match;
-  }
-  return mapping;
-}
 
 export default function GuestCsvImport({ eventId }: { eventId: string }) {
   const [step, setStep] = useState<"upload" | "preview" | "done">("upload");
@@ -45,7 +28,7 @@ export default function GuestCsvImport({ eventId }: { eventId: string }) {
     setIsPending(true);
     try {
       const result = await parseGuestFile(formData);
-      const guessed = guessMapping(result.headers);
+      const guessed = guessGuestMapping(result.headers);
       if (!guessed.name) {
         setError('לא זוהתה עמודת "שם האורח" בקובץ — ודאו שמדובר בקובץ בפורמט הרגיל.');
         return;

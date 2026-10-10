@@ -29,7 +29,7 @@ interface LogRow {
   created_at: string;
   event_id: string | null;
   event_name: string;
-  kind: "created" | "updated" | "linked";
+  kind: "created" | "updated" | "linked" | "sketch" | "guests";
   changes: { label: string; from: string | null; to: string | null }[];
 }
 
@@ -37,6 +37,8 @@ const KIND_LABELS: Record<LogRow["kind"], string> = {
   created: "אירוע חדש נוצר",
   updated: "עודכן",
   linked: "קושר לאירוע קיים",
+  sketch: "סקיצה נטענה",
+  guests: "רשימת אורחים נטענה",
 };
 
 const ACTION_LABELS: Record<string, string> = {

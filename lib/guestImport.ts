@@ -29,3 +29,20 @@ export function mapGuestRows(rows: Record<string, string>[], mapping: GuestColum
     }))
     .filter((guest) => guest.name);
 }
+
+// The guest-list template is fixed, so columns are always detected by these
+// known header aliases rather than asking the user to map them by hand.
+const ALIASES: Record<keyof GuestColumnMapping, string[]> = {
+  name: ["שם פרטי+שם משפחה", "שם", "שם אורח", "שם מלא"],
+  party_size: ["הושבו בשולחן", "מספר סועדים", "סועדים", "כמות"],
+  seating_table: ["שולחן", "שולחן הושבה", "מספר שולחן"],
+};
+
+export function guessGuestMapping(headers: string[]): Partial<GuestColumnMapping> {
+  const mapping: Partial<GuestColumnMapping> = {};
+  for (const key of Object.keys(ALIASES) as (keyof GuestColumnMapping)[]) {
+    const match = headers.find((header) => ALIASES[key].includes(header.trim()));
+    if (match) mapping[key] = match;
+  }
+  return mapping;
+}
