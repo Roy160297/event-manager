@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "סנכרון iPlan לניהול אירועים",
+  "version": "1.0.0",
+  "description": "קורא אירועים סגורים מ-iPlan (קריאה בלבד) ושולח אותם לאתר ניהול האירועים.",
+  "permissions": ["alarms", "offscreen", "storage"],
+  "host_permissions": ["https://app.iplan.co.il/*", "https://my-event-manager.vercel.app/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "סנכרון iPlan" }
+}

@@ -7,6 +7,7 @@ import { TAB_NAV_CLASS, tabLinkClass } from "@/components/tabStyles";
 const LINKS = [
   { href: "/admin/users", label: "משתמשים" },
   { href: "/admin/roles", label: "תפקידים והרשאות" },
+  { href: "/admin/iplan", label: "סנכרון iPlan" },
 ];
 
 export function AdminNav() {

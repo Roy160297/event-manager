@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { scheduleSortKey } from "@/lib/labels";
 import { KETUBAH_STEP_LABEL, addMinutesToTime, ketubahWitnessNote, timeToMinutes } from "@/lib/scheduleTime";
@@ -316,11 +317,14 @@ const FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; no
   { label: "אפטר", time: "16:00", notes: "קיפול הקינוחים" },
 ];
 
+// `client` lets a caller with no logged-in user (the iPlan sync route, which
+// authenticates with a token) pass an admin client instead of the cookie one.
 async function insertSchedule(
   eventId: string,
   schedule: { label: string; time: string; notes?: string }[],
+  client?: SupabaseClient,
 ) {
-  const supabase = await createClient();
+  const supabase = client ?? (await createClient());
 
   const { count } = await supabase
     .from("timeline_items")
@@ -339,7 +343,7 @@ async function insertSchedule(
   if (error) throw new Error(error.message);
 
   for (const step of schedule) {
-    await schedulePushRemindersForStep(eventId, step.label, step.time);
+    await schedulePushRemindersForStep(eventId, step.label, step.time, supabase);
   }
 
   revalidatePath(`/events/${eventId}/timeline`);
@@ -351,8 +355,8 @@ async function insertSchedule(
 // if no rule is anchored to this label. Best-effort - a failure here (e.g.
 // app_settings.push_webhook_secret not configured yet) shouldn't block
 // editing the timeline itself.
-export async function schedulePushRemindersForStep(eventId: string, label: string, time: string) {
-  const supabase = await createClient();
+export async function schedulePushRemindersForStep(eventId: string, label: string, time: string, client?: SupabaseClient) {
+  const supabase = client ?? (await createClient());
   try {
     await supabase.rpc("schedule_push_reminders_for_step", { p_event_id: eventId, p_label: label, p_time: time });
   } catch (err) {
@@ -398,8 +402,9 @@ const FRIDAY_SCHEDULE_TEMPLATE_START_TIME = "12:00";
 async function insertFridaySchedule(
   eventId: string,
   template: { label: string; time: string; notes?: string }[],
+  client?: SupabaseClient,
 ) {
-  const supabase = await createClient();
+  const supabase = client ?? (await createClient());
   const { data: event } = await supabase.from("events").select("start_time").eq("id", eventId).maybeSingle();
 
   const startTime = event?.start_time;
@@ -413,7 +418,7 @@ async function insertFridaySchedule(
       ? template
       : template.map((step) => ({ ...step, time: addMinutesToTime(step.time, diffMinutes) ?? step.time }));
 
-  await insertSchedule(eventId, schedule);
+  await insertSchedule(eventId, schedule, supabase);
 }
 
 export async function addFridayReverseWeddingSchedule(eventId: string) {
@@ -430,18 +435,18 @@ export async function addFridayReverseWeddingServiceSchedule(eventId: string) {
 // "wedding"/"wedding_service" only have one (evening) shape - the venue
 // never actually runs those formats on a Friday, only the reverse ones, so
 // only reverse_wedding/reverse_wedding_service branch by day-of-week.
-export async function applyDefaultSchedule(eventId: string, eventType: string, eventDate?: string | null) {
+export async function applyDefaultSchedule(eventId: string, eventType: string, eventDate?: string | null, client?: SupabaseClient) {
   const isFriday = isFridayDate(eventDate);
   if (eventType === "wedding") {
-    await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE);
+    await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE, client);
   } else if (eventType === "wedding_service") {
-    await insertSchedule(eventId, EVENING_WEDDING_SERVICE_SCHEDULE);
+    await insertSchedule(eventId, EVENING_WEDDING_SERVICE_SCHEDULE, client);
   } else if (eventType === "reverse_wedding") {
-    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
-    else await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SCHEDULE);
+    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE, client);
+    else await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SCHEDULE, client);
   } else if (eventType === "reverse_wedding_service") {
-    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE);
-    else await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE);
+    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE, client);
+    else await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE, client);
   }
 }
 
