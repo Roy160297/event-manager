@@ -120,6 +120,8 @@
       guestsSecure: received ? get("אורחים בטוחים") : null,
       guestsReserve: received ? get("אורחים רזרבה") : null,
       reservePercent: toInt(valueAfter(after, "% רזרבה מקסימלי")),
+      // The contract minimum, shown while no signed commitment has arrived.
+      minimumGuests: toInt(valueAfter(lines, "מינימום אורחים")),
       kids: received ? get("מנות ילדים") : null,
       glat: received ? get("מנות גלאט") : null,
       vegetarian: received ? get("מנות צמחוניות") : null,

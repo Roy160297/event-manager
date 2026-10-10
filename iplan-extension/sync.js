@@ -105,9 +105,11 @@
         contact_phone_2: (contacts[1] && contacts[1].phone) || null,
         contact_email: (contacts[0] && contacts[0].email) || null,
         contact_email_2: (contacts[1] && contacts[1].email) || null,
-        guests_secure: cloud.guestsSecure,
+        // Until the client signs a commitment the number in use is the contract
+        // minimum (what is entered by hand today) - without a reserve on top.
+        guests_secure: cloud.commitmentReceived ? cloud.guestsSecure : cloud.minimumGuests,
         guests_reserve: cloud.guestsReserve,
-        guests_reserve_percent: cloud.guestsReserve == null ? cloud.reservePercent : null,
+        guests_reserve_percent: cloud.commitmentReceived && cloud.guestsReserve == null ? cloud.reservePercent : null,
         kids_meals: cloud.kids,
         glat_meals: cloud.glat,
         vegetarian_meals: cloud.vegetarian,

@@ -4,11 +4,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { applyDefaultSchedule, schedulePushRemindersForStep } from "@/app/events/[id]/timeline/actions";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { sendPushToStaff } from "@/lib/pushNotifications";
-import { addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
+import { todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { formatDate } from "@/lib/labels";
 import {
   describeChanges,
   diffSnapshots,
+  dropFirstTimeOverwrites,
   eventInsertFromSnapshot,
   eventUpdateForChanges,
   isIplanEventPayload,
@@ -32,10 +33,9 @@ interface EventRowLite {
   iplan_data: IplanSnapshot | null;
 }
 
-// Events further out than this get their default schedule later (see
-// ensureSchedules): creating a schedule schedules a push-reminder job per
-// step, which is wasted work months ahead of an event.
-const SCHEDULE_WITHIN_DAYS = 45;
+// Events per request that get their default schedule backfilled (see
+// ensureSchedules) - keeps one request short when many are waiting.
+const SCHEDULE_BACKFILL_PER_REQUEST = 20;
 
 interface ItemResult {
   iplan_event_id: string;
@@ -115,7 +115,7 @@ async function processEvent(
 
   const { data: linked } = await supabase
     .from("events")
-    .select("id, name, event_date, manager_id, iplan_data")
+    .select("*")
     .eq("iplan_event_id", iplanId)
     .is("deleted_at", null)
     .maybeSingle<EventRowLite>();
@@ -125,9 +125,12 @@ async function processEvent(
   if (linked) {
     const previous = linked.iplan_data;
     const snapshot = mergeSnapshot(previous, incoming);
-    const changes = diffSnapshots(previous, snapshot);
+    const changes = dropFirstTimeOverwrites(diffSnapshots(previous, snapshot), linked as unknown as Record<string, unknown>);
     if (changes.length === 0) {
-      if (!previous) await supabase.from("events").update({ iplan_data: snapshot, iplan_synced_at: now }).eq("id", linked.id);
+      // Remember what iPlan shows now, so a later real change is measured from it.
+      if (!dry && JSON.stringify(previous) !== JSON.stringify(snapshot)) {
+        await supabase.from("events").update({ iplan_data: snapshot, iplan_synced_at: now }).eq("id", linked.id);
+      }
       return { iplan_event_id: iplanId, action: "unchanged" };
     }
 
@@ -168,7 +171,9 @@ async function processEvent(
     revalidatePath("/");
     revalidatePath(`/events/${linked.id}`);
 
-    if (notify) {
+    // Only a value that actually changed in iPlan is worth a push - a field
+    // iPlan is showing for the first time is just being filled in.
+    if (notify && changes.some((change) => change.from !== null)) {
       await notifyManager(
         supabase,
         (update.manager_id as string | null | undefined) ?? linked.manager_id,
@@ -220,9 +225,7 @@ async function processEvent(
     .single<{ id: string; manager_id: string | null }>();
   if (error || !created) return { iplan_event_id: iplanId, action: "skipped", detail: error?.message ?? "יצירה נכשלה" };
 
-  if (incoming.event_date <= addDaysToDate(today, SCHEDULE_WITHIN_DAYS)) {
-    await applyDefaultSchedule(created.id, incoming.event_type, incoming.event_date, supabase);
-  }
+  await applyDefaultSchedule(created.id, incoming.event_type, incoming.event_date, supabase);
   await checkRemindersForEvent(created.id);
   await logChange(supabase, created.id, incoming.name, "created", []);
   revalidatePath("/");
@@ -239,16 +242,19 @@ async function processEvent(
   return { iplan_event_id: iplanId, action: "created", detail: incoming.name };
 }
 
-// Synced events that have come within SCHEDULE_WITHIN_DAYS and still have no
-// timeline get the default schedule for their type now.
+// Events this sync created that still have no timeline (e.g. created before
+// schedules were applied at creation) get the default schedule for their
+// type. Events entered by hand are never touched.
 async function ensureSchedules(supabase: Admin, today: string) {
+  const { data: createdLog } = await supabase.from("iplan_sync_log").select("event_id").eq("kind", "created").not("event_id", "is", null);
+  const createdIds = [...new Set((createdLog ?? []).map((row) => row.event_id as string))];
+  if (createdIds.length === 0) return;
   const { data: events } = await supabase
     .from("events")
     .select("id, event_type, event_date")
-    .not("iplan_event_id", "is", null)
+    .in("id", createdIds)
     .is("deleted_at", null)
-    .gte("event_date", today)
-    .lte("event_date", addDaysToDate(today, SCHEDULE_WITHIN_DAYS));
+    .gte("event_date", today);
   if (!events || events.length === 0) return;
   const { data: withTimeline } = await supabase
     .from("timeline_items")
@@ -258,8 +264,8 @@ async function ensureSchedules(supabase: Admin, today: string) {
       events.map((event) => event.id as string),
     );
   const have = new Set((withTimeline ?? []).map((row) => row.event_id as string));
-  for (const event of events) {
-    if (have.has(event.id as string)) continue;
+  const missing = events.filter((event) => !have.has(event.id as string)).slice(0, SCHEDULE_BACKFILL_PER_REQUEST);
+  for (const event of missing) {
     try {
       await applyDefaultSchedule(event.id as string, event.event_type as string, event.event_date as string, supabase);
     } catch (err) {

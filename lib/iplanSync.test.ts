@@ -4,6 +4,7 @@ import {
   describeChanges,
   diffSnapshots,
   eventInsertFromSnapshot,
+  dropFirstTimeOverwrites,
   eventNameFromTitle,
   eventUpdateForChanges,
   isIplanEventPayload,
@@ -94,6 +95,28 @@ describe("diffSnapshots", () => {
   it("treats 19:30 and 19:30:00 as the same time", () => {
     const before = { ...snapshotFromPayload(payload()), start_time: "19:30:00" };
     expect(diffSnapshots(before, snapshotFromPayload(payload()))).toEqual([]);
+  });
+});
+
+describe("dropFirstTimeOverwrites", () => {
+  const change = (field: "estimated_guests" | "event_manager_name", from: string | null, to: string) => ({
+    field,
+    label: field,
+    from,
+    to,
+  });
+  it("keeps a value typed in by hand when iPlan shows one for the first time", () => {
+    const changes = [change("estimated_guests", null, "320")];
+    expect(dropFirstTimeOverwrites(changes, { estimated_guests: "340" })).toEqual([]);
+    expect(dropFirstTimeOverwrites(changes, { estimated_guests: null })).toEqual(changes);
+  });
+  it("always applies a change from a value iPlan already had", () => {
+    const changes = [change("estimated_guests", "320", "340")];
+    expect(dropFirstTimeOverwrites(changes, { estimated_guests: "300" })).toEqual(changes);
+  });
+  it("checks the staff link column for staff names", () => {
+    const changes = [change("event_manager_name", null, "רן קופרמן")];
+    expect(dropFirstTimeOverwrites(changes, { manager_id: "m" })).toEqual([]);
   });
 });
 

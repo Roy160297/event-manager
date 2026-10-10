@@ -133,6 +133,33 @@ export function describeChanges(changes: FieldChange[]): string {
   return changes.map((change) => `${change.label}: ${change.from ?? "ריק"} ← ${change.to ?? "ריק"}`).join(" · ");
 }
 
+// The event columns a snapshot field is written to.
+export function columnsForField(field: keyof IplanSnapshot): string[] {
+  switch (field) {
+    case "event_manager_name":
+      return ["manager_id"];
+    case "floor_manager_name":
+      return ["floor_manager_id"];
+    case "sales_person_name":
+      return ["sales_person_id", "sales_person_name"];
+    default:
+      return [field];
+  }
+}
+
+// A field that had no value in iPlan the last time we looked and now does is
+// filled in only if it is still empty here - anything typed in by hand wins
+// over a value iPlan is showing for the first time.
+export function dropFirstTimeOverwrites(changes: FieldChange[], current: Record<string, unknown>): FieldChange[] {
+  return changes.filter((change) => {
+    if (change.from !== null) return true;
+    return !columnsForField(change.field).some((column) => {
+      const value = current[column];
+      return value !== null && value !== undefined && String(value).trim() !== "";
+    });
+  });
+}
+
 export interface StaffMatch {
   id: string;
   name: string;
