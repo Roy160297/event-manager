@@ -339,7 +339,15 @@ export async function POST(request: Request) {
       .not("iplan_event_id", "is", null)
       .is("deleted_at", null)
       .in("event_date", [today, tomorrow]);
-    const manual = body.manual === true;
+    // "Sync now" from the admin page counts as manual too, so it behaves like a
+    // click on the extension icon.
+    const { data: status } = await supabase
+      .from("iplan_sync_status")
+      .select("last_run_at, run_requested_at")
+      .eq("id", true)
+      .maybeSingle<{ last_run_at: string | null; run_requested_at: string | null }>();
+    const requestedFromSite = !!status?.run_requested_at && (!status.last_run_at || status.run_requested_at > status.last_run_at);
+    const manual = body.manual === true || requestedFromSite;
     const sketch: string[] = [];
     const guests: string[] = [];
     for (const event of events ?? []) {
