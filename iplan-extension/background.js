@@ -41,3 +41,17 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM) runSync();
 });
 chrome.action.onClicked.addListener(() => runSync());
+
+// The offscreen document has no chrome.storage, so it asks this worker to
+// read and write the sync state (which events were already sent).
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === "storage-get") {
+    chrome.storage.local.get(message.keys).then(sendResponse);
+    return true;
+  }
+  if (message?.type === "storage-set") {
+    chrome.storage.local.set(message.values).then(() => sendResponse({}));
+    return true;
+  }
+  return false;
+});
