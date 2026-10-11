@@ -361,6 +361,10 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               {guestCommitment ?? "—"}
             </p>
             <p>
+              <span className="text-foreground/60">מספר ילדים (התחייבות): </span>
+              {event?.kids_meal_count ?? "—"}
+            </p>
+            <p>
               <span className="text-foreground/60">מנהל אירוע: </span>
               {managerName ?? "—"}
             </p>

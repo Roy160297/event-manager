@@ -10,6 +10,7 @@ import { TimeField } from "@/components/TimeField";
 import { getCurrentStaff } from "@/lib/auth";
 import { getEventManagerCandidates, getFloorManagerCandidates, getSalespersonCandidates } from "@/lib/staff";
 import { canRead, canWrite } from "@/lib/permissions";
+import { ExpandableText, ExpandableTextarea } from "@/components/ExpandableInfo";
 import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
 import { ImageUpdateWizard } from "./ImageUpdateWizard";
@@ -377,15 +378,12 @@ export default async function EventOverviewPage({
             )}
           </div>
 
-          <label className={labelClass}>
-            <span className="font-medium">מידע נוסף</span>
-            <textarea
-              name="menu_notes"
-              rows={6}
-              defaultValue={event?.menu_notes ?? (event?.event_type !== "business_event" ? DEFAULT_ADDITIONAL_INFO : "")}
-              className={inputClass}
-            />
-          </label>
+          <ExpandableTextarea
+            name="menu_notes"
+            title="מידע נוסף"
+            defaultValue={event?.menu_notes ?? (event?.event_type !== "business_event" ? DEFAULT_ADDITIONAL_INFO : "")}
+            className={inputClass}
+          />
 
           <label className={labelClass}>
             <span className="font-medium">הערות חניה</span>
@@ -445,9 +443,8 @@ export default async function EventOverviewPage({
           </div>
 
           {event?.menu_notes && (
-            <div className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">מידע נוסף</span>
-              <p className="whitespace-pre-wrap">{event.menu_notes}</p>
+            <div className="text-sm">
+              <ExpandableText title="מידע נוסף" text={event.menu_notes} />
             </div>
           )}
 
