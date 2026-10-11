@@ -166,7 +166,7 @@ export default async function ChecklistNotesPage() {
                   )}
                   {event.report_general_notes && (
                     <p className="text-sm">
-                      <span className="font-medium">הערות כלליות: </span>
+                      <span className="font-medium">הערות כלליות ופידבק מלצרים: </span>
                       <span className="whitespace-pre-wrap">{event.report_general_notes}</span>
                     </p>
                   )}

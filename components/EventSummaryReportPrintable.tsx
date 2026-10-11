@@ -72,7 +72,7 @@ export function EventSummaryReportPrintable({
       )}
       {event.report_general_notes && (
         <div className="flex flex-col gap-1">
-          <p className="text-sm font-bold">הערות כלליות</p>
+          <p className="text-sm font-bold">הערות כלליות ופידבק מלצרים</p>
           <p className="whitespace-pre-wrap text-[12.5px]">{event.report_general_notes}</p>
         </div>
       )}

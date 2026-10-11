@@ -393,7 +393,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               )}
               {event?.report_general_notes && (
                 <div className="flex flex-col gap-1 text-sm">
-                  <p className="font-medium">הערות כלליות</p>
+                  <p className="font-medium">הערות כלליות ופידבק מלצרים</p>
                   <p className="whitespace-pre-wrap text-foreground/80">{event.report_general_notes}</p>
                 </div>
               )}
@@ -575,7 +575,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
             </label>
 
             <label className={reportLabelClass}>
-              <span>הערות כלליות</span>
+              <span>הערות כלליות ופידבק מלצרים</span>
               <textarea
                 name="report_general_notes"
                 rows={3}
