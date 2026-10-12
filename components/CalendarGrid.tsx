@@ -121,11 +121,13 @@ export function CalendarGrid({
                 {selected.startTime ? ` · ${formatTime(selected.startTime)}` : ""}
               </p>
             </div>
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${EVENT_STATUS_COLORS[selected.displayStatus]}`}
-            >
-              {EVENT_STATUS_LABELS[selected.displayStatus]}
-            </span>
+            {selected.displayStatus !== "approved" && (
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-medium ${EVENT_STATUS_COLORS[selected.displayStatus]}`}
+              >
+                {EVENT_STATUS_LABELS[selected.displayStatus]}
+              </span>
+            )}
           </div>
           <dl className="mt-3 grid gap-1.5 text-sm sm:grid-cols-2">
             <div className="flex gap-1">

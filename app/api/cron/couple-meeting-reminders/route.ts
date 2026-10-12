@@ -51,7 +51,16 @@ export async function GET(request: Request) {
       }
     }
 
-    return Response.json({ ok: true, sent, skippedAlreadySent });
+    // Safety net for push reminders: schedules any that an upcoming event is
+    // missing (see backfill_push_reminders). Once a day is enough.
+    let pushScheduled: number | null = null;
+    if (pass === "morning") {
+      const { data, error: backfillError } = await supabase.rpc("backfill_push_reminders");
+      if (backfillError) console.error("backfill_push_reminders failed:", backfillError.message);
+      else pushScheduled = data as number;
+    }
+
+    return Response.json({ ok: true, sent, skippedAlreadySent, pushScheduled });
   } catch (err) {
     return Response.json({ error: err instanceof Error ? err.message : "שגיאה לא צפויה" }, { status: 500 });
   }

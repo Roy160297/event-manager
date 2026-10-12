@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { deleteEvent } from "@/app/events/actions";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { todaysEventDate } from "@/lib/scheduleTime";
-import { todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { EventManagerFilter } from "@/components/EventManagerFilter";
@@ -26,7 +25,7 @@ export default async function EventsDashboard({
       .from("events")
       .select("*")
       .is("deleted_at", null)
-      .gte("event_date", todayInIsrael())
+      .gte("event_date", todaysEventDate())
       .order("event_date", { ascending: true })
       .returns<EventRow[]>(),
     getEventManagerCandidates(),

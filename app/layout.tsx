@@ -5,7 +5,7 @@ import { canRead } from "@/lib/permissions";
 import { isPrivateEventsOwner } from "@/lib/privateEvents";
 import { signOut } from "@/app/login/actions";
 import { createClient } from "@/lib/supabase/server";
-import { todayInIsrael } from "@/lib/coupleMeetingReminders";
+import { todaysEventDate } from "@/lib/scheduleTime";
 import { getEventManagerCandidates } from "@/lib/staff";
 import type { EventRow } from "@/lib/types";
 import "./globals.css";
@@ -36,7 +36,7 @@ export default async function RootLayout({
         .from("events")
         .select("id, name, event_date, event_type, manager_id")
         .is("deleted_at", null)
-        .gte("event_date", todayInIsrael())
+        .gte("event_date", todaysEventDate())
         .order("event_date", { ascending: true })
         .returns<Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">[]>(),
       getEventManagerCandidates(),

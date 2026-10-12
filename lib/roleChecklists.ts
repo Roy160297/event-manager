@@ -85,6 +85,7 @@ export const ROLE_CHECKLISTS: RoleChecklistDefinition[] = [
             text: "לוודא סדר וניקיון בחדר המלצרים - שיהיה כמה שיותר מוכן לסגירה.",
           },
           { key: "fm-chuppah-cleanup", text: "ניקיון שולחן חופה ושברי זכוכית ולכלוך מהרצפה." },
+          { key: "fm-office-kitchen-dishes", text: "פינוי כלים ממטבח המשרדים + ניקיון הכיור." },
           {
             key: "fm-trays-count-before-exit",
             text: "ריכוז מגשים מכל האולם על מקרר הקרח.",

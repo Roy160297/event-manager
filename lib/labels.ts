@@ -1,3 +1,4 @@
+import { todaysEventDate } from "@/lib/scheduleTime";
 import type {
   EventDisplayStatus,
   EventRow,
@@ -124,8 +125,8 @@ export function assignManagerColors(managerNames: string[]): Map<string, string>
 
 export function getDisplayEventStatus(event: Pick<EventRow, "status" | "event_date">): EventDisplayStatus {
   if (event.status === "canceled") return "canceled";
-  const today = new Date().toISOString().slice(0, 10);
-  if (event.event_date < today) return "completed";
+  // An event is over only the morning after (same 6am cutoff as the dashboard), not at midnight.
+  if (event.event_date < todaysEventDate()) return "completed";
   return event.status;
 }
 

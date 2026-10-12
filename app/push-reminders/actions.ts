@@ -8,6 +8,13 @@ import { sendPushToStaff } from "@/lib/pushNotifications";
 import { draftPushRule, type PushRuleDraft } from "@/lib/ruleDraft";
 import { getKnownTimelineStepLabels } from "@/app/events/[id]/timeline/actions";
 
+// Jobs are scheduled per event when a timeline step is saved, so a rule that
+// is added or changed has to be pushed out to the events that already exist.
+async function syncRuleJobs(supabase: Awaited<ReturnType<typeof createClient>>, ruleId: string) {
+  const { error } = await supabase.rpc("sync_push_rule_jobs", { p_rule_id: ruleId });
+  if (error) console.error(`Failed to sync push reminder jobs for rule ${ruleId}:`, error.message);
+}
+
 async function assertCanManage() {
   const staff = await getCurrentStaff();
   if (!staff || !canWrite(staff.permissions, "push_reminder_rules")) {
@@ -54,9 +61,14 @@ export async function createPushReminderRule(formData: FormData) {
   await assertCanManage();
   const supabase = await createClient();
 
-  const { error } = await supabase.from("push_reminder_rules").insert(readRuleFields(formData));
+  const { data: created, error } = await supabase
+    .from("push_reminder_rules")
+    .insert(readRuleFields(formData))
+    .select("id")
+    .single<{ id: string }>();
 
   if (error) throw new Error(error.message);
+  await syncRuleJobs(supabase, created.id);
   revalidatePath("/push-reminders");
 }
 
@@ -78,6 +90,7 @@ export async function updatePushReminderRule(ruleId: string, formData: FormData)
     .eq("id", ruleId);
 
   if (error) throw new Error(error.message);
+  await syncRuleJobs(supabase, ruleId);
   revalidatePath("/push-reminders");
 }
 
@@ -114,6 +127,7 @@ export async function deletePushReminderRule(ruleId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("push_reminder_rules").delete().eq("id", ruleId);
   if (error) throw new Error(error.message);
+  await syncRuleJobs(supabase, ruleId);
   revalidatePath("/push-reminders");
 }
 

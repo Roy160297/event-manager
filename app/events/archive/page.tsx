@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDate, getDisplayEventStatus } from "@/lib/labels";
-import { todayInIsrael } from "@/lib/coupleMeetingReminders";
+import { todaysEventDate } from "@/lib/scheduleTime";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
@@ -14,7 +14,7 @@ export default async function EventsArchivePage() {
       .from("events")
       .select("*")
       .is("deleted_at", null)
-      .lt("event_date", todayInIsrael())
+      .lt("event_date", todaysEventDate())
       .order("event_date", { ascending: false })
       .returns<EventRow[]>(),
     getCurrentStaff(),
