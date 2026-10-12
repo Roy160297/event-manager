@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { IS_DEMO } from "@/lib/demoMode";
 import { canWrite } from "@/lib/permissions";
-import { requestSyncNow, setSyncEnabled, setSyncInterval } from "./actions";
+import { requestSyncNow, setSyncInterval } from "./actions";
+import { SyncSwitch } from "./SyncSwitch";
 
 interface StatusRow {
   last_ping_at: string | null;
@@ -138,19 +139,7 @@ export default async function IplanSyncPage() {
 
       {canManage && (
         <section className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
-          <form action={setSyncEnabled} className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-sm font-medium">
-              <input type="checkbox" name="enabled" defaultChecked={IS_DEMO || status?.enabled === true} />
-              סנכרון iPlan פעיל
-            </label>
-            <p className="text-sm text-foreground/60">
-              תנאי השימוש של iPlan אוסרים משיכת מידע אוטומטית ללא אישור בכתב. כשהמתג כבוי, התוסף לא קורא דבר מ-iPlan והאתר
-              לא מקבל ממנו כלום.
-            </p>
-            <button type="submit" className="self-start rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft">
-              שמור
-            </button>
-          </form>
+          <SyncSwitch enabled={IS_DEMO || status?.enabled === true} />
           <form action={setSyncInterval} className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-sm">
               <span>תדירות הסנכרון (בשעות היום בלבד)</span>

@@ -22,10 +22,10 @@ export async function requestSyncNow() {
 
 // Master switch: while off, the site answers every extension request with "do
 // not sync" and accepts nothing from it.
-export async function setSyncEnabled(formData: FormData) {
+export async function setSyncEnabled(enabled: boolean) {
   await assertCanManage();
   const supabase = await createClient();
-  const { error } = await supabase.from("iplan_sync_status").update({ enabled: formData.get("enabled") === "on" }).eq("id", true);
+  const { error } = await supabase.from("iplan_sync_status").update({ enabled }).eq("id", true);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/iplan");
 }

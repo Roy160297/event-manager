@@ -506,7 +506,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <span>כמות מנקי מטבח</span>
                 <input
                   name="kitchen_dishwasher_count"
-                  defaultValue={event?.kitchen_dishwasher_count ?? ""}
+                  defaultValue={event?.kitchen_dishwasher_count ?? "2"}
                   className={inputClass}
                 />
               </label>
@@ -522,7 +522,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
                 <span>כמות שוטפי כלים</span>
                 <input
                   name="dishwasher_count"
-                  defaultValue={event?.dishwasher_count ?? ""}
+                  defaultValue={event?.dishwasher_count ?? "3"}
                   className={inputClass}
                 />
               </label>
