@@ -68,6 +68,10 @@ export function parseQuickView(dump: PageDump): QuickView {
 
 export interface CloudView {
   users: { name: string; role: string; phone: string | null; email: string | null }[];
+  // People the venue invited to join the event who have not joined yet (the
+  // couple often sit here for months): one entry per person, phone and email
+  // merged from their separate invitation rows.
+  invited: { name: string; role: string; phone: string | null; email: string | null }[];
   commitmentReceived: boolean;
   serviceStyle: string | null;
   guestsSecure: number | null;
@@ -84,6 +88,10 @@ export interface CloudView {
 }
 
 const COMMITMENT_HEADING = "התחייבות חתומה";
+const INVITES_HEADING = "הזמנות להצטרף לאירוע";
+const PRODUCER_ROLE = "מפיק/ה";
+const PHONE = /^[\d-]{9,}$/;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function parseCloud(dump: PageDump | null): CloudView {
   const lines = dump?.lines ?? [];
@@ -94,7 +102,7 @@ export function parseCloud(dump: PageDump | null): CloudView {
     const end = lines.findIndex((line, i) => i > usersAt && line === "הוספה");
     const block = lines.slice(usersAt + 1, end > 0 ? end : usersAt + 40);
     for (let i = 0; i < block.length; i++) {
-      if (block[i + 1] === "חתן" || block[i + 1] === "כלה") {
+      if (block[i + 1] === "חתן" || block[i + 1] === "כלה" || block[i + 1] === PRODUCER_ROLE) {
         const user = { name: block[i], role: block[i + 1], phone: null as string | null, email: null as string | null };
         for (let j = i + 2; j < Math.min(block.length, i + 8); j++) {
           if (/^[\d-]{9,}$/.test(block[j]) && !user.phone) user.phone = block[j];
@@ -102,6 +110,25 @@ export function parseCloud(dump: PageDump | null): CloudView {
         }
         users.push(user);
       }
+    }
+  }
+
+  // Each invitation is one row per phone or email: contact, name, "(role)".
+  const invited: CloudView["invited"] = [];
+  const invitesAt = lines.indexOf(INVITES_HEADING);
+  if (invitesAt >= 0) {
+    for (let i = invitesAt + 3; i < lines.length; i++) {
+      const role = lines[i].match(/^\((חתן|כלה|הזוג)\)$/)?.[1];
+      const contact = lines[i - 2];
+      if (!role || !(PHONE.test(contact) || EMAIL.test(contact))) continue;
+      const name = lines[i - 1];
+      let person = invited.find((entry) => entry.name === name && entry.role === role);
+      if (!person) {
+        person = { name, role, phone: null, email: null };
+        invited.push(person);
+      }
+      if (PHONE.test(contact)) person.phone ??= contact;
+      else person.email ??= contact;
     }
   }
 
@@ -117,6 +144,7 @@ export function parseCloud(dump: PageDump | null): CloudView {
 
   return {
     users,
+    invited,
     commitmentReceived: received,
     serviceStyle: valueAfter(after, "סוג הגשה"),
     guestsSecure: received ? get("אורחים בטוחים") : null,
@@ -132,6 +160,29 @@ export function parseCloud(dump: PageDump | null): CloudView {
     toddlers: received ? get("ילדים מתחת לגיל 2") : null,
     isReverse: lines.some((line) => line.includes('לו"ז אירוע') && line.includes("הפוכה")),
   };
+}
+
+// Up to two people to reach about the event: the bride and groom (or "the
+// couple") - whether they joined or are still only invited - and, when there
+// are none, whoever produces the event.
+const CONTACT_ORDER = ["כלה", "חתן", "הזוג"];
+
+export function contactsOf(cloud: CloudView): { phone: string | null; email: string | null }[] {
+  const people: CloudView["users"] = [];
+  for (const person of [...cloud.users, ...cloud.invited]) {
+    const known = people.find((entry) => entry.name === person.name);
+    if (known) {
+      known.phone ??= person.phone;
+      known.email ??= person.email;
+    } else {
+      people.push({ ...person });
+    }
+  }
+  const couple = people
+    .filter((person) => CONTACT_ORDER.includes(person.role))
+    .sort((a, b) => CONTACT_ORDER.indexOf(a.role) - CONTACT_ORDER.indexOf(b.role));
+  const chosen = couple.length > 0 ? couple : people.filter((person) => person.role === PRODUCER_ROLE);
+  return chosen.slice(0, 2).map(({ phone, email }) => ({ phone, email }));
 }
 
 // The venue only runs the "reverse" wedding format on Fridays, and iPlan marks
@@ -163,7 +214,7 @@ export function buildIplanPayload(page: IplanPagePayload): IplanEventPayload {
   const groom = cloud.users.find((user) => user.role === "חתן") ?? null;
   const isWedding = (quick.typeLabel ?? "").includes("חתונה") && !!(bride || groom);
   const staffByRole = (role: string) => quick.staff.find((member) => member.role === role)?.name ?? null;
-  const contacts = [bride, groom].filter((user): user is NonNullable<typeof user> => !!user);
+  const contacts = contactsOf(cloud);
   // "עדיין לא נקבע" (not decided yet) is not a style.
   const style = cloud.serviceStyle === "מזנונים" || cloud.serviceStyle === "הגשה" ? cloud.serviceStyle : null;
 

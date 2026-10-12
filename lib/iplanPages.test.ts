@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildIplanPayload, isIplanPagePayload, mapEventType, parseCloud, parseQuickView, type PageDump } from "@/lib/iplanPages";
+import { buildIplanPayload, contactsOf, isIplanPagePayload, mapEventType, parseCloud, parseQuickView, type PageDump } from "@/lib/iplanPages";
 
 const quick: PageDump = {
   lines: [
@@ -96,6 +96,74 @@ describe("parseQuickView", () => {
       cloudId: "268277",
     });
     expect(parseQuickView(quick).staff).toHaveLength(3);
+  });
+});
+
+// An event run by a producer: only the producer has joined, the couple are
+// invitations still waiting (one row per phone / email), as iPlan shows it.
+const cloudInvitedOnly: PageDump = {
+  lines: [
+    "משתמשים באירוע",
+    "אבירן רוקח",
+    "מפיק/ה",
+    "כניסה אחרונה לאירוע",
+    "לפני בערך שעה אחתיום שני, 12 אוקטובר 2026, 14:32",
+    "052-516-7979",
+    "aviran@example.com",
+    "הוספה",
+    "הזמנות להצטרף לאירוע",
+    "ממתינה",
+    "לפני 8 חודשיםיום רביעי, 18 פברואר 2026, 12:44",
+    "050-476-3914",
+    "עמית עזרן",
+    "(חתן)",
+    "House No.Seven",
+    "ביטול",
+    "ממתינה",
+    "לפני 8 חודשיםיום רביעי, 18 פברואר 2026, 12:44",
+    "amit@example.com",
+    "עמית עזרן",
+    "(חתן)",
+    "House No.Seven",
+    "ביטול",
+    "ממתינה",
+    "לפני 8 חודשיםיום רביעי, 18 פברואר 2026, 12:44",
+    "054-567-3544",
+    "נעה לזר",
+    "(הזוג)",
+    "House No.Seven",
+    "ביטול",
+    "ממתינה",
+    "לפני 8 חודשיםיום רביעי, 18 פברואר 2026, 12:44",
+    "noa@example.com",
+    "נעה לזר",
+    "(הזוג)",
+    "House No.Seven",
+  ],
+  labels: [],
+  hrefs: [],
+};
+
+describe("contacts", () => {
+  it("takes the couple from the pending invitations, merging each person's phone and email", () => {
+    const cloud = parseCloud(cloudInvitedOnly);
+    expect(cloud.invited).toEqual([
+      { name: "עמית עזרן", role: "חתן", phone: "050-476-3914", email: "amit@example.com" },
+      { name: "נעה לזר", role: "הזוג", phone: "054-567-3544", email: "noa@example.com" },
+    ]);
+    expect(contactsOf(cloud)).toEqual([
+      { phone: "050-476-3914", email: "amit@example.com" },
+      { phone: "054-567-3544", email: "noa@example.com" },
+    ]);
+  });
+
+  it("prefers the bride and groom who joined, and falls back to the producer", () => {
+    expect(contactsOf(parseCloud(cloudNotReceived))).toEqual([
+      { phone: "054-459-0103", email: "mika@example.com" },
+      { phone: "052-578-4756", email: "yuval@example.com" },
+    ]);
+    const onlyProducer = parseCloud({ ...cloudInvitedOnly, lines: cloudInvitedOnly.lines.slice(0, 8) });
+    expect(contactsOf(onlyProducer)).toEqual([{ phone: "052-516-7979", email: "aviran@example.com" }]);
   });
 });
 
