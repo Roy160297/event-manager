@@ -20,6 +20,11 @@ import type {
 
 const EVENT_TYPES = Object.keys(PRIVATE_EVENT_TYPE_LABELS) as PrivateEventType[];
 
+// The image-update wizard and the supplier-photo import chain several Gemini
+// calls (overload retry, model fallback) - the platform's default function
+// timeout can be shorter than that worst case.
+export const maxDuration = 60;
+
 export default async function PrivateEventOverviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
