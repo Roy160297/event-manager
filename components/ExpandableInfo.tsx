@@ -83,7 +83,7 @@ export function ExpandableTextarea({ name, defaultValue, title, className }: { n
           name={name}
           defaultValue={defaultValue}
           rows={open ? undefined : 12}
-          className={open ? `${className} min-h-0 flex-1 resize-none leading-relaxed` : className}
+          className={open ? `${className} min-h-0 flex-1 resize-none text-base leading-relaxed` : `${className} text-sm`}
         />
       </div>
     </div>
