@@ -6,8 +6,17 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { DateField } from "@/components/DateField";
 import { TimeField } from "@/components/TimeField";
 import { TrashIcon } from "@/components/icons";
+import { ExpandableTextarea } from "@/components/ExpandableInfo";
+import { EventFormExport } from "./EventFormExport";
+import { ImageUpdateWizard } from "./ImageUpdateWizard";
 import { SupplierImageImport } from "./SupplierImageImport";
-import type { PrivateEventGuestRow, PrivateEventRow, PrivateEventSupplierRow, PrivateEventType } from "@/lib/types";
+import type {
+  PrivateEventGuestRow,
+  PrivateEventRow,
+  PrivateEventSupplierRow,
+  PrivateEventTimelineItemRow,
+  PrivateEventType,
+} from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(PRIVATE_EVENT_TYPE_LABELS) as PrivateEventType[];
 
@@ -15,7 +24,7 @@ export default async function PrivateEventOverviewPage({ params }: { params: Pro
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: event }, { count: openTasks }, { data: guestPartySizes }, { data: suppliers }] = await Promise.all([
+  const [{ data: event }, { count: openTasks }, { data: guestPartySizes }, { data: suppliers }, { data: scheduleItems }] = await Promise.all([
     supabase.from("private_events").select("*").eq("id", id).returns<PrivateEventRow[]>().single(),
     supabase.from("private_event_tasks").select("*", { count: "exact", head: true }).eq("event_id", id).neq("status", "done"),
     supabase
@@ -29,6 +38,11 @@ export default async function PrivateEventOverviewPage({ params }: { params: Pro
       .eq("event_id", id)
       .order("sort_order")
       .returns<PrivateEventSupplierRow[]>(),
+    supabase
+      .from("private_event_timeline_items")
+      .select("label, approx_time, notes")
+      .eq("event_id", id)
+      .returns<Pick<PrivateEventTimelineItemRow, "label" | "approx_time" | "notes">[]>(),
   ]);
 
   const guestListCount = (guestPartySizes ?? []).reduce((sum, guest) => sum + (guest.party_size ?? 1), 0);
@@ -68,6 +82,10 @@ export default async function PrivateEventOverviewPage({ params }: { params: Pro
           <p className="text-2xl font-bold">{guestCount}</p>
         </div>
       </div>
+
+      {event && <EventFormExport event={event} suppliers={suppliers ?? []} scheduleItems={scheduleItems ?? []} />}
+
+      <ImageUpdateWizard eventId={id} />
 
       <SaveDetailsForm action={saveDetails} className="flex flex-col gap-4 rounded-lg border border-border-classic bg-surface p-4">
         <p className="font-serif text-lg font-bold">פרטי האירוע</p>
@@ -165,10 +183,7 @@ export default async function PrivateEventOverviewPage({ params }: { params: Pro
           )}
         </div>
 
-        <label className={labelClass}>
-          <span className="font-medium">מידע נוסף</span>
-          <textarea name="additional_info" rows={6} defaultValue={event?.additional_info ?? ""} className={inputClass} />
-        </label>
+        <ExpandableTextarea name="additional_info" title="מידע נוסף" defaultValue={event?.additional_info ?? ""} className={inputClass} />
 
         <button
           type="submit"

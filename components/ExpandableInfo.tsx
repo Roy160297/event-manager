@@ -29,7 +29,7 @@ export function ExpandableText({ title, text }: { title: string; text: string })
           הגדל
         </button>
       </div>
-      <p className="max-h-80 overflow-y-auto whitespace-pre-wrap rounded-md bg-accent-soft/50 p-3 text-base leading-relaxed">{text}</p>
+      <p className="max-h-80 overflow-y-auto whitespace-pre-wrap rounded-md bg-accent-soft/50 p-3 text-sm leading-relaxed">{text}</p>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setOpen(false)} role="presentation">
@@ -46,7 +46,7 @@ export function ExpandableText({ title, text }: { title: string; text: string })
                 סגור
               </button>
             </div>
-            <p className="overflow-y-auto whitespace-pre-wrap text-lg leading-relaxed">{text}</p>
+            <p className="overflow-y-auto whitespace-pre-wrap text-base leading-relaxed">{text}</p>
           </div>
         </div>
       )}
@@ -83,7 +83,7 @@ export function ExpandableTextarea({ name, defaultValue, title, className }: { n
           name={name}
           defaultValue={defaultValue}
           rows={open ? undefined : 12}
-          className={open ? `${className} min-h-0 flex-1 resize-none text-lg leading-relaxed` : `${className} text-base`}
+          className={open ? `${className} min-h-0 flex-1 resize-none leading-relaxed` : className}
         />
       </div>
     </div>
