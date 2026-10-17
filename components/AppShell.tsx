@@ -134,7 +134,7 @@ export function AppShell({
             </div>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
+        <main className="mx-auto w-full max-w-5xl min-w-0 flex-1 overflow-x-clip px-4 py-6">{children}</main>
         <footer className="border-t border-border-classic bg-background px-4 py-4 text-center text-xs text-foreground/50">
           {IS_DEMO ? `© ${new Date().getFullYear()} ${DEMO_VENUE_NAME}` : `© ${new Date().getFullYear()} רועי פוריאן. כל הזכויות שמורות.`}
         </footer>
@@ -212,7 +212,7 @@ export function AppShell({
       {staff && (
         <EventSwitcher events={switcherEvents} managers={switcherManagers} defaultManagerId={switcherDefaultManagerId} />
       )}
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-5xl min-w-0 flex-1 overflow-x-clip px-4 py-6">{children}</main>
       <footer className="border-t border-border-classic bg-background px-4 py-4 text-center text-xs text-foreground/50">
         {IS_DEMO ? `© ${new Date().getFullYear()} ${DEMO_VENUE_NAME}` : `© ${new Date().getFullYear()} רועי פוריאן. כל הזכויות שמורות.`}
       </footer>

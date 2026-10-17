@@ -118,7 +118,7 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
     }
   }
 
-  const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2";
+  const inputClass = "w-full min-w-0 rounded-md border border-border-classic bg-surface px-3 py-2";
 
   return (
     <div className="flex flex-col gap-6">
@@ -196,14 +196,13 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
               name="label"
               placeholder="לדוגמה: קבלת פנים"
               required
-              autoFocus
-              className="rounded-md border border-border-classic bg-surface px-3 py-2 sm:col-span-2"
+              className="w-full min-w-0 rounded-md border border-border-classic bg-surface px-3 py-2 sm:col-span-2"
             />
             <TimeField name="approx_time" />
             <input
               name="notes"
               placeholder="הערות (לא חובה)"
-              className="rounded-md border border-border-classic bg-surface px-3 py-2 sm:col-span-3"
+              className="w-full min-w-0 rounded-md border border-border-classic bg-surface px-3 py-2 sm:col-span-3"
             />
           </div>
           <button
@@ -287,16 +286,16 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
               className="flex flex-col gap-2 rounded-lg border border-border-classic bg-surface p-4"
             >
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-soft text-sm font-medium">
                     {index + 1}
                   </span>
-                  <div>
-                    <p className="font-medium">
+                  <div className="min-w-0">
+                    <p className="break-words font-medium">
                       {item.approx_time ? `${item.approx_time} · ` : ""}
                       {item.label}
                     </p>
-                    {item.notes && <p className="text-sm text-foreground/60">{item.notes}</p>}
+                    {item.notes && <p className="break-words text-sm text-foreground/60">{item.notes}</p>}
                   </div>
                 </div>
                 {canWriteTimeline && (
