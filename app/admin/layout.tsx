@@ -11,7 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-serif text-2xl font-bold">ניהול משתמשים והרשאות</h1>
-        <AdminNav />
+        <AdminNav showVenue={canRead(staff.permissions, "venue_settings")} />
       </div>
       {children}
     </div>

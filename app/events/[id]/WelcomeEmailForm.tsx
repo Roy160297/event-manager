@@ -3,7 +3,6 @@
 import { useRef, useState, useTransition } from "react";
 import { sendWelcomeEmail } from "@/app/events/actions";
 import { EditableRecipientList } from "@/components/EditableRecipientList";
-import { WELCOME_EMAIL_ATTACHMENT_FILENAME } from "@/lib/welcomeEmail";
 
 export function WelcomeEmailForm({
   eventId,
@@ -12,6 +11,7 @@ export function WelcomeEmailForm({
   managerName,
   defaultSubject,
   defaultBody,
+  attachmentFilename,
   cancelLabel,
   onSent,
   onCancel,
@@ -22,6 +22,7 @@ export function WelcomeEmailForm({
   managerName: string | null;
   defaultSubject: string;
   defaultBody: string;
+  attachmentFilename: string;
   cancelLabel: string;
   onSent?: () => void;
   onCancel: () => void;
@@ -64,7 +65,7 @@ export function WelcomeEmailForm({
 
       <div className="flex flex-col gap-1 text-sm">
         <span className="text-foreground/70">
-          קובץ מצורף: {attachment ? attachment.name : `"${WELCOME_EMAIL_ATTACHMENT_FILENAME}"`}
+          קובץ מצורף: {attachment ? attachment.name : `"${attachmentFilename}"`}
         </span>
         <div className="flex items-center gap-2">
           <button

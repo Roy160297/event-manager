@@ -6,7 +6,6 @@ import { EventSummaryReportPrintable } from "@/components/EventSummaryReportPrin
 import { EditableRecipientList } from "@/components/EditableRecipientList";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { sendAllChecklistsEmail } from "@/app/events/actions";
-import { CHECKLIST_EMAIL_TO, CHECKLIST_EMAIL_CC } from "@/lib/checklistEmailRecipients";
 import type { ClosingChecklistCategory } from "@/lib/closingChecklist";
 import type { EventRow } from "@/lib/types";
 
@@ -55,6 +54,8 @@ export function SendChecklistsEmailButton({
   summaryReportSignedByName,
   summaryReportSignatureData,
   summaryReportPhotoUrls,
+  defaultTo,
+  defaultCc,
 }: {
   event: EventRow;
   managerName: string | null;
@@ -69,14 +70,16 @@ export function SendChecklistsEmailButton({
   summaryReportSignedByName: string | null;
   summaryReportSignatureData: string | null;
   summaryReportPhotoUrls: string[];
+  defaultTo: string[];
+  defaultCc: string[];
 }) {
   const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
   const footerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [step, setStep] = useState<"idle" | "preparing" | "review" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<{ filename: string; base64: string }[] | null>(null);
-  const [toList, setToList] = useState<string[]>(CHECKLIST_EMAIL_TO);
-  const [ccList, setCcList] = useState<string[]>(CHECKLIST_EMAIL_CC);
+  const [toList, setToList] = useState<string[]>(defaultTo);
+  const [ccList, setCcList] = useState<string[]>(defaultCc);
   const [bodyOverride, setBodyOverride] = useState<string | null>(null);
 
   const eventLabel = `${event.name} · ${EVENT_TYPE_LABELS[event.event_type]} · ${formatDate(event.event_date)}`;

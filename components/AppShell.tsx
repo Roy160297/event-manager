@@ -7,6 +7,7 @@ import { PushNotificationManager } from "@/components/PushNotificationManager";
 import { EventSwitcher } from "@/components/EventSwitcher";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { RoyLogo } from "@/components/RoyLogo";
+import { VenueWordmark } from "@/components/VenueWordmark";
 import { DEMO_VENUE_NAME, IS_DEMO } from "@/lib/demoMode";
 import type { EventRow } from "@/lib/types";
 
@@ -24,6 +25,7 @@ interface StaffSummary {
 export function AppShell({
   staff,
   isPrivateEventsOwner,
+  venueName,
   navProps,
   switcherEvents,
   switcherManagers,
@@ -33,6 +35,7 @@ export function AppShell({
 }: {
   staff: StaffSummary | null;
   isPrivateEventsOwner: boolean;
+  venueName: string;
   navProps: {
     showAdmin: boolean;
     showCalendar: boolean;
@@ -146,18 +149,7 @@ export function AppShell({
 
   // Smaller version of the venue logo for the phone header (the full-size one
   // lives in the desktop grid below).
-  const mobileLogo = IS_DEMO ? (
-    <div dir="ltr" aria-label={DEMO_VENUE_NAME} className="flex shrink-0 items-baseline gap-1 text-foreground">
-      <span className="text-lg font-black uppercase tracking-tight">Demo</span>
-      <span className="text-lg font-black uppercase tracking-tight">Venue</span>
-    </div>
-  ) : (
-    <div dir="ltr" aria-label="House No. Seven" className="flex shrink-0 items-baseline gap-1 text-foreground">
-      <span className="text-lg font-black uppercase tracking-tight">House</span>
-      <span className="font-serif text-sm italic text-foreground/80">No.</span>
-      <span className="text-lg font-black uppercase tracking-tight">Seven</span>
-    </div>
-  );
+  const mobileLogo = <VenueWordmark name={venueName} size="sm" />;
 
   const navEl = staff && (
     <MainNav
@@ -189,18 +181,9 @@ export function AppShell({
 
             <div className="flex min-w-0 items-center justify-center">{titleEl}</div>
 
-            {IS_DEMO ? (
-              <div dir="ltr" aria-label={DEMO_VENUE_NAME} className="flex items-baseline gap-1.5 justify-self-end text-foreground">
-                <span className="text-2xl font-black uppercase tracking-tight">Demo</span>
-                <span className="text-2xl font-black uppercase tracking-tight">Venue</span>
-              </div>
-            ) : (
-              <div dir="ltr" aria-label="House No. Seven" className="flex items-baseline gap-1.5 justify-self-end text-foreground">
-                <span className="text-2xl font-black uppercase tracking-tight">House</span>
-                <span className="font-serif text-lg italic text-foreground/80">No.</span>
-                <span className="text-2xl font-black uppercase tracking-tight">Seven</span>
-              </div>
-            )}
+            <div className="justify-self-end">
+              <VenueWordmark name={venueName} size="lg" />
+            </div>
 
             {/* The nav gets the full header width on its own row, so its nine
                 links fit in two rows instead of wrapping inside the narrow

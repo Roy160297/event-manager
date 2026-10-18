@@ -41,7 +41,9 @@ export type PermissionResource =
   | "my_tasks"
   | "menu"
   | "calendar"
-  | "business_event_checklist";
+  | "business_event_checklist"
+  | "push_reminder_rules"
+  | "venue_settings";
 
 export type MenuType = "buffet" | "plated";
 

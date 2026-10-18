@@ -27,6 +27,7 @@ import {
 } from "@/lib/labels";
 import type { ChecklistPhotoRow, ChecklistSignatureRow, EventRow, StaffRow, TaskRow, TaskStatus } from "@/lib/types";
 import { DateField } from "@/components/DateField";
+import { getVenueSettings } from "@/lib/venueSettings";
 import { TimeField } from "@/components/TimeField";
 
 const STATUSES = Object.keys(TASK_STATUS_LABELS) as TaskStatus[];
@@ -48,6 +49,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     { data: checklistSignatures },
     { data: checklistPhotos },
     currentStaff,
+    venue,
   ] = await Promise.all([
     supabase
       .from("tasks")
@@ -87,6 +89,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       .order("created_at", { ascending: true })
       .returns<ChecklistPhotoRow[]>(),
     getCurrentStaff(),
+    getVenueSettings(),
   ]);
 
   function signatureFor(checklistKey: string) {
@@ -288,6 +291,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           summaryReportSignedByName={summaryReportSignature?.signed_by_name ?? null}
           summaryReportSignatureData={summaryReportSignature?.signature_data ?? null}
           summaryReportPhotoUrls={photosFor("event_summary_report").map((photo) => photo.url)}
+          defaultTo={venue.checklist_email_to}
+          defaultCc={venue.checklist_email_cc}
         />
       )}
 

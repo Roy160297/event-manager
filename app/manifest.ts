@@ -1,8 +1,14 @@
 import type { MetadataRoute } from "next";
+import { getVenueSettings } from "@/lib/venueSettings";
 
-export default function manifest(): MetadataRoute.Manifest {
+// The name comes from the venue's settings, which can change after a deploy -
+// so this must be rendered per request, not baked in at build time.
+export const dynamic = "force-dynamic";
+
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const { venue_name } = await getVenueSettings();
   return {
-    name: "ניהול אירועים - House No. Seven",
+    name: `ניהול אירועים - ${venue_name}`,
     short_name: "ניהול אירועים",
     description: "מערכת פנימית לניהול אירועים",
     start_url: "/",

@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { getVenueSettings } from "@/lib/venueSettings";
 
 // Separate from lib/checklistEmail.ts because these go out unattended from a
 // cron job to whichever staff member the reminder is for, rather than being
@@ -24,8 +25,9 @@ export async function sendReminderEmail({
     auth: { user, pass: appPassword },
   });
 
+  const { venue_name } = await getVenueSettings();
   await transporter.sendMail({
-    from: `"House No. Seven" <${user}>`,
+    from: `"${venue_name}" <${user}>`,
     to,
     subject,
     html: `<div dir="rtl">${bodyText}</div>`,

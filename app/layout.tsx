@@ -7,6 +7,7 @@ import { signOut } from "@/app/login/actions";
 import { createClient } from "@/lib/supabase/server";
 import { todaysEventDate } from "@/lib/scheduleTime";
 import { getEventManagerCandidates } from "@/lib/staff";
+import { getVenueSettings } from "@/lib/venueSettings";
 import type { EventRow } from "@/lib/types";
 import "./globals.css";
 
@@ -20,7 +21,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const staff = await getCurrentStaff();
+  const [staff, venue] = await Promise.all([getCurrentStaff(), getVenueSettings()]);
 
   // Fetched here (rather than only within the per-event layout) so the
   // switcher sidebar shows on every page, not just an event's own sub-pages.
@@ -59,6 +60,7 @@ export default async function RootLayout({
         <AppShell
           staff={staff ? { name: staff.name } : null}
           isPrivateEventsOwner={isPrivateEventsOwner(staff)}
+          venueName={venue.venue_name}
           navProps={{
             showAdmin: !!staff && canRead(staff.permissions, "admin"),
             showCalendar: !!staff && canRead(staff.permissions, "calendar"),

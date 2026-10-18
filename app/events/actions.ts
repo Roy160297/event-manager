@@ -15,7 +15,8 @@ import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { extractEventDraftFromImage, applyCarriedReservePercent } from "@/lib/imageImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
-import { WELCOME_EMAIL_ATTACHMENT_FILENAME, welcomeEmailAttachmentAssetFor } from "@/lib/welcomeEmail";
+import { welcomeEmailAttachmentAssetFor } from "@/lib/welcomeEmail";
+import { getVenueSettings } from "@/lib/venueSettings";
 import { deleteAllChecklistPhotosForEvent } from "@/app/events/[id]/tasks/actions";
 import type { EventRow, EventType, StaffRow } from "@/lib/types";
 
@@ -93,7 +94,7 @@ export async function sendWelcomeEmail(eventId: string, formData: FormData): Pro
     // one-off guideline variant) instead of always attaching the venue's
     // standard default.
     const uploadedAttachment = formData.get("attachment");
-    let attachmentFilename = WELCOME_EMAIL_ATTACHMENT_FILENAME;
+    let attachmentFilename = (await getVenueSettings()).welcome_email_attachment_filename;
     let attachmentBase64: string;
     if (uploadedAttachment instanceof File && uploadedAttachment.size > 0) {
       attachmentFilename = uploadedAttachment.name;

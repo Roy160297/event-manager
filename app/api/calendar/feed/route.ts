@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
 import { buildCalendarFeed, type FeedEvent } from "@/lib/calendarFeed";
+import { getVenueSettings } from "@/lib/venueSettings";
 import { totalGuestCount } from "@/lib/guestCount";
 import { EVENT_TYPE_LABELS } from "@/lib/labels";
 import { getEventManagerCandidates } from "@/lib/staff";
@@ -59,7 +60,8 @@ export async function GET(request: Request) {
     url: `${url.origin}/events/${event.id}`,
   }));
 
-  return new Response(buildCalendarFeed(feedEvents), {
+  const venue = await getVenueSettings();
+  return new Response(buildCalendarFeed(feedEvents, { venueName: venue.venue_name, calendarName: venue.calendar_name }), {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
       "Content-Disposition": `inline; filename="events-${month}.ics"`,

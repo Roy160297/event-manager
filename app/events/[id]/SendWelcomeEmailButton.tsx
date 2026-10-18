@@ -10,6 +10,7 @@ export function SendWelcomeEmailButton({
   managerName,
   defaultSubject,
   defaultBody,
+  attachmentFilename,
 }: {
   eventId: string;
   to1: string | null;
@@ -17,6 +18,7 @@ export function SendWelcomeEmailButton({
   managerName: string | null;
   defaultSubject: string;
   defaultBody: string;
+  attachmentFilename: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -42,6 +44,7 @@ export function SendWelcomeEmailButton({
         managerName={managerName}
         defaultSubject={defaultSubject}
         defaultBody={defaultBody}
+        attachmentFilename={attachmentFilename}
         cancelLabel="ביטול"
         onCancel={() => setOpen(false)}
       />

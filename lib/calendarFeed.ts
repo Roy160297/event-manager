@@ -66,15 +66,19 @@ function eventTimes(event: FeedEvent): string[] {
   ];
 }
 
-export function buildCalendarFeed(events: FeedEvent[], now: Date = new Date()): string {
+export function buildCalendarFeed(
+  events: FeedEvent[],
+  names: { venueName: string; calendarName: string },
+  now: Date = new Date(),
+): string {
   const stamp = now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//House No. Seven//Event Manager//HE",
+    `PRODID:-//${names.venueName}//Event Manager//HE`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:אירועי שבע",
+    `X-WR-CALNAME:${names.calendarName}`,
     "X-WR-TIMEZONE:Asia/Jerusalem",
     "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
     "X-PUBLISHED-TTL:PT1H",

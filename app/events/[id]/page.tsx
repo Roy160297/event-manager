@@ -15,7 +15,8 @@ import { EventFormExport } from "./EventFormExport";
 import { SupplierImageImport } from "./SupplierImageImport";
 import { ImageUpdateWizard } from "./ImageUpdateWizard";
 import { SendWelcomeEmailButton } from "./SendWelcomeEmailButton";
-import { WELCOME_EMAIL_SUBJECT, buildWelcomeEmailBody } from "@/lib/welcomeEmail";
+import { buildWelcomeEmailBody } from "@/lib/welcomeEmail";
+import { getVenueSettings } from "@/lib/venueSettings";
 import type { EventRow, EventSupplierRow, EventType, GuestRow, TimelineItemRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -53,6 +54,7 @@ export default async function EventOverviewPage({
     { data: suppliers },
     { data: scheduleItems },
     currentStaff,
+    venue,
   ] = await Promise.all([
     supabase.from("events").select("*").eq("id", id).returns<EventRow[]>().single(),
     supabase
@@ -76,6 +78,7 @@ export default async function EventOverviewPage({
       .eq("event_id", id)
       .returns<Pick<TimelineItemRow, "label" | "approx_time" | "notes">[]>(),
     getCurrentStaff(),
+    getVenueSettings(),
   ]);
 
   const canReadEvents = !!currentStaff && canRead(currentStaff.permissions, "events");
@@ -159,8 +162,9 @@ export default async function EventOverviewPage({
             to1={event.contact_email}
             to2={event.contact_email_2}
             managerName={welcomeEmailSenderName || null}
-            defaultSubject={WELCOME_EMAIL_SUBJECT}
-            defaultBody={buildWelcomeEmailBody(welcomeEmailSenderName, welcomeEmailSenderPhone)}
+            defaultSubject={venue.welcome_email_subject}
+            defaultBody={buildWelcomeEmailBody(venue.welcome_email_body, welcomeEmailSenderName, welcomeEmailSenderPhone)}
+            attachmentFilename={venue.welcome_email_attachment_filename}
           />
         </div>
       )}

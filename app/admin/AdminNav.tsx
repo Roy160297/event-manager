@@ -10,12 +10,14 @@ const LINKS = [
   { href: "/admin/iplan", label: "סנכרון iPlan" },
 ];
 
-export function AdminNav() {
+const VENUE_LINK = { href: "/admin/venue", label: "הגדרות האולם" };
+
+export function AdminNav({ showVenue = false }: { showVenue?: boolean }) {
   const pathname = usePathname();
 
   return (
     <nav className={`mt-3 ${TAB_NAV_CLASS}`}>
-      {LINKS.map((link) => {
+      {(showVenue ? [...LINKS, VENUE_LINK] : LINKS).map((link) => {
         const isActive = pathname.startsWith(link.href);
         return (
           <Link

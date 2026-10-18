@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { getVenueSettings } from "@/lib/venueSettings";
 
 export async function sendChecklistsEmail({
   to,
@@ -33,8 +34,9 @@ export async function sendChecklistsEmail({
     auth: { user, pass: appPassword },
   });
 
+  const { venue_name } = await getVenueSettings();
   await transporter.sendMail({
-    from: `"House No. Seven" <${user}>`,
+    from: `"${venue_name}" <${user}>`,
     to,
     cc,
     replyTo: replyTo ?? undefined,
