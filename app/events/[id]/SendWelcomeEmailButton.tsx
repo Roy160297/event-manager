@@ -7,7 +7,7 @@ export function SendWelcomeEmailButton({
   eventId,
   to1,
   to2,
-  managerName,
+  senderStaffId,
   defaultSubject,
   defaultBody,
   attachmentFilename,
@@ -15,7 +15,7 @@ export function SendWelcomeEmailButton({
   eventId: string;
   to1: string | null;
   to2: string | null;
-  managerName: string | null;
+  senderStaffId: string | null;
   defaultSubject: string;
   defaultBody: string;
   attachmentFilename: string;
@@ -41,7 +41,7 @@ export function SendWelcomeEmailButton({
         eventId={eventId}
         to1={to1}
         to2={to2}
-        managerName={managerName}
+        senderStaffId={senderStaffId}
         defaultSubject={defaultSubject}
         defaultBody={defaultBody}
         attachmentFilename={attachmentFilename}

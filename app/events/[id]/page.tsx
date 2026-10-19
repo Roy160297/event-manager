@@ -17,6 +17,7 @@ import { ImageUpdateWizard } from "./ImageUpdateWizard";
 import { SendWelcomeEmailButton } from "./SendWelcomeEmailButton";
 import { buildWelcomeEmailBody } from "@/lib/welcomeEmail";
 import { getVenueSettings } from "@/lib/venueSettings";
+import { findWelcomeAttachment } from "@/lib/welcomeAttachments";
 import type { EventRow, EventSupplierRow, EventType, GuestRow, TimelineItemRow } from "@/lib/types";
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
@@ -105,6 +106,8 @@ export default async function EventOverviewPage({
   // manager is assigned yet, so the email still signs off as a real person.
   const welcomeEmailSenderName = assignedManager?.name ?? currentStaff?.name ?? "";
   const welcomeEmailSenderPhone = assignedManager?.phone ?? null;
+  const welcomeEmailSenderId = assignedManager?.id ?? currentStaff?.id ?? null;
+  const welcomeAttachment = await findWelcomeAttachment(welcomeEmailSenderId);
 
   async function saveDetails(formData: FormData) {
     "use server";
@@ -161,10 +164,10 @@ export default async function EventOverviewPage({
             eventId={id}
             to1={event.contact_email}
             to2={event.contact_email_2}
-            managerName={welcomeEmailSenderName || null}
+            senderStaffId={welcomeEmailSenderId}
             defaultSubject={venue.welcome_email_subject}
             defaultBody={buildWelcomeEmailBody(venue.welcome_email_body, welcomeEmailSenderName, welcomeEmailSenderPhone)}
-            attachmentFilename={venue.welcome_email_attachment_filename}
+            attachmentFilename={welcomeAttachment ? venue.welcome_email_attachment_filename || welcomeAttachment.file_name : ""}
           />
         </div>
       )}

@@ -5,6 +5,7 @@ import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import type { VenueSettings } from "@/lib/venueSettings";
 import { saveVenueSettings } from "./actions";
+import { WelcomeAttachments } from "./WelcomeAttachments";
 
 export default async function VenueSettingsPage() {
   const currentStaff = await getCurrentStaff();
@@ -20,84 +21,88 @@ export default async function VenueSettingsPage() {
   const hintClass = "text-xs text-foreground/60";
 
   return (
-    <SaveDetailsForm
-      action={saveVenueSettings}
-      message="ההגדרות נשמרו בהצלחה"
-      className="flex flex-col gap-6 rounded-lg border border-border-classic bg-surface p-4"
-    >
-      <fieldset disabled={!canEdit} className="flex flex-col gap-6">
-        <section className="flex flex-col gap-3">
-          <p className="font-serif text-lg font-bold">זהות האולם</p>
-          <label className={labelClass}>
-            <span className="font-medium">שם האולם</span>
-            <input name="venue_name" defaultValue={data.venue_name} required className={inputClass} />
-            <span className={hintClass}>מוצג בכותרת האתר, בעמוד ההתחברות, כשם השולח של מיילים ובאפליקציה המותקנת.</span>
-          </label>
-          <label className={labelClass}>
-            <span className="font-medium">שם היומן</span>
-            <input name="calendar_name" defaultValue={data.calendar_name} required className={inputClass} />
-            <span className={hintClass}>השם שיופיע ביומן Google או Apple אחרי הוספת האירועים אליו.</span>
-          </label>
-        </section>
+    <div className="flex flex-col gap-6">
+      <SaveDetailsForm
+        action={saveVenueSettings}
+        message="ההגדרות נשמרו בהצלחה"
+        className="flex flex-col gap-6 rounded-lg border border-border-classic bg-surface p-4"
+      >
+        <fieldset disabled={!canEdit} className="flex flex-col gap-6">
+          <section className="flex flex-col gap-3">
+            <p className="font-serif text-lg font-bold">זהות האולם</p>
+            <label className={labelClass}>
+              <span className="font-medium">שם האולם</span>
+              <input name="venue_name" defaultValue={data.venue_name} required className={inputClass} />
+              <span className={hintClass}>מוצג בכותרת האתר, בעמוד ההתחברות, כשם השולח של מיילים ובאפליקציה המותקנת.</span>
+            </label>
+            <label className={labelClass}>
+              <span className="font-medium">שם היומן</span>
+              <input name="calendar_name" defaultValue={data.calendar_name} required className={inputClass} />
+              <span className={hintClass}>השם שיופיע ביומן Google או Apple אחרי הוספת האירועים אליו.</span>
+            </label>
+          </section>
 
-        <section className="flex flex-col gap-3">
-          <p className="font-serif text-lg font-bold">מייל סיכום האירוע (הצ&apos;קליסטים והדוח)</p>
-          <label className={labelClass}>
-            <span className="font-medium">נמענים</span>
-            <textarea
-              name="checklist_email_to"
-              rows={5}
-              defaultValue={data.checklist_email_to.join("\n")}
-              className={inputClass}
-              dir="ltr"
-            />
-            <span className={hintClass}>כתובת אחת בכל שורה. אלה ברירות המחדל, ואפשר לשנות אותן גם בזמן השליחה.</span>
-          </label>
-          <label className={labelClass}>
-            <span className="font-medium">עותק (CC)</span>
-            <textarea
-              name="checklist_email_cc"
-              rows={3}
-              defaultValue={data.checklist_email_cc.join("\n")}
-              className={inputClass}
-              dir="ltr"
-            />
-          </label>
-        </section>
+          <section className="flex flex-col gap-3">
+            <p className="font-serif text-lg font-bold">מייל סיכום האירוע (הצ&apos;קליסטים והדוח)</p>
+            <label className={labelClass}>
+              <span className="font-medium">נמענים</span>
+              <textarea
+                name="checklist_email_to"
+                rows={5}
+                defaultValue={data.checklist_email_to.join("\n")}
+                className={inputClass}
+                dir="ltr"
+              />
+              <span className={hintClass}>כתובת אחת בכל שורה. אלה ברירות המחדל, ואפשר לשנות אותן גם בזמן השליחה.</span>
+            </label>
+            <label className={labelClass}>
+              <span className="font-medium">עותק (CC)</span>
+              <textarea
+                name="checklist_email_cc"
+                rows={3}
+                defaultValue={data.checklist_email_cc.join("\n")}
+                className={inputClass}
+                dir="ltr"
+              />
+            </label>
+          </section>
 
-        <section className="flex flex-col gap-3">
-          <p className="font-serif text-lg font-bold">מייל הפתיחה לזוג</p>
-          <label className={labelClass}>
-            <span className="font-medium">נושא</span>
-            <input name="welcome_email_subject" defaultValue={data.welcome_email_subject} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            <span className="font-medium">תוכן המייל</span>
-            <textarea name="welcome_email_body" rows={18} defaultValue={data.welcome_email_body} className={inputClass} />
-            <span className={hintClass}>
-              אפשר להשתמש ב-<bdi>{"{{manager_name}}"}</bdi> (שם מנהל האירוע) וב-<bdi>{"{{signature}}"}</bdi> (שם וטלפון),
-              והם יתמלאו אוטומטית בכל אירוע. לפני השליחה אפשר עדיין לערוך את הטקסט.
-            </span>
-          </label>
-          <label className={labelClass}>
-            <span className="font-medium">שם הקובץ המצורף כפי שהזוג יראה אותו</span>
-            <input
-              name="welcome_email_attachment_filename"
-              defaultValue={data.welcome_email_attachment_filename}
-              className={inputClass}
-            />
-          </label>
-        </section>
+          <section className="flex flex-col gap-3">
+            <p className="font-serif text-lg font-bold">מייל הפתיחה לזוג</p>
+            <label className={labelClass}>
+              <span className="font-medium">נושא</span>
+              <input name="welcome_email_subject" defaultValue={data.welcome_email_subject} className={inputClass} />
+            </label>
+            <label className={labelClass}>
+              <span className="font-medium">תוכן המייל</span>
+              <textarea name="welcome_email_body" rows={18} defaultValue={data.welcome_email_body} className={inputClass} />
+              <span className={hintClass}>
+                אפשר להשתמש ב-<bdi>{"{{manager_name}}"}</bdi> (שם מנהל האירוע) וב-<bdi>{"{{signature}}"}</bdi> (שם וטלפון),
+                והם יתמלאו אוטומטית בכל אירוע. לפני השליחה אפשר עדיין לערוך את הטקסט.
+              </span>
+            </label>
+            <label className={labelClass}>
+              <span className="font-medium">שם הקובץ המצורף כפי שהזוג יראה אותו</span>
+              <input
+                name="welcome_email_attachment_filename"
+                defaultValue={data.welcome_email_attachment_filename}
+                className={inputClass}
+              />
+            </label>
+          </section>
 
-        {canEdit && (
-          <button
-            type="submit"
-            className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-          >
-            שמירת הגדרות
-          </button>
-        )}
-      </fieldset>
-    </SaveDetailsForm>
+          {canEdit && (
+            <button
+              type="submit"
+              className="self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+            >
+              שמירת הגדרות
+            </button>
+          )}
+        </fieldset>
+      </SaveDetailsForm>
+
+      <WelcomeAttachments canEdit={canEdit} />
+    </div>
   );
 }

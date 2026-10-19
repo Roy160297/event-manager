@@ -8,7 +8,7 @@ export function WelcomeEmailForm({
   eventId,
   to1,
   to2,
-  managerName,
+  senderStaffId,
   defaultSubject,
   defaultBody,
   attachmentFilename,
@@ -19,7 +19,7 @@ export function WelcomeEmailForm({
   eventId: string;
   to1: string | null;
   to2: string | null;
-  managerName: string | null;
+  senderStaffId: string | null;
   defaultSubject: string;
   defaultBody: string;
   attachmentFilename: string;
@@ -43,7 +43,7 @@ export function WelcomeEmailForm({
       for (const email of toList) formData.append("to", email);
       formData.set("subject", subject);
       formData.set("body", body);
-      if (managerName) formData.set("managerName", managerName);
+      if (senderStaffId) formData.set("senderStaffId", senderStaffId);
       if (attachment) formData.set("attachment", attachment);
       const result = await sendWelcomeEmail(eventId, formData);
       if (result) {
@@ -65,7 +65,7 @@ export function WelcomeEmailForm({
 
       <div className="flex flex-col gap-1 text-sm">
         <span className="text-foreground/70">
-          קובץ מצורף: {attachment ? attachment.name : `"${attachmentFilename}"`}
+          קובץ מצורף: {attachment ? attachment.name : attachmentFilename ? `"${attachmentFilename}"` : "אין (אפשר להעלות קובץ)"}
         </span>
         <div className="flex items-center gap-2">
           <button

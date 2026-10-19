@@ -1,7 +1,5 @@
 "use server";
 
-import fs from "fs";
-import path from "path";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -15,7 +13,7 @@ import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { extractEventDraftFromImage, applyCarriedReservePercent } from "@/lib/imageImport";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
-import { welcomeEmailAttachmentAssetFor } from "@/lib/welcomeEmail";
+import { downloadWelcomeAttachment, findWelcomeAttachment } from "@/lib/welcomeAttachments";
 import { getVenueSettings } from "@/lib/venueSettings";
 import { deleteAllChecklistPhotosForEvent } from "@/app/events/[id]/tasks/actions";
 import type { EventRow, EventType, StaffRow } from "@/lib/types";
@@ -91,19 +89,24 @@ export async function sendWelcomeEmail(eventId: string, formData: FormData): Pro
     const currentStaff = await getCurrentStaff();
 
     // Lets the sender swap in a different file for this one send (e.g. a
-    // one-off guideline variant) instead of always attaching the venue's
-    // standard default.
+    // one-off guideline variant) instead of the file set up in the venue
+    // settings (the sender's own if they have one, else the venue default).
     const uploadedAttachment = formData.get("attachment");
-    let attachmentFilename = (await getVenueSettings()).welcome_email_attachment_filename;
-    let attachmentBase64: string;
+    const attachments: { filename: string; base64: string }[] = [];
     if (uploadedAttachment instanceof File && uploadedAttachment.size > 0) {
-      attachmentFilename = uploadedAttachment.name;
-      attachmentBase64 = Buffer.from(await uploadedAttachment.arrayBuffer()).toString("base64");
+      attachments.push({
+        filename: uploadedAttachment.name,
+        base64: Buffer.from(await uploadedAttachment.arrayBuffer()).toString("base64"),
+      });
     } else {
-      const managerName = String(formData.get("managerName") ?? "").trim() || null;
-      const assetFilename = welcomeEmailAttachmentAssetFor(managerName);
-      const attachmentPath = path.join(process.cwd(), "assets", assetFilename);
-      attachmentBase64 = fs.readFileSync(attachmentPath).toString("base64");
+      const senderId = String(formData.get("senderStaffId") ?? "").trim() || null;
+      const stored = await findWelcomeAttachment(senderId);
+      if (stored) {
+        attachments.push({
+          filename: (await getVenueSettings()).welcome_email_attachment_filename || stored.file_name,
+          base64: await downloadWelcomeAttachment(stored),
+        });
+      }
     }
 
     await sendChecklistsEmail({
@@ -112,7 +115,7 @@ export async function sendWelcomeEmail(eventId: string, formData: FormData): Pro
       subject,
       bodyText: escapeHtml(body).replace(/\n/g, "<br/>"),
       replyTo: currentStaff?.email ?? null,
-      attachments: [{ filename: attachmentFilename, base64: attachmentBase64 }],
+      attachments,
     });
 
     revalidatePath(`/events/${eventId}`);

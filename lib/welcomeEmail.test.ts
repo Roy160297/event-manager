@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildWelcomeEmailBody, welcomeEmailAttachmentAssetFor } from "@/lib/welcomeEmail";
+import { buildWelcomeEmailBody } from "@/lib/welcomeEmail";
 
 const TEMPLATE = "נעים מאוד, {{manager_name}} 😊\nבברכה,\n{{signature}}";
 
@@ -21,18 +21,5 @@ describe("buildWelcomeEmailBody", () => {
     const body = buildWelcomeEmailBody("{{manager_name}} / {{manager_name}}", "דנה", null);
     expect(body).toBe("דנה / דנה");
     expect(body).not.toContain("{{");
-  });
-});
-
-describe("welcomeEmailAttachmentAssetFor", () => {
-  it("picks the manager-specific PDF when one exists", () => {
-    expect(welcomeEmailAttachmentAssetFor("ניר חדד")).toBe("wedding-welcome-guidelines-nir-hadad.pdf");
-    expect(welcomeEmailAttachmentAssetFor("רן קופרמן")).toBe("wedding-welcome-guidelines-ran-kuperman.pdf");
-  });
-
-  it("falls back to the default PDF for a manager without their own version", () => {
-    expect(welcomeEmailAttachmentAssetFor("רועי פוריאן")).toBe("wedding-welcome-guidelines.pdf");
-    expect(welcomeEmailAttachmentAssetFor("דנה כהן")).toBe("wedding-welcome-guidelines.pdf");
-    expect(welcomeEmailAttachmentAssetFor(null)).toBe("wedding-welcome-guidelines.pdf");
   });
 });
