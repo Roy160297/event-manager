@@ -2,7 +2,15 @@
 // ends in a period ("No.") in a small italic serif - which is how
 // "House No. Seven" has always been drawn, now generated from the name the
 // venue sets in its settings.
-export function VenueWordmark({ name, size }: { name: string; size: "sm" | "lg" }) {
+export function VenueWordmark({ name, size, logoUrl }: { name: string; size: "sm" | "lg"; logoUrl?: string | null }) {
+  // A venue that uploaded a logo shows that instead of the name set as text.
+  if (logoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={logoUrl} alt={name} className={`w-auto shrink-0 object-contain ${size === "lg" ? "h-14 max-w-48" : "h-9 max-w-32"}`} />
+    );
+  }
+
   const words = name.trim().split(/\s+/).filter(Boolean);
   const bold = size === "lg" ? "text-2xl" : "text-lg";
   const small = size === "lg" ? "text-lg" : "text-sm";

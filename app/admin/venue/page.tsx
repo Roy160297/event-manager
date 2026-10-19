@@ -3,9 +3,10 @@ import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
-import type { VenueSettings } from "@/lib/venueSettings";
+import { venueLogoUrl, type VenueSettings } from "@/lib/venueSettings";
 import { saveVenueSettings } from "./actions";
 import { WelcomeAttachments } from "./WelcomeAttachments";
+import { VenueLogo } from "./VenueLogo";
 
 export default async function VenueSettingsPage() {
   const currentStaff = await getCurrentStaff();
@@ -101,6 +102,8 @@ export default async function VenueSettingsPage() {
           )}
         </fieldset>
       </SaveDetailsForm>
+
+      <VenueLogo logoUrl={venueLogoUrl(data)} venueName={data.venue_name} canEdit={canEdit} />
 
       <WelcomeAttachments canEdit={canEdit} />
     </div>

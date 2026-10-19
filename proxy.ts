@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth", "/pending"];
+// /api/venue-logo is public because the login page shows the logo too.
+const PUBLIC_PATHS = ["/login", "/auth", "/pending", "/api/venue-logo"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

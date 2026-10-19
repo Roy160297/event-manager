@@ -1,5 +1,5 @@
 import { signInWithGoogle } from "./actions";
-import { getVenueSettings } from "@/lib/venueSettings";
+import { getVenueSettings, venueLogoUrl } from "@/lib/venueSettings";
 
 const ERROR_MESSAGES: Record<string, string> = {
   not_authorized: "כתובת האימייל שלך אינה רשומה כאנשי צוות במערכת. פנו למנהל המערכת כדי להוסיף אתכם.",
@@ -12,13 +12,19 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const { venue_name } = await getVenueSettings();
+  const venue = await getVenueSettings();
+  const { venue_name } = venue;
+  const logoUrl = venueLogoUrl(venue);
   const errorMessage = error ? (ERROR_MESSAGES[error] ?? ERROR_MESSAGES.auth) : null;
 
   return (
     <div className="flex flex-1 items-center justify-center">
       <div className="flex w-full max-w-sm flex-col items-center gap-6 rounded-lg border border-border-classic bg-surface p-8 text-center">
         <div>
+          {logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={venue_name} className="mx-auto mb-4 max-h-20 w-auto max-w-full object-contain" />
+          )}
           <h1 className="font-serif text-2xl font-bold text-accent">ניהול אירועים</h1>
           <p className="mt-1 text-sm text-foreground/60">מערכת פנימית לצוות {venue_name}</p>
         </div>

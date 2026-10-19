@@ -7,7 +7,7 @@ import { signOut } from "@/app/login/actions";
 import { createClient } from "@/lib/supabase/server";
 import { todaysEventDate } from "@/lib/scheduleTime";
 import { getEventManagerCandidates } from "@/lib/staff";
-import { getVenueSettings } from "@/lib/venueSettings";
+import { getVenueSettings, venueLogoUrl } from "@/lib/venueSettings";
 import type { EventRow } from "@/lib/types";
 import "./globals.css";
 
@@ -61,6 +61,7 @@ export default async function RootLayout({
           staff={staff ? { name: staff.name } : null}
           isPrivateEventsOwner={isPrivateEventsOwner(staff)}
           venueName={venue.venue_name}
+          venueLogoUrl={venueLogoUrl(venue)}
           navProps={{
             showAdmin: !!staff && canRead(staff.permissions, "admin"),
             showCalendar: !!staff && canRead(staff.permissions, "calendar"),

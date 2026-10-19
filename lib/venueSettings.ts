@@ -14,6 +14,7 @@ export interface VenueSettings {
   welcome_email_subject: string;
   welcome_email_body: string;
   welcome_email_attachment_filename: string;
+  logo_path: string | null;
 }
 
 // Only used if the row can't be read at all, so a database hiccup never leaves
@@ -26,6 +27,7 @@ const FALLBACK: VenueSettings = {
   welcome_email_subject: "",
   welcome_email_body: "",
   welcome_email_attachment_filename: "",
+  logo_path: null,
 };
 
 // Read with the service-role client because it is needed where there is no
@@ -38,7 +40,7 @@ const readVenueSettings = unstable_cache(
     const { data, error } = await createAdminClient()
       .from("venue_settings")
       .select(
-        "venue_name, calendar_name, checklist_email_to, checklist_email_cc, welcome_email_subject, welcome_email_body, welcome_email_attachment_filename",
+        "venue_name, calendar_name, checklist_email_to, checklist_email_cc, welcome_email_subject, welcome_email_body, welcome_email_attachment_filename, logo_path",
       )
       .eq("id", true)
       .maybeSingle<VenueSettings>();
@@ -56,4 +58,11 @@ export async function getVenueSettings(): Promise<VenueSettings> {
     console.error("getVenueSettings failed", err);
     return FALLBACK;
   }
+}
+
+// Public URL of the venue logo, or null when none is set. The path doubles as a
+// cache-busting version: a new upload gets a new path, so the long-lived cache
+// on the image route never serves a stale logo.
+export function venueLogoUrl(settings: Pick<VenueSettings, "logo_path">): string | null {
+  return settings.logo_path ? `/api/venue-logo?v=${encodeURIComponent(settings.logo_path)}` : null;
 }

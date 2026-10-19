@@ -26,6 +26,7 @@ export function AppShell({
   staff,
   isPrivateEventsOwner,
   venueName,
+  venueLogoUrl,
   navProps,
   switcherEvents,
   switcherManagers,
@@ -36,6 +37,7 @@ export function AppShell({
   staff: StaffSummary | null;
   isPrivateEventsOwner: boolean;
   venueName: string;
+  venueLogoUrl: string | null;
   navProps: {
     showAdmin: boolean;
     showCalendar: boolean;
@@ -149,7 +151,7 @@ export function AppShell({
 
   // Smaller version of the venue logo for the phone header (the full-size one
   // lives in the desktop grid below).
-  const mobileLogo = <VenueWordmark name={venueName} size="sm" />;
+  const mobileLogo = <VenueWordmark name={venueName} size="sm" logoUrl={venueLogoUrl} />;
 
   const navEl = staff && (
     <MainNav
@@ -182,7 +184,7 @@ export function AppShell({
             <div className="flex min-w-0 items-center justify-center">{titleEl}</div>
 
             <div className="justify-self-end">
-              <VenueWordmark name={venueName} size="lg" />
+              <VenueWordmark name={venueName} size="lg" logoUrl={venueLogoUrl} />
             </div>
 
             {/* The nav gets the full header width on its own row, so its nine
