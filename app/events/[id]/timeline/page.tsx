@@ -1,17 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  addEveningReverseWeddingSchedule,
-  addEveningReverseWeddingServiceSchedule,
-  addEveningWeddingSchedule,
-  addEveningWeddingServiceSchedule,
-  addFridayReverseWeddingSchedule,
-  addFridayReverseWeddingServiceSchedule,
-  addTimelineItem,
-  deleteAllTimelineItems,
-  deleteTimelineItem,
-  shiftTimelineFrom,
-  updateTimelineItem,
-} from "./actions";
+import { addScheduleFromTemplate, addTimelineItem, deleteAllTimelineItems, deleteTimelineItem, shiftTimelineFrom, updateTimelineItem } from "./actions";
 import { TimelineImageImport } from "./TimelineImageImport";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
@@ -22,14 +10,16 @@ import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
 import { scheduleSortKey } from "@/lib/labels";
 import { actionErrorMessage } from "@/lib/actionError";
+import { loadScheduleTemplates } from "@/lib/scheduleTemplates";
 
 export default async function TimelinePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = await params;
   const supabase = await createClient();
 
-  const [{ data: rawItems }, currentStaff] = await Promise.all([
+  const [{ data: rawItems }, currentStaff, templates] = await Promise.all([
     supabase.from("timeline_items").select("*").eq("event_id", eventId).order("sort_order", { ascending: true }),
     getCurrentStaff(),
+    loadScheduleTemplates(supabase),
   ]);
 
   const canReadTimeline = !!currentStaff && canRead(currentStaff.permissions, "timeline");
@@ -50,55 +40,10 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
     }
   }
 
-  async function addEveningDefault() {
+  async function addFromTemplate(templateId: string) {
     "use server";
     try {
-      await addEveningWeddingSchedule(eventId);
-    } catch (err) {
-      return actionErrorMessage(err);
-    }
-  }
-
-  async function addFridayReverseDefault() {
-    "use server";
-    try {
-      await addFridayReverseWeddingSchedule(eventId);
-    } catch (err) {
-      return actionErrorMessage(err);
-    }
-  }
-
-  async function addEveningServiceDefault() {
-    "use server";
-    try {
-      await addEveningWeddingServiceSchedule(eventId);
-    } catch (err) {
-      return actionErrorMessage(err);
-    }
-  }
-
-  async function addEveningReverseDefault() {
-    "use server";
-    try {
-      await addEveningReverseWeddingSchedule(eventId);
-    } catch (err) {
-      return actionErrorMessage(err);
-    }
-  }
-
-  async function addEveningReverseServiceDefault() {
-    "use server";
-    try {
-      await addEveningReverseWeddingServiceSchedule(eventId);
-    } catch (err) {
-      return actionErrorMessage(err);
-    }
-  }
-
-  async function addFridayReverseServiceDefault() {
-    "use server";
-    try {
-      await addFridayReverseWeddingServiceSchedule(eventId);
+      await addScheduleFromTemplate(eventId, templateId);
     } catch (err) {
       return actionErrorMessage(err);
     }
@@ -125,61 +70,29 @@ export default async function TimelinePage({ params }: { params: Promise<{ id: s
       {canWriteTimeline && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-classic bg-surface p-4">
           <p className="text-sm text-foreground/60">
-            יוצרים לוח זמנים סטנדרטי (קבלת פנים, חופה, מזנונים ועוד) ואז אפשר להתאים אישית, או מייבאים לוח זמנים מתמונה.
+            יוצרים לוח זמנים סטנדרטי (קבלת פנים, חופה, מזנונים ועוד) ואז אפשר להתאים אישית, או מייבאים לוח זמנים מתמונה. את התבניות עורכים ב&quot;ניהול&quot; &gt; &quot;לוחות זמנים&quot;.
           </p>
           <div className="w-full">
             <TimelineImageImport eventId={eventId} />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <SaveDetailsForm action={addEveningDefault} message="לוח הזמנים נוצר בהצלחה">
-              <button
-                type="submit"
-                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
-              >
-                צור לוח זמנים ברירת מחדל - חתונת ערב (מזנונים)
-              </button>
-            </SaveDetailsForm>
-            <SaveDetailsForm action={addEveningServiceDefault} message="לוח הזמנים נוצר בהצלחה">
-              <button
-                type="submit"
-                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
-              >
-                צור לוח זמנים ברירת מחדל - חתונת ערב (הגשה)
-              </button>
-            </SaveDetailsForm>
-            <SaveDetailsForm action={addEveningReverseDefault} message="לוח הזמנים נוצר בהצלחה">
-              <button
-                type="submit"
-                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
-              >
-                צור לוח זמנים ברירת מחדל - חתונה הפוכה ערב (מזנונים)
-              </button>
-            </SaveDetailsForm>
-            <SaveDetailsForm action={addFridayReverseDefault} message="לוח הזמנים נוצר בהצלחה">
-              <button
-                type="submit"
-                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
-              >
-                צור לוח זמנים ברירת מחדל - חתונה הפוכה שישי צהריים (מזנונים)
-              </button>
-            </SaveDetailsForm>
-            <SaveDetailsForm action={addEveningReverseServiceDefault} message="לוח הזמנים נוצר בהצלחה">
-              <button
-                type="submit"
-                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
-              >
-                צור לוח זמנים ברירת מחדל - חתונה הפוכה ערב (הגשה)
-              </button>
-            </SaveDetailsForm>
-            <SaveDetailsForm action={addFridayReverseServiceDefault} message="לוח הזמנים נוצר בהצלחה">
-              <button
-                type="submit"
-                className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
-              >
-                צור לוח זמנים ברירת מחדל - חתונה הפוכה שישי צהריים (הגשה)
-              </button>
-            </SaveDetailsForm>
-          </div>
+          {templates.length > 0 && (
+            <div className="grid grid-cols-2 gap-2">
+              {templates.map((template) => (
+                <SaveDetailsForm
+                  key={template.id}
+                  action={addFromTemplate.bind(null, template.id)}
+                  message="לוח הזמנים נוצר בהצלחה"
+                >
+                  <button
+                    type="submit"
+                    className="w-full rounded-full border border-accent px-4 py-2 text-sm text-accent hover:bg-accent-soft"
+                  >
+                    צור לוח זמנים ברירת מחדל - {template.name}
+                  </button>
+                </SaveDetailsForm>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

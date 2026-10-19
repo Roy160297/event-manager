@@ -87,7 +87,7 @@ function ChecklistEditor({ checklist, index, total }: { checklist: ChecklistDefi
   return (
     <details className="rounded-lg border border-border-classic bg-surface p-4">
       <summary className="cursor-pointer text-sm font-medium">
-        {checklist.label} <span className="text-foreground/60">({countItems(checklist.categories)} סעיפים)</span>
+        {checklist.label} <span className="text-foreground/60">({countItems(checklist.categories) === 1 ? "סעיף אחד" : `${countItems(checklist.categories)} סעיפים`})</span>
         {isSystem && <span className="text-foreground/60"> · הצ&apos;קליסט הראשי</span>}
       </summary>
 

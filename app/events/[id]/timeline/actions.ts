@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { scheduleSortKey } from "@/lib/labels";
-import { KETUBAH_STEP_LABEL, addMinutesToTime, ketubahWitnessNote, timeToMinutes } from "@/lib/scheduleTime";
+import { KETUBAH_STEP_LABEL, addMinutesToTime, ketubahWitnessNote } from "@/lib/scheduleTime";
+import { loadScheduleTemplates, pickTemplate, stepsForEvent } from "@/lib/scheduleTemplates";
 import { extractTimelineFromImage, type TimelineImportDraft } from "@/lib/timelineImport";
 import type { TimelineItemRow } from "@/lib/types";
 
@@ -193,130 +194,6 @@ export async function updateTimelineItem(eventId: string, itemId: string, formDa
   revalidatePath(`/events/${eventId}/timeline`);
 }
 
-const EVENING_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
-  { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
-  { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
-  { label: "צילומי משפחות", time: "19:00" },
-  { label: "קבלת פנים", time: "19:30" },
-  { label: "כתובה", time: "20:15" },
-  { label: "מזנונים נסגרים, הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
-  { label: "חופה", time: "21:00" },
-  { label: "מזנונים נפתחים (מנות עיקריות)", time: "21:20", notes: "15-20 דקות ריקודים" },
-  { label: "מנות עיקריות", time: "21:50", notes: "הכלה מחליפה ללוק שני" },
-  { label: "ריקודים", time: "22:20" },
-  { label: "קינוחים", time: "22:50", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "23:50", notes: "קיפול הקינוחים" },
-];
-
-const EVENING_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
-  { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
-  { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
-  { label: "צילומי משפחות", time: "19:00" },
-  { label: "קבלת פנים", time: "19:30" },
-  { label: "כתובה", time: "20:15" },
-  { label: "הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
-  { label: "חופה", time: "21:00" },
-  { label: "ראשונות", time: "21:20" },
-  { label: "ריקודים", time: "21:35" },
-  { label: "עיקריות", time: "22:00", notes: "הכלה מחליפה ללוק שני" },
-  { label: "ריקודים", time: "22:30" },
-  { label: "קינוחים", time: "22:45", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "23:45", notes: "קיפול הקינוחים" },
-];
-
-const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
-  { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
-  { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
-  { label: "צילומי משפחות", time: "19:00" },
-  { label: "קבלת פנים", time: "19:30" },
-  { label: "פתיחת דלתות ומזנונים ראשיים", time: "19:50" },
-  { label: "כתובה", time: "20:15" },
-  { label: "סגירת מזנוני חצר", time: "21:05" },
-  {
-    label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה",
-    time: "21:20",
-    notes: "יצירת שביל חופה",
-  },
-  { label: "חופה", time: "21:30" },
-  { label: "ריקודים", time: "21:50", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
-  { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "23:30", notes: "קיפול הקינוחים" },
-];
-
-// Reverse + service combined: the "reverse" timing skeleton (food happens
-// before the chuppah, then it's just dancing+dessert after) with the
-// "service" seated-course concept instead of buffets - both starters and
-// mains are served in the pre-chuppah window, so after the chuppah it's
-// straight to dancing and then dessert (no seated course after the chuppah).
-const EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
-  { label: "החתן והכלה מגיעים לאולם", time: "18:30" },
-  { label: "הבאת אוכל לזוג", time: "18:45", notes: "אחריות מלצרית משפחה" },
-  { label: "צילומי משפחות", time: "19:00" },
-  { label: "קבלת פנים", time: "19:30" },
-  { label: "פתיחת דלתות, ראשונות על השולחן", time: "19:50" },
-  { label: "כתובה", time: "20:15" },
-  { label: "הגשת עיקריות", time: "20:20" },
-  {
-    label: "סיום הגשת עיקריות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
-    time: "21:15",
-    notes: "יצירת שביל חופה",
-  },
-  { label: "חופה", time: "21:30" },
-  { label: "ריקודים", time: "21:50", notes: "הכלה מחליפה ללוק שני" },
-  { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "23:30", notes: "קיפול הקינוחים" },
-];
-
-// Every FRIDAY_* schedule below is written assuming קבלת פנים at "12:00" -
-// insertFridaySchedule shifts every step by the difference between this and
-// the real event's own start_time (so an event starting at 11:30 gets its
-// first step, the couple's arrival, at 10:30, קבלת פנים at 11:30, and the
-// rest of the schedule following at the same relative offsets), rather than
-// assuming every Friday event starts at noon. אפטר is always exactly one
-// hour after קינוחים, same rule as the evening schedules.
-const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[] = [
-  { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
-  { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
-  { label: "צילומי משפחות", time: "11:30" },
-  { label: "קבלת פנים", time: "12:00" },
-  { label: "פתיחת דלתות ומזנונים ראשיים", time: "12:20" },
-  { label: "כתובה", time: "12:45" },
-  { label: "סגירת מזנוני חצר", time: "13:35" },
-  {
-    label: "סגירת מזנונים ראשיים, הוצאת אורחים לחצר והכנה לחופה והדרכה",
-    time: "13:50",
-    notes: "יצירת שביל חופה",
-  },
-  { label: "חופה", time: "14:00" },
-  { label: "ריקודים", time: "14:20", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
-  { label: "קינוחים", time: "15:00", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "16:00", notes: "קיפול הקינוחים" },
-];
-
-// Mirrors EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE's structure and offsets
-// from קבלת פנים (not this schedule's own pre-restructure times), per the
-// 2026-09-22 restructuring. There's no non-reverse Friday schedule (venue
-// weddings on Friday are always the reverse format) and no plain FRIDAY_
-// version of the buffet/service schedules either, for the same reason.
-const FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE: { label: string; time: string; notes?: string }[] = [
-  { label: "החתן והכלה מגיעים לאולם", time: "11:00" },
-  { label: "הבאת אוכל לזוג", time: "11:15", notes: "אחריות מלצרית משפחה" },
-  { label: "צילומי משפחות", time: "11:30" },
-  { label: "קבלת פנים", time: "12:00" },
-  { label: "פתיחת דלתות, ראשונות על השולחן", time: "12:20" },
-  { label: "כתובה", time: "12:45" },
-  { label: "הגשת עיקריות", time: "12:50" },
-  {
-    label: "סיום הגשת עיקריות, הוצאת אורחים לחצר והכנה לחופה והדרכה",
-    time: "13:45",
-    notes: "יצירת שביל חופה",
-  },
-  { label: "חופה", time: "14:00" },
-  { label: "ריקודים", time: "14:20", notes: "הכלה מחליפה ללוק שני" },
-  { label: "קינוחים", time: "15:00", notes: "קיפול מזנונים" },
-  { label: "אפטר", time: "16:00", notes: "קיפול הקינוחים" },
-];
-
 // `client` lets a caller with no logged-in user (the iPlan sync route, which
 // authenticates with a token) pass an admin client instead of the cookie one.
 async function insertSchedule(
@@ -377,98 +254,50 @@ async function cancelPushRemindersForEvent(eventId: string, label: string | null
   }
 }
 
-export async function addEveningWeddingSchedule(eventId: string) {
-  await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE);
+async function startTimeOf(supabase: SupabaseClient, eventId: string): Promise<string | null> {
+  const { data } = await supabase.from("events").select("start_time").eq("id", eventId).maybeSingle();
+  return data?.start_time ?? null;
 }
 
-export async function addEveningWeddingServiceSchedule(eventId: string) {
-  await insertSchedule(eventId, EVENING_WEDDING_SERVICE_SCHEDULE);
+// Fills the event's timeline from one of the venue's schedule templates (the
+// buttons on the timeline tab). Templates that name a reference time are
+// shifted to the event's own start time.
+export async function addScheduleFromTemplate(eventId: string, templateId: string) {
+  const supabase = await createClient();
+  const template = (await loadScheduleTemplates(supabase)).find((candidate) => candidate.id === templateId);
+  if (!template) throw new Error("התבנית לא נמצאה");
+
+  const steps = stepsForEvent(template, await startTimeOf(supabase, eventId));
+  await insertSchedule(
+    eventId,
+    steps.map((step) => ({ label: step.label, time: step.time, notes: step.notes ?? undefined })),
+    supabase,
+  );
 }
 
-export async function addEveningReverseWeddingSchedule(eventId: string) {
-  await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SCHEDULE);
-}
-
-export async function addEveningReverseWeddingServiceSchedule(eventId: string) {
-  await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE);
-}
-
-// FRIDAY_* templates all assume קבלת פנים at "12:00" - shift every step by
-// the real event's own start_time (see the comment above
-// FRIDAY_REVERSE_WEDDING_SCHEDULE) before inserting. Falls back to the
-// template as-is if the event has no start_time yet.
-const FRIDAY_SCHEDULE_TEMPLATE_START_TIME = "12:00";
-
-async function insertFridaySchedule(
-  eventId: string,
-  template: { label: string; time: string; notes?: string }[],
-  client?: SupabaseClient,
-) {
-  const supabase = client ?? (await createClient());
-  const { data: event } = await supabase.from("events").select("start_time").eq("id", eventId).maybeSingle();
-
-  const startTime = event?.start_time;
-  const diffMinutes =
-    startTime != null
-      ? (timeToMinutes(startTime) ?? 0) - (timeToMinutes(FRIDAY_SCHEDULE_TEMPLATE_START_TIME) ?? 0)
-      : 0;
-
-  const schedule =
-    diffMinutes === 0
-      ? template
-      : template.map((step) => ({ ...step, time: addMinutesToTime(step.time, diffMinutes) ?? step.time }));
-
-  await insertSchedule(eventId, schedule, supabase);
-}
-
-export async function addFridayReverseWeddingSchedule(eventId: string) {
-  await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE);
-}
-
-export async function addFridayReverseWeddingServiceSchedule(eventId: string) {
-  await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE);
-}
-
-// Called right after a new event is created, so events of a type with a
-// known default schedule start with it pre-filled instead of empty. Other
-// event types are left as before, filled in manually on the timeline page.
-// "wedding"/"wedding_service" only have one (evening) shape - the venue
-// never actually runs those formats on a Friday, only the reverse ones, so
-// only reverse_wedding/reverse_wedding_service branch by day-of-week.
+// Called right after a new event is created, so events of a type that has a
+// matching template (chosen by event type and weekday, see pickTemplate) start
+// with it pre-filled instead of empty. Other event types are left as before,
+// filled in manually on the timeline page.
 export async function applyDefaultSchedule(eventId: string, eventType: string, eventDate?: string | null, client?: SupabaseClient) {
-  const isFriday = isFridayDate(eventDate);
-  if (eventType === "wedding") {
-    await insertSchedule(eventId, EVENING_WEDDING_SCHEDULE, client);
-  } else if (eventType === "wedding_service") {
-    await insertSchedule(eventId, EVENING_WEDDING_SERVICE_SCHEDULE, client);
-  } else if (eventType === "reverse_wedding") {
-    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SCHEDULE, client);
-    else await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SCHEDULE, client);
-  } else if (eventType === "reverse_wedding_service") {
-    if (isFriday) await insertFridaySchedule(eventId, FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE, client);
-    else await insertSchedule(eventId, EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE, client);
-  }
+  const supabase = client ?? (await createClient());
+  const template = pickTemplate(await loadScheduleTemplates(supabase), eventType, eventDate ?? null);
+  if (!template) return;
+
+  const steps = stepsForEvent(template, await startTimeOf(supabase, eventId));
+  await insertSchedule(
+    eventId,
+    steps.map((step) => ({ label: step.label, time: step.time, notes: step.notes ?? undefined })),
+    supabase,
+  );
 }
 
-// Every distinct step label across the 6 default templates - offered as
+// Every distinct step label across the venue's schedule templates - offered as
 // autocomplete suggestions for a push reminder rule's anchor_label (see
 // app/push-reminders/page.tsx), since a typo there means the rule silently
 // never matches any real timeline step and just never fires.
 export async function getKnownTimelineStepLabels(): Promise<string[]> {
-  const allSteps = [
-    ...EVENING_WEDDING_SCHEDULE,
-    ...EVENING_WEDDING_SERVICE_SCHEDULE,
-    ...EVENING_REVERSE_WEDDING_SCHEDULE,
-    ...EVENING_REVERSE_WEDDING_SERVICE_SCHEDULE,
-    ...FRIDAY_REVERSE_WEDDING_SCHEDULE,
-    ...FRIDAY_REVERSE_WEDDING_SERVICE_SCHEDULE,
-  ];
-  return [...new Set(allSteps.map((step) => step.label))].sort((a, b) => a.localeCompare(b, "he"));
-}
-
-function isFridayDate(eventDate?: string | null): boolean {
-  if (!eventDate) return false;
-  const [year, month, day] = eventDate.split("-").map(Number);
-  if (!year || !month || !day) return false;
-  return new Date(Date.UTC(year, month - 1, day)).getUTCDay() === 5;
+  const supabase = await createClient();
+  const { data } = await supabase.from("schedule_template_steps").select("label");
+  return [...new Set((data ?? []).map((step) => step.label as string))].sort((a, b) => a.localeCompare(b, "he"));
 }
