@@ -9,8 +9,7 @@ import { createTask, deleteTask, updateTask, updateTaskStatus } from "./actions"
 import { updateEventSummaryReport } from "@/app/events/actions";
 import ClosingChecklist from "./ClosingChecklist";
 import RoleChecklist from "./RoleChecklist";
-import { ROLE_CHECKLISTS } from "@/lib/roleChecklists";
-import { CLOSING_CHECKLIST } from "@/lib/closingChecklist";
+import { CLOSING_CHECKLIST_KEY, appliesToEventType, getChecklists } from "@/lib/checklists";
 import { EventSummaryReportExport } from "./EventSummaryReportExport";
 import { SendChecklistsEmailButton, type ChecklistForEmail } from "./SendChecklistsEmailButton";
 import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
@@ -50,6 +49,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     { data: checklistPhotos },
     currentStaff,
     venue,
+    checklists,
   ] = await Promise.all([
     supabase
       .from("tasks")
@@ -90,6 +90,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       .returns<ChecklistPhotoRow[]>(),
     getCurrentStaff(),
     getVenueSettings(),
+    getChecklists(),
   ]);
 
   function signatureFor(checklistKey: string) {
@@ -110,37 +111,31 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       }));
   }
 
-  const canReadChecklist = !!currentStaff && canRead(currentStaff.permissions, "closing_checklist");
   const canEditChecklist = !!currentStaff && canWrite(currentStaff.permissions, "closing_checklist");
   const canReadSummary = !!currentStaff && canRead(currentStaff.permissions, "event_summary_report");
   const canWriteSummary = !!currentStaff && canWrite(currentStaff.permissions, "event_summary_report");
   const canReadTasks = !!currentStaff && canRead(currentStaff.permissions, "tasks");
   const canWriteTasks = !!currentStaff && canWrite(currentStaff.permissions, "tasks");
 
-  const roleChecklistPermissions = ROLE_CHECKLISTS.filter(
-    (definition) => !definition.eventTypes || (!!event && definition.eventTypes.includes(event.event_type)),
-  ).map((definition) => ({
-    definition,
-    canRead: !!currentStaff && canRead(currentStaff.permissions, definition.key),
-    canWrite: !!currentStaff && canWrite(currentStaff.permissions, definition.key),
-    initialCheckedKeys:
-      roleChecklistChecks?.filter((row) => row.checklist_key === definition.key).map((row) => row.item_key) ?? [],
-    initialNote: roleChecklistNotes?.find((row) => row.checklist_key === definition.key)?.note ?? null,
-  }));
-  const canReadAnyRoleChecklist = roleChecklistPermissions.some((entry) => entry.canRead);
-  // Shown ahead of the event manager's own closing checklist (not just
-  // ahead of the other role checklists) - it's the primary checklist for an
-  // אירוע עסקי, per venue request.
-  const businessEventChecklistEntry = roleChecklistPermissions.find(
-    (entry) => entry.definition.key === "business_event_checklist",
-  );
-  const otherRoleChecklistEntries = roleChecklistPermissions.filter(
-    (entry) => entry.definition.key !== "business_event_checklist",
-  );
+  // Every checklist that applies to this event's type, in the order the venue
+  // set (business-event first, then the event manager's, and so on).
+  const checklistEntries = checklists
+    .filter((definition) => appliesToEventType(definition, event?.event_type ?? null))
+    .map((definition) => ({
+      definition,
+      canRead: !!currentStaff && canRead(currentStaff.permissions, definition.key),
+      canWrite: !!currentStaff && canWrite(currentStaff.permissions, definition.key),
+      initialCheckedKeys:
+        definition.key === CLOSING_CHECKLIST_KEY
+          ? (closingChecklistChecks?.map((row) => row.item_key) ?? [])
+          : (roleChecklistChecks?.filter((row) => row.checklist_key === definition.key).map((row) => row.item_key) ?? []),
+      initialNote: roleChecklistNotes?.find((row) => row.checklist_key === definition.key)?.note ?? null,
+    }));
+  const canReadAnyChecklist = checklistEntries.some((entry) => entry.canRead);
   const closingChecklistNote =
-    roleChecklistNotes?.find((row) => row.checklist_key === "closing_checklist")?.note ?? null;
+    roleChecklistNotes?.find((row) => row.checklist_key === CLOSING_CHECKLIST_KEY)?.note ?? null;
 
-  if (!canReadChecklist && !canReadSummary && !canReadTasks && !canReadAnyRoleChecklist) return <NoPermissionNotice />;
+  if (!canReadSummary && !canReadTasks && !canReadAnyChecklist) return <NoPermissionNotice />;
 
   const floorManagerName = staff?.find((member) => member.id === event?.floor_manager_id)?.name ?? null;
 
@@ -206,32 +201,39 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
   // leaving this blank on the summary report.
   const guestCommitment = event?.estimated_guests ?? null;
 
-  const closingChecklistSignature = signatureFor("closing_checklist");
+  const closingChecklistSignature = signatureFor(CLOSING_CHECKLIST_KEY);
   const summaryReportSignature = signatureFor("event_summary_report");
 
-  // Only the event manager's own closing checklist accompanies the summary
-  // report in this email - the other role checklists (floor manager/bar/
-  // barista) are reviewed/signed in-app but never attached here.
-  const checklistsForEmail: ChecklistForEmail[] = [
-    {
-      key: "closing_checklist",
-      title: "צ'קליסט סגירה - מנהל אירוע",
-      categories: CLOSING_CHECKLIST,
-      checkedKeys: closingChecklistChecks?.map((row) => row.item_key) ?? [],
-      note: closingChecklistNote,
-      noteLabel: "הערות",
-      showCategoryLabels: true,
-      signedByName: closingChecklistSignature?.signed_by_name ?? null,
-      signatureData: closingChecklistSignature?.signature_data ?? null,
-    },
-  ];
+  // The checklists the venue marked "send by email" (by default only the event
+  // manager's own) accompany the summary report. The others are reviewed and
+  // signed in the app but never attached.
+  const emailEntries = checklistEntries.filter((entry) => entry.definition.includeInEmail);
+  const checklistsForEmail: ChecklistForEmail[] = emailEntries.map(({ definition, initialCheckedKeys, initialNote }) => {
+    const signature = signatureFor(definition.key);
+    return {
+      key: definition.key,
+      title: definition.label,
+      categories: definition.categories,
+      checkedKeys: initialCheckedKeys,
+      note: initialNote,
+      noteLabel: definition.noteLabel ?? undefined,
+      showCategoryLabels: definition.showCategoryLabels,
+      signedByName: signature?.signed_by_name ?? null,
+      signatureData: signature?.signature_data ?? null,
+    };
+  });
 
-  // The event manager's own checklist and the event summary report both need
-  // to be signed - no specific field on either is mandatory, just the sign-
-  // off itself. He can still send with whichever role checklists are ready
-  // (even just one or two signed), no need to wait on everyone else.
+  // Every emailed checklist and the event summary report need to be signed - no
+  // specific field on either is mandatory, just the sign-off itself.
   const sendBlockedReasons: string[] = [];
-  if (!closingChecklistSignature) sendBlockedReasons.push("יש לחתום על הצ'קליסט של מנהל האירוע");
+  for (const { definition } of emailEntries) {
+    if (signatureFor(definition.key)) continue;
+    sendBlockedReasons.push(
+      definition.key === CLOSING_CHECKLIST_KEY
+        ? "יש לחתום על הצ'קליסט של מנהל האירוע"
+        : `יש לחתום על הצ'קליסט: ${definition.label}`,
+    );
+  }
   if (!summaryReportSignature) sendBlockedReasons.push("יש לחתום על דוח סיכום אירוע");
   const canSendChecklistEmail = sendBlockedReasons.length === 0;
 
@@ -244,7 +246,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     canWrite: canWriteThis,
     initialCheckedKeys,
     initialNote,
-  }: (typeof roleChecklistPermissions)[number]) {
+  }: (typeof checklistEntries)[number]) {
     if (!canReadThis) return null;
     const signature = signatureFor(definition.key);
     return (
@@ -259,7 +261,9 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         eventDate={event?.event_date ?? null}
         canEdit={canWriteThis}
         initialCheckedKeys={initialCheckedKeys}
-        noteLabel={definition.noteLabel}
+        noteLabel={definition.noteLabel ?? undefined}
+        showCategoryLabels={definition.showCategoryLabels}
+        requiresManagerCosign={definition.requiresManagerCosign}
         initialNote={initialNote}
         isSigned={!!signature}
         signedByName={signature?.signed_by_name}
@@ -296,28 +300,33 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         />
       )}
 
-      {businessEventChecklistEntry && renderRoleChecklist(businessEventChecklistEntry)}
-
-      {canReadChecklist && (
-        <ClosingChecklist
-          eventId={eventId}
-          eventName={event?.name ?? ""}
-          eventType={event?.event_type ?? null}
-          eventDate={event?.event_date ?? null}
-          managerName={managerName}
-          canEdit={canEditChecklist}
-          initialCheckedKeys={closingChecklistChecks?.map((row) => row.item_key) ?? []}
-          initialNote={closingChecklistNote}
-          isSigned={!!closingChecklistSignature}
-          signedByName={closingChecklistSignature?.signed_by_name}
-          signedAt={closingChecklistSignature?.signed_at}
-          signatureData={closingChecklistSignature?.signature_data}
-          currentStaffName={currentStaff?.name}
-          photos={photosFor("closing_checklist")}
-        />
-      )}
-
-      {otherRoleChecklistEntries.map(renderRoleChecklist)}
+      {checklistEntries.map((entry) => {
+        if (entry.definition.key !== CLOSING_CHECKLIST_KEY) return renderRoleChecklist(entry);
+        if (!entry.canRead) return null;
+        return (
+          <ClosingChecklist
+            key={entry.definition.key}
+            title={entry.definition.label}
+            categories={entry.definition.categories}
+            noteLabel={entry.definition.noteLabel ?? undefined}
+            showCategoryLabels={entry.definition.showCategoryLabels}
+            eventId={eventId}
+            eventName={event?.name ?? ""}
+            eventType={event?.event_type ?? null}
+            eventDate={event?.event_date ?? null}
+            managerName={managerName}
+            canEdit={entry.canWrite}
+            initialCheckedKeys={entry.initialCheckedKeys}
+            initialNote={closingChecklistNote}
+            isSigned={!!closingChecklistSignature}
+            signedByName={closingChecklistSignature?.signed_by_name}
+            signedAt={closingChecklistSignature?.signed_at}
+            signatureData={closingChecklistSignature?.signature_data}
+            currentStaffName={currentStaff?.name}
+            photos={photosFor(CLOSING_CHECKLIST_KEY)}
+          />
+        );
+      })}
 
       {canReadSummary && (
       <details className="rounded-lg border border-border-classic bg-surface p-4">

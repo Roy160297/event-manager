@@ -2,9 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { ALL_CLOSING_CHECKLIST_KEYS } from "@/lib/closingChecklist";
-import { ROLE_CHECKLIST_KEYS } from "@/lib/roleChecklists";
+import { CLOSING_CHECKLIST_KEY, findChecklist, getChecklists, itemKeysOf } from "@/lib/checklists";
 import type { TaskPriority, TaskStatus } from "@/lib/types";
+
+// The checklists as the venue currently defines them. Item and checklist keys
+// are validated against these (the database no longer restricts them).
+async function requireChecklist(checklistKey: string) {
+  const checklist = findChecklist(await getChecklists(), checklistKey);
+  if (!checklist) throw new Error("צ'קליסט לא מוכר");
+  return checklist;
+}
+
+// A role checklist (everything except the event manager's own) and its item keys.
+async function requireRoleChecklist(checklistKey: string) {
+  if (checklistKey === CLOSING_CHECKLIST_KEY) throw new Error("צ'קליסט לא מוכר");
+  const checklist = await requireChecklist(checklistKey);
+  return { checklist, itemKeys: new Set(itemKeysOf(checklist)) };
+}
 
 export async function createTask(eventId: string, formData: FormData) {
   const supabase = await createClient();
@@ -88,7 +102,8 @@ export async function deleteTask(eventId: string, taskId: string) {
 }
 
 export async function setClosingChecklistItem(eventId: string, itemKey: string, checked: boolean) {
-  if (!ALL_CLOSING_CHECKLIST_KEYS.has(itemKey)) {
+  const closing = await requireChecklist(CLOSING_CHECKLIST_KEY);
+  if (!itemKeysOf(closing).includes(itemKey)) {
     throw new Error("פריט צ'קליסט לא מוכר");
   }
 
@@ -109,8 +124,9 @@ export async function clearClosingChecklist(eventId: string) {
 }
 
 export async function markAllClosingChecklist(eventId: string) {
+  const closing = await requireChecklist(CLOSING_CHECKLIST_KEY);
   const supabase = await createClient();
-  const rows = Array.from(ALL_CLOSING_CHECKLIST_KEYS).map((itemKey) => ({ event_id: eventId, item_key: itemKey }));
+  const rows = itemKeysOf(closing).map((itemKey) => ({ event_id: eventId, item_key: itemKey }));
   const { error } = await supabase.from("closing_checklist_checks").upsert(rows);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/tasks`);
@@ -132,7 +148,8 @@ export async function setRoleChecklistItem(
   itemKey: string,
   checked: boolean,
 ) {
-  if (!ROLE_CHECKLIST_KEYS[checklistKey]?.has(itemKey)) {
+  const { itemKeys } = await requireRoleChecklist(checklistKey);
+  if (!itemKeys.has(itemKey)) {
     throw new Error("פריט צ'קליסט לא מוכר");
   }
 
@@ -153,7 +170,7 @@ export async function setRoleChecklistItem(
 }
 
 export async function clearRoleChecklistItems(eventId: string, checklistKey: string) {
-  if (!ROLE_CHECKLIST_KEYS[checklistKey]) throw new Error("צ'קליסט לא מוכר");
+  await requireRoleChecklist(checklistKey);
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -167,8 +184,7 @@ export async function clearRoleChecklistItems(eventId: string, checklistKey: str
 }
 
 export async function markAllRoleChecklistItems(eventId: string, checklistKey: string) {
-  const keys = ROLE_CHECKLIST_KEYS[checklistKey];
-  if (!keys) throw new Error("צ'קליסט לא מוכר");
+  const { itemKeys: keys } = await requireRoleChecklist(checklistKey);
 
   const supabase = await createClient();
   const rows = Array.from(keys).map((itemKey) => ({ event_id: eventId, checklist_key: checklistKey, item_key: itemKey }));
@@ -178,9 +194,7 @@ export async function markAllRoleChecklistItems(eventId: string, checklistKey: s
 }
 
 export async function setRoleChecklistNote(eventId: string, checklistKey: string, note: string) {
-  if (!ROLE_CHECKLIST_KEYS[checklistKey]) {
-    throw new Error("צ'קליסט לא מוכר");
-  }
+  await requireRoleChecklist(checklistKey);
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -199,6 +213,7 @@ export async function signChecklist(
 ) {
   const name = signedByName.trim();
   if (!name) throw new Error("יש להזין שם החותם/ת");
+  if (checklistKey !== "event_summary_report") await requireChecklist(checklistKey);
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -225,11 +240,6 @@ export async function unsignChecklist(eventId: string, checklistKey: string) {
 }
 
 const CHECKLIST_PHOTOS_BUCKET = "checklist-photos";
-const VALID_PHOTO_CHECKLIST_KEYS = new Set([
-  "closing_checklist",
-  "event_summary_report",
-  ...Object.keys(ROLE_CHECKLIST_KEYS),
-]);
 
 export async function uploadChecklistPhoto(
   eventId: string,
@@ -237,7 +247,7 @@ export async function uploadChecklistPhoto(
   formData: FormData,
   slot: string | null = null,
 ) {
-  if (!VALID_PHOTO_CHECKLIST_KEYS.has(checklistKey)) throw new Error("צ'קליסט לא מוכר");
+  if (checklistKey !== "event_summary_report") await requireChecklist(checklistKey);
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("יש לבחור תמונה");

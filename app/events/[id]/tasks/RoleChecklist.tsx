@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ClosingChecklistCategory } from "@/lib/closingChecklist";
+import type { ChecklistCategory } from "@/lib/checklists";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
@@ -31,6 +31,8 @@ export default function RoleChecklist({
   canEdit,
   initialCheckedKeys,
   noteLabel,
+  showCategoryLabels,
+  requiresManagerCosign,
   initialNote,
   isSigned,
   signedByName,
@@ -46,7 +48,7 @@ export default function RoleChecklist({
 }: {
   checklistKey: string;
   title: string;
-  categories: ClosingChecklistCategory[];
+  categories: ChecklistCategory[];
   eventId: string;
   eventName: string;
   eventType: EventType | null;
@@ -54,6 +56,8 @@ export default function RoleChecklist({
   canEdit: boolean;
   initialCheckedKeys: string[];
   noteLabel?: string;
+  showCategoryLabels: boolean;
+  requiresManagerCosign: boolean;
   initialNote?: string | null;
   isSigned: boolean;
   signedByName?: string | null;
@@ -206,12 +210,14 @@ export default function RoleChecklist({
             checked={checked}
             note={noteLabel ? note : null}
             noteLabel={noteLabel}
+            showCategoryLabels={showCategoryLabels}
             photoUrls={photos.map((photo) => photo.url)}
           />
         </PdfExportButton>
 
         {categories.map((category) => (
           <div key={category.key} className="flex flex-col gap-2">
+            {showCategoryLabels && <p className="text-sm font-semibold underline">{category.label}</p>}
             <ul className="flex flex-col gap-1.5">
               {category.items.map((item) => {
                 const isChecked = checked.has(item.key);
@@ -280,7 +286,7 @@ export default function RoleChecklist({
           />
         </div>
 
-        {isSigned && (
+        {isSigned && requiresManagerCosign && (
           <div className="border-t border-border-classic pt-3">
             <ChecklistCosignBlock
               isCosigned={!!managerSignatureData}

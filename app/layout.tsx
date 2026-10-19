@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { todaysEventDate } from "@/lib/scheduleTime";
 import { getEventManagerCandidates } from "@/lib/staff";
 import { getVenueSettings, venueLogoUrl } from "@/lib/venueSettings";
+import { getChecklists } from "@/lib/checklists";
 import type { EventRow } from "@/lib/types";
 import "./globals.css";
 
@@ -21,7 +22,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [staff, venue] = await Promise.all([getCurrentStaff(), getVenueSettings()]);
+  const [staff, venue, checklists] = await Promise.all([getCurrentStaff(), getVenueSettings(), getChecklists()]);
 
   // Fetched here (rather than only within the per-event layout) so the
   // switcher sidebar shows on every page, not just an event's own sub-pages.
@@ -70,11 +71,7 @@ export default async function RootLayout({
             showMyTasks: !!staff && canRead(staff.permissions, "my_tasks"),
             showPushReminders: !!staff && canRead(staff.permissions, "push_reminder_rules"),
             showChecklistNotes:
-              !!staff &&
-              (canRead(staff.permissions, "closing_checklist") ||
-                canRead(staff.permissions, "floor_manager_checklist") ||
-                canRead(staff.permissions, "bar_checklist") ||
-                canRead(staff.permissions, "barista_checklist")),
+              !!staff && checklists.some((checklist) => canRead(staff.permissions, checklist.key)),
           }}
           switcherEvents={switcherEvents}
           switcherManagers={switcherManagers}

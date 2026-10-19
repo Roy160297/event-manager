@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ALL_CLOSING_CHECKLIST_KEYS, CLOSING_CHECKLIST } from "@/lib/closingChecklist";
+import { countItems, itemKeysOf, type ChecklistCategory } from "@/lib/checklists";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
@@ -17,9 +17,11 @@ import {
   unsignChecklist,
 } from "./actions";
 
-const TOTAL_ITEMS = CLOSING_CHECKLIST.reduce((sum, category) => sum + category.items.length, 0);
-
 export default function ClosingChecklist({
+  title,
+  categories,
+  noteLabel,
+  showCategoryLabels,
   eventId,
   eventName,
   eventType,
@@ -35,6 +37,10 @@ export default function ClosingChecklist({
   currentStaffName,
   photos,
 }: {
+  title: string;
+  categories: ChecklistCategory[];
+  noteLabel?: string;
+  showCategoryLabels: boolean;
   eventId: string;
   eventName: string;
   eventType: EventType | null;
@@ -59,6 +65,7 @@ export default function ClosingChecklist({
   const [noteStatus, setNoteStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [noteError, setNoteError] = useState<string | null>(null);
 
+  const totalItems = countItems(categories);
   const canEditNow = canEdit && !isSigned;
 
   async function toggle(itemKey: string, next: boolean) {
@@ -105,7 +112,7 @@ export default function ClosingChecklist({
   async function markAll() {
     const previous = checked;
     setError(null);
-    setChecked(new Set(ALL_CLOSING_CHECKLIST_KEYS));
+    setChecked(new Set(itemKeysOf({ categories })));
     setMarking(true);
     try {
       await markAllClosingChecklist(eventId);
@@ -132,9 +139,9 @@ export default function ClosingChecklist({
   return (
     <details className="rounded-lg border border-border-classic bg-surface p-4">
       <summary className="cursor-pointer text-sm font-medium">
-        צ&apos;קליסט סגירה - מנהל אירוע{" "}
+        {title}{" "}
         <span className="text-foreground/60">
-          ({checked.size}/{TOTAL_ITEMS})
+          ({checked.size}/{totalItems})
         </span>
         {isSigned && <span className="text-green-700"> · נחתם</span>}
       </summary>
@@ -153,7 +160,7 @@ export default function ClosingChecklist({
             <button
               type="button"
               onClick={markAll}
-              disabled={marking || checked.size === TOTAL_ITEMS}
+              disabled={marking || checked.size === totalItems}
               className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-50"
             >
               סמן הכל
@@ -176,22 +183,22 @@ export default function ClosingChecklist({
           storedSignature={signatureData ?? null}
         >
           <ChecklistPrintable
-            title="צ'קליסט סגירה - מנהל אירוע"
+            title={title}
             eventName={eventName}
             eventType={eventType}
             eventDate={eventDate}
-            categories={CLOSING_CHECKLIST}
+            categories={categories}
             checked={checked}
-            note={note}
-            noteLabel="הערות"
-            showCategoryLabels
+            note={noteLabel ? note : null}
+            noteLabel={noteLabel}
+            showCategoryLabels={showCategoryLabels}
             photoUrls={photos.map((photo) => photo.url)}
           />
         </PdfExportButton>
 
-        {CLOSING_CHECKLIST.map((category) => (
+        {categories.map((category) => (
           <div key={category.key} className="flex flex-col gap-2">
-            <p className="text-sm font-semibold underline">{category.label}</p>
+            {showCategoryLabels && <p className="text-sm font-semibold underline">{category.label}</p>}
             <ul className="flex flex-col gap-1.5">
               {category.items.map((item) => {
                 const isChecked = checked.has(item.key);
@@ -214,34 +221,36 @@ export default function ClosingChecklist({
           </div>
         ))}
 
-        <div className="flex flex-col gap-2 border-t border-border-classic pt-3">
-          <p className="text-sm font-medium">הערות</p>
-          <textarea
-            value={note}
-            onChange={(e) => {
-              setNote(e.target.value);
-              setNoteStatus("idle");
-            }}
-            disabled={!canEditNow}
-            rows={3}
-            placeholder="ניתן לפרט כאן. אם אין מה להוסיף - להשאיר ריק."
-            className="rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
-          />
-          {noteError && <p className="text-sm text-red-600">{noteError}</p>}
-          {canEditNow && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={saveNote}
-                disabled={noteStatus === "saving"}
-                className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-50"
-              >
-                {noteStatus === "saving" ? "שומר..." : "שמור"}
-              </button>
-              {noteStatus === "saved" && <span className="text-xs text-foreground/60">נשמר</span>}
-            </div>
-          )}
-        </div>
+        {noteLabel && (
+          <div className="flex flex-col gap-2 border-t border-border-classic pt-3">
+            <p className="text-sm font-medium">{noteLabel}</p>
+            <textarea
+              value={note}
+              onChange={(e) => {
+                setNote(e.target.value);
+                setNoteStatus("idle");
+              }}
+              disabled={!canEditNow}
+              rows={3}
+              placeholder="ניתן לפרט כאן. אם אין מה להוסיף - להשאיר ריק."
+              className="rounded-md border border-border-classic bg-surface px-3 py-2 text-sm"
+            />
+            {noteError && <p className="text-sm text-red-600">{noteError}</p>}
+            {canEditNow && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={saveNote}
+                  disabled={noteStatus === "saving"}
+                  className="self-start rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft disabled:opacity-50"
+                >
+                  {noteStatus === "saving" ? "שומר..." : "שמור"}
+                </button>
+                {noteStatus === "saved" && <span className="text-xs text-foreground/60">נשמר</span>}
+              </div>
+            )}
+          </div>
+        )}
 
         <ChecklistPhotos eventId={eventId} checklistKey="closing_checklist" photos={photos} canEdit={canEditNow} />
 

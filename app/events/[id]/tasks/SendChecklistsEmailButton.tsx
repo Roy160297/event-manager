@@ -6,7 +6,7 @@ import { EventSummaryReportPrintable } from "@/components/EventSummaryReportPrin
 import { EditableRecipientList } from "@/components/EditableRecipientList";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { sendAllChecklistsEmail } from "@/app/events/actions";
-import type { ClosingChecklistCategory } from "@/lib/closingChecklist";
+import type { ChecklistCategory } from "@/lib/checklists";
 import type { EventRow } from "@/lib/types";
 
 // Deliberately just the shape needed for the event manager's own closing
@@ -15,7 +15,7 @@ import type { EventRow } from "@/lib/types";
 export interface ChecklistForEmail {
   key: string;
   title: string;
-  categories: ClosingChecklistCategory[];
+  categories: ChecklistCategory[];
   checkedKeys: string[];
   note?: string | null;
   noteLabel?: string;

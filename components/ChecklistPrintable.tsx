@@ -1,4 +1,4 @@
-import type { ClosingChecklistCategory } from "@/lib/closingChecklist";
+import type { ChecklistCategory } from "@/lib/checklists";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import type { EventType } from "@/lib/types";
 
@@ -21,7 +21,7 @@ export function ChecklistPrintable({
   eventName: string;
   eventType: EventType | null;
   eventDate: string | null;
-  categories: ClosingChecklistCategory[];
+  categories: ChecklistCategory[];
   checked: Set<string>;
   note?: string | null;
   noteLabel?: string;

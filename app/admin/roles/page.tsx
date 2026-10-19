@@ -4,7 +4,8 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { SubmitButton } from "@/components/SubmitButton";
 import { TrashIcon } from "@/components/icons";
 import { getCurrentStaff } from "@/lib/auth";
-import { canWrite } from "@/lib/permissions";
+import { canWrite, permissionResourceList } from "@/lib/permissions";
+import { getChecklists } from "@/lib/checklists";
 import type { RolePermissionRow, RoleRow } from "@/lib/types";
 import { createRole, deleteRole, renameRole } from "./actions";
 import { actionErrorMessage } from "@/lib/actionError";
@@ -14,11 +15,13 @@ import { PermissionGrid } from "./PermissionGrid";
 export default async function RolesPage() {
   const supabase = await createClient();
 
-  const [{ data: roles }, { data: permissions }, currentStaff] = await Promise.all([
+  const [{ data: roles }, { data: permissions }, currentStaff, checklists] = await Promise.all([
     supabase.from("roles").select("*").order("created_at").returns<RoleRow[]>(),
     supabase.from("role_permissions").select("*").returns<RolePermissionRow[]>(),
     getCurrentStaff(),
+    getChecklists(),
   ]);
+  const resources = permissionResourceList(checklists);
 
   const canManage = !!currentStaff && canWrite(currentStaff.permissions, "admin");
 
@@ -72,6 +75,7 @@ export default async function RolesPage() {
             key={roles.map((role) => role.id).join(",")}
             roles={roles}
             permissionsByRole={permissionsByRole}
+            resources={resources}
             readOnly={!canManage}
           />
 

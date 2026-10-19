@@ -6,14 +6,8 @@ import { totalGuestCount } from "@/lib/guestCount";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
-import type { EventType, PermissionResource } from "@/lib/types";
-
-const CHECKLIST_SECTIONS: { key: PermissionResource; label: string }[] = [
-  { key: "closing_checklist", label: "צ'קליסט סגירה - מנהל אירוע" },
-  { key: "floor_manager_checklist", label: "צ'קליסט סגירה - מנהל פלור" },
-  { key: "bar_checklist", label: "צ'קליסט סגירה - בר" },
-  { key: "barista_checklist", label: "צ'קליסט סגירה - בריסטה" },
-];
+import { getChecklists } from "@/lib/checklists";
+import type { EventType } from "@/lib/types";
 
 type NoteWithEvent = {
   checklist_key: string;
@@ -44,9 +38,10 @@ const guestsLabel = (guests: string | null) => {
 };
 
 export default async function ChecklistNotesPage() {
-  const currentStaff = await getCurrentStaff();
-  const readableSections = CHECKLIST_SECTIONS.filter(
-    (section) => !!currentStaff && canRead(currentStaff.permissions, section.key),
+  const [currentStaff, checklists] = await Promise.all([getCurrentStaff(), getChecklists()]);
+  // One section per checklist that has a notes box and that this person may read.
+  const readableSections = checklists.filter(
+    (checklist) => !!checklist.noteLabel && !!currentStaff && canRead(currentStaff.permissions, checklist.key),
   );
   const canReadSummaryReport = !!currentStaff && canRead(currentStaff.permissions, "event_summary_report");
 

@@ -1,15 +1,13 @@
+// Fixed permission areas. Each closing checklist is also a permission resource, but
+// those are defined in the database (the checklists table) and added to this list
+// at runtime - see permissionResourceList below.
 export const RESOURCES = [
   "events",
   "tasks",
   "timeline",
   "guests",
   "staffing",
-  "closing_checklist",
   "event_summary_report",
-  "floor_manager_checklist",
-  "bar_checklist",
-  "barista_checklist",
-  "business_event_checklist",
   "couple_meeting",
   "event_management_dex",
   "waiters",
@@ -28,11 +26,7 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   timeline: "לוח זמנים",
   guests: "אורחים",
   staffing: "סקיצה + מלצרים",
-  closing_checklist: "צ'קליסט סגירה - מנהל אירוע",
   event_summary_report: "דוח סיכום אירוע",
-  floor_manager_checklist: "צ'קליסט סגירה - מנהל פלור",
-  bar_checklist: "צ'קליסט סגירה - בר",
-  barista_checklist: "צ'קליסט סגירה - בריסטה",
   couple_meeting: "פגישה עם זוג",
   event_management_dex: 'סד"פ ניהול אירוע',
   waiters: "מלצרים (רשימה כללית)",
@@ -40,20 +34,29 @@ export const RESOURCE_LABELS: Record<Resource, string> = {
   my_tasks: "המשימות שלי",
   menu: "תפריט",
   calendar: "יומן",
-  business_event_checklist: "צ'קליסט סגירה - אירוע עסקי",
   push_reminder_rules: "התראות ותזכורות",
   venue_settings: "הגדרות האולם",
 };
 
-export type PermissionMap = Record<Resource, { read: boolean; write: boolean }>;
+// Every permission area a role can be given: the fixed ones plus one per checklist
+// (the role grid and new-role defaults use this list).
+export function permissionResourceList(checklists: { key: string; label: string }[]): { key: string; label: string }[] {
+  return [
+    ...RESOURCES.map((key) => ({ key: key as string, label: RESOURCE_LABELS[key] })),
+    ...checklists.map((checklist) => ({ key: checklist.key, label: checklist.label })),
+  ];
+}
+
+// Keyed by any resource string: the fixed ones above plus one per checklist.
+export type PermissionMap = Record<string, { read: boolean; write: boolean }>;
 
 // Write implies read: a role granted write on a resource can always view it
 // too, so admins don't need to double-grant both flags for the common case.
-export function canRead(permissions: PermissionMap, resource: Resource): boolean {
+export function canRead(permissions: PermissionMap, resource: string): boolean {
   const perm = permissions[resource];
   return !!perm && (perm.read || perm.write);
 }
 
-export function canWrite(permissions: PermissionMap, resource: Resource): boolean {
+export function canWrite(permissions: PermissionMap, resource: string): boolean {
   return permissions[resource]?.write ?? false;
 }

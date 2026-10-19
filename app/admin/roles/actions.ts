@@ -2,7 +2,8 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { RESOURCES } from "@/lib/permissions";
+import { permissionResourceList } from "@/lib/permissions";
+import { getChecklists } from "@/lib/checklists";
 import { EVENT_MANAGERS_CACHE_TAG, FLOOR_MANAGERS_CACHE_TAG, SALESPEOPLE_CACHE_TAG } from "@/lib/staff";
 
 export async function createRole(formData: FormData) {
@@ -15,7 +16,14 @@ export async function createRole(formData: FormData) {
 
   const { error: permError } = await supabase
     .from("role_permissions")
-    .insert(RESOURCES.map((resource) => ({ role_id: role.id, resource, can_read: false, can_write: false })));
+    .insert(
+      permissionResourceList(await getChecklists()).map(({ key: resource }) => ({
+        role_id: role.id,
+        resource,
+        can_read: false,
+        can_write: false,
+      })),
+    );
   if (permError) throw new Error(permError.message);
 
   revalidatePath("/admin/roles");
