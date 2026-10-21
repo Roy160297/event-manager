@@ -14,6 +14,7 @@ const VENUE_LINKS = [
   { href: "/admin/venue", label: "הגדרות האולם" },
   { href: "/admin/checklists", label: "צ'קליסטים" },
   { href: "/admin/schedules", label: "לוחות זמנים" },
+  { href: "/admin/guides", label: "מדריכים" },
 ];
 
 export function AdminNav({ showVenue = false }: { showVenue?: boolean }) {
