@@ -1,8 +1,9 @@
 "use client";
 
+import { useEventTypeLabel } from "@/components/EventTypesProvider";
 import { useState } from "react";
 import { countItems, itemKeysOf, type ChecklistCategory } from "@/lib/checklists";
-import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import { formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
 import { ChecklistPhotos, type ChecklistPhoto } from "@/components/ChecklistPhotos";
@@ -56,6 +57,7 @@ export default function ClosingChecklist({
   currentStaffName?: string | null;
   photos: ChecklistPhoto[];
 }) {
+  const eventTypeLabel = useEventTypeLabel();
   const [checked, setChecked] = useState(() => new Set(initialCheckedKeys));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
@@ -178,7 +180,7 @@ export default function ClosingChecklist({
 
         <PdfExportButton
           filename={`צקליסט-סגירה-${eventName}.pdf`}
-          eventLabel={`${eventName} · ${eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · ${formatDate(eventDate)}`}
+          eventLabel={`${eventName} · ${eventType ? eventTypeLabel(eventType) : "—"} · ${formatDate(eventDate)}`}
           signerName={managerName}
           storedSignature={signatureData ?? null}
         >

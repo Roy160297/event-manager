@@ -1,10 +1,11 @@
 "use client";
 
+import { useEventTypeLabel } from "@/components/EventTypesProvider";
 import { useRef, useState } from "react";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
 import { EventSummaryReportPrintable } from "@/components/EventSummaryReportPrintable";
 import { EditableRecipientList } from "@/components/EditableRecipientList";
-import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import { formatDate } from "@/lib/labels";
 import { sendAllChecklistsEmail } from "@/app/events/actions";
 import type { ChecklistCategory } from "@/lib/checklists";
 import type { ReportField } from "@/lib/reportFields";
@@ -76,6 +77,7 @@ export function SendChecklistsEmailButton({
   defaultTo: string[];
   defaultCc: string[];
 }) {
+  const eventTypeLabel = useEventTypeLabel();
   const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
   const footerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [step, setStep] = useState<"idle" | "preparing" | "review" | "sending" | "sent">("idle");
@@ -85,7 +87,7 @@ export function SendChecklistsEmailButton({
   const [ccList, setCcList] = useState<string[]>(defaultCc);
   const [bodyOverride, setBodyOverride] = useState<string | null>(null);
 
-  const eventLabel = `${event.name} · ${EVENT_TYPE_LABELS[event.event_type]} · ${formatDate(event.event_date)}`;
+  const eventLabel = `${event.name} · ${eventTypeLabel(event.event_type)} · ${formatDate(event.event_date)}`;
   const coupleLabel =
     event.groom_name && event.bride_name
       ? `${event.groom_name} ו${event.bride_name}`

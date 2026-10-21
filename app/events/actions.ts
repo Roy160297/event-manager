@@ -13,6 +13,8 @@ import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { extractEventDraftFromImage, applyCarriedReservePercent } from "@/lib/imageImport";
 import { loadReportFields, mergeReportValues, type ReportValues } from "@/lib/reportFields";
+import { getEventTypes } from "@/lib/eventTypesServer";
+import { resolveEventType } from "@/lib/eventTypes";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
 import { downloadWelcomeAttachment, findWelcomeAttachment } from "@/lib/welcomeAttachments";
 import { getVenueSettings } from "@/lib/venueSettings";
@@ -29,7 +31,7 @@ export async function createEvent(formData: FormData): Promise<string | void> {
   const currentStaff = await getCurrentStaff();
 
   const name = String(formData.get("name") ?? "").trim();
-  const eventType = String(formData.get("event_type") ?? "other") as EventType;
+  const eventType = resolveEventType(await getEventTypes(), String(formData.get("event_type") ?? ""));
   const eventDate = String(formData.get("event_date") ?? "");
 
   if (!name || !eventType || !eventDate) {
@@ -155,7 +157,7 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
   const supabase = await createClient();
 
   const name = String(formData.get("name") ?? "").trim();
-  const eventType = String(formData.get("event_type") ?? "other") as EventType;
+  const eventType = resolveEventType(await getEventTypes(), String(formData.get("event_type") ?? ""));
   const eventDate = String(formData.get("event_date") ?? "");
   const coupleMeetingDate = String(formData.get("couple_meeting_date") ?? "").trim() || null;
   const startTime = String(formData.get("start_time") ?? "").trim() || null;
@@ -370,7 +372,7 @@ async function parseEventImageUpdateInner(eventId: string, formData: FormData): 
   if (!event) throw new Error("האירוע לא נמצא");
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const draft = await extractEventDraftFromImage(buffer, file.type);
+  const draft = await extractEventDraftFromImage(buffer, file.type, await getEventTypes());
 
   const name = draft.bride_name && draft.groom_name
     ? `${draft.bride_name} ו${draft.groom_name}`

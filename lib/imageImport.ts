@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { FALLBACK_EVENT_TYPES, resolveEventType, type EventTypeInfo } from "@/lib/eventTypes";
 import { isFriday, fridayEndTime } from "@/lib/scheduleTime";
 import type { EventType } from "@/lib/types";
 
@@ -35,8 +35,6 @@ export interface ImageImportDraft {
   warnings: string[];
 }
 
-const EVENT_TYPE_KEYS = Object.keys(EVENT_TYPE_LABELS) as EventType[];
-
 export interface GeminiExtraction {
   bride_name: string | null;
   groom_name: string | null;
@@ -63,6 +61,21 @@ export interface GeminiExtraction {
   source_type: "iplan_screen" | "commitment_email";
 }
 
+// The schema with the venue's own event types as the allowed values of event_type.
+function responseSchemaFor(types: EventTypeInfo[]) {
+  return {
+    ...RESPONSE_SCHEMA,
+    properties: {
+      ...RESPONSE_SCHEMA.properties,
+      event_type: {
+        type: Type.STRING,
+        enum: types.map((type) => type.key),
+        description: types.map((type) => `${type.key} = ${type.label}`).join(", "),
+      },
+    },
+  };
+}
+
 const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
@@ -84,13 +97,8 @@ const RESPONSE_SCHEMA = {
       description:
         'שם החתן בלבד, בעברית בלבד (גם אם מופיע באנגלית באזור "משתמשים באירוע" - השתמש בגרסה העברית מכותרת העמוד). אם שני הצדדים מתויגים "חתן" (זוג חתנים) - שים כאן את שני השמות יחד (למשל "שם1 ושם2"). אם שני הצדדים מתויגים "כלה" (זוג כלות) - שים את שני השמות יחד בשדה bride_name במקום, והשאר שדה זה null.',
     },
-    event_type: {
-      type: Type.STRING,
-      enum: EVENT_TYPE_KEYS,
-      description: Object.entries(EVENT_TYPE_LABELS)
-        .map(([key, label]) => `${key} = ${label}`)
-        .join(", "),
-    },
+    // Filled in per request with the venue's own event types (see responseSchemaFor).
+    event_type: { type: Type.STRING },
     event_date: { type: Type.STRING, nullable: true, description: "תאריך האירוע בפורמט YYYY-MM-DD" },
     start_time: { type: Type.STRING, nullable: true, description: "שעת התחלה בפורמט HH:MM" },
     end_time: { type: Type.STRING, nullable: true, description: "שעת סיום בפורמט HH:MM" },
@@ -241,7 +249,7 @@ const FALLBACK_MODEL = "gemini-flash-latest";
 // to fail. If Gemini billing ever moves off the free tier, revisit adding
 // one back.
 
-function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: string, signal: AbortSignal) {
+function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: string, signal: AbortSignal, types: EventTypeInfo[]) {
   return ai.models.generateContent({
     model,
     contents: [
@@ -252,7 +260,7 @@ function callGemini(ai: GoogleGenAI, buffer: Buffer, mimeType: string, model: st
     ],
     config: {
       responseMimeType: "application/json",
-      responseSchema: RESPONSE_SCHEMA,
+      responseSchema: responseSchemaFor(types),
       // This is a read-the-label-off-the-screen task, not a creative one -
       // temperature 0 removes sampling variance that was otherwise letting
       // the model drop one clearly-visible field on one pass (e.g. the
@@ -305,7 +313,7 @@ const EXTRACTION_ATTEMPTS: { model: string; delayMsBefore: number }[] = [
 const EXTRACTION_BUDGET_MS = 25_000;
 const PER_CALL_TIMEOUT_MS = 12_000;
 
-async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: string): Promise<GeminiExtraction> {
+async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: string, types: EventTypeInfo[]): Promise<GeminiExtraction> {
   const startedAt = Date.now();
   let response: Awaited<ReturnType<typeof callGemini>> | undefined;
   let lastError: unknown;
@@ -318,7 +326,7 @@ async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: stri
     if (remaining <= 0) break;
 
     try {
-      response = await callGemini(ai, buffer, mimeType, attempt.model, AbortSignal.timeout(Math.min(PER_CALL_TIMEOUT_MS, remaining)));
+      response = await callGemini(ai, buffer, mimeType, attempt.model, AbortSignal.timeout(Math.min(PER_CALL_TIMEOUT_MS, remaining)), types);
       break;
     } catch (err) {
       lastError = err;
@@ -350,7 +358,11 @@ async function requestExtraction(ai: GoogleGenAI, buffer: Buffer, mimeType: stri
   }
 }
 
-export async function extractEventDraftFromImage(buffer: Buffer, mimeType: string): Promise<ImageImportDraft> {
+export async function extractEventDraftFromImage(
+  buffer: Buffer,
+  mimeType: string,
+  types: EventTypeInfo[] = FALLBACK_EVENT_TYPES,
+): Promise<ImageImportDraft> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY אינו מוגדר בסביבת השרת");
 
@@ -361,15 +373,15 @@ export async function extractEventDraftFromImage(buffer: Buffer, mimeType: strin
   // half as many Gemini requests per upload (directly easing the overload
   // errors that come from Gemini being under high demand) and not waiting on
   // the slower of two calls.
-  const extraction = await requestExtraction(ai, buffer, mimeType);
+  const extraction = await requestExtraction(ai, buffer, mimeType, types);
 
-  return buildImageImportDraft(extraction);
+  return buildImageImportDraft(extraction, types);
 }
 
 // Pure merge/derivation step, split out from extractEventDraftFromImage so
 // the guest-count math (the part that's actually gone wrong before) can be
 // unit-tested without mocking the Gemini API.
-export function buildImageImportDraft(extraction: GeminiExtraction): ImageImportDraft {
+export function buildImageImportDraft(extraction: GeminiExtraction, types: EventTypeInfo[] = FALLBACK_EVENT_TYPES): ImageImportDraft {
   const warnings: string[] = [
     "החילוץ מתמונה עלול לכלול טעויות - יש לבדוק את כל השדות בקפידה לפני יצירת האירוע.",
   ];
@@ -380,7 +392,7 @@ export function buildImageImportDraft(extraction: GeminiExtraction): ImageImport
   if (!name) warnings.push('לא זוהו שמות בני הזוג - יש להזין ידנית את שדה "שם הלקוח / הזוג"');
 
   if (!extraction.event_date) warnings.push("לא זוהה תאריך אירוע - יש להזין ידנית");
-  if (!EVENT_TYPE_KEYS.includes(extraction.event_type)) {
+  if (!types.some((type) => type.key === extraction.event_type)) {
     warnings.push('סוג האירוע שזוהה אינו תקין - נבחר "אחר" כברירת מחדל');
   }
 
@@ -446,7 +458,7 @@ export function buildImageImportDraft(extraction: GeminiExtraction): ImageImport
     name,
     bride_name,
     groom_name,
-    event_type: EVENT_TYPE_KEYS.includes(extraction.event_type) ? extraction.event_type : "other",
+    event_type: resolveEventType(types, extraction.event_type),
     event_date: extraction.event_date ?? null,
     start_time: extraction.start_time ?? null,
     end_time,

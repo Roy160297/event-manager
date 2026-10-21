@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { updateEventDetails, addSupplier, updateSupplier, deleteSupplier } from "@/app/events/actions";
 import { actionErrorMessage } from "@/lib/actionError";
-import { EVENT_TYPE_LABELS, formatDate, formatTime } from "@/lib/labels";
+import { formatDate, formatTime } from "@/lib/labels";
+import { getEventTypes } from "@/lib/eventTypesServer";
+import { eventTypeLabel, isBusinessType, labelsOf } from "@/lib/eventTypes";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { TrashIcon } from "@/components/icons";
@@ -18,9 +20,7 @@ import { SendWelcomeEmailButton } from "./SendWelcomeEmailButton";
 import { buildWelcomeEmailBody } from "@/lib/welcomeEmail";
 import { getVenueSettings } from "@/lib/venueSettings";
 import { findWelcomeAttachment } from "@/lib/welcomeAttachments";
-import type { EventRow, EventSupplierRow, EventType, GuestRow, TimelineItemRow } from "@/lib/types";
-
-const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
+import type { EventRow, EventSupplierRow, GuestRow, TimelineItemRow } from "@/lib/types";
 
 // Both the image-update wizard and the supplier-photo import on this page
 // chain multiple sequential Gemini calls (overload retry, model fallback,
@@ -73,6 +73,9 @@ export default async function EventOverviewPage({
     getCurrentStaff(),
     getVenueSettings(),
   ]);
+
+  const eventTypes = await getEventTypes();
+  const isBusiness = isBusinessType(eventTypes, event?.event_type);
 
   const canReadEvents = !!currentStaff && canRead(currentStaff.permissions, "events");
   const canWriteEvents = !!currentStaff && canWrite(currentStaff.permissions, "events");
@@ -177,9 +180,9 @@ export default async function EventOverviewPage({
             <label className={labelClass}>
               <span className="font-medium">סוג האירוע</span>
               <select name="event_type" defaultValue={event?.event_type} required className={inputClass}>
-                {EVENT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {EVENT_TYPE_LABELS[type]}
+                {eventTypes.map((type) => (
+                  <option key={type.key} value={type.key}>
+                    {type.label}
                   </option>
                 ))}
               </select>
@@ -191,7 +194,7 @@ export default async function EventOverviewPage({
                 <DateField name="event_date" defaultValue={event?.event_date ?? ""} />
               </label>
 
-              {event?.event_type !== "business_event" && (
+              {!isBusiness && (
                 <label className={labelClass}>
                   <span className="font-medium">תאריך פגישת זוג</span>
                   <DateField name="couple_meeting_date" defaultValue={event?.couple_meeting_date ?? ""} />
@@ -221,7 +224,7 @@ export default async function EventOverviewPage({
                 <TimeField name="end_time" defaultValue={event?.end_time ?? ""} />
               </label>
 
-              {event?.event_type !== "business_event" && (
+              {!isBusiness && (
                 <label className={labelClass}>
                   <span className="font-medium">מספר מנות ילדים</span>
                   <input
@@ -235,7 +238,7 @@ export default async function EventOverviewPage({
             </div>
           </div>
 
-          {event?.event_type !== "business_event" && (
+          {!isBusiness && (
             <div className="flex flex-col gap-2">
               <p className="text-sm font-medium">פירוט מנות (חלק מתוך מנות ההתחייבות, לא בנוסף)</p>
               <div className="grid gap-4 sm:grid-cols-3">
@@ -354,7 +357,7 @@ export default async function EventOverviewPage({
               </select>
             </label>
 
-            {event?.event_type !== "business_event" && (
+            {!isBusiness && (
               <>
                 <label className={labelClass}>
                   <span className="font-medium">שמות הורי הכלה</span>
@@ -380,7 +383,7 @@ export default async function EventOverviewPage({
           <ExpandableTextarea
             name="menu_notes"
             title="מידע נוסף"
-            defaultValue={event?.menu_notes ?? (event?.event_type !== "business_event" ? venue.default_additional_info : "")}
+            defaultValue={event?.menu_notes ?? (!isBusiness ? venue.default_additional_info : "")}
             className={inputClass}
           />
 
@@ -403,12 +406,12 @@ export default async function EventOverviewPage({
             {(
               [
                 ["שם הלקוח / הזוג", event?.name ?? null],
-                ["סוג האירוע", event ? EVENT_TYPE_LABELS[event.event_type] : null],
+                ["סוג האירוע", event ? eventTypeLabel(labelsOf(eventTypes), event.event_type) : null],
                 ["תאריך", event ? formatDate(event.event_date) : null],
                 ["מספר אורחים - התחייבות", event?.estimated_guests ?? null],
                 ["שעת התחלה", event ? formatTime(event.start_time) : null],
                 ['שעת סיום (ע"פ חוזה)', event ? formatTime(event.end_time) : null],
-                ...(event?.event_type !== "business_event"
+                ...(!isBusiness
                   ? ([
                       ["תאריך פגישת זוג", event ? formatDate(event.couple_meeting_date) : null],
                       ["מספר מנות ילדים", event?.kids_meal_count ?? null],
@@ -426,7 +429,7 @@ export default async function EventOverviewPage({
                 ["מנהל/ת אירוע אחראי/ת", managerName],
                 ["מנהל/ת פלור", floorManagerName],
                 ["איש/ת מכירות", salespersonName],
-                ...(event?.event_type !== "business_event"
+                ...(!isBusiness
                   ? ([
                       ["שמות הורי הכלה", event?.bride_parents_names ?? null],
                       ["שמות הורי החתן", event?.groom_parents_names ?? null],

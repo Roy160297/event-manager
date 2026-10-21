@@ -4,9 +4,9 @@ import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { getEventTypes } from "@/lib/eventTypesServer";
+import type { EventTypeInfo } from "@/lib/eventTypes";
 import { countItems, getChecklists, type ChecklistDefinition } from "@/lib/checklists";
-import type { EventType } from "@/lib/types";
 import {
   addCategory,
   addItem,
@@ -21,8 +21,6 @@ import {
   updateChecklist,
   updateItem,
 } from "./actions";
-
-const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
 const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2 text-sm";
 const smallButton = "rounded-md border border-border-classic px-2 py-1 text-xs hover:bg-accent-soft disabled:opacity-40";
@@ -57,7 +55,17 @@ function MoveButtons({
   );
 }
 
-function ChecklistEditor({ checklist, index, total }: { checklist: ChecklistDefinition; index: number; total: number }) {
+function ChecklistEditor({
+  checklist,
+  index,
+  total,
+  eventTypes,
+}: {
+  checklist: ChecklistDefinition;
+  index: number;
+  total: number;
+  eventTypes: EventTypeInfo[];
+}) {
   const key = checklist.key;
   const isSystem = checklist.isSystem;
 
@@ -140,16 +148,16 @@ function ChecklistEditor({ checklist, index, total }: { checklist: ChecklistDefi
           <fieldset className="flex flex-col gap-1">
             <legend className="mb-1 text-sm font-medium">מוצג בסוגי האירוע</legend>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {EVENT_TYPES.map((type) => (
-                <label key={type} className="flex items-center gap-1.5 text-sm">
+              {eventTypes.map((type) => (
+                <label key={type.key} className="flex items-center gap-1.5 text-sm">
                   <input
                     type="checkbox"
                     name="event_types"
-                    value={type}
-                    defaultChecked={!!checklist.eventTypes?.includes(type)}
+                    value={type.key}
+                    defaultChecked={!!checklist.eventTypes?.includes(type.key)}
                     className="h-4 w-4"
                   />
-                  {EVENT_TYPE_LABELS[type]}
+                  {type.label}
                 </label>
               ))}
             </div>
@@ -344,7 +352,7 @@ export default async function ChecklistsAdminPage() {
   if (!currentStaff || !canRead(currentStaff.permissions, "venue_settings")) return <NoPermissionNotice />;
   const canEdit = canWrite(currentStaff.permissions, "venue_settings");
 
-  const checklists = await getChecklists();
+  const [checklists, eventTypes] = await Promise.all([getChecklists(), getEventTypes()]);
 
   async function create(formData: FormData) {
     "use server";
@@ -379,7 +387,7 @@ export default async function ChecklistsAdminPage() {
 
       <div className={canEdit ? "flex flex-col gap-3" : "pointer-events-none flex flex-col gap-3 opacity-80"}>
         {checklists.map((checklist, index) => (
-          <ChecklistEditor key={checklist.key} checklist={checklist} index={index} total={checklists.length} />
+          <ChecklistEditor key={checklist.key} checklist={checklist} index={index} total={checklists.length} eventTypes={eventTypes} />
         ))}
       </div>
     </div>

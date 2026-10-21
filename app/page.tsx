@@ -1,8 +1,9 @@
 import { IS_DEMO } from "@/lib/demoMode";
+import { getEventTypeLabels } from "@/lib/eventTypesServer";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { deleteEvent } from "@/app/events/actions";
-import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import { formatDate } from "@/lib/labels";
 import { todaysEventDate } from "@/lib/scheduleTime";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
@@ -18,6 +19,7 @@ export default async function EventsDashboard({
 }: {
   searchParams: Promise<{ manager?: string }>;
 }) {
+  const eventTypeLabels = await getEventTypeLabels();
   const { manager: managerParam } = await searchParams;
   const supabase = await createClient();
   const [{ data: events, error }, managers, currentStaff] = await Promise.all([
@@ -150,7 +152,7 @@ export default async function EventsDashboard({
                   {isToday && <span className="ms-2 text-xs font-medium text-accent">אירוע היום</span>}
                 </p>
                 <p className="text-sm text-foreground/60">
-                  {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+                  {eventTypeLabels[event.event_type]} · {formatDate(event.event_date)}
                   {managerName(event.manager_id) && ` · ${managerName(event.manager_id)}`}
                 </p>
               </Link>

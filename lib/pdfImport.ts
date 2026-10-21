@@ -1,5 +1,5 @@
 import { PDFParse } from "pdf-parse";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { FALLBACK_EVENT_TYPES, resolveEventType, type EventTypeInfo } from "@/lib/eventTypes";
 import { isFriday, fridayEndTime } from "@/lib/scheduleTime";
 import type { EventType } from "@/lib/types";
 
@@ -248,7 +248,7 @@ function convertDate(ddmmyyyy: string): string | null {
   return `${m[3]}-${m[2]}-${m[1]}`;
 }
 
-export function parsePdfDraft(rawText: string): PdfImportDraft {
+export function parsePdfDraft(rawText: string, types: EventTypeInfo[] = FALLBACK_EVENT_TYPES): PdfImportDraft {
   const lines = rawText
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -291,7 +291,7 @@ export function parsePdfDraft(rawText: string): PdfImportDraft {
 
   // "סוג אירוע" only ever says "חתונה" / "חתונה הפוכה" - it never carries the
   // מזנונים/הגשה distinction, which instead lives in the separate "תפריט"
-  // (a.k.a. "סוג הגשה") field. EVENT_TYPE_LABELS' wedding entries are compound
+  // (a.k.a. "סוג הגשה") field. the wedding event types' labels are compound
   // ("חתונה - מזנונים" etc.), so for weddings the two fields must be combined;
   // every other event type (בת/בר מצווה, אירוע עסקי...) matches directly.
   const eventTypeValue = findValueBeforeLabel(lines, "סוג אירוע") ?? headerEventTypeLabel;
@@ -312,14 +312,14 @@ export function parsePdfDraft(rawText: string): PdfImportDraft {
       warnings.push(`סוג הגשה "${service_style}" אינו "מזנונים" או "הגשה" - נבחרה ברירת המחדל "מזנונים"`);
     }
   } else {
-    event_type =
-      (Object.entries(EVENT_TYPE_LABELS).find(([, label]) => label === eventTypeValue)?.[0] as
-        | EventType
-        | undefined) ?? "other";
-    if (eventTypeValue && event_type === "other" && eventTypeValue !== EVENT_TYPE_LABELS.other) {
+    const matched = types.find((type) => type.label === eventTypeValue)?.key;
+    event_type = matched ?? "other";
+    if (eventTypeValue && !matched && eventTypeValue !== types.find((type) => type.key === "other")?.label) {
       warnings.push(`סוג האירוע "${eventTypeValue}" לא זוהה - נבחר "אחר" כברירת מחדל`);
     }
   }
+
+  event_type = resolveEventType(types, event_type);
 
   const eventDateRaw = findValueBeforeLabel(lines, "תאריך אירוע");
   const event_date = eventDateRaw ? convertDate(eventDateRaw) : null;

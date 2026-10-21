@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { FALLBACK_EVENT_TYPES, labelsOf } from "@/lib/eventTypes";
+
+const EVENT_TYPE_LABELS = labelsOf(FALLBACK_EVENT_TYPES);
 import { addDaysToDate } from "@/lib/coupleMeetingReminders";
 import {
   emailRuleRecipients,

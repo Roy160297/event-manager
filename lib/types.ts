@@ -1,12 +1,5 @@
-export type EventType =
-  | "wedding"
-  | "wedding_service"
-  | "reverse_wedding"
-  | "reverse_wedding_service"
-  | "bat_mitzvah"
-  | "bar_mitzvah"
-  | "business_event"
-  | "other";
+// An event type's key; the types themselves (and their labels) are the venue's own, see lib/eventTypes.ts.
+export type EventType = string;
 export type EventStatus = "planning" | "approved" | "canceled";
 export type EventDisplayStatus = EventStatus | "completed";
 export type TaskStatus = "open" | "done";

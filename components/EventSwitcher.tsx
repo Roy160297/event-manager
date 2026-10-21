@@ -1,9 +1,10 @@
 "use client";
 
+import { useEventTypeLabel } from "@/components/EventTypesProvider";
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import { formatDate } from "@/lib/labels";
 import type { EventRow } from "@/lib/types";
 
 type SwitcherEvent = Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">;
@@ -22,6 +23,7 @@ export function EventSwitcher({
   managers: { id: string; name: string }[];
   defaultManagerId: string | null;
 }) {
+  const eventTypeLabel = useEventTypeLabel();
   const pathname = usePathname();
   const [query, setQuery] = useState("");
   // "" means "כל המנהלים" (no filter) - distinct from defaultManagerId,
@@ -83,7 +85,7 @@ export function EventSwitcher({
                 >
                   <p className="truncate">{event.name}</p>
                   <p className="truncate text-xs text-foreground/60">
-                    {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+                    {eventTypeLabel(event.event_type)} · {formatDate(event.event_date)}
                   </p>
                 </Link>
               </li>

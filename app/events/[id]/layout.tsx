@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { getEventTypeLabels } from "@/lib/eventTypesServer";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDateWithWeekday, getDisplayEventStatus } from "@/lib/labels";
+import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, formatDateWithWeekday, getDisplayEventStatus } from "@/lib/labels";
 import { EventSubNav } from "@/components/EventSubNav";
 import type { EventRow } from "@/lib/types";
 
@@ -12,6 +13,7 @@ export default async function EventLayout({
   children: React.ReactNode;
   params: Promise<{ id: string }>;
 }) {
+  const eventTypeLabels = await getEventTypeLabels();
   const { id } = await params;
   const supabase = await createClient();
   const { data: event } = await supabase.from("events").select("*").eq("id", id).returns<EventRow[]>().single();
@@ -35,7 +37,7 @@ export default async function EventLayout({
           )}
         </div>
         <p className="on-photo text-sm">
-          {EVENT_TYPE_LABELS[event.event_type]} · {formatDateWithWeekday(event.event_date)}
+          {eventTypeLabels[event.event_type]} · {formatDateWithWeekday(event.event_date)}
         </p>
       </div>
 

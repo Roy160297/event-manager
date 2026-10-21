@@ -1,4 +1,7 @@
-import { EVENT_TYPE_LABELS, formatDate, formatTime } from "@/lib/labels";
+"use client";
+
+import { useEventTypeLabel } from "@/components/EventTypesProvider";
+import { formatDate, formatTime } from "@/lib/labels";
 import { REPORT_END_TIME_KEY, displayValue, longFields, shortFields, type ReportField } from "@/lib/reportFields";
 import type { EventRow } from "@/lib/types";
 
@@ -17,12 +20,13 @@ export function EventSummaryReportPrintable({
   guestCommitment: string | null;
   photoUrls?: string[];
 }) {
+  const eventTypeLabel = useEventTypeLabel();
   const values = event.report_values ?? {};
   const hasEndTimeField = reportFields.some((field) => field.key === REPORT_END_TIME_KEY);
   const fields: [string, string | number | null][] = [
     ["תאריך", formatDate(event.event_date)],
     ["שם הלקוח", event.name],
-    ["סוג אירוע", EVENT_TYPE_LABELS[event.event_type]],
+    ["סוג אירוע", eventTypeLabel(event.event_type)],
     ["שעת תחילת האירוע", formatTime(event.start_time)],
     ...(hasEndTimeField ? ([["שעת סיום האירוע", formatTime(values[REPORT_END_TIME_KEY] ?? null)]] as [string, string | null][]) : []),
     ["מינימום אורחים בהתחייבות", guestCommitment],
@@ -39,7 +43,7 @@ export function EventSummaryReportPrintable({
       <div className="mb-1 flex items-baseline justify-between pb-2" style={{ borderBottom: "1px solid #d4d4d4" }}>
         <h1 className="font-serif text-xl font-bold">דוח סיכום אירוע</h1>
         <div className="text-sm" style={{ color: "#525252" }}>
-          {event.name} · {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+          {event.name} · {eventTypeLabel(event.event_type)} · {formatDate(event.event_date)}
         </div>
       </div>
 

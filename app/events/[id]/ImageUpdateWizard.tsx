@@ -6,11 +6,10 @@ import { parseEventImageUpdate, applyEventImageUpdate, type EventImageUpdateDraf
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { DateInput } from "@/components/DateField";
 import { TimeInput } from "@/components/TimeField";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { useEventTypes } from "@/components/EventTypesProvider";
 import { compressImage } from "@/lib/clientImageCompress";
 import type { EventType, StaffRow } from "@/lib/types";
 
-const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 const inputClass = "rounded-md border border-border-classic bg-surface px-2 py-1.5 text-sm";
 const labelClass = "flex flex-col gap-1 text-xs";
 
@@ -37,6 +36,7 @@ export function ImageUpdateWizard({
   managers: StaffRow[];
   salespeople: StaffRow[];
 }) {
+  const eventTypes = useEventTypes();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<EventImageUpdateDraft | null>(null);
@@ -167,9 +167,9 @@ export function ImageUpdateWizard({
             onChange={(e) => updateField("event_type", e.target.value as EventType)}
             className={inputClass}
           >
-            {EVENT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {EVENT_TYPE_LABELS[type]}
+            {eventTypes.map((type) => (
+              <option key={type.key} value={type.key}>
+                {type.label}
               </option>
             ))}
           </select>

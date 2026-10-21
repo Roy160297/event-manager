@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { getEventTypeLabels } from "@/lib/eventTypesServer";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
 import { buildCalendarFeed, type FeedEvent } from "@/lib/calendarFeed";
 import { getVenueSettings } from "@/lib/venueSettings";
 import { totalGuestCount } from "@/lib/guestCount";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
 import { getEventManagerCandidates } from "@/lib/staff";
 import type { EventRow, StaffRow } from "@/lib/types";
 
@@ -15,6 +15,7 @@ type EventWithManager = EventRow & { staff: Pick<StaffRow, "name"> | null };
 // outside the login proxy, so it checks the session and the calendar
 // permission itself) - no secret link to leak.
 export async function GET(request: Request) {
+  const eventTypeLabels = await getEventTypeLabels();
   const url = new URL(request.url);
   const month = url.searchParams.get("month") ?? "";
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
   const feedEvents: FeedEvent[] = (events ?? []).map((event) => ({
     id: event.id,
     name: event.name,
-    typeLabel: EVENT_TYPE_LABELS[event.event_type],
+    typeLabel: eventTypeLabels[event.event_type],
     date: event.event_date,
     startTime: event.start_time,
     canceled: false,

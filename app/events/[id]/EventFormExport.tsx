@@ -1,7 +1,8 @@
 "use client";
 
+import { useEventTypeLabel, useIsBusinessType } from "@/components/EventTypesProvider";
 import { PdfExportButton } from "@/components/PdfExportButton";
-import { EVENT_TYPE_LABELS, formatDate, formatTime, scheduleSortKey } from "@/lib/labels";
+import { formatDate, formatTime, scheduleSortKey } from "@/lib/labels";
 import type { EventRow, EventSupplierRow, TimelineItemRow } from "@/lib/types";
 
 export function EventFormExport({
@@ -19,7 +20,9 @@ export function EventFormExport({
   suppliers: EventSupplierRow[];
   scheduleItems: Pick<TimelineItemRow, "label" | "approx_time" | "notes">[];
 }) {
-  const isBusinessEvent = event.event_type === "business_event";
+  const eventTypeLabel = useEventTypeLabel();
+  const isBusinessType = useIsBusinessType();
+  const isBusinessEvent = isBusinessType(event.event_type);
   const hiddenForBusinessEvent = new Set([
     "מספר מנות ילדים",
     "מנות גלאט",
@@ -63,14 +66,14 @@ export function EventFormExport({
     <PdfExportButton
       label="הורדת טופס אירוע"
       filename={`טופס-אירוע-${event.name}.pdf`}
-      eventLabel={`${event.name} · ${EVENT_TYPE_LABELS[event.event_type]} · ${formatDate(event.event_date)}`}
+      eventLabel={`${event.name} · ${eventTypeLabel(event.event_type)} · ${formatDate(event.event_date)}`}
       showSignature={false}
     >
       <div className="flex flex-col gap-4">
         <div className="mb-1 flex items-baseline justify-between pb-2" style={{ borderBottom: "1px solid #d4d4d4" }}>
           <h1 className="font-serif text-xl font-bold">{event.name}</h1>
           <div className="text-sm" style={{ color: "#525252" }}>
-            {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+            {eventTypeLabel(event.event_type)} · {formatDate(event.event_date)}
           </div>
         </div>
 

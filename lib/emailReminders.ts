@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDaysToDate } from "@/lib/coupleMeetingReminders";
 import { hasDjTzachZivSupplier } from "@/lib/djSketchReminder";
-import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import { FALLBACK_EVENT_TYPES, eventTypeLabel, labelsOf } from "@/lib/eventTypes";
+import { formatDate } from "@/lib/labels";
 import type { EmailReminderCondition, EmailReminderRuleRow, EventType } from "@/lib/types";
 
 // The event fields a reminder's due date, condition or text can draw on.
@@ -44,10 +45,13 @@ export const EMAIL_PLACEHOLDERS: Record<string, string> = {
 
 const dash = (value: string | null) => value || "—";
 
-export function emailPlaceholderValues(event: EmailReminderEvent): Record<string, string> {
+export function emailPlaceholderValues(
+  event: EmailReminderEvent,
+  typeLabels: Record<string, string> = labelsOf(FALLBACK_EVENT_TYPES),
+): Record<string, string> {
   return {
     event_name: event.name,
-    event_type: EVENT_TYPE_LABELS[event.event_type],
+    event_type: eventTypeLabel(typeLabels, event.event_type),
     event_date: formatDate(event.event_date),
     guests: dash(event.estimated_guests),
     kids_meal_count: dash(event.kids_meal_count),
@@ -76,9 +80,9 @@ function replacePlaceholders(template: string, values: Record<string, string>, w
 // doesn't mention the event name itself, the event is added automatically.
 const mentionsEventName = (template: string) => template.includes("{event_name}");
 
-export function renderEmailSubject(template: string, event: EmailReminderEvent): string {
+export function renderEmailSubject(template: string, event: EmailReminderEvent, typeLabels?: Record<string, string>): string {
   const withEvent = mentionsEventName(template) ? template : `${template} - {event_name}`;
-  return replacePlaceholders(withEvent, emailPlaceholderValues(event), (_key, value) => value, (text) => text);
+  return replacePlaceholders(withEvent, emailPlaceholderValues(event, typeLabels), (_key, value) => value, (text) => text);
 }
 
 const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -86,11 +90,11 @@ const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "
 // The template is plain text: everything is HTML-escaped, the event name is
 // bolded, and line breaks (including inside the additional-info value) become
 // <br/>.
-export function renderEmailBody(template: string, event: EmailReminderEvent): string {
+export function renderEmailBody(template: string, event: EmailReminderEvent, typeLabels?: Record<string, string>): string {
   const withEvent = mentionsEventName(template) ? template : `${template}\n\nהאירוע: {event_name} (בתאריך {event_date})`;
   const html = replacePlaceholders(
     withEvent,
-    emailPlaceholderValues(event),
+    emailPlaceholderValues(event, typeLabels),
     (key, value) => (key === "event_name" ? `<strong>${escapeHtml(value)}</strong>` : escapeHtml(value)),
     escapeHtml,
   );

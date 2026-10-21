@@ -9,6 +9,8 @@ import { todaysEventDate } from "@/lib/scheduleTime";
 import { getEventManagerCandidates } from "@/lib/staff";
 import { getVenueSettings, venueLogoUrl } from "@/lib/venueSettings";
 import { getChecklists } from "@/lib/checklists";
+import { getEventTypes } from "@/lib/eventTypesServer";
+import { EventTypesProvider } from "@/components/EventTypesProvider";
 import type { EventRow } from "@/lib/types";
 import "./globals.css";
 
@@ -22,7 +24,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [staff, venue, checklists] = await Promise.all([getCurrentStaff(), getVenueSettings(), getChecklists()]);
+  const [staff, venue, checklists, eventTypes] = await Promise.all([
+    getCurrentStaff(),
+    getVenueSettings(),
+    getChecklists(),
+    getEventTypes(),
+  ]);
 
   // Fetched here (rather than only within the per-event layout) so the
   // switcher sidebar shows on every page, not just an event's own sub-pages.
@@ -58,6 +65,7 @@ export default async function RootLayout({
   return (
     <html lang="he" dir="rtl" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-background font-sans text-foreground">
+        <EventTypesProvider types={eventTypes}>
         <AppShell
           staff={staff ? { name: staff.name } : null}
           isPrivateEventsOwner={isPrivateEventsOwner(staff)}
@@ -80,6 +88,7 @@ export default async function RootLayout({
         >
           {children}
         </AppShell>
+        </EventTypesProvider>
       </body>
     </html>
   );

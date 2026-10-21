@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { getEventTypeLabels } from "@/lib/eventTypesServer";
 import { createClient } from "@/lib/supabase/server";
 import { permanentlyDeleteEvent, restoreEvent } from "@/app/events/actions";
-import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import { formatDate } from "@/lib/labels";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { getCurrentStaff } from "@/lib/auth";
@@ -9,6 +10,7 @@ import { canRead, canWrite } from "@/lib/permissions";
 import type { EventRow } from "@/lib/types";
 
 export default async function EventsTrashPage() {
+  const eventTypeLabels = await getEventTypeLabels();
   const supabase = await createClient();
   const [{ data: events, error }, currentStaff] = await Promise.all([
     supabase
@@ -64,7 +66,7 @@ export default async function EventsTrashPage() {
               <div className="min-w-0">
                 <p className="truncate font-medium">{event.name}</p>
                 <p className="text-sm text-foreground/60">
-                  {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)} · נמחק ב-
+                  {eventTypeLabels[event.event_type]} · {formatDate(event.event_date)} · נמחק ב-
                   {event.deleted_at ? new Date(event.deleted_at).toLocaleDateString("he-IL") : "—"}
                 </p>
               </div>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractPdfText, parsePdfDraft, type PdfImportDraft } from "@/lib/pdfImport";
+import { getEventTypes } from "@/lib/eventTypesServer";
 import { getCurrentStaff } from "@/lib/auth";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
@@ -29,7 +30,7 @@ export async function parsePdfImport(
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const text = await extractPdfText(buffer);
-  const draft = parsePdfDraft(text);
+  const draft = parsePdfDraft(text, await getEventTypes());
 
   let matched_manager_id: string | null = null;
   if (draft.event_manager_name) {

@@ -1,5 +1,8 @@
+"use client";
+
+import { useEventTypeLabel } from "@/components/EventTypesProvider";
 import type { ChecklistCategory } from "@/lib/checklists";
-import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import { formatDate } from "@/lib/labels";
 import type { EventType } from "@/lib/types";
 
 // Shared print layout for all five closing checklists (event manager, floor
@@ -31,12 +34,13 @@ export function ChecklistPrintable({
   showCategoryLabels?: boolean;
   photoUrls?: string[];
 }) {
+  const eventTypeLabel = useEventTypeLabel();
   return (
     <div className="flex flex-col gap-4">
       <div className="mb-1 flex items-baseline justify-between pb-2" style={{ borderBottom: "1px solid #d4d4d4" }}>
         <h1 className="font-serif text-xl font-bold">{title}</h1>
         <div className="text-sm" style={{ color: "#525252" }}>
-          {eventName} · {eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · {formatDate(eventDate)}
+          {eventName} · {eventType ? eventTypeLabel(eventType) : "—"} · {formatDate(eventDate)}
         </div>
       </div>
       {categories.map((category) => (

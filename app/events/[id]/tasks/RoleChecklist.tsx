@@ -1,8 +1,9 @@
 "use client";
 
+import { useEventTypeLabel } from "@/components/EventTypesProvider";
 import { useState } from "react";
 import type { ChecklistCategory } from "@/lib/checklists";
-import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import { formatDate } from "@/lib/labels";
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { ChecklistPrintable } from "@/components/ChecklistPrintable";
 import { ChecklistPhotos, type ChecklistPhoto } from "@/components/ChecklistPhotos";
@@ -74,6 +75,7 @@ export default function RoleChecklist({
   managerSignatureData?: string | null;
   photos: ChecklistPhoto[];
 }) {
+  const eventTypeLabel = useEventTypeLabel();
   // e.g. "צ'קליסט סגירה - מנהל פלור" -> "מנהל פלור" - shown as the signer's
   // role/title under their signature, instead of a generic "נחתם על ידי".
   const roleTitle = title.replace("צ'קליסט סגירה - ", "");
@@ -196,7 +198,7 @@ export default function RoleChecklist({
 
         <PdfExportButton
           filename={`${title}-${eventName}.pdf`}
-          eventLabel={`${eventName} · ${eventType ? EVENT_TYPE_LABELS[eventType] : "—"} · ${formatDate(eventDate)}`}
+          eventLabel={`${eventName} · ${eventType ? eventTypeLabel(eventType) : "—"} · ${formatDate(eventDate)}`}
           signerName={signedByName}
           signerLabel={roleTitle}
           storedSignature={signatureData ?? null}

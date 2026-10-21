@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { getEventTypeLabels } from "@/lib/eventTypesServer";
 import { createClient } from "@/lib/supabase/server";
-import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, EVENT_TYPE_LABELS, formatDate, getDisplayEventStatus } from "@/lib/labels";
+import { EVENT_STATUS_LABELS, EVENT_STATUS_COLORS, formatDate, getDisplayEventStatus } from "@/lib/labels";
 import { todaysEventDate } from "@/lib/scheduleTime";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { getCurrentStaff } from "@/lib/auth";
@@ -8,6 +9,7 @@ import { canRead } from "@/lib/permissions";
 import type { EventRow } from "@/lib/types";
 
 export default async function EventsArchivePage() {
+  const eventTypeLabels = await getEventTypeLabels();
   const supabase = await createClient();
   const [{ data: events, error }, currentStaff] = await Promise.all([
     supabase
@@ -54,7 +56,7 @@ export default async function EventsArchivePage() {
                 <div className="min-w-0">
                   <p className="truncate font-medium">{event.name}</p>
                   <p className="text-sm text-foreground/60">
-                    {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+                    {eventTypeLabels[event.event_type]} · {formatDate(event.event_date)}
                   </p>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${EVENT_STATUS_COLORS[displayStatus]}`}>

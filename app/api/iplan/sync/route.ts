@@ -1,3 +1,5 @@
+import { getEventTypes } from "@/lib/eventTypesServer";
+import { resolveEventType } from "@/lib/eventTypes";
 import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -110,6 +112,8 @@ async function processEvent(
   if (!item.confirmed) return { iplan_event_id: iplanId, action: "skipped", detail: "אירוע לא סגור ב-iPlan" };
 
   const incoming = snapshotFromPayload(item);
+  // iPlan's event kinds are matched to this venue's own types; one the venue does not have becomes "other".
+  incoming.event_type = resolveEventType(await getEventTypes(), incoming.event_type);
   if (!incoming.event_date || !/^\d{4}-\d{2}-\d{2}$/.test(incoming.event_date)) {
     return { iplan_event_id: iplanId, action: "skipped", detail: "אין תאריך אירוע" };
   }

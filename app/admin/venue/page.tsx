@@ -7,6 +7,8 @@ import { venueLogoUrl, type VenueSettings } from "@/lib/venueSettings";
 import { saveVenueSettings } from "./actions";
 import { WelcomeAttachments } from "./WelcomeAttachments";
 import { VenueLogo } from "./VenueLogo";
+import { EventTypes } from "./EventTypes";
+import { getEventTypes } from "@/lib/eventTypesServer";
 
 export default async function VenueSettingsPage() {
   const currentStaff = await getCurrentStaff();
@@ -113,6 +115,8 @@ export default async function VenueSettingsPage() {
           )}
         </fieldset>
       </SaveDetailsForm>
+
+      <EventTypes types={await getEventTypes()} canEdit={canEdit} />
 
       <VenueLogo logoUrl={venueLogoUrl(data)} venueName={data.venue_name} canEdit={canEdit} />
 

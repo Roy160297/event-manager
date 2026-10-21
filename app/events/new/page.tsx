@@ -2,13 +2,11 @@
 
 import { useActionState } from "react";
 import { createEvent } from "@/app/events/actions";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
-import type { EventType } from "@/lib/types";
+import { useEventTypes } from "@/components/EventTypesProvider";
 import { DateField } from "@/components/DateField";
 
-const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
-
 export default function NewEventPage() {
+  const eventTypes = useEventTypes();
   // createEvent returns an error message on failure, or redirects (a Next.js
   // control-flow signal, not a real error/return value) on success - nothing
   // to catch here either way.
@@ -38,12 +36,12 @@ export default function NewEventPage() {
           <span className="text-sm font-medium">סוג האירוע</span>
           <select
             name="event_type"
-            defaultValue="wedding"
+            defaultValue={eventTypes[0]?.key}
             className="rounded-md border border-border-classic bg-surface px-3 py-2"
           >
-            {EVENT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {EVENT_TYPE_LABELS[type]}
+            {eventTypes.map((type) => (
+              <option key={type.key} value={type.key}>
+                {type.label}
               </option>
             ))}
           </select>

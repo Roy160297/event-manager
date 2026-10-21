@@ -4,12 +4,10 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { addManagerFromImport, createEventFromPdfImport, parsePdfImport } from "./actions";
 import type { PdfImportDraft, ScheduleItemDraft, SupplierDraft } from "@/lib/pdfImport";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { useEventTypes } from "@/components/EventTypesProvider";
 import { DateInput } from "@/components/DateField";
 import { TimeInput } from "@/components/TimeField";
 import type { EventType, StaffRow } from "@/lib/types";
-
-const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
 type Draft = PdfImportDraft & { matched_manager_id: string | null };
 
@@ -17,6 +15,7 @@ const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2
 const labelClass = "flex flex-col gap-1 text-sm";
 
 export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) {
+  const eventTypes = useEventTypes();
   const router = useRouter();
   const [step, setStep] = useState<"upload" | "review">("upload");
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -186,9 +185,9 @@ export default function PdfImportWizard({ managers }: { managers: StaffRow[] }) 
             onChange={(e) => updateField("event_type", e.target.value as EventType)}
             className={inputClass}
           >
-            {EVENT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {EVENT_TYPE_LABELS[type]}
+            {eventTypes.map((type) => (
+              <option key={type.key} value={type.key}>
+                {type.label}
               </option>
             ))}
           </select>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getEventTypeLabels } from "@/lib/eventTypesServer";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
@@ -8,7 +9,6 @@ import { DateField } from "@/components/DateField";
 import { updateTask, updateTaskStatus } from "@/app/events/[id]/tasks/actions";
 import { actionErrorMessage } from "@/lib/actionError";
 import {
-  EVENT_TYPE_LABELS,
   TASK_PRIORITY_COLORS,
   TASK_PRIORITY_LABELS,
   formatDate,
@@ -23,6 +23,7 @@ const PRIORITIES = Object.keys(TASK_PRIORITY_LABELS) as TaskPriority[];
 const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2 text-sm";
 
 export default async function MyTasksPage() {
+  const eventTypeLabels = await getEventTypeLabels();
   const currentStaff = await getCurrentStaff();
   const canReadMyTasks = !!currentStaff && canRead(currentStaff.permissions, "my_tasks");
 
@@ -85,7 +86,7 @@ export default async function MyTasksPage() {
                     <Link href={`/events/${task.event_id}`} className="text-accent hover:underline">
                       {task.events?.name ?? "אירוע"}
                     </Link>
-                    {task.events && ` · ${EVENT_TYPE_LABELS[task.events.event_type]} · ${formatDate(task.events.event_date)}`}
+                    {task.events && ` · ${eventTypeLabels[task.events.event_type]} · ${formatDate(task.events.event_date)}`}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TASK_PRIORITY_COLORS[task.priority]}`}>

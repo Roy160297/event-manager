@@ -1,3 +1,5 @@
+import { getEventTypes } from "@/lib/eventTypesServer";
+import { isBusinessType, labelsOf } from "@/lib/eventTypes";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendReminderEmail } from "@/lib/reminderEmail";
 import { todayInIsrael } from "@/lib/coupleMeetingReminders";
@@ -51,7 +53,8 @@ export async function sendDueReminders(
 ): Promise<{ sent: number; skippedAlreadySent: number }> {
   // Business events don't have a couple/wedding flow, so none of these
   // couple-meeting-anchored reminder rules are relevant to them.
-  if (event.event_type === "business_event") return { sent: 0, skippedAlreadySent: 0 };
+  const eventTypes = await getEventTypes();
+  if (isBusinessType(eventTypes, event.event_type)) return { sent: 0, skippedAlreadySent: 0 };
 
   const activeRules = rules ?? (await loadActiveEmailReminderRules(supabase));
   const staffDirectory = directory ?? (await loadStaffDirectory(supabase));
@@ -114,8 +117,8 @@ export async function sendDueReminders(
     try {
       await sendReminderEmail({
         to,
-        subject: renderEmailSubject(rule.subject, event),
-        bodyText: renderEmailBody(rule.body, event),
+        subject: renderEmailSubject(rule.subject, event, labelsOf(eventTypes)),
+        bodyText: renderEmailBody(rule.body, event, labelsOf(eventTypes)),
       });
       sent++;
     } catch (err) {

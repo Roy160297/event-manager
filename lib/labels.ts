@@ -2,7 +2,6 @@ import { todaysEventDate } from "@/lib/scheduleTime";
 import type {
   EventDisplayStatus,
   EventRow,
-  EventType,
   LocationType,
   MenuType,
   RsvpStatus,
@@ -27,16 +26,6 @@ export const MONTH_LABELS = [
   "דצמבר",
 ];
 
-export const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  wedding: "חתונה - מזנונים",
-  wedding_service: "חתונה - הגשה",
-  reverse_wedding: "חתונה הפוכה - מזנונים",
-  reverse_wedding_service: "חתונה הפוכה - הגשה",
-  bat_mitzvah: "בת מצווה",
-  bar_mitzvah: "בר מצווה",
-  business_event: "אירוע עסקי",
-  other: "אחר",
-};
 
 export const MENU_TYPE_LABELS: Record<MenuType, string> = {
   buffet: "מזנונים",

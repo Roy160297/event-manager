@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractEventDraftFromImage, type ImageImportDraft } from "@/lib/imageImport";
+import { getEventTypes } from "@/lib/eventTypesServer";
 import { getCurrentStaff } from "@/lib/auth";
 import { applyDefaultSchedule } from "@/app/events/[id]/timeline/actions";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
@@ -36,7 +37,7 @@ async function parseImageImportInner(
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const draft = await extractEventDraftFromImage(buffer, file.type);
+  const draft = await extractEventDraftFromImage(buffer, file.type, await getEventTypes());
 
   let matched_manager_id: string | null = null;
   if (draft.event_manager_name) {

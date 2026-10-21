@@ -1,5 +1,7 @@
 "use server";
 
+import { getEventTypes } from "@/lib/eventTypesServer";
+import { isBusinessType, labelsOf } from "@/lib/eventTypes";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
@@ -107,8 +109,9 @@ async function markMissedEventsAsHandled(rule: EmailReminderRuleRow) {
       .gte("event_date", today)
       .returns<{ id: string; event_type: string; event_date: string; couple_meeting_date: string | null }[]>();
 
+    const eventTypes = await getEventTypes();
     const missed = (events ?? []).filter((event) => {
-      if (event.event_type === "business_event") return false;
+      if (isBusinessType(eventTypes, event.event_type)) return false;
       const target = resolveEmailTargetDate(rule, event);
       return !!target && target < today;
     });
@@ -201,8 +204,8 @@ export async function sendTestEmailReminderRule(ruleId: string): Promise<{ to: s
 
   await sendReminderEmail({
     to,
-    subject: `[בדיקה] ${renderEmailSubject(rule.subject, SAMPLE_EVENT)}`,
-    bodyText: renderEmailBody(rule.body, SAMPLE_EVENT),
+    subject: `[בדיקה] ${renderEmailSubject(rule.subject, SAMPLE_EVENT, labelsOf(await getEventTypes()))}`,
+    bodyText: renderEmailBody(rule.body, SAMPLE_EVENT, labelsOf(await getEventTypes())),
   });
   return { to };
 }

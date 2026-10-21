@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { getEventTypes } from "@/lib/eventTypesServer";
 import type { DayKind } from "@/lib/scheduleTemplates";
 
 // Every action returns an error message instead of throwing (Next.js hides thrown
@@ -95,7 +95,7 @@ export async function updateTemplate(id: string, formData: FormData): Result {
   const dayKind = String(formData.get("day_kind") ?? "any") as DayKind;
   if (!["any", "friday", "not_friday"].includes(dayKind)) return "יום לא תקין";
 
-  const validTypes = Object.keys(EVENT_TYPE_LABELS);
+  const validTypes = (await getEventTypes()).map((type) => type.key);
   const types = formData.getAll("event_types").map(String).filter((type) => validTypes.includes(type));
 
   const rawReference = String(formData.get("reference_time") ?? "").trim();

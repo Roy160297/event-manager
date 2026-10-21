@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { getEventTypeLabels } from "@/lib/eventTypesServer";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
 import { totalGuestCount } from "@/lib/guestCount";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
-import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import { formatDate } from "@/lib/labels";
 import { addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { getChecklists } from "@/lib/checklists";
 import { loadReportFields, type ReportValues } from "@/lib/reportFields";
@@ -38,6 +39,7 @@ const guestsLabel = (guests: string | null) => {
 };
 
 export default async function ChecklistNotesPage() {
+  const eventTypeLabels = await getEventTypeLabels();
   const [currentStaff, checklists] = await Promise.all([getCurrentStaff(), getChecklists()]);
   // One section per checklist that has a notes box and that this person may read.
   const readableSections = checklists.filter(
@@ -122,7 +124,7 @@ export default async function ChecklistNotesPage() {
                       </Link>
                       <span className="text-foreground/60">
                         {" "}
-                        · {EVENT_TYPE_LABELS[row.events!.event_type]} · {formatDate(row.events!.event_date)}
+                        · {eventTypeLabels[row.events!.event_type]} · {formatDate(row.events!.event_date)}
                         {guestsLabel(row.events!.estimated_guests)}
                       </span>
                     </p>
@@ -154,7 +156,7 @@ export default async function ChecklistNotesPage() {
                     </Link>
                     <span className="text-foreground/60">
                       {" "}
-                      · {EVENT_TYPE_LABELS[event.event_type]} · {formatDate(event.event_date)}
+                      · {eventTypeLabels[event.event_type]} · {formatDate(event.event_date)}
                       {guestsLabel(event.estimated_guests)}
                     </span>
                   </p>

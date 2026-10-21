@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentStaff } from "@/lib/auth";
 import { canWrite } from "@/lib/permissions";
 import { CHECKLISTS_CACHE_TAG, CLOSING_CHECKLIST_KEY } from "@/lib/checklists";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { getEventTypes } from "@/lib/eventTypesServer";
 
 // Every action returns an error message instead of throwing (Next.js hides thrown
 // Server Action messages in production), and undefined on success.
@@ -109,7 +109,7 @@ export async function updateChecklist(key: string, formData: FormData): Result {
   const noteLabel = String(formData.get("note_label") ?? "").trim();
   if (hasNotes && !noteLabel) return "יש להזין כותרת לתיבת ההערות או לבטל אותה";
 
-  const validTypes = Object.keys(EVENT_TYPE_LABELS);
+  const validTypes = (await getEventTypes()).map((type) => type.key);
   const types = formData.getAll("event_types").map(String).filter((type) => validTypes.includes(type));
 
   const supabase = await createClient();

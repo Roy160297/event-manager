@@ -6,13 +6,11 @@ import { createEventFromImageImport, parseImageImport } from "./actions";
 import { addManagerFromImport } from "@/app/events/import/actions";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import type { ImageImportDraft } from "@/lib/imageImport";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { useEventTypes } from "@/components/EventTypesProvider";
 import { DateInput } from "@/components/DateField";
 import { TimeInput } from "@/components/TimeField";
 import { compressImage } from "@/lib/clientImageCompress";
 import type { EventType, StaffRow } from "@/lib/types";
-
-const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
 // A hard server-side timeout or crash mid-request (rare, but possible on a
 // slow/overloaded image-extraction pass) never reaches our own try/catch in
@@ -34,6 +32,7 @@ const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2
 const labelClass = "flex flex-col gap-1 text-sm";
 
 export default function ImageImportWizard({ managers }: { managers: StaffRow[] }) {
+  const eventTypes = useEventTypes();
   const router = useRouter();
   const [step, setStep] = useState<"upload" | "review">("upload");
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -160,9 +159,9 @@ export default function ImageImportWizard({ managers }: { managers: StaffRow[] }
             onChange={(e) => updateField("event_type", e.target.value as EventType)}
             className={inputClass}
           >
-            {EVENT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {EVENT_TYPE_LABELS[type]}
+            {eventTypes.map((type) => (
+              <option key={type.key} value={type.key}>
+                {type.label}
               </option>
             ))}
           </select>

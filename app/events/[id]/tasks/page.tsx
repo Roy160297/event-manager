@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getEventTypeLabels } from "@/lib/eventTypesServer";
 import { actionErrorMessage } from "@/lib/actionError";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
@@ -16,7 +17,6 @@ import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
 import { ChecklistPhotos } from "@/components/ChecklistPhotos";
 import { signChecklist, unsignChecklist } from "./actions";
 import {
-  EVENT_TYPE_LABELS,
   TASK_PRIORITY_COLORS,
   TASK_PRIORITY_LABELS,
   TASK_STATUS_COLORS,
@@ -44,6 +44,7 @@ const PRIORITIES = Object.keys(TASK_PRIORITY_LABELS) as (keyof typeof TASK_PRIOR
 type TaskWithAssignee = TaskRow & { staff: Pick<StaffRow, "name"> | null };
 
 export default async function TasksPage({ params }: { params: Promise<{ id: string }> }) {
+  const eventTypeLabels = await getEventTypeLabels();
   const { id: eventId } = await params;
   const supabase = await createClient();
 
@@ -356,7 +357,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
             </p>
             <p>
               <span className="text-foreground/60">סוג אירוע: </span>
-              {event ? EVENT_TYPE_LABELS[event.event_type] : "—"}
+              {event ? eventTypeLabels[event.event_type] : "—"}
             </p>
             <p>
               <span className="text-foreground/60">שעת תחילת האירוע: </span>

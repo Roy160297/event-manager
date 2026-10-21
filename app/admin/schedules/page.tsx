@@ -6,9 +6,9 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TimeField } from "@/components/TimeField";
 import { TrashIcon } from "@/components/icons";
-import { EVENT_TYPE_LABELS } from "@/lib/labels";
+import { getEventTypes } from "@/lib/eventTypesServer";
+import { labelsOf, type EventTypeInfo } from "@/lib/eventTypes";
 import { DAY_KIND_LABELS, loadScheduleTemplates, type DayKind, type ScheduleTemplate } from "@/lib/scheduleTemplates";
-import type { EventType } from "@/lib/types";
 import {
   addStep,
   createTemplate,
@@ -20,7 +20,6 @@ import {
   updateTemplate,
 } from "./actions";
 
-const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 const DAY_KINDS = Object.keys(DAY_KIND_LABELS) as DayKind[];
 
 const inputClass = "rounded-md border border-border-classic bg-surface px-3 py-2 text-sm";
@@ -28,9 +27,9 @@ const smallButton = "rounded-md border border-border-classic px-2 py-1 text-xs h
 const saveButton = "rounded-full border border-accent px-3 py-1.5 text-sm text-accent hover:bg-accent-soft";
 const dangerButton = "flex items-center gap-1 rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50";
 
-function autoApplySummary(template: ScheduleTemplate): string {
+function autoApplySummary(template: ScheduleTemplate, labels: Record<string, string>): string {
   if (template.eventTypes.length === 0) return "ידני בלבד";
-  const types = template.eventTypes.map((type) => EVENT_TYPE_LABELS[type as EventType] ?? type).join(", ");
+  const types = template.eventTypes.map((type) => labels[type] ?? type).join(", ");
   return `${types} · ${DAY_KIND_LABELS[template.dayKind]}`;
 }
 
@@ -64,7 +63,17 @@ function StepRow({ step }: { step: ScheduleTemplate["steps"][number] }) {
   );
 }
 
-function TemplateEditor({ template, index, total }: { template: ScheduleTemplate; index: number; total: number }) {
+function TemplateEditor({
+  template,
+  index,
+  total,
+  eventTypes,
+}: {
+  template: ScheduleTemplate;
+  index: number;
+  total: number;
+  eventTypes: EventTypeInfo[];
+}) {
   const id = template.id;
 
   async function save(formData: FormData) {
@@ -95,7 +104,7 @@ function TemplateEditor({ template, index, total }: { template: ScheduleTemplate
   return (
     <details className="rounded-lg border border-border-classic bg-surface p-4">
       <summary className="cursor-pointer text-sm font-medium">
-        {template.name} <span className="text-foreground/60">({template.steps.length === 1 ? "שלב אחד" : `${template.steps.length} שלבים`} · {autoApplySummary(template)})</span>
+        {template.name} <span className="text-foreground/60">({template.steps.length === 1 ? "שלב אחד" : `${template.steps.length} שלבים`} · {autoApplySummary(template, labelsOf(eventTypes))})</span>
       </summary>
 
       <div className="mt-4 flex flex-col gap-5">
@@ -112,10 +121,10 @@ function TemplateEditor({ template, index, total }: { template: ScheduleTemplate
           <fieldset className="flex flex-col gap-1">
             <legend className="mb-1 text-sm font-medium">להחיל אוטומטית על אירוע חדש מסוג</legend>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {EVENT_TYPES.map((type) => (
-                <label key={type} className="flex items-center gap-1.5 text-sm">
-                  <input type="checkbox" name="event_types" value={type} defaultChecked={template.eventTypes.includes(type)} className="h-4 w-4" />
-                  {EVENT_TYPE_LABELS[type]}
+              {eventTypes.map((type) => (
+                <label key={type.key} className="flex items-center gap-1.5 text-sm">
+                  <input type="checkbox" name="event_types" value={type.key} defaultChecked={template.eventTypes.includes(type.key)} className="h-4 w-4" />
+                  {type.label}
                 </label>
               ))}
             </div>
@@ -220,7 +229,7 @@ export default async function SchedulesAdminPage() {
   if (!currentStaff || !canRead(currentStaff.permissions, "venue_settings")) return <NoPermissionNotice />;
   const canEdit = canWrite(currentStaff.permissions, "venue_settings");
 
-  const templates = await loadScheduleTemplates(await createClient());
+  const [templates, eventTypes] = await Promise.all([loadScheduleTemplates(await createClient()), getEventTypes()]);
 
   async function create(formData: FormData) {
     "use server";
@@ -259,7 +268,7 @@ export default async function SchedulesAdminPage() {
 
       <div className={canEdit ? "flex flex-col gap-3" : "pointer-events-none flex flex-col gap-3 opacity-80"}>
         {templates.map((template, index) => (
-          <TemplateEditor key={template.id} template={template} index={index} total={templates.length} />
+          <TemplateEditor key={template.id} template={template} index={index} total={templates.length} eventTypes={eventTypes} />
         ))}
         {templates.length === 0 && <p className="text-foreground/60">עדיין לא הוגדרו תבניות.</p>}
       </div>

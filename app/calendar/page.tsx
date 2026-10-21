@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { getEventTypeLabels } from "@/lib/eventTypesServer";
 import { createClient } from "@/lib/supabase/server";
-import { EVENT_TYPE_LABELS, assignManagerColors, formatDateWithWeekday, getDisplayEventStatus, MONTH_LABELS, UNASSIGNED_MANAGER_COLOR } from "@/lib/labels";
+import { assignManagerColors, formatDateWithWeekday, getDisplayEventStatus, MONTH_LABELS, UNASSIGNED_MANAGER_COLOR } from "@/lib/labels";
 import { getHebrewDatesByDate, getHolidaysByDate } from "@/lib/hebrewCalendar";
 import { CalendarGrid, type CalendarCell, type CalendarEvent, type ManagerLegendEntry } from "@/components/CalendarGrid";
 import { MonthPicker } from "@/components/MonthPicker";
@@ -63,6 +64,7 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ month?: string }>;
 }) {
+  const eventTypeLabels = await getEventTypeLabels();
   const { month: monthParam } = await searchParams;
   const { year, month } = parseMonthParam(monthParam);
 
@@ -135,7 +137,7 @@ export default async function CalendarPage({
       id: event.id,
       dateLabel: formatDateWithWeekday(event.event_date),
       name: event.name,
-      typeLabel: EVENT_TYPE_LABELS[event.event_type],
+      typeLabel: eventTypeLabels[event.event_type],
       timeLabel: `${event.start_time ? event.start_time.slice(0, 5) : hhmm(DEFAULT_START_MINUTES)}–${hhmm(FIXED_END_MINUTES)}`,
     }));
 

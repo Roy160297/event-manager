@@ -1,11 +1,11 @@
 "use client";
 
+import { useEventTypeLabel } from "@/components/EventTypesProvider";
 import Link from "next/link";
 import { useState } from "react";
 import {
   EVENT_STATUS_COLORS,
   EVENT_STATUS_LABELS,
-  EVENT_TYPE_LABELS,
   formatTime,
 } from "@/lib/labels";
 import type { EventDisplayStatus, EventType } from "@/lib/types";
@@ -49,6 +49,7 @@ export function CalendarGrid({
   todayStr: string;
   managerLegend: ManagerLegendEntry[];
 }) {
+  const eventTypeLabel = useEventTypeLabel();
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
 
   return (
@@ -102,7 +103,7 @@ export function CalendarGrid({
                 >
                   <span className="w-full break-words text-[11px] font-semibold">{event.name}</span>
                   <span className="w-full break-words text-[10px] opacity-80">
-                    {EVENT_TYPE_LABELS[event.eventType]}
+                    {eventTypeLabel(event.eventType)}
                   </span>
                 </button>
               ))}
@@ -117,7 +118,7 @@ export function CalendarGrid({
             <div>
               <p className="font-serif text-lg font-bold">{selected.name}</p>
               <p className="text-sm text-foreground/60">
-                {EVENT_TYPE_LABELS[selected.eventType]}
+                {eventTypeLabel(selected.eventType)}
                 {selected.startTime ? ` · ${formatTime(selected.startTime)}` : ""}
               </p>
             </div>
