@@ -1,3 +1,4 @@
+import { getVenueSettings } from "@/lib/venueSettings";
 import { getEventTypes } from "@/lib/eventTypesServer";
 import { resolveEventType } from "@/lib/eventTypes";
 import { timingSafeEqual } from "node:crypto";
@@ -308,7 +309,8 @@ export async function POST(request: Request) {
   // iPlan (see lib/iplanSchedule.ts), so the pace is set here, not in the
   // extension.
   const { data: switchRow } = await supabase.from("iplan_sync_status").select("enabled").eq("id", true).maybeSingle<{ enabled: boolean }>();
-  const enabled = switchRow?.enabled === true;
+  // Off for a venue that does not use iPlan at all, whatever the sync switch says.
+  const enabled = switchRow?.enabled === true && (await getVenueSettings()).iplan_enabled;
 
   if (body.status === "poll") {
     const { data: row } = await supabase

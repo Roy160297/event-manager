@@ -1,7 +1,10 @@
+import { notFound } from "next/navigation";
 import { getEventManagerCandidates } from "@/lib/staff";
+import { getVenueSettings } from "@/lib/venueSettings";
 import PdfImportWizard from "./PdfImportWizard";
 
 export default async function ImportFromPdfPage() {
+  if (!(await getVenueSettings()).iplan_enabled) notFound();
   const managers = await getEventManagerCandidates();
 
   return (

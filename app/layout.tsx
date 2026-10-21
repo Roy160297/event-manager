@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
 import { isPrivateEventsOwner } from "@/lib/privateEvents";
+import { getPrivateEventsOwnerEmail } from "@/lib/privateEventsOwner";
 import { signOut } from "@/app/login/actions";
 import { createClient } from "@/lib/supabase/server";
 import { todaysEventDate } from "@/lib/scheduleTime";
@@ -24,11 +25,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [staff, venue, checklists, eventTypes] = await Promise.all([
+  const [staff, venue, checklists, eventTypes, privateOwnerEmail] = await Promise.all([
     getCurrentStaff(),
     getVenueSettings(),
     getChecklists(),
     getEventTypes(),
+    getPrivateEventsOwnerEmail(),
   ]);
 
   // Fetched here (rather than only within the per-event layout) so the
@@ -68,7 +70,7 @@ export default async function RootLayout({
         <EventTypesProvider types={eventTypes}>
         <AppShell
           staff={staff ? { name: staff.name } : null}
-          isPrivateEventsOwner={isPrivateEventsOwner(staff)}
+          isPrivateEventsOwner={isPrivateEventsOwner(staff, privateOwnerEmail)}
           venueName={venue.venue_name}
           venueLogoUrl={venueLogoUrl(venue)}
           navProps={{

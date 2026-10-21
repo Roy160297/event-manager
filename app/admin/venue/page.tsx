@@ -95,6 +95,20 @@ export default async function VenueSettingsPage() {
           </section>
 
           <section className="flex flex-col gap-3">
+            <p className="font-serif text-lg font-bold">שילוב עם iPlan</p>
+            <label className="flex items-start gap-2 text-sm">
+              <input type="checkbox" name="iplan_enabled" defaultChecked={data.iplan_enabled} className="mt-0.5 h-4 w-4" />
+              <span>
+                <span className="font-medium">האולם עובד עם iPlan</span>
+                <span className={`${hintClass} block`}>
+                  מפעיל את יצירת האירוע וחידושו מצילום מסך או PDF של iPlan, את הקישורים ל-iPlan ואת הלשונית &quot;סנכרון iPlan&quot; בניהול.
+                  אולם שאינו משתמש ב-iPlan מכבה את זה ולא יראה את הכפתורים האלה.
+                </span>
+              </span>
+            </label>
+          </section>
+
+          <section className="flex flex-col gap-3">
             <p className="font-serif text-lg font-bold">אירועים חדשים</p>
             <label className={labelClass}>
               <span className="font-medium">טקסט התחלתי בשדה &quot;מידע נוסף&quot; בחתונות</span>

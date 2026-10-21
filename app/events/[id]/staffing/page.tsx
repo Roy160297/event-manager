@@ -8,6 +8,7 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import TableSketchPhoto from "./TableSketchPhoto";
+import { getVenueSettings } from "@/lib/venueSettings";
 import EventWaitersRoster from "./EventWaitersRoster";
 import { StaffingLocationList } from "./StaffingLocationList";
 import { StaffingRow } from "./StaffingRow";
@@ -147,6 +148,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
         isPdf={isSketchPdf}
         canWrite={canWriteStaffing}
         seatedChairsCount={event?.sketch_seated_chairs_count ?? null}
+        iplanEnabled={(await getVenueSettings()).iplan_enabled}
       />
 
       <EventWaitersRoster eventId={eventId} roster={rosterEntries} canWrite={canWriteStaffing} />

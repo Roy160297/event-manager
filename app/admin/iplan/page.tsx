@@ -1,4 +1,6 @@
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getVenueSettings } from "@/lib/venueSettings";
 import { getCurrentStaff } from "@/lib/auth";
 import { IS_DEMO } from "@/lib/demoMode";
 import { canWrite } from "@/lib/permissions";
@@ -73,6 +75,7 @@ function agoText(minutes: number | null): string {
 }
 
 export default async function IplanSyncPage() {
+  if (!(await getVenueSettings()).iplan_enabled) notFound();
   const supabase = await createClient();
   const [{ data: status }, { data: log }, currentStaff] = await Promise.all([
     supabase.from("iplan_sync_status").select("*").eq("id", true).maybeSingle<StatusRow>(),

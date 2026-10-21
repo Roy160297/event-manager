@@ -13,12 +13,14 @@ export default function TableSketchPhoto({
   isPdf,
   canWrite,
   seatedChairsCount,
+  iplanEnabled,
 }: {
   eventId: string;
   sketchUrl: string | null;
   isPdf: boolean;
   canWrite: boolean;
   seatedChairsCount: string | null;
+  iplanEnabled: boolean;
 }) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
@@ -85,9 +87,9 @@ export default function TableSketchPhoto({
               disabled={isPending}
               className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft disabled:opacity-50"
             >
-              {isPending ? "מעלה..." : sketchUrl ? "החלף סקיצת PDF מ-iPlan" : "העלה סקיצת PDF מ-iPlan"}
+              {isPending ? "מעלה..." : sketchUrl ? `החלף סקיצה${iplanEnabled ? " (PDF מ-iPlan)" : ""}` : `העלה סקיצה${iplanEnabled ? " (PDF מ-iPlan)" : ""}`}
             </button>
-            {!IS_DEMO && (
+            {iplanEnabled && !IS_DEMO && (
               <a
                 href="https://iplan.co.il/he-IL/corp/sign_in?"
                 target="_blank"
@@ -138,8 +140,8 @@ export default function TableSketchPhoto({
         )
       ) : (
         <p className="text-sm text-foreground/60">
-          העלו תמונה או PDF של סקיצת הפריסה כדי שיהיה ניתן לראות אותה כאן בזמן שיבוץ המלצרים. העלאת קובץ PDF
-          מ-iPlan גם מייבאת אוטומטית את רשימת השולחנות והעמדות ממנו.
+          העלו תמונה או PDF של סקיצת הפריסה כדי שיהיה ניתן לראות אותה כאן בזמן שיבוץ המלצרים.
+          {iplanEnabled && " העלאת קובץ PDF מ-iPlan גם מייבאת אוטומטית את רשימת השולחנות והעמדות ממנו."}
         </p>
       )}
 

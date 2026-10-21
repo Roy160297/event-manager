@@ -149,7 +149,7 @@ export default async function EventOverviewPage({
         />
       )}
 
-      {canWriteEvents && (
+      {canWriteEvents && venue.iplan_enabled && (
         <ImageUpdateWizard eventId={id} managers={managers ?? []} salespeople={salespeople ?? []} />
       )}
 

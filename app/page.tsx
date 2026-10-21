@@ -11,6 +11,7 @@ import { EventManagerFilter } from "@/components/EventManagerFilter";
 import { TrashIcon } from "@/components/icons";
 import { getCurrentStaff } from "@/lib/auth";
 import { getEventManagerCandidates } from "@/lib/staff";
+import { getVenueSettings } from "@/lib/venueSettings";
 import { canRead, canWrite } from "@/lib/permissions";
 import type { EventRow } from "@/lib/types";
 
@@ -20,6 +21,7 @@ export default async function EventsDashboard({
   searchParams: Promise<{ manager?: string }>;
 }) {
   const eventTypeLabels = await getEventTypeLabels();
+  const { iplan_enabled: iplanEnabled } = await getVenueSettings();
   const { manager: managerParam } = await searchParams;
   const supabase = await createClient();
   const [{ data: events, error }, managers, currentStaff] = await Promise.all([
@@ -63,12 +65,14 @@ export default async function EventsDashboard({
         <div className="flex flex-wrap gap-2">
           {canWriteEvents && (
             <>
-              <Link
-                href="/events/import-image"
-                className="rounded-full border-2 border-accent bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
-              >
-                יצירת אירוע מצילום מסך &quot;ענן&quot; מ-iPlan
-              </Link>
+              {iplanEnabled && (
+                <Link
+                  href="/events/import-image"
+                  className="rounded-full border-2 border-accent bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
+                >
+                  יצירת אירוע מצילום מסך &quot;ענן&quot; מ-iPlan
+                </Link>
+              )}
               <Link
                 href="/events/new"
                 className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
@@ -94,7 +98,7 @@ export default async function EventsDashboard({
                 >
                   פח מיחזור
                 </Link>
-                {!IS_DEMO && (
+                {iplanEnabled && !IS_DEMO && (
                   <a
                     href="https://iplan.co.il/he-IL/corp/sign_in?"
                     target="_blank"

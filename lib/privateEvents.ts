@@ -1,17 +1,16 @@
 import type { CurrentStaff } from "@/lib/auth";
 import type { PrivateEventType } from "@/lib/types";
 
-// This whole section is Roy's own private-event admin, deliberately kept
+// The private-events section belongs to one person, deliberately kept
 // completely outside role_permissions/has_permission() so it can never show
 // up in - or be granted from - the admin roles screen. Gating is a plain
-// hardcoded identity check instead, mirrored by is_private_events_owner() in
-// the DB (see 00000000000060_private_events.sql), which is what actually
-// enforces this at the RLS level; this helper only decides what the app
-// renders.
-const OWNER_EMAIL = "roy1602@gmail.com";
-
-export function isPrivateEventsOwner(staff: CurrentStaff | null): boolean {
-  return staff?.email === OWNER_EMAIL;
+// identity check instead: the owner's e-mail is app_settings
+// 'private_events_owner_email' (not visible to venue admins), mirrored by
+// is_private_events_owner() in the DB, which is what actually enforces this at
+// the RLS level; this helper only decides what the app renders. With no owner
+// set the whole section is off.
+export function isPrivateEventsOwner(staff: CurrentStaff | null, ownerEmail: string | null): boolean {
+  return !!staff?.email && !!ownerEmail && staff.email.toLowerCase() === ownerEmail.toLowerCase();
 }
 
 export const PRIVATE_EVENT_TYPE_LABELS: Record<PrivateEventType, string> = {

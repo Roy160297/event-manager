@@ -1,4 +1,6 @@
+import { notFound } from "next/navigation";
 import { getEventManagerCandidates } from "@/lib/staff";
+import { getVenueSettings } from "@/lib/venueSettings";
 import ImageImportWizard from "./ImageImportWizard";
 
 // The Gemini extraction can chain multiple sequential calls (overload retry,
@@ -8,6 +10,7 @@ import ImageImportWizard from "./ImageImportWizard";
 export const maxDuration = 60;
 
 export default async function ImportFromImagePage() {
+  if (!(await getVenueSettings()).iplan_enabled) notFound();
   const managers = await getEventManagerCandidates();
 
   return (

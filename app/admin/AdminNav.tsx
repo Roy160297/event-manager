@@ -7,8 +7,9 @@ import { TAB_NAV_CLASS, tabLinkClass } from "@/components/tabStyles";
 const LINKS = [
   { href: "/admin/users", label: "משתמשים" },
   { href: "/admin/roles", label: "תפקידים והרשאות" },
-  { href: "/admin/iplan", label: "סנכרון iPlan" },
 ];
+
+const IPLAN_LINK = { href: "/admin/iplan", label: "סנכרון iPlan" };
 
 const VENUE_LINKS = [
   { href: "/admin/venue", label: "הגדרות האולם" },
@@ -19,12 +20,12 @@ const VENUE_LINKS = [
   { href: "/admin/guides", label: "מדריכים" },
 ];
 
-export function AdminNav({ showVenue = false }: { showVenue?: boolean }) {
+export function AdminNav({ showVenue = false, showIplan = false }: { showVenue?: boolean; showIplan?: boolean }) {
   const pathname = usePathname();
 
   return (
     <nav className={`mt-3 ${TAB_NAV_CLASS}`}>
-      {(showVenue ? [...LINKS, ...VENUE_LINKS] : LINKS).map((link) => {
+      {[...LINKS, ...(showIplan ? [IPLAN_LINK] : []), ...(showVenue ? VENUE_LINKS : [])].map((link) => {
         const isActive = pathname.startsWith(link.href);
         return (
           <Link
