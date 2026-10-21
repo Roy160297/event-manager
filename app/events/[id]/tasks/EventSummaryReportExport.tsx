@@ -3,10 +3,12 @@
 import { PdfExportButton } from "@/components/PdfExportButton";
 import { EventSummaryReportPrintable } from "@/components/EventSummaryReportPrintable";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
+import type { ReportField } from "@/lib/reportFields";
 import type { EventRow } from "@/lib/types";
 
 export function EventSummaryReportExport({
   event,
+  reportFields,
   managerName,
   floorManagerName,
   guestCommitment,
@@ -15,6 +17,7 @@ export function EventSummaryReportExport({
   photoUrls,
 }: {
   event: EventRow | null;
+  reportFields: ReportField[];
   managerName: string | null;
   floorManagerName: string | null;
   guestCommitment: string | null;
@@ -33,6 +36,7 @@ export function EventSummaryReportExport({
     >
       <EventSummaryReportPrintable
         event={event}
+        reportFields={reportFields}
         managerName={managerName}
         floorManagerName={floorManagerName}
         guestCommitment={guestCommitment}

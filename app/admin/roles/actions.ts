@@ -52,12 +52,22 @@ export async function deleteRole(roleId: string) {
   updateTag(SALESPEOPLE_CACHE_TAG);
 }
 
-export async function setRoleEventManagerFlag(roleId: string, value: boolean) {
+const ROLE_FLAGS = {
+  can_be_event_manager: EVENT_MANAGERS_CACHE_TAG,
+  can_be_floor_manager: FLOOR_MANAGERS_CACHE_TAG,
+  can_be_salesperson: SALESPEOPLE_CACHE_TAG,
+} as const;
+export type RoleFlag = keyof typeof ROLE_FLAGS;
+
+// Whether people with this role appear in the event manager / floor manager /
+// salesperson dropdowns.
+export async function setRoleFlag(roleId: string, flag: RoleFlag, value: boolean) {
+  if (!(flag in ROLE_FLAGS)) throw new Error("הגדרה לא מוכרת");
   const supabase = await createClient();
-  const { error } = await supabase.from("roles").update({ can_be_event_manager: value }).eq("id", roleId);
+  const { error } = await supabase.from("roles").update({ [flag]: value }).eq("id", roleId);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/roles");
-  updateTag(EVENT_MANAGERS_CACHE_TAG);
+  updateTag(ROLE_FLAGS[flag]);
 }
 
 export async function setRolePermission(

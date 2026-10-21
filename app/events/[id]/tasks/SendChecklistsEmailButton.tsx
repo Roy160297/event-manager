@@ -7,6 +7,7 @@ import { EditableRecipientList } from "@/components/EditableRecipientList";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { sendAllChecklistsEmail } from "@/app/events/actions";
 import type { ChecklistCategory } from "@/lib/checklists";
+import type { ReportField } from "@/lib/reportFields";
 import type { EventRow } from "@/lib/types";
 
 // Deliberately just the shape needed for the event manager's own closing
@@ -44,6 +45,7 @@ function fileDate(eventDate: string | null): string {
 
 export function SendChecklistsEmailButton({
   event,
+  reportFields,
   managerName,
   floorManagerName,
   managerEmail,
@@ -58,6 +60,7 @@ export function SendChecklistsEmailButton({
   defaultCc,
 }: {
   event: EventRow;
+  reportFields: ReportField[];
   managerName: string | null;
   floorManagerName: string | null;
   managerEmail: string | null;
@@ -136,6 +139,7 @@ export function SendChecklistsEmailButton({
       body: (
         <EventSummaryReportPrintable
           event={event}
+          reportFields={reportFields}
           managerName={managerName}
           floorManagerName={floorManagerName}
           guestCommitment={guestCommitment}

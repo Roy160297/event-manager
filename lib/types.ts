@@ -90,6 +90,8 @@ export interface EventRow {
   menu_notes: string | null;
   parking_notes: string | null;
   table_sketch_path: string | null;
+  // Summary-report values by field key (see report_fields); the columns below are the old storage.
+  report_values: Record<string, string>;
   production_company: string | null;
   exit_time: string | null;
   report_end_time: string | null;
@@ -155,6 +157,8 @@ export interface RoleRow {
   id: string;
   name: string;
   can_be_event_manager: boolean;
+  can_be_floor_manager: boolean;
+  can_be_salesperson: boolean;
   created_at: string;
 }
 

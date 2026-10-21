@@ -1,49 +1,37 @@
 import { EVENT_TYPE_LABELS, formatDate, formatTime } from "@/lib/labels";
+import { REPORT_END_TIME_KEY, displayValue, longFields, shortFields, type ReportField } from "@/lib/reportFields";
 import type { EventRow } from "@/lib/types";
 
 export function EventSummaryReportPrintable({
   event,
+  reportFields,
   managerName,
   floorManagerName,
   guestCommitment,
   photoUrls,
 }: {
   event: EventRow;
+  reportFields: ReportField[];
   managerName: string | null;
   floorManagerName: string | null;
   guestCommitment: string | null;
   photoUrls?: string[];
 }) {
+  const values = event.report_values ?? {};
+  const hasEndTimeField = reportFields.some((field) => field.key === REPORT_END_TIME_KEY);
   const fields: [string, string | number | null][] = [
     ["תאריך", formatDate(event.event_date)],
     ["שם הלקוח", event.name],
     ["סוג אירוע", EVENT_TYPE_LABELS[event.event_type]],
     ["שעת תחילת האירוע", formatTime(event.start_time)],
-    ["שעת סיום האירוע", formatTime(event.report_end_time)],
+    ...(hasEndTimeField ? ([["שעת סיום האירוע", formatTime(values[REPORT_END_TIME_KEY] ?? null)]] as [string, string | null][]) : []),
     ["מינימום אורחים בהתחייבות", guestCommitment],
     ["מספר ילדים (התחייבות)", event.kids_meal_count],
     ["מנהל אירוע", managerName],
-    ["חברת הפקה", event.production_company],
-    ["שעת יציאה מהאולם", formatTime(event.exit_time)],
-    ["כמות אורחים סופית - קאונטר", event.final_guest_count_counter],
-    ["כמות אורחים סופית - אייפלן (כולל דף נוספים)", event.final_guest_count_iplan],
-    ["כמות רזרבה שנפתחו", event.reserve_opened_count],
-    ["כמות ילדים (אורחים)", event.final_children_count],
-    ["מנהל בר", event.bar_manager_name],
-    ["כמות ברמנים", event.bartender_count],
-    ["מנהל פלור", floorManagerName],
-    ["כמות מלצרים", event.waiter_count],
-    ["כמות מגשים התחלתית", event.initial_tray_count],
-    ["כמות מגשים סופית", event.final_tray_count],
-    ["כמות טבחים", event.cook_count],
-    ["כמות מנקי מטבח", event.kitchen_dishwasher_count],
-    ["כמות שוטפי כלים", event.dishwasher_count],
-    ["כמות מאבטחים", event.security_guard_count],
-    ["שעות מנקה אולם", event.hall_cleaner_hours],
-    ["שעות מנקה שירותים", event.restroom_cleaner_hours],
-    ["שעות מנקי מטבח", event.kitchen_dishwasher_hours],
-    ["שעות שוטפי כלים", event.dishwasher_hours],
-    ["שעות מאבטחים", event.security_guard_hours],
+    ...shortFields(reportFields).map((field) => {
+      const value = displayValue(field, values, floorManagerName);
+      return [field.label, field.type === "time" ? formatTime(value) : value] as [string, string | null];
+    }),
   ];
 
   return (
@@ -64,18 +52,17 @@ export function EventSummaryReportPrintable({
         ))}
       </div>
 
-      {event.report_summary && (
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-bold">סיכום האירוע</p>
-          <p className="whitespace-pre-wrap text-[12.5px]">{event.report_summary}</p>
-        </div>
-      )}
-      {event.report_general_notes && (
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-bold">הערות כלליות ופידבק מלצרים</p>
-          <p className="whitespace-pre-wrap text-[12.5px]">{event.report_general_notes}</p>
-        </div>
-      )}
+      {longFields(reportFields).map((field) => {
+        const value = displayValue(field, values, floorManagerName);
+        return (
+          value && (
+            <div key={field.key} className="flex flex-col gap-1">
+              <p className="text-sm font-bold">{field.label}</p>
+              <p className="whitespace-pre-wrap text-[12.5px]">{value}</p>
+            </div>
+          )
+        );
+      })}
       {photoUrls && photoUrls.length > 0 && (
         <div className="flex flex-col gap-1.5 pt-1" style={{ borderTop: "1px solid #d4d4d4" }}>
           <p className="text-sm font-bold">תמונות</p>

@@ -1,9 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { setRoleEventManagerFlag } from "./actions";
+import { setRoleFlag, type RoleFlag } from "./actions";
 
-export function EventManagerToggle({ roleId, initialValue }: { roleId: string; initialValue: boolean }) {
+const FLAG_LABELS: Record<RoleFlag, string> = {
+  can_be_event_manager: "יכול/ה להיות מנהל/ת אירוע אחראי/ת",
+  can_be_floor_manager: "יכול/ה להיות מנהל/ת פלור",
+  can_be_salesperson: "יכול/ה להיות איש/ת מכירות",
+};
+
+// One checkbox of a role: whether its people are offered in the matching
+// dropdown on an event (event manager, floor manager, salesperson).
+export function RoleFlagToggle({ roleId, flag, initialValue }: { roleId: string; flag: RoleFlag; initialValue: boolean }) {
   const [checked, setChecked] = useState(initialValue);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,13 +25,13 @@ export function EventManagerToggle({ roleId, initialValue }: { roleId: string; i
             const next = e.target.checked;
             setError(null);
             setChecked(next);
-            setRoleEventManagerFlag(roleId, next).catch((err) => {
+            setRoleFlag(roleId, flag, next).catch((err) => {
               setChecked(!next);
               setError(err instanceof Error ? err.message : "שגיאה בעדכון");
             });
           }}
         />
-        יכול/ה להיות מנהל/ת אירוע אחראי/ת
+        {FLAG_LABELS[flag]}
       </label>
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>

@@ -31,17 +31,15 @@ export const getEventManagerCandidates = unstable_cache(
 
 export const FLOOR_MANAGERS_CACHE_TAG = "floor-managers";
 
-// The "מנהל/ת פלור" dropdown: staff whose assigned role is literally named
-// "מנהל פלור" (an admin-managed role, same as bar/kitchen/barista roles),
-// rather than a separate boolean flag - simpler since this role doesn't
-// carry any other permission meaning.
+// The "מנהל/ת פלור" dropdown: staff whose role has the "can be a floor manager"
+// flag (set on the roles screen), not matched by the role's name.
 export const getFloorManagerCandidates = unstable_cache(
   async (): Promise<StaffRow[]> => {
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("staff")
-      .select("*, roles!inner(name)")
-      .eq("roles.name", "מנהל פלור")
+      .select("*, roles!inner(can_be_floor_manager)")
+      .eq("roles.can_be_floor_manager", true)
       .order("name")
       .returns<StaffRow[]>();
     return data ?? [];
@@ -52,17 +50,15 @@ export const getFloorManagerCandidates = unstable_cache(
 
 export const SALESPEOPLE_CACHE_TAG = "salespeople";
 
-// The "איש/ת מכירות" dropdown: same role-name-matching pattern as floor
-// manager, matching staff whose assigned role is named "איש מכירות" (no
-// slash - existing role names in this system are all written that way,
-// e.g. "מנהל פלור" not "מנהל/ת פלור").
+// The "איש/ת מכירות" dropdown: staff whose role has the "can be a salesperson"
+// flag (set on the roles screen).
 export const getSalespersonCandidates = unstable_cache(
   async (): Promise<StaffRow[]> => {
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("staff")
-      .select("*, roles!inner(name)")
-      .eq("roles.name", "איש מכירות")
+      .select("*, roles!inner(can_be_salesperson)")
+      .eq("roles.can_be_salesperson", true)
       .order("name")
       .returns<StaffRow[]>();
     return data ?? [];

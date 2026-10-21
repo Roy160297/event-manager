@@ -12,6 +12,7 @@ import { isFriday } from "@/lib/scheduleTime";
 import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { extractEventDraftFromImage, applyCarriedReservePercent } from "@/lib/imageImport";
+import { loadReportFields, mergeReportValues, type ReportValues } from "@/lib/reportFields";
 import { sendChecklistsEmail } from "@/lib/checklistEmail";
 import { downloadWelcomeAttachment, findWelcomeAttachment } from "@/lib/welcomeAttachments";
 import { getVenueSettings } from "@/lib/venueSettings";
@@ -240,46 +241,22 @@ export async function updateEventDetails(eventId: string, formData: FormData) {
 export async function updateEventSummaryReport(eventId: string, formData: FormData) {
   const supabase = await createClient();
 
-  // Summary-report fields live on the same `events` row as core event
-  // fields (gated by events:write via RLS), so RLS can't separate them -
-  // Postgres row-level security has no notion of "these specific columns."
-  // Enforce the dedicated event_summary_report permission here instead.
+  // Summary-report values live on the same `events` row as core event fields
+  // (gated by events:write via RLS), so RLS can't separate them - Postgres
+  // row-level security has no notion of "these specific columns." Enforce the
+  // dedicated event_summary_report permission here instead.
   const staff = await getCurrentStaff();
   if (!staff || !canWrite(staff.permissions, "event_summary_report")) {
     throw new Error("אין לך הרשאה לערוך את דוח סיכום האירוע");
   }
 
-  const text = (key: string) => String(formData.get(key) ?? "").trim() || null;
+  const [fields, { data: event }] = await Promise.all([
+    loadReportFields(supabase),
+    supabase.from("events").select("report_values").eq("id", eventId).maybeSingle<{ report_values: ReportValues | null }>(),
+  ]);
+  const values = mergeReportValues(fields, event?.report_values ?? {}, formData);
 
-  const { error } = await supabase
-    .from("events")
-    .update({
-      production_company: text("production_company"),
-      exit_time: text("exit_time"),
-      report_end_time: text("report_end_time"),
-      final_guest_count_counter: text("final_guest_count_counter"),
-      final_guest_count_iplan: text("final_guest_count_iplan"),
-      reserve_opened_count: text("reserve_opened_count"),
-      final_children_count: text("final_children_count"),
-      bar_manager_name: text("bar_manager_name"),
-      bartender_count: text("bartender_count"),
-      waiter_count: text("waiter_count"),
-      initial_tray_count: text("initial_tray_count"),
-      final_tray_count: text("final_tray_count"),
-      cook_count: text("cook_count"),
-      kitchen_dishwasher_count: text("kitchen_dishwasher_count"),
-      dishwasher_count: text("dishwasher_count"),
-      security_guard_count: text("security_guard_count"),
-      security_guard_hours: text("security_guard_hours"),
-      report_summary: text("report_summary"),
-      report_general_notes: text("report_general_notes"),
-      hall_cleaner_hours: text("hall_cleaner_hours"),
-      restroom_cleaner_hours: text("restroom_cleaner_hours"),
-      kitchen_dishwasher_hours: text("kitchen_dishwasher_hours"),
-      dishwasher_hours: text("dishwasher_hours"),
-    })
-    .eq("id", eventId);
-
+  const { error } = await supabase.from("events").update({ report_values: values }).eq("id", eventId);
   if (error) throw new Error(error.message);
 
   revalidatePath(`/events/${eventId}/tasks`);

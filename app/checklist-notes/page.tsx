@@ -7,6 +7,7 @@ import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { EVENT_TYPE_LABELS, formatDate } from "@/lib/labels";
 import { addDaysToDate, todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { getChecklists } from "@/lib/checklists";
+import { loadReportFields, type ReportValues } from "@/lib/reportFields";
 import type { EventType } from "@/lib/types";
 
 type NoteWithEvent = {
@@ -28,8 +29,7 @@ type SummaryReportEvent = {
   event_type: EventType;
   event_date: string;
   estimated_guests: string | null;
-  report_summary: string | null;
-  report_general_notes: string | null;
+  report_values: ReportValues | null;
 };
 
 const guestsLabel = (guests: string | null) => {
@@ -68,10 +68,15 @@ export default async function ChecklistNotesPage() {
   // events table (not role_checklist_notes, which the 4 role checklists
   // above share), so it needs its own query and its own section shape -
   // one event can carry both a summary and general notes at once.
+  // The report's long-text fields flagged "show in notes" (by default the
+  // summary and the general notes/waiter feedback) are what is listed here.
+  const notesFields = canReadSummaryReport
+    ? (await loadReportFields(supabase)).filter((field) => field.type === "longtext" && field.showInNotes)
+    : [];
   const { data: summaryReportEventsRaw } = canReadSummaryReport
     ? await supabase
         .from("events")
-        .select("id, name, event_type, event_date, estimated_guests, report_summary, report_general_notes")
+        .select("id, name, event_type, event_date, estimated_guests, report_values")
         .is("deleted_at", null)
         .gte("event_date", tenDaysAgo)
         .lte("event_date", today)
@@ -79,7 +84,7 @@ export default async function ChecklistNotesPage() {
         .returns<SummaryReportEvent[]>()
     : { data: null };
   const summaryReportEvents = (summaryReportEventsRaw ?? []).filter(
-    (event) => event.report_summary || event.report_general_notes,
+    (event) => notesFields.some((field) => event.report_values?.[field.key]?.trim()),
   );
 
   return (
@@ -153,18 +158,17 @@ export default async function ChecklistNotesPage() {
                       {guestsLabel(event.estimated_guests)}
                     </span>
                   </p>
-                  {event.report_summary && (
-                    <p className="text-sm">
-                      <span className="font-medium">סיכום האירוע: </span>
-                      <span className="whitespace-pre-wrap">{event.report_summary}</span>
-                    </p>
-                  )}
-                  {event.report_general_notes && (
-                    <p className="text-sm">
-                      <span className="font-medium">הערות כלליות ופידבק מלצרים: </span>
-                      <span className="whitespace-pre-wrap">{event.report_general_notes}</span>
-                    </p>
-                  )}
+                  {notesFields.map((field) => {
+                    const value = event.report_values?.[field.key]?.trim();
+                    return (
+                      value && (
+                        <p key={field.key} className="text-sm">
+                          <span className="font-medium">{field.label}: </span>
+                          <span className="whitespace-pre-wrap">{value}</span>
+                        </p>
+                      )
+                    );
+                  })}
                 </li>
               ))}
             </ul>

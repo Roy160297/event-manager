@@ -27,6 +27,15 @@ import {
 import type { ChecklistPhotoRow, ChecklistSignatureRow, EventRow, StaffRow, TaskRow, TaskStatus } from "@/lib/types";
 import { DateField } from "@/components/DateField";
 import { getVenueSettings } from "@/lib/venueSettings";
+import {
+  REPORT_END_TIME_KEY,
+  displayValue,
+  loadReportFields,
+  longFields,
+  reportInputName,
+  shortFields,
+  type ReportField,
+} from "@/lib/reportFields";
 import { TimeField } from "@/components/TimeField";
 
 const STATUSES = Object.keys(TASK_STATUS_LABELS) as TaskStatus[];
@@ -50,6 +59,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     currentStaff,
     venue,
     checklists,
+    reportFields,
   ] = await Promise.all([
     supabase
       .from("tasks")
@@ -91,6 +101,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
     getCurrentStaff(),
     getVenueSettings(),
     getChecklists(),
+    loadReportFields(supabase),
   ]);
 
   function signatureFor(checklistKey: string) {
@@ -139,30 +150,13 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
 
   const floorManagerName = staff?.find((member) => member.id === event?.floor_manager_id)?.name ?? null;
 
-  const summaryFields: [string, string | number | null][] = [
-    ["חברת הפקה", event?.production_company ?? null],
-    ["שעת סיום האירוע", event?.report_end_time ?? null],
-    ["שעת יציאה מהאולם", event?.exit_time ?? null],
-    ["כמות אורחים סופית - קאונטר", event?.final_guest_count_counter ?? null],
-    ["כמות אורחים סופית - אייפלן (כולל דף נוספים)", event?.final_guest_count_iplan ?? null],
-    ["כמות רזרבה שנפתחו", event?.reserve_opened_count ?? null],
-    ["כמות ילדים (אורחים)", event?.final_children_count ?? null],
-    ["מנהל בר", event?.bar_manager_name ?? null],
-    ["כמות ברמנים", event?.bartender_count ?? null],
-    ["מנהל פלור", floorManagerName],
-    ["כמות מלצרים", event?.waiter_count ?? null],
-    ["כמות מגשים התחלתית", event?.initial_tray_count ?? null],
-    ["כמות מגשים סופית", event?.final_tray_count ?? null],
-    ["כמות טבחים", event?.cook_count ?? null],
-    ["כמות מנקי מטבח", event?.kitchen_dishwasher_count ?? null],
-    ["שעות מנקי מטבח", event?.kitchen_dishwasher_hours ?? null],
-    ["כמות שוטפי כלים", event?.dishwasher_count ?? null],
-    ["שעות שוטפי כלים", event?.dishwasher_hours ?? null],
-    ["כמות מאבטחים", event?.security_guard_count ?? null],
-    ["שעות מאבטחים", event?.security_guard_hours ?? null],
-    ["שעות מנקה אולם", event?.hall_cleaner_hours ?? null],
-    ["שעות מנקה שירותים", event?.restroom_cleaner_hours ?? null],
-  ];
+  const reportValues = event?.report_values ?? {};
+  const hasEndTimeField = reportFields.some((field) => field.key === REPORT_END_TIME_KEY);
+  // Read-only list of the short fields (long texts are shown separately below).
+  const summaryFields: [ReportField, string | null][] = shortFields(reportFields).map((field) => [
+    field,
+    displayValue(field, reportValues, floorManagerName),
+  ]);
 
   async function addTask(formData: FormData) {
     "use server";
@@ -285,6 +279,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       {canEditChecklist && event && (
         <SendChecklistsEmailButton
           event={event}
+          reportFields={reportFields}
           managerName={managerName}
           floorManagerName={floorManagerName}
           managerEmail={managerEmail}
@@ -341,6 +336,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           )}
           <EventSummaryReportExport
             event={event ?? null}
+            reportFields={reportFields}
             managerName={managerName}
             floorManagerName={floorManagerName}
             guestCommitment={guestCommitment}
@@ -366,10 +362,12 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
               <span className="text-foreground/60">שעת תחילת האירוע: </span>
               {formatTime(event?.start_time ?? null)}
             </p>
-            <p>
-              <span className="text-foreground/60">שעת סיום האירוע: </span>
-              {formatTime(event?.report_end_time ?? null)}
-            </p>
+            {hasEndTimeField && (
+              <p>
+                <span className="text-foreground/60">שעת סיום האירוע: </span>
+                {formatTime(reportValues[REPORT_END_TIME_KEY] ?? null)}
+              </p>
+            )}
             <p>
               <span className="text-foreground/60">מינימום אורחים בהתחייבות: </span>
               {guestCommitment ?? "—"}
@@ -387,220 +385,93 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
           {(!canWriteSummary || !!summaryReportSignature) && (
             <>
               <div className="grid gap-x-4 gap-y-1 rounded-md bg-accent-soft/50 p-3 text-sm sm:grid-cols-3">
-                {summaryFields.map(([label, value]) => (
-                  <p key={label}>
-                    <span className="text-foreground/60">{label}: </span>
-                    {value ?? "—"}
+                {summaryFields.map(([field, value]) => (
+                  <p key={field.key}>
+                    <span className="text-foreground/60">{field.label}: </span>
+                    {(field.type === "time" ? formatTime(value) : value) ?? "—"}
                   </p>
                 ))}
               </div>
-              <ChecklistPhotos
-                eventId={eventId}
-                checklistKey="event_summary_report"
-                slot="counter"
-                label="תמונת קאונטר"
-                compact
-                photos={photosFor("event_summary_report", "counter")}
-                canEdit={canWriteSummary && !summaryReportSignature}
-              />
-              {event?.report_summary && (
-                <div className="flex flex-col gap-1 text-sm">
-                  <p className="font-medium">סיכום האירוע</p>
-                  <p className="whitespace-pre-wrap text-foreground/80">{event.report_summary}</p>
-                </div>
-              )}
-              {event?.report_general_notes && (
-                <div className="flex flex-col gap-1 text-sm">
-                  <p className="font-medium">הערות כלליות ופידבק מלצרים</p>
-                  <p className="whitespace-pre-wrap text-foreground/80">{event.report_general_notes}</p>
-                </div>
-              )}
+              {summaryFields
+                .filter(([field]) => field.photoSlot)
+                .map(([field]) => (
+                  <ChecklistPhotos
+                    key={field.key}
+                    eventId={eventId}
+                    checklistKey="event_summary_report"
+                    slot={field.photoSlot}
+                    label={`תמונה - ${field.label}`}
+                    compact
+                    photos={photosFor("event_summary_report", field.photoSlot)}
+                    canEdit={canWriteSummary && !summaryReportSignature}
+                  />
+                ))}
+              {longFields(reportFields).map((field) => {
+                const value = displayValue(field, reportValues, floorManagerName);
+                return (
+                  value && (
+                    <div key={field.key} className="flex flex-col gap-1 text-sm">
+                      <p className="font-medium">{field.label}</p>
+                      <p className="whitespace-pre-wrap text-foreground/80">{value}</p>
+                    </div>
+                  )
+                );
+              })}
             </>
           )}
 
           {canWriteSummary && !summaryReportSignature && (
           <SaveDetailsForm action={saveSummaryReport} message="הדוח נשמר בהצלחה" className="flex flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className={reportLabelClass}>
-                <span>חברת הפקה</span>
-                <input name="production_company" defaultValue={event?.production_company ?? ""} className={inputClass} />
-              </label>
-              <label className={reportLabelClass}>
-                <span>שעת סיום האירוע</span>
-                <TimeField name="report_end_time" defaultValue={event?.report_end_time ?? ""} />
-              </label>
-              <label className={reportLabelClass}>
-                <span>שעת יציאה מהאולם</span>
-                <TimeField name="exit_time" defaultValue={event?.exit_time ?? ""} />
-              </label>
-              <div className="flex flex-col gap-2">
-                <label className={reportLabelClass}>
-                  <span>כמות אורחים סופית - קאונטר</span>
-                  <input
-                    name="final_guest_count_counter"
-                    defaultValue={event?.final_guest_count_counter ?? ""}
-                    className={inputClass}
-                  />
-                </label>
-                <ChecklistPhotos
-                  eventId={eventId}
-                  checklistKey="event_summary_report"
-                  slot="counter"
-                  label="תמונת קאונטר"
-                  compact
-                  photos={photosFor("event_summary_report", "counter")}
-                  canEdit={canWriteSummary && !summaryReportSignature}
-                />
-              </div>
-              <label className={reportLabelClass}>
-                <span>כמות אורחים סופית - אייפלן (כולל דף נוספים)</span>
-                <input
-                  name="final_guest_count_iplan"
-                  defaultValue={event?.final_guest_count_iplan ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות רזרבה שנפתחו</span>
-                <input
-                  name="reserve_opened_count"
-                  defaultValue={event?.reserve_opened_count ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות ילדים (אורחים)</span>
-                <input
-                  name="final_children_count"
-                  defaultValue={event?.final_children_count ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>מנהל בר</span>
-                <input name="bar_manager_name" defaultValue={event?.bar_manager_name ?? ""} className={inputClass} />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות ברמנים</span>
-                <input name="bartender_count" defaultValue={event?.bartender_count ?? ""} className={inputClass} />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות מלצרים</span>
-                <input
-                  name="waiter_count"
-                  defaultValue={event?.waiter_count ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות מגשים התחלתית</span>
-                <input
-                  name="initial_tray_count"
-                  defaultValue={event?.initial_tray_count ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות מגשים סופית</span>
-                <input
-                  name="final_tray_count"
-                  defaultValue={event?.final_tray_count ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות טבחים</span>
-                <input
-                  name="cook_count"
-                  defaultValue={event?.cook_count ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות מנקי מטבח</span>
-                <input
-                  name="kitchen_dishwasher_count"
-                  defaultValue={event?.kitchen_dishwasher_count ?? "2"}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>שעות מנקי מטבח</span>
-                <input
-                  name="kitchen_dishwasher_hours"
-                  defaultValue={event?.kitchen_dishwasher_hours ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות שוטפי כלים</span>
-                <input
-                  name="dishwasher_count"
-                  defaultValue={event?.dishwasher_count ?? "3"}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>שעות שוטפי כלים</span>
-                <input
-                  name="dishwasher_hours"
-                  defaultValue={event?.dishwasher_hours ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>כמות מאבטחים</span>
-                <input
-                  name="security_guard_count"
-                  defaultValue={event?.security_guard_count ?? 2}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>שעות מאבטחים</span>
-                <input
-                  name="security_guard_hours"
-                  defaultValue={event?.security_guard_hours ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>שעות מנקה אולם</span>
-                <input
-                  name="hall_cleaner_hours"
-                  defaultValue={event?.hall_cleaner_hours ?? ""}
-                  className={inputClass}
-                />
-              </label>
-              <label className={reportLabelClass}>
-                <span>שעות מנקה שירותים</span>
-                <input
-                  name="restroom_cleaner_hours"
-                  defaultValue={event?.restroom_cleaner_hours ?? ""}
-                  className={inputClass}
-                />
-              </label>
+              {shortFields(reportFields)
+                .filter((field) => field.type !== "floor_manager")
+                .map((field) => {
+                  const name = reportInputName(field.key);
+                  const defaultValue = reportValues[field.key] ?? field.defaultValue ?? "";
+                  const input =
+                    field.type === "time" ? (
+                      <TimeField name={name} defaultValue={defaultValue} />
+                    ) : (
+                      <input
+                        name={name}
+                        type={field.type === "number" ? "number" : "text"}
+                        defaultValue={defaultValue}
+                        className={inputClass}
+                      />
+                    );
+                  return (
+                    <div key={field.key} className="flex flex-col gap-2">
+                      <label className={reportLabelClass}>
+                        <span>{field.label}</span>
+                        {input}
+                      </label>
+                      {field.photoSlot && (
+                        <ChecklistPhotos
+                          eventId={eventId}
+                          checklistKey="event_summary_report"
+                          slot={field.photoSlot}
+                          label={`תמונה - ${field.label}`}
+                          compact
+                          photos={photosFor("event_summary_report", field.photoSlot)}
+                          canEdit={canWriteSummary && !summaryReportSignature}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
             </div>
 
-            <label className={reportLabelClass}>
-              <span>סיכום האירוע</span>
-              <textarea
-                name="report_summary"
-                rows={2}
-                defaultValue={event?.report_summary ?? ""}
-                className={inputClass}
-              />
-            </label>
-
-            <label className={reportLabelClass}>
-              <span>הערות כלליות ופידבק מלצרים</span>
-              <textarea
-                name="report_general_notes"
-                rows={3}
-                defaultValue={event?.report_general_notes ?? ""}
-                className={inputClass}
-              />
-            </label>
+            {longFields(reportFields).map((field) => (
+              <label key={field.key} className={reportLabelClass}>
+                <span>{field.label}</span>
+                <textarea
+                  name={reportInputName(field.key)}
+                  rows={3}
+                  defaultValue={reportValues[field.key] ?? field.defaultValue ?? ""}
+                  className={inputClass}
+                />
+              </label>
+            ))}
 
             <button
               type="submit"

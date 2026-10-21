@@ -9,8 +9,15 @@ import { getChecklists } from "@/lib/checklists";
 import type { RolePermissionRow, RoleRow } from "@/lib/types";
 import { createRole, deleteRole, renameRole } from "./actions";
 import { actionErrorMessage } from "@/lib/actionError";
-import { EventManagerToggle } from "./EventManagerToggle";
+import { RoleFlagToggle } from "./EventManagerToggle";
+import type { RoleFlag } from "./actions";
 import { PermissionGrid } from "./PermissionGrid";
+
+const ROLE_FLAGS: { flag: RoleFlag; label: string }[] = [
+  { flag: "can_be_event_manager", label: "יכול/ה להיות מנהל/ת אירוע אחראי/ת" },
+  { flag: "can_be_floor_manager", label: "יכול/ה להיות מנהל/ת פלור" },
+  { flag: "can_be_salesperson", label: "יכול/ה להיות איש/ת מכירות" },
+];
 
 export default async function RolesPage() {
   const supabase = await createClient();
@@ -124,14 +131,17 @@ export default async function RolesPage() {
                       </form>
                     )}
                   </div>
-                  {role.name === "מנהל מערכת" &&
-                    (canManage ? (
-                      <EventManagerToggle roleId={role.id} initialValue={role.can_be_event_manager} />
+                  {ROLE_FLAGS.map(({ flag, label }) =>
+                    canManage ? (
+                      <RoleFlagToggle key={flag} roleId={role.id} flag={flag} initialValue={role[flag]} />
                     ) : (
-                      role.can_be_event_manager && (
-                        <p className="text-xs text-foreground/60">יכול/ה להיות מנהל/ת אירוע אחראי/ת</p>
+                      role[flag] && (
+                        <p key={flag} className="text-xs text-foreground/60">
+                          {label}
+                        </p>
                       )
-                    ))}
+                    ),
+                  )}
                 </li>
               );
             })}
