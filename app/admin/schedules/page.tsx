@@ -125,7 +125,7 @@ function TemplateEditor({ template, index, total }: { template: ScheduleTemplate
           </fieldset>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">באיזה יום להחיל אוטומטית</span>
+            <span className="font-medium">ביום איזה בשבוע התבנית הזו נבחרת</span>
             <select name="day_kind" defaultValue={template.dayKind} className={inputClass}>
               {DAY_KINDS.map((kind) => (
                 <option key={kind} value={kind}>
@@ -164,7 +164,7 @@ function TemplateEditor({ template, index, total }: { template: ScheduleTemplate
               </button>
             </form>
           </span>
-          <span className="text-xs text-foreground/60">סדר ההופעה ברשימת הכפתורים</span>
+          <span className="text-xs text-foreground/60">שנה מיקום הלו&quot;ז הנוכחי ברשימת הלו&quot;זים</span>
           <form action={duplicate} className="ms-auto">
             <button type="submit" className={saveButton}>
               שכפל תבנית
