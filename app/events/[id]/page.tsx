@@ -22,14 +22,6 @@ import type { EventRow, EventSupplierRow, EventType, GuestRow, TimelineItemRow }
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_LABELS) as EventType[];
 
-// Pre-filled starting point for the "מידע נוסף" field on weddings, so the
-// manager sees the standard couple-meeting questions to fill in rather than a
-// blank box - only replaces an actually-empty value, never overwrites a saved one.
-const DEFAULT_ADDITIONAL_INFO = `סדר כניסה לחופה:
-בר מרובע? איזה סוג חבילת בר?
-עיצוב?
-אפטר?`;
-
 // Both the image-update wizard and the supplier-photo import on this page
 // chain multiple sequential Gemini calls (overload retry, model fallback,
 // missing-critical-fields retry) - the platform's default function timeout
@@ -388,7 +380,7 @@ export default async function EventOverviewPage({
           <ExpandableTextarea
             name="menu_notes"
             title="מידע נוסף"
-            defaultValue={event?.menu_notes ?? (event?.event_type !== "business_event" ? DEFAULT_ADDITIONAL_INFO : "")}
+            defaultValue={event?.menu_notes ?? (event?.event_type !== "business_event" ? venue.default_additional_info : "")}
             className={inputClass}
           />
 

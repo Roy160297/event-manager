@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractMenuDraftFromDocx, type MenuImportDraft } from "@/lib/menuImport";
-import { DEFAULT_MENUS } from "@/lib/defaultMenus";
+import { loadDefaultMenus } from "@/lib/defaultMenus";
 import type { MenuSection, MenuType } from "@/lib/types";
 
 const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -19,7 +19,8 @@ export async function parseMenuImport(formData: FormData): Promise<MenuImportDra
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  return extractMenuDraftFromDocx(buffer);
+  const examples = await loadDefaultMenus(await createClient()).catch(() => []);
+  return extractMenuDraftFromDocx(buffer, examples);
 }
 
 export interface MenuSaveData {
@@ -64,24 +65,14 @@ export async function deleteMenu(eventId: string) {
   revalidatePath(`/events/${eventId}/menu`);
 }
 
-// Called right after a new event is created, so wedding-type events start
-// with the venue's standard tasting menu pre-filled instead of empty
-// (mirrors applyDefaultSchedule) - buffet for the plain wedding types,
-// plated for the "_service" (הגשה) variants. Other event types (bar/bat
-// mitzvah, business events) don't have a tasting-menu template and are left
-// without one, same as they're left without a default schedule.
-export async function applyDefaultMenu(eventId: string, eventType: string) {
-  const menuType: MenuType | null =
-    eventType === "wedding" || eventType === "reverse_wedding"
-      ? "buffet"
-      : eventType === "wedding_service" || eventType === "reverse_wedding_service"
-        ? "plated"
-        : null;
-  if (!menuType) return;
-
-  const template = DEFAULT_MENUS[menuType];
+// Loads one of the venue's default menus into the event (replacing its menu).
+// Triggered by hand from the menu tab - a new event starts without a menu.
+export async function loadDefaultMenu(eventId: string, menuType: MenuType) {
   const supabase = await createClient();
-  const { error } = await supabase.from("event_menus").insert({
+  const template = (await loadDefaultMenus(supabase)).find((menu) => menu.menu_type === menuType);
+  if (!template) throw new Error("לא נמצא תפריט ברירת מחדל מהסוג הזה");
+
+  const { error } = await supabase.from("event_menus").upsert({
     event_id: eventId,
     menu_type: template.menu_type,
     title: template.title,
@@ -89,6 +80,8 @@ export async function applyDefaultMenu(eventId: string, eventType: string) {
     linens_note: template.linens_note,
     sections: template.sections,
     footer_notes: template.footer_notes,
+    updated_at: new Date().toISOString(),
   });
   if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/menu`);
 }

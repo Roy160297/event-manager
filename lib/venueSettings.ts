@@ -14,6 +14,7 @@ export interface VenueSettings {
   welcome_email_subject: string;
   welcome_email_body: string;
   welcome_email_attachment_filename: string;
+  default_additional_info: string;
   logo_path: string | null;
 }
 
@@ -27,6 +28,7 @@ const FALLBACK: VenueSettings = {
   welcome_email_subject: "",
   welcome_email_body: "",
   welcome_email_attachment_filename: "",
+  default_additional_info: "",
   logo_path: null,
 };
 
@@ -40,7 +42,7 @@ const readVenueSettings = unstable_cache(
     const { data, error } = await createAdminClient()
       .from("venue_settings")
       .select(
-        "venue_name, calendar_name, checklist_email_to, checklist_email_cc, welcome_email_subject, welcome_email_body, welcome_email_attachment_filename, logo_path",
+        "venue_name, calendar_name, checklist_email_to, checklist_email_cc, welcome_email_subject, welcome_email_body, welcome_email_attachment_filename, default_additional_info, logo_path",
       )
       .eq("id", true)
       .maybeSingle<VenueSettings>();

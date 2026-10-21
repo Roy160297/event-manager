@@ -1,5 +1,6 @@
 import mammoth from "mammoth";
 import { GoogleGenAI, Type } from "@google/genai";
+import type { DefaultMenu } from "@/lib/defaultMenus";
 import type { MenuSection, MenuType } from "@/lib/types";
 
 export interface MenuImportDraft {
@@ -74,7 +75,19 @@ const PROMPT = `להלן טקסט גולמי שחולץ ממסמך Word המכי
 הטקסט:
 `;
 
-export async function extractMenuDraftFromDocx(buffer: Buffer): Promise<MenuImportDraft> {
+// The venue's own saved menus, shown to the model as examples of how this
+// venue's menus are structured (titles, station names, notes) - so the same
+// import works for a venue whose documents look nothing like the original one.
+function formatExamples(examples: DefaultMenu[]): string {
+  const usable = examples.filter((menu) => menu.sections.length > 0);
+  if (usable.length === 0) return "";
+  const rendered = usable
+    .map((menu) => JSON.stringify({ menu_type: menu.menu_type, title: menu.title, subtitle: menu.subtitle, linens_note: menu.linens_note, sections: menu.sections, footer_notes: menu.footer_notes }))
+    .join("\n");
+  return `\nלהלן דוגמאות לתפריטים שכבר שמורים אצל האולם הזה (בפורמט היעד). השתמש בהן רק כדי להבין את המבנה, את סוגי הסעיפים ואת אופן הניסוח - אל תעתיק מהן מנות לתפריט החדש:\n${rendered}\n`;
+}
+
+export async function extractMenuDraftFromDocx(buffer: Buffer, examples: DefaultMenu[] = []): Promise<MenuImportDraft> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY אינו מוגדר בסביבת השרת");
 
@@ -90,7 +103,7 @@ export async function extractMenuDraftFromDocx(buffer: Buffer): Promise<MenuImpo
   const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateContent({
     model: "gemini-flash-lite-latest",
-    contents: [{ role: "user", parts: [{ text: PROMPT + rawText }] }],
+    contents: [{ role: "user", parts: [{ text: PROMPT + formatExamples(examples) + "\n" + rawText }] }],
     config: {
       responseMimeType: "application/json",
       responseSchema: RESPONSE_SCHEMA,

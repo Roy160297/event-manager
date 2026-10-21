@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { saveMenu } from "./actions";
+import { saveMenu, type MenuSaveData } from "./actions";
 import { MENU_TYPE_LABELS } from "@/lib/labels";
 import type { MenuType } from "@/lib/types";
 
@@ -41,12 +41,19 @@ export function MenuEditor({
   warnings,
   onCancel,
   onSaved,
+  save,
+  lockType = false,
 }: {
-  eventId: string;
+  // The event the menu belongs to; omitted when `save` stores it elsewhere (the venue's default menus).
+  eventId?: string;
   initial: EditableMenu;
   warnings?: string[];
   onCancel?: () => void;
   onSaved?: () => void;
+  // Replaces the default save into the event's menu.
+  save?: (menu: MenuSaveData) => Promise<string | void>;
+  // Hides the buffet/plated choice (a default menu's type is fixed).
+  lockType?: boolean;
 }) {
   const router = useRouter();
   const [menu, setMenu] = useState<EditableMenu>(initial);
@@ -133,7 +140,7 @@ export function MenuEditor({
     setIsSaving(true);
     setError(null);
     try {
-      await saveMenu(eventId, {
+      const data: MenuSaveData = {
         menu_type: menu.menu_type,
         title: menu.title || null,
         subtitle: menu.subtitle || null,
@@ -144,7 +151,16 @@ export function MenuEditor({
           items: s.items,
         })),
         footer_notes: menu.footer_notes,
-      });
+      };
+      if (save) {
+        const message = await save(data);
+        if (message) {
+          setError(message);
+          return;
+        }
+      } else {
+        await saveMenu(eventId!, data);
+      }
       router.refresh();
       onSaved?.();
     } catch (err) {
@@ -165,6 +181,7 @@ export function MenuEditor({
       )}
 
       <div className="grid gap-4 sm:grid-cols-2">
+        {!lockType && (
         <label className={labelClass}>
           <span className="font-medium">סוג תפריט</span>
           <select
@@ -179,6 +196,7 @@ export function MenuEditor({
             ))}
           </select>
         </label>
+        )}
 
         <label className={labelClass}>
           <span className="font-medium">מפות/מפיות</span>

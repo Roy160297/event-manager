@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { parseMenuImport } from "./actions";
 import { DocxDropZone } from "@/components/DocxDropZone";
 import { MenuEditor, type EditableMenu } from "./MenuEditor";
+import type { MenuSaveData } from "./actions";
 import type { MenuImportDraft } from "@/lib/menuImport";
 
 function draftToEditable(draft: MenuImportDraft): EditableMenu {
@@ -24,10 +25,16 @@ export function MenuImportWizard({
   eventId,
   onCancel,
   onSaved,
+  save,
+  lockType,
+  heading = "ייבוא תפריט מקובץ Word",
 }: {
-  eventId: string;
+  eventId?: string;
   onCancel?: () => void;
   onSaved?: () => void;
+  save?: (menu: MenuSaveData) => Promise<string | void>;
+  lockType?: boolean;
+  heading?: string;
 }) {
   const [draft, setDraft] = useState<MenuImportDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +73,7 @@ export function MenuImportWizard({
         onSubmit={handleUpload}
         className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4"
       >
-        <p className="text-sm font-medium">ייבוא תפריט מקובץ Word</p>
+        <p className="text-sm font-medium">{heading}</p>
         <DocxDropZone fileInputRef={fileInputRef} fileName={fileName} onFileName={setFileName} />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex items-center gap-3">
@@ -100,6 +107,8 @@ export function MenuImportWizard({
         warnings={draft.warnings}
         onCancel={handleCancelReview}
         onSaved={onSaved}
+        save={save}
+        lockType={lockType}
       />
     </div>
   );

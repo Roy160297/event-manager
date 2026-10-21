@@ -92,6 +92,17 @@ export default async function VenueSettingsPage() {
             </label>
           </section>
 
+          <section className="flex flex-col gap-3">
+            <p className="font-serif text-lg font-bold">אירועים חדשים</p>
+            <label className={labelClass}>
+              <span className="font-medium">טקסט התחלתי בשדה &quot;מידע נוסף&quot; בחתונות</span>
+              <textarea name="default_additional_info" rows={5} defaultValue={data.default_additional_info} className={inputClass} />
+              <span className={hintClass}>
+                מופיע בסקירה של אירוע (שאינו אירוע עסקי) שבו עדיין לא נכתב מידע נוסף, למשל שאלות שחשוב לעבור עליהן בפגישה עם הזוג.
+              </span>
+            </label>
+          </section>
+
           {canEdit && (
             <button
               type="submit"

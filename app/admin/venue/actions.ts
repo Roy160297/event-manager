@@ -53,6 +53,7 @@ export async function saveVenueSettings(formData: FormData): Promise<string | vo
       // Not trimmed: the template's own blank lines and line breaks are intentional.
       welcome_email_body: String(formData.get("welcome_email_body") ?? "").replace(/\r\n/g, "\n"),
       welcome_email_attachment_filename: text("welcome_email_attachment_filename"),
+      default_additional_info: String(formData.get("default_additional_info") ?? "").replace(/\r\n/g, "\n").trim(),
     })
     .eq("id", true);
   if (error) return error.message;

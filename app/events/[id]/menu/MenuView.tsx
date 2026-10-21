@@ -6,7 +6,8 @@ import { MenuImportWizard } from "./MenuImportWizard";
 import { MenuEditor, BLANK_MENU, type EditableMenu } from "./MenuEditor";
 import { MenuPrintable } from "@/components/MenuPrintable";
 import { PdfExportButton } from "@/components/PdfExportButton";
-import { deleteMenu } from "./actions";
+import { deleteMenu, loadDefaultMenu } from "./actions";
+import type { DefaultMenu } from "@/lib/defaultMenus";
 import { MENU_TYPE_LABELS, formatDate } from "@/lib/labels";
 import type { EventMenuRow, EventRow } from "@/lib/types";
 
@@ -31,15 +32,18 @@ export function MenuView({
   event,
   menu,
   canWrite,
+  defaultMenus,
 }: {
   eventId: string;
   event: EventRow;
   menu: EventMenuRow | null;
   canWrite: boolean;
+  defaultMenus: DefaultMenu[];
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("view");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoadingDefault, setIsLoadingDefault] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
@@ -55,6 +59,35 @@ export function MenuView({
       setIsDeleting(false);
     }
   }
+
+  // Replaces the event's menu with one of the venue's default menus.
+  async function handleLoadDefault(menuType: DefaultMenu["menu_type"]) {
+    if (menu && !window.confirm("התפריט הקיים יוחלף בתפריט ברירת המחדל. להמשיך?")) return;
+    setIsLoadingDefault(true);
+    setError(null);
+    try {
+      await loadDefaultMenu(eventId, menuType);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "שגיאה בטעינת תפריט ברירת המחדל");
+    } finally {
+      setIsLoadingDefault(false);
+    }
+  }
+
+  const loadDefaultButtons = defaultMenus
+    .filter((defaultMenu) => defaultMenu.sections.length > 0)
+    .map((defaultMenu) => (
+      <button
+        key={defaultMenu.menu_type}
+        type="button"
+        onClick={() => handleLoadDefault(defaultMenu.menu_type)}
+        disabled={isLoadingDefault}
+        className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium text-accent hover:bg-accent-soft disabled:opacity-50"
+      >
+        טען תפריט ברירת מחדל - {MENU_TYPE_LABELS[defaultMenu.menu_type]}
+      </button>
+    ));
 
   if (mode === "import") {
     return <MenuImportWizard eventId={eventId} onCancel={() => setMode("view")} onSaved={() => setMode("view")} />;
@@ -75,8 +108,9 @@ export function MenuView({
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm text-foreground/60">טרם הוגדר תפריט לאירוע זה.</p>
+        {error && <p className="text-sm text-red-600">{error}</p>}
         {canWrite && (
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => setMode("import")}
@@ -91,6 +125,7 @@ export function MenuView({
             >
               יצירה ידנית
             </button>
+            {loadDefaultButtons}
           </div>
         )}
       </div>
@@ -125,6 +160,7 @@ export function MenuView({
             >
               ייבוא מחדש
             </button>
+            {loadDefaultButtons}
             <button
               type="button"
               onClick={handleDelete}
