@@ -7,7 +7,6 @@ import { getEventTypes } from "@/lib/eventTypesServer";
 import { getCurrentStaff } from "@/lib/auth";
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
-import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import type { StaffRow } from "@/lib/types";
 
 export async function addManagerFromImport(name: string): Promise<StaffRow> {
@@ -137,7 +136,6 @@ async function createEventFromPdfImportInner(
     const { error: supErr } = await supabase.from("event_suppliers").insert(rows);
     if (supErr) throw new Error(supErr.message);
 
-    await maybeCreateDjSketchTask(supabase, eventId, validSuppliers.map((s) => s.name));
   }
 
   await checkRemindersForEvent(eventId);

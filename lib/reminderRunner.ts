@@ -81,7 +81,7 @@ export async function sendDueReminders(
     // though the event itself is long over.
     if (rule.match_mode === "on_or_after" && event.event_date < today) continue;
 
-    if (!(await isEmailRuleConditionMet(rule, event, supabase))) continue;
+    if (!isEmailRuleConditionMet(rule, event)) continue;
 
     const recipients = emailRuleRecipients(rule, event, staffDirectory);
     if (recipients.length === 0) continue;

@@ -9,7 +9,6 @@ import { applyDefaultSchedule, schedulePushRemindersForStep } from "@/app/events
 import { assertNoDuplicateEventDate } from "@/lib/eventValidation";
 import { checkRemindersForEvent } from "@/lib/reminderRunner";
 import { isFriday } from "@/lib/scheduleTime";
-import { maybeCreateDjSketchTask } from "@/lib/djSketchReminder";
 import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/supplierImport";
 import { extractEventDraftFromImage, applyCarriedReservePercent } from "@/lib/imageImport";
 import { loadReportFields, mergeReportValues, type ReportValues } from "@/lib/reportFields";
@@ -283,7 +282,6 @@ export async function addSupplier(eventId: string, formData: FormData) {
     .insert({ event_id: eventId, name, role, phone, sort_order: count ?? 0 });
   if (error) throw new Error(error.message);
 
-  await maybeCreateDjSketchTask(supabase, eventId, [name]);
   revalidatePath(`/events/${eventId}`);
 }
 
@@ -302,7 +300,6 @@ export async function updateSupplier(eventId: string, supplierId: string, formDa
     .eq("id", supplierId);
   if (error) throw new Error(error.message);
 
-  await maybeCreateDjSketchTask(supabase, eventId, [name]);
   revalidatePath(`/events/${eventId}`);
 }
 
@@ -588,6 +585,5 @@ export async function addSuppliersFromImport(eventId: string, suppliers: Supplie
   );
   if (error) throw new Error(error.message);
 
-  await maybeCreateDjSketchTask(supabase, eventId, validSuppliers.map((s) => s.name));
   revalidatePath(`/events/${eventId}`);
 }

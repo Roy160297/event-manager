@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDaysToDate } from "@/lib/coupleMeetingReminders";
-import { hasDjTzachZivSupplier } from "@/lib/djSketchReminder";
 import { FALLBACK_EVENT_TYPES, eventTypeLabel, labelsOf } from "@/lib/eventTypes";
 import { formatDate } from "@/lib/labels";
 import type { EmailReminderCondition, EmailReminderRuleRow, EventType } from "@/lib/types";
@@ -25,7 +24,6 @@ export interface EmailReminderEvent {
 export const CONDITION_LABELS: Record<EmailReminderCondition, string> = {
   none: "ללא תנאי",
   additional_info_filled: "רק אם מולא מידע נוסף באירוע",
-  supplier_dj_tzach_ziv: "רק אם הדיג'י באירוע הוא צח זיו",
 };
 
 // {placeholder} -> description, shown as help on the management page.
@@ -113,13 +111,11 @@ export function resolveEmailTargetDate(
   return null;
 }
 
-export async function isEmailRuleConditionMet(
+export function isEmailRuleConditionMet(
   rule: Pick<EmailReminderRuleRow, "condition">,
-  event: Pick<EmailReminderEvent, "id" | "menu_notes">,
-  supabase: SupabaseClient,
-): Promise<boolean> {
+  event: Pick<EmailReminderEvent, "menu_notes">,
+): boolean {
   if (rule.condition === "additional_info_filled") return !!event.menu_notes?.trim();
-  if (rule.condition === "supplier_dj_tzach_ziv") return !!event.id && (await hasDjTzachZivSupplier(supabase, event.id));
   return true;
 }
 

@@ -296,7 +296,7 @@ export interface PushReminderRuleRow {
 }
 
 export type EmailReminderAnchor = "couple_meeting_date" | "event_date";
-export type EmailReminderCondition = "none" | "additional_info_filled" | "supplier_dj_tzach_ziv";
+export type EmailReminderCondition = "none" | "additional_info_filled";
 
 export interface EmailReminderRuleRow {
   id: string;
