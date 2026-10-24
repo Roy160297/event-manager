@@ -11,7 +11,6 @@ import { todayInIsrael } from "@/lib/coupleMeetingReminders";
 import { applyIplanGuests, applyIplanSketch, type FileResult } from "@/lib/iplanFiles";
 import { buildIplanPayload, isIplanPagePayload } from "@/lib/iplanPages";
 import { israelDate, shouldRunSync } from "@/lib/iplanSchedule";
-import { formatDate } from "@/lib/labels";
 import {
   describeChanges,
   diffSnapshots,
@@ -57,16 +56,8 @@ function tokenMatches(header: string | null): boolean {
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
-async function notifyManager(supabase: Admin, managerId: string | null, eventId: string, title: string, body: string) {
-  if (!managerId) return;
-  try {
-    await sendPushToStaff(managerId, { title, body, url: `/events/${eventId}` });
-  } catch (err) {
-    console.error("iPlan sync: push to the event manager failed:", err);
-  }
-}
-
-// Whoever can manage users gets told when the sync stops (e.g. iPlan logged
+// What the sync created or changed is only recorded in the sync page's log; the
+// event's manager is not pushed about it. Whoever can manage users gets told when the sync stops (e.g. iPlan logged
 // the browser out), once per outage rather than on every attempt.
 async function notifyAdminsLoginRequired(supabase: Admin) {
   const { data: roles } = await supabase
@@ -106,7 +97,6 @@ async function processEvent(
   today: string,
   item: unknown,
   dry: boolean,
-  notify: boolean,
 ): Promise<ItemResult> {
   if (!isIplanEventPayload(item)) return { iplan_event_id: "?", action: "skipped", detail: "מבנה נתונים לא תקין" };
   const iplanId = item.iplan_event_id;
@@ -178,18 +168,6 @@ async function processEvent(
     }
     revalidatePath("/");
     revalidatePath(`/events/${linked.id}`);
-
-    // Only a value that actually changed in iPlan is worth a push - a field
-    // iPlan is showing for the first time is just being filled in.
-    if (notify && changes.some((change) => change.from !== null)) {
-      await notifyManager(
-        supabase,
-        (update.manager_id as string | null | undefined) ?? linked.manager_id,
-        linked.id,
-        `עודכן מ-iPlan: ${linked.name}`,
-        describeChanges(changes),
-      );
-    }
     return { iplan_event_id: iplanId, action: "updated", detail: [describeChanges(changes), ...warnings].join(" | ") };
   }
 
@@ -237,16 +215,6 @@ async function processEvent(
   await checkRemindersForEvent(created.id);
   await logChange(supabase, created.id, incoming.name, "created", []);
   revalidatePath("/");
-
-  if (notify) {
-    await notifyManager(
-      supabase,
-      created.manager_id,
-      created.id,
-      `אירוע חדש מ-iPlan: ${incoming.name}`,
-      `${formatDate(incoming.event_date)} - האירוע נוצר אוטומטית ומחכה לך באתר.`,
-    );
-  }
   return { iplan_event_id: iplanId, action: "created", detail: incoming.name };
 }
 
@@ -454,7 +422,7 @@ export async function POST(request: Request) {
     const today = todayInIsrael();
     for (const item of incoming) {
       try {
-        results.push(await processEvent(supabase, staff ?? [], today, item, dry, body.initial !== true));
+        results.push(await processEvent(supabase, staff ?? [], today, item, dry));
       } catch (err) {
         console.error("iPlan sync: event failed:", err);
         results.push({
