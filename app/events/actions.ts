@@ -461,7 +461,18 @@ async function parseEventImageUpdateInner(eventId: string, formData: FormData): 
   return { ...merged, warnings, changedFields };
 }
 
-export async function applyEventImageUpdate(eventId: string, draft: EventImageUpdateDraft) {
+// Returns the error text instead of throwing - a thrown message is replaced by
+// a generic one in production, so a day that already has another event would
+// show the manager nothing useful.
+export async function applyEventImageUpdate(eventId: string, draft: EventImageUpdateDraft): Promise<string | void> {
+  try {
+    await applyEventImageUpdateInner(eventId, draft);
+  } catch (err) {
+    return err instanceof Error ? err.message : "העדכון נכשל";
+  }
+}
+
+async function applyEventImageUpdateInner(eventId: string, draft: EventImageUpdateDraft) {
   const supabase = await createClient();
 
   const name = draft.name.trim();

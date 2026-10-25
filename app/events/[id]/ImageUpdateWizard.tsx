@@ -84,7 +84,12 @@ export function ImageUpdateWizard({
     setIsPending(true);
     setError(null);
     try {
-      await applyEventImageUpdate(eventId, draft);
+      const failure = await applyEventImageUpdate(eventId, draft);
+      if (failure) {
+        setError(failure);
+        setIsPending(false);
+        return;
+      }
       reset();
       router.refresh();
     } catch (err) {
