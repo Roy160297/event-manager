@@ -334,6 +334,9 @@ export interface EventImageUpdateDraft {
   // actually differs from what's currently saved on the event - lets the
   // review screen bold only the fields the screenshot is really changing.
   changedFields: string[];
+  // What every field holds on the event right now, so the review screen can
+  // put a single field back to it when the screenshot should not change it.
+  original: Record<string, string | null>;
 }
 
 // Parses an updated "ענן" screenshot for an EXISTING event and merges it onto
@@ -404,7 +407,7 @@ async function parseEventImageUpdateInner(eventId: string, formData: FormData): 
       ? applyCarriedReservePercent(Number(draft.estimated_guests), event.estimated_guests)
       : (draft.estimated_guests ?? event.estimated_guests);
 
-  const merged: Omit<EventImageUpdateDraft, "warnings" | "changedFields"> = {
+  const merged: Omit<EventImageUpdateDraft, "warnings" | "changedFields" | "original"> = {
     name,
     event_type: eventType,
     event_date: draft.event_date ?? event.event_date,
@@ -458,7 +461,7 @@ async function parseEventImageUpdateInner(eventId: string, formData: FormData): 
       : w,
   );
 
-  return { ...merged, warnings, changedFields };
+  return { ...merged, warnings, changedFields, original: previous };
 }
 
 // Returns the error text instead of throwing - a thrown message is replaced by

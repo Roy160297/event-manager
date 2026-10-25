@@ -193,6 +193,8 @@ export interface PrivateEventImageUpdateDraft {
   // Field names whose merged value differs from what is saved - the review
   // screen bolds only those.
   changedFields: string[];
+  // What every field holds on the event now, for putting one field back.
+  original: Record<string, string | null>;
 }
 
 // Returns { error } instead of throwing: Next.js redacts thrown Server Action
@@ -246,7 +248,10 @@ export async function parsePrivateEventImageUpdate(
         : w,
     );
 
-    return { ...merged, warnings, changedFields };
+    const original = Object.fromEntries(
+      (Object.keys(merged) as (keyof typeof merged)[]).map((key) => [key, (event[key] as string | null) ?? null]),
+    );
+    return { ...merged, warnings, changedFields, original };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "שגיאה בעיבוד התמונה" };
   }

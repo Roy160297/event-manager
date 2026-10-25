@@ -130,9 +130,33 @@ export function ImageUpdateWizard({ eventId }: { eventId: string }) {
     );
   }
 
-  const changed = new Set(draft.changedFields);
+  const draftValues = draft as unknown as Record<string, string | null>;
+  const isChanged = (key: string) => (draftValues[key] ?? null) !== (draft.original[key] ?? null);
+  function originalText(key: string): string {
+    const value = draft?.original[key] ?? null;
+    if (!value) return "ריק";
+    if (key === "event_type") return PRIVATE_EVENT_TYPE_LABELS[value as PrivateEventType] ?? value;
+    return value;
+  }
+  function revertField(key: string) {
+    setDraft((prev) => (prev ? ({ ...prev, [key]: prev.original[key] ?? null } as PrivateEventImageUpdateDraft) : prev));
+  }
   function labelSpan(key: keyof PrivateEventImageUpdateDraft, text: string) {
-    return <span className={changed.has(key) ? "font-bold text-accent" : "font-medium"}>{text}</span>;
+    if (!isChanged(key)) return <span className="font-medium">{text}</span>;
+    return (
+      <span className="flex flex-wrap items-center gap-x-2">
+        <span className="font-bold text-accent">{text}</span>
+        <button
+          type="button"
+          onClick={() => revertField(key)}
+          title={`הערך הנוכחי באירוע: ${originalText(key)}`}
+          className="rounded-full border border-border-classic bg-background px-2 py-0.5 text-[11px] font-normal text-foreground/70 hover:bg-accent-soft"
+        >
+          ↩ החזר למקור
+        </button>
+        <span className="max-w-full truncate text-[11px] font-normal text-foreground/50">במקור: {originalText(key)}</span>
+      </span>
+    );
   }
 
   return (
