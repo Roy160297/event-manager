@@ -25,36 +25,31 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [staff, venue, checklists, eventTypes, privateOwnerEmail] = await Promise.all([
+  // Everything the shell needs is asked for at once - the switcher's events
+  // do not depend on the staff row (RLS decides what a session sees), so they
+  // no longer wait behind it. Logged-out visitors just get nothing back.
+  // The switcher is shown on every page, not just an event's own sub-pages, and
+  // gets the full upcoming list: it filters client-side (see EventSwitcher's
+  // manager dropdown) so a user can switch away from the default without a
+  // round trip.
+  const supabase = await createClient();
+  const [staff, venue, checklists, eventTypes, privateOwnerEmail, { data: upcomingEvents }, managers] = await Promise.all([
     getCurrentStaff(),
     getVenueSettings(),
     getChecklists(),
     getEventTypes(),
     getPrivateEventsOwnerEmail(),
+    supabase
+      .from("events")
+      .select("id, name, event_date, event_type, manager_id")
+      .is("deleted_at", null)
+      .gte("event_date", todaysEventDate())
+      .order("event_date", { ascending: true })
+      .returns<Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">[]>(),
+    getEventManagerCandidates(),
   ]);
-
-  // Fetched here (rather than only within the per-event layout) so the
-  // switcher sidebar shows on every page, not just an event's own sub-pages.
-  // Always the full upcoming list - the switcher itself filters client-side
-  // (see EventSwitcher's manager dropdown) so a user can switch away from
-  // the default without a round trip.
-  let switcherEvents: Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">[] = [];
-  let switcherManagers: { id: string; name: string }[] = [];
-  if (staff) {
-    const supabase = await createClient();
-    const [{ data }, managers] = await Promise.all([
-      supabase
-        .from("events")
-        .select("id, name, event_date, event_type, manager_id")
-        .is("deleted_at", null)
-        .gte("event_date", todaysEventDate())
-        .order("event_date", { ascending: true })
-        .returns<Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">[]>(),
-      getEventManagerCandidates(),
-    ]);
-    switcherEvents = data ?? [];
-    switcherManagers = managers.map((manager) => ({ id: manager.id, name: manager.name }));
-  }
+  const switcherEvents = staff ? (upcomingEvents ?? []) : [];
+  const switcherManagers = staff ? managers.map((manager) => ({ id: manager.id, name: manager.name })) : [];
 
   // Default the switcher to "only my events" for anyone who can actually be
   // assigned as an event's manager (same eligibility as the manager_id
