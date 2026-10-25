@@ -2,6 +2,7 @@
 
 import { useEventTypeLabel } from "@/components/EventTypesProvider";
 import Link from "next/link";
+import { HoverPrefetchLink } from "@/components/HoverPrefetchLink";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { formatDate } from "@/lib/labels";
@@ -75,7 +76,7 @@ export function EventSwitcher({
             const isCurrent = event.id === currentEventId;
             return (
               <li key={event.id}>
-                <Link
+                <HoverPrefetchLink
                   href={`/events/${event.id}${subPath}`}
                   className={
                     isCurrent
@@ -87,7 +88,7 @@ export function EventSwitcher({
                   <p className="truncate text-xs text-foreground/60">
                     {eventTypeLabel(event.event_type)} · {formatDate(event.event_date)}
                   </p>
-                </Link>
+                </HoverPrefetchLink>
               </li>
             );
           })}

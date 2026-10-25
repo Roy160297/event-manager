@@ -50,6 +50,7 @@ export function MainNav({
       <li key={link.href}>
         <Link
           href={link.href}
+          prefetch
           aria-current={isActive ? "page" : undefined}
           className={
             isActive

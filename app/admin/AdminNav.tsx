@@ -31,6 +31,7 @@ export function AdminNav({ showVenue = false, showIplan = false }: { showVenue?:
           <Link
             key={link.href}
             href={link.href}
+            prefetch
             aria-current={isActive ? "page" : undefined}
             className={tabLinkClass(isActive)}
           >

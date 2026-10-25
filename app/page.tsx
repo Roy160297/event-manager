@@ -10,6 +10,7 @@ import { NoPermissionNotice } from "@/components/NoPermissionNotice";
 import { EventManagerFilter } from "@/components/EventManagerFilter";
 import { TrashIcon } from "@/components/icons";
 import { getCurrentStaff } from "@/lib/auth";
+import { HoverPrefetchLink } from "@/components/HoverPrefetchLink";
 import { getEventManagerCandidates } from "@/lib/staff";
 import { getVenueSettings } from "@/lib/venueSettings";
 import { canRead, canWrite } from "@/lib/permissions";
@@ -150,7 +151,7 @@ export default async function EventsDashboard({
                 isToday ? "border-accent bg-accent-soft ring-1 ring-accent" : "border-border-classic bg-surface"
               }`}
             >
-              <Link href={`/events/${event.id}`} className="flex flex-1 flex-col gap-1 min-w-0">
+              <HoverPrefetchLink href={`/events/${event.id}`} className="flex flex-1 flex-col gap-1 min-w-0">
                 <p className="truncate font-medium">
                   {event.name}
                   {isToday && <span className="ms-2 text-xs font-medium text-accent">אירוע היום</span>}
@@ -159,7 +160,7 @@ export default async function EventsDashboard({
                   {eventTypeLabels[event.event_type]} · {formatDate(event.event_date)}
                   {managerName(event.manager_id) && ` · ${managerName(event.manager_id)}`}
                 </p>
-              </Link>
+              </HoverPrefetchLink>
               {canWriteEvents && (
                 <form action={remove} className="ms-3">
                   <ConfirmSubmitButton

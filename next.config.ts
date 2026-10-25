@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
     "/events/\\[id\\]/staffing": ["./node_modules/pdfjs-dist/**/*"],
   },
   experimental: {
+    // Pages prefetched in the background (the navigation links) are shown from
+    // memory for this long (seconds) - short, since other people edit the same
+    // events. The router drops them sooner after any save done in this tab.
+    staleTimes: { dynamic: 0, static: 60 },
     serverActions: {
       bodySizeLimit: "10mb",
     },

@@ -26,6 +26,7 @@ export function EventSubNav({ eventId }: { eventId: string }) {
           <Link
             key={item.segment}
             href={href}
+            prefetch
             aria-current={isActive ? "page" : undefined}
             className={tabLinkClass(isActive)}
           >
