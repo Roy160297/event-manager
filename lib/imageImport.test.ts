@@ -96,10 +96,16 @@ describe("buildImageImportDraft - diet-type meal counts", () => {
     expect(draft.glat_meal_count).toBe("12");
   });
 
-  it("keeps an explicit 0 for kids/toddlers headcounts, unlike the diet-type fields", () => {
+  it("leaves kids/toddlers blank too when the count is 0", () => {
     const draft = buildImageImportDraft({ ...BASE_EXTRACTION, kids_meals: 0, toddlers_under_2: 0 });
-    expect(draft.kids_meal_count).toBe("0");
-    expect(draft.toddlers_under_2_count).toBe("0");
+    expect(draft.kids_meal_count).toBeNull();
+    expect(draft.toddlers_under_2_count).toBeNull();
+  });
+
+  it("still renders a real kids/toddlers count", () => {
+    const draft = buildImageImportDraft({ ...BASE_EXTRACTION, kids_meals: 10, toddlers_under_2: 2 });
+    expect(draft.kids_meal_count).toBe("10");
+    expect(draft.toddlers_under_2_count).toBe("2");
   });
 });
 

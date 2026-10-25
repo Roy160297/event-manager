@@ -435,15 +435,15 @@ export function buildImageImportDraft(extraction: GeminiExtraction, types: Event
     warnings.push('לא זוהו נתוני התחייבות אורחים - יש להזין ידנית את שדה "מספר אורחים - התחייבות"');
   }
 
-  const kids_meal_count = extraction.kids_meals != null ? String(extraction.kids_meals) : null;
-  // Diet-type portion counts (unlike kids/toddlers headcounts) aren't worth
-  // recording as an explicit "0" - a 0 here just means that diet type wasn't
-  // ordered, so leave the field blank rather than filling it with "0".
+  // None of the portion counts is worth recording as an explicit "0" - a 0
+  // (or a missing number the reader filled in as 0) just means nothing was
+  // ordered, so the field is left blank rather than filled with "0".
+  const kids_meal_count = extraction.kids_meals ? String(extraction.kids_meals) : null;
   const glat_meal_count = extraction.glat_meals ? String(extraction.glat_meals) : null;
   const vegetarian_meal_count = extraction.vegetarian_meals ? String(extraction.vegetarian_meals) : null;
   const vegan_meal_count = extraction.vegan_meals ? String(extraction.vegan_meals) : null;
   const gluten_free_meal_count = extraction.gluten_free_meals ? String(extraction.gluten_free_meals) : null;
-  const toddlers_under_2_count = extraction.toddlers_under_2 != null ? String(extraction.toddlers_under_2) : null;
+  const toddlers_under_2_count = extraction.toddlers_under_2 ? String(extraction.toddlers_under_2) : null;
 
   // Friday weddings end ~5.5h after the reception starts (Shabbat) rather
   // than the usual late finish - fill this in only when iPlan itself didn't
