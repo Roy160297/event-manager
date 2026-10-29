@@ -349,6 +349,10 @@ export interface PrivateEventRow {
   additional_info: string | null;
   table_sketch_path: string | null;
   sketch_seated_chairs_count: string | null;
+  report_guests_iplan: string | null;
+  report_children_count: string | null;
+  report_exit_time: string | null;
+  report_notes: string | null;
   created_at: string;
 }
 

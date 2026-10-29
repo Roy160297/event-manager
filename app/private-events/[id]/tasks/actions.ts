@@ -66,3 +66,22 @@ export async function deletePrivateTask(eventId: string, taskId: string) {
   if (error) throw new Error(error.message);
   revalidatePath(`/private-events/${eventId}/tasks`);
 }
+
+// The short end-of-event summary kept on the private event itself.
+export async function savePrivateEventReport(eventId: string, formData: FormData) {
+  const supabase = await createClient();
+  const text = (name: string) => String(formData.get(name) ?? "").trim() || null;
+
+  const { error } = await supabase
+    .from("private_events")
+    .update({
+      report_guests_iplan: text("report_guests_iplan"),
+      report_children_count: text("report_children_count"),
+      report_exit_time: text("report_exit_time"),
+      report_notes: text("report_notes"),
+    })
+    .eq("id", eventId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/private-events/${eventId}/tasks`);
+}

@@ -3,7 +3,15 @@ import { actionErrorMessage } from "@/lib/actionError";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { DateField } from "@/components/DateField";
-import { createPrivateTask, deletePrivateTask, updatePrivateTask, updatePrivateTaskStatus } from "./actions";
+import { TimeField } from "@/components/TimeField";
+import { ReportExport } from "./ReportExport";
+import {
+  createPrivateTask,
+  deletePrivateTask,
+  savePrivateEventReport,
+  updatePrivateTask,
+  updatePrivateTaskStatus,
+} from "./actions";
 import {
   TASK_PRIORITY_COLORS,
   TASK_PRIORITY_LABELS,
@@ -42,8 +50,50 @@ export default async function PrivateTasksPage({ params }: { params: Promise<{ i
     }
   }
 
+  async function saveReport(formData: FormData) {
+    "use server";
+    try {
+      await savePrivateEventReport(eventId, formData);
+    } catch (err) {
+      return actionErrorMessage(err);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      {event && (
+        <section className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+          <p className="font-serif text-lg font-bold">דוח סיכום אירוע</p>
+          <SaveDetailsForm action={saveReport} message="הדוח נשמר" className="flex flex-col gap-3">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">כמות אורחים סופית - אייפלן</span>
+                <input name="report_guests_iplan" defaultValue={event.report_guests_iplan ?? ""} className={inputClass} />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">כמות ילדים (אורחים)</span>
+                <input name="report_children_count" defaultValue={event.report_children_count ?? ""} className={inputClass} />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">שעת עזיבה</span>
+                <TimeField name="report_exit_time" defaultValue={event.report_exit_time?.slice(0, 5) ?? ""} />
+              </label>
+            </div>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">הערות</span>
+              <textarea name="report_notes" defaultValue={event.report_notes ?? ""} rows={4} className={inputClass} />
+            </label>
+            <button
+              type="submit"
+              className="self-start rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground hover:opacity-90"
+            >
+              שמור דוח
+            </button>
+          </SaveDetailsForm>
+          <ReportExport event={event} />
+        </section>
+      )}
+
       <SaveDetailsForm
         action={addTask}
         message="המשימה נוספה בהצלחה"
