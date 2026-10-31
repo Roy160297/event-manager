@@ -6,6 +6,8 @@ import { HoverPrefetchLink } from "@/components/HoverPrefetchLink";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { formatDate } from "@/lib/labels";
+import { eventEntryHref } from "@/lib/eventEntry";
+import { todaysEventDate } from "@/lib/scheduleTime";
 import type { EventRow } from "@/lib/types";
 
 type SwitcherEvent = Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">;
@@ -19,10 +21,12 @@ export function EventSwitcher({
   events,
   managers,
   defaultManagerId,
+  canReadSummary,
 }: {
   events: SwitcherEvent[];
   managers: { id: string; name: string }[];
   defaultManagerId: string | null;
+  canReadSummary: boolean;
 }) {
   const eventTypeLabel = useEventTypeLabel();
   const pathname = usePathname();
@@ -41,6 +45,7 @@ export function EventSwitcher({
   const currentEventId = matchedId && !RESERVED_SEGMENTS.has(matchedId) ? matchedId : null;
   const subPath = currentEventId ? (match?.[2] ?? "") : "";
 
+  const today = todaysEventDate();
   const normalizedQuery = query.trim().toLowerCase();
   const filtered = events
     .filter((event) => !selectedManagerId || event.manager_id === selectedManagerId)
@@ -77,7 +82,10 @@ export function EventSwitcher({
             return (
               <li key={event.id}>
                 <HoverPrefetchLink
-                  href={`/events/${event.id}${subPath}`}
+                  href={
+                    // From outside an event, today's event opens on its summary report; once inside an event the tab stays.
+                    currentEventId ? `/events/${event.id}${subPath}` : eventEntryHref(event.id, event.event_date === today, canReadSummary)
+                  }
                   className={
                     isCurrent
                       ? "block rounded-md bg-accent-soft px-2 py-1.5 text-sm font-semibold text-accent"

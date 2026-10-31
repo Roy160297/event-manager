@@ -139,6 +139,10 @@ export function PushRuleCreator({
             <legend className="mb-1">נמענים (לפחות אחד)</legend>
             <EmailRecipientPicker values={draft ?? undefined} staff={staff} inputClass={inputClass} />
           </fieldset>
+          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+            <input type="checkbox" name="skip_fridays" defaultChecked={draft?.skip_fridays === true} />
+            <span>לא להפעיל באירועי יום שישי</span>
+          </label>
         </div>
         <button
           type="submit"

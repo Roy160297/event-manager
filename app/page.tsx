@@ -11,6 +11,7 @@ import { EventManagerFilter } from "@/components/EventManagerFilter";
 import { TrashIcon } from "@/components/icons";
 import { getCurrentStaff } from "@/lib/auth";
 import { HoverPrefetchLink } from "@/components/HoverPrefetchLink";
+import { eventEntryHref } from "@/lib/eventEntry";
 import { getEventManagerCandidates } from "@/lib/staff";
 import { getVenueSettings } from "@/lib/venueSettings";
 import { canRead, canWrite } from "@/lib/permissions";
@@ -41,6 +42,7 @@ export default async function EventsDashboard({
 
   const canWriteEvents = canWrite(currentStaff.permissions, "events");
   const canReadEvents = canRead(currentStaff.permissions, "events");
+  const canReadSummary = canRead(currentStaff.permissions, "event_summary_report");
 
   // Default (no ?manager param yet) is "my events" when the logged-in staff
   // member is themselves an event-manager candidate; ?manager=all is the
@@ -151,7 +153,10 @@ export default async function EventsDashboard({
                 isToday ? "border-accent bg-accent-soft ring-1 ring-accent" : "border-border-classic bg-surface"
               }`}
             >
-              <HoverPrefetchLink href={`/events/${event.id}`} className="flex flex-1 flex-col gap-1 min-w-0">
+              <HoverPrefetchLink
+                href={eventEntryHref(event.id, isToday, canReadSummary)}
+                className="flex flex-1 flex-col gap-1 min-w-0"
+              >
                 <p className="truncate font-medium">
                   {event.name}
                   {isToday && <span className="ms-2 text-xs font-medium text-accent">אירוע היום</span>}

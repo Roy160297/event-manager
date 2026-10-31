@@ -48,14 +48,14 @@ export async function POST(request: Request) {
   const [{ data: event }, { data: rule }] = await Promise.all([
     supabase
       .from("events")
-      .select("name, manager_id, floor_manager_id, sales_person_id, menu_notes")
+      .select("name, event_date, manager_id, floor_manager_id, sales_person_id, menu_notes")
       .eq("id", eventId)
       .is("deleted_at", null)
       .maybeSingle(),
     supabase
       .from("push_reminder_rules")
       .select(
-        "notification_title, notification_body, active, to_event_manager, to_floor_manager, to_salesperson, recipient_role_ids, recipient_staff_ids",
+        "notification_title, notification_body, active, skip_fridays, to_event_manager, to_floor_manager, to_salesperson, recipient_role_ids, recipient_staff_ids",
       )
       .eq("id", ruleId)
       .maybeSingle<PushReminderRuleRow>(),
@@ -63,6 +63,12 @@ export async function POST(request: Request) {
 
   if (!event || !rule?.active) {
     return Response.json({ ok: true, sent: 0, reason: !event ? "event not found" : "rule inactive" });
+  }
+
+  // The job is not scheduled for a Friday event in the first place; this covers
+  // one that was already queued when the rule or the event's date changed.
+  if (rule.skip_fridays && new Date(`${event.event_date}T12:00:00Z`).getUTCDay() === 5) {
+    return Response.json({ ok: true, sent: 0, reason: "rule skips Fridays" });
   }
 
   const staffIds = await resolveRecipientStaffIds(supabase, rule, event);

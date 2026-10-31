@@ -54,6 +54,7 @@ export interface PushRuleDraft {
   to_salesperson: boolean | null;
   recipient_role_ids: string[];
   recipient_staff_ids: string[];
+  skip_fridays: boolean | null;
   missing: string[];
 }
 
@@ -69,6 +70,7 @@ const PUSH_SCHEMA = {
     to_floor_manager: { type: Type.BOOLEAN, nullable: true },
     to_salesperson: { type: Type.BOOLEAN, nullable: true },
     recipient_staff_names: { type: Type.ARRAY, items: { type: Type.STRING } },
+    skip_fridays: { type: Type.BOOLEAN, nullable: true },
   },
 };
 
@@ -97,6 +99,7 @@ Fill these fields (use null for anything the request does not say - never guess)
 - notification_title: short push title in Hebrew, starting with "תזכורת:".
 - notification_body: the push text in Hebrew. You may use {event_name} for the event's name and {additional_info} for the event's additional-info text.
 - to_event_manager / to_floor_manager / to_salesperson: true if the request says the event's manager / the event's floor manager (מנהל פלור) / the event's salesperson (איש מכירות) receives it; otherwise null.
+- skip_fridays: true only if the request says it should not apply to Friday events ("לא בחתונות שישי", "חוץ מאירועי שישי"); otherwise null.
 - recipient_staff_names: specific people who should receive it - a request that names a position (e.g. the chef) means the person holding it. Use the name exactly as in this list (name - position): ${context.staff.map((m) => (m.roleName ? `${m.name} (${m.roleName})` : m.name)).join(", ")}; [] if none.`;
 
   const raw = await generateDraft(prompt, PUSH_SCHEMA);
@@ -116,6 +119,7 @@ Fill these fields (use null for anything the request does not say - never guess)
     to_salesperson: raw.to_salesperson === true ? true : null,
     recipient_role_ids: [],
     recipient_staff_ids: staffIds,
+    skip_fridays: raw.skip_fridays === true ? true : null,
     missing: [],
   };
   if (!draft.title) draft.missing.push("שם פנימי");

@@ -31,6 +31,7 @@ export function AppShell({
   switcherEvents,
   switcherManagers,
   switcherDefaultManagerId,
+  switcherCanReadSummary,
   signOutAction,
   children,
 }: {
@@ -50,6 +51,7 @@ export function AppShell({
   switcherEvents: Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">[];
   switcherManagers: { id: string; name: string }[];
   switcherDefaultManagerId: string | null;
+  switcherCanReadSummary: boolean;
   signOutAction: () => Promise<void>;
   children: React.ReactNode;
 }) {
@@ -195,7 +197,7 @@ export function AppShell({
         </div>
       </header>
       {staff && (
-        <EventSwitcher events={switcherEvents} managers={switcherManagers} defaultManagerId={switcherDefaultManagerId} />
+        <EventSwitcher events={switcherEvents} managers={switcherManagers} defaultManagerId={switcherDefaultManagerId} canReadSummary={switcherCanReadSummary} />
       )}
       <main className="mx-auto w-full max-w-5xl min-w-0 flex-1 overflow-x-clip px-4 py-6">{children}</main>
       <footer className="border-t border-border-classic bg-background px-4 py-4 text-center text-xs text-foreground/50">

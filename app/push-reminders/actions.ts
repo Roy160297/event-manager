@@ -54,6 +54,7 @@ function readRuleFields(formData: FormData, hasLegacyRoles = false) {
     to_floor_manager: toFloorManager,
     to_salesperson: toSalesperson,
     recipient_staff_ids: staffIds,
+    skip_fridays: formData.get("skip_fridays") === "on",
   };
 }
 

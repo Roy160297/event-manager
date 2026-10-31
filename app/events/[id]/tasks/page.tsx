@@ -12,6 +12,7 @@ import ClosingChecklist from "./ClosingChecklist";
 import RoleChecklist from "./RoleChecklist";
 import { CLOSING_CHECKLIST_KEY, appliesToEventType, getChecklists } from "@/lib/checklists";
 import { EventSummaryReportExport } from "./EventSummaryReportExport";
+import { SUMMARY_REPORT_ANCHOR } from "@/lib/eventEntry";
 import { SendChecklistsEmailButton, type ChecklistForEmail } from "./SendChecklistsEmailButton";
 import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
 import { ChecklistPhotos } from "@/components/ChecklistPhotos";
@@ -43,9 +44,16 @@ const PRIORITIES = Object.keys(TASK_PRIORITY_LABELS) as (keyof typeof TASK_PRIOR
 
 type TaskWithAssignee = TaskRow & { staff: Pick<StaffRow, "name"> | null };
 
-export default async function TasksPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TasksPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ report?: string }>;
+}) {
   const eventTypeLabels = await getEventTypeLabels();
   const { id: eventId } = await params;
+  const openReport = (await searchParams).report === "1";
   const supabase = await createClient();
 
   const [
@@ -325,7 +333,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
       })}
 
       {canReadSummary && (
-      <details className="rounded-lg border border-border-classic bg-surface p-4">
+      <details id={SUMMARY_REPORT_ANCHOR} open={openReport} className="rounded-lg border border-border-classic bg-surface p-4">
         <summary className="cursor-pointer text-sm font-medium">
           דוח סיכום אירוע
           {summaryReportSignature && <span className="text-green-700"> · נחתם</span>}

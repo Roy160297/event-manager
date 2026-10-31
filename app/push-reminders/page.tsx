@@ -155,6 +155,7 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
                   <p className="text-sm text-foreground/60">
                     {rule.offset_minutes} דקות {rule.offset_minutes < 0 ? "לפני" : "אחרי"} שלב &quot;{rule.anchor_label}
                     &quot; · נשלח אל: {recipientSummary(rule)}
+                    {rule.skip_fridays && " · לא באירועי שישי"}
                   </p>
                 </div>
                 {canWriteRules && (
@@ -220,6 +221,10 @@ export default async function PushRemindersPage({ searchParams }: { searchParams
                       <legend className="mb-1">נמענים (לפחות אחד)</legend>
                       <EmailRecipientPicker values={rule} staff={staffList} inputClass={inputClass} />
                     </fieldset>
+                    <label className="flex items-center gap-2 text-sm sm:col-span-2">
+                      <input type="checkbox" name="skip_fridays" defaultChecked={rule.skip_fridays} />
+                      <span>לא להפעיל באירועי יום שישי</span>
+                    </label>
                     <label className="flex items-center gap-2 text-sm sm:col-span-2">
                       <input type="checkbox" name="active" defaultChecked={rule.active} />
                       <span>פעילה</span>

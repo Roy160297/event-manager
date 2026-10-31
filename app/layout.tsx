@@ -81,6 +81,7 @@ export default async function RootLayout({
           switcherEvents={switcherEvents}
           switcherManagers={switcherManagers}
           switcherDefaultManagerId={switcherDefaultManagerId}
+          switcherCanReadSummary={!!staff && canRead(staff.permissions, "event_summary_report")}
           signOutAction={signOut}
         >
           {children}

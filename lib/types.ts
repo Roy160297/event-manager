@@ -292,6 +292,7 @@ export interface PushReminderRuleRow {
   to_salesperson: boolean;
   recipient_role_ids: string[];
   recipient_staff_ids: string[];
+  skip_fridays: boolean;
   created_at: string;
 }
 
