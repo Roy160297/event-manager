@@ -7,18 +7,27 @@ import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { TimeField } from "@/components/TimeField";
 import { scheduleSortKey } from "@/lib/labels";
 import { actionErrorMessage } from "@/lib/actionError";
-import type { PrivateEventTimelineItemRow } from "@/lib/types";
+import { ScheduleExport } from "./ScheduleExport";
+import type { PrivateEventRow, PrivateEventTimelineItemRow } from "@/lib/types";
 
 export default async function PrivateTimelinePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = await params;
   const supabase = await createClient();
 
-  const { data: rawItems } = await supabase
-    .from("private_event_timeline_items")
-    .select("*")
-    .eq("event_id", eventId)
-    .order("sort_order", { ascending: true })
-    .returns<PrivateEventTimelineItemRow[]>();
+  const [{ data: rawItems }, { data: event }] = await Promise.all([
+    supabase
+      .from("private_event_timeline_items")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("sort_order", { ascending: true })
+      .returns<PrivateEventTimelineItemRow[]>(),
+    supabase
+      .from("private_events")
+      .select("name, event_type, event_date")
+      .eq("id", eventId)
+      .returns<Pick<PrivateEventRow, "name" | "event_type" | "event_date">[]>()
+      .single(),
+  ]);
 
   const items = rawItems ? [...rawItems].sort((a, b) => scheduleSortKey(a.approx_time) - scheduleSortKey(b.approx_time)) : rawItems;
 
@@ -52,6 +61,7 @@ export default async function PrivateTimelinePage({ params }: { params: Promise<
       <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
         <p className="text-sm text-foreground/60">אפשר למלא את לוח הזמנים ידנית למטה, או לייבא אותו מתמונה.</p>
         <TimelineImageImport eventId={eventId} />
+        {event && items && items.length > 0 && <ScheduleExport event={event} items={items} />}
       </div>
 
       <SaveDetailsForm
