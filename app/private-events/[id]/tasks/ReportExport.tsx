@@ -19,6 +19,7 @@ export function ReportExport({ event }: { event: PrivateEventRow }) {
       filename={`דוח-סיכום-${event.name}.pdf`}
       eventLabel={`${event.name} · ${PRIVATE_EVENT_TYPE_LABELS[event.event_type]} · ${formatDate(event.event_date)}`}
       showSignature={false}
+      showBrand={false}
     >
       <div className="flex flex-col gap-4">
         <div className="mb-1 flex items-baseline justify-between pb-2" style={{ borderBottom: "1px solid #d4d4d4" }}>

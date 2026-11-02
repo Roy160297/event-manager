@@ -10,6 +10,7 @@ export function PdfExportButton({
   signerName,
   signerLabel = "מנהל אירוע",
   showSignature = true,
+  showBrand = true,
   storedSignature = null,
   children,
 }: {
@@ -19,6 +20,8 @@ export function PdfExportButton({
   signerName?: string | null;
   signerLabel?: string;
   showSignature?: boolean;
+  // The House No. Seven logo at the top; off for the private-events profile.
+  showBrand?: boolean;
   // Once a checklist has a formal signature on file, use it directly instead
   // of prompting to draw a new one each download - keeps every downloaded
   // copy consistent with what was actually signed.
@@ -94,13 +97,15 @@ export function PdfExportButton({
           className="w-[780px] p-8 text-[13px] leading-relaxed"
           style={{ backgroundColor: "#ffffff", color: "#000000" }}
         >
-          <div dir="ltr" className="mb-4 flex items-baseline justify-start gap-1.5">
-            <span className="text-lg font-black uppercase tracking-tight">House</span>
-            <span className="font-serif text-sm italic" style={{ color: "#525252" }}>
-              No.
-            </span>
-            <span className="text-lg font-black uppercase tracking-tight">Seven</span>
-          </div>
+          {showBrand && (
+            <div dir="ltr" className="mb-4 flex items-baseline justify-start gap-1.5">
+              <span className="text-lg font-black uppercase tracking-tight">House</span>
+              <span className="font-serif text-sm italic" style={{ color: "#525252" }}>
+                No.
+              </span>
+              <span className="text-lg font-black uppercase tracking-tight">Seven</span>
+            </div>
+          )}
           {children}
         </div>
         <div ref={footerRef} dir="rtl" className="w-[780px]" style={{ backgroundColor: "#ffffff" }}>
