@@ -354,6 +354,7 @@ export interface PrivateEventRow {
   report_children_count: string | null;
   report_exit_time: string | null;
   report_notes: string | null;
+  deleted_at: string | null;
   created_at: string;
 }
 

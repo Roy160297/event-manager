@@ -25,6 +25,7 @@ export default async function PrivateMyTasksPage() {
     .from("private_event_tasks")
     .select("*, private_events!inner(name, event_type, event_date)")
     .eq("status", "open")
+    .is("private_events.deleted_at", null)
     .order("due_date", { ascending: true, nullsFirst: false })
     .returns<TaskWithEvent[]>();
 

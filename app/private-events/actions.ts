@@ -226,7 +226,29 @@ export async function addSuppliersFromImport(eventId: string, suppliers: Supplie
   revalidatePath(`/private-events/${eventId}`);
 }
 
+// Moves the event to the recycling bin; permanentlyDeletePrivateEvent is the
+// real delete, from the bin.
 export async function deletePrivateEvent(eventId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("private_events")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", eventId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/private-events");
+  revalidatePath("/private-events/trash");
+}
+
+export async function restorePrivateEvent(eventId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("private_events").update({ deleted_at: null }).eq("id", eventId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/private-events");
+  revalidatePath("/private-events/trash");
+  revalidatePath("/private-events/archive");
+}
+
+export async function permanentlyDeletePrivateEvent(eventId: string) {
   const supabase = await createClient();
   const { data: event } = await supabase
     .from("private_events")
@@ -241,7 +263,7 @@ export async function deletePrivateEvent(eventId: string) {
     await supabase.storage.from("private-event-sketches").remove([event.table_sketch_path]);
   }
 
-  revalidatePath("/private-events");
+  revalidatePath("/private-events/trash");
 }
 
 export interface PrivateEventImageUpdateDraft {

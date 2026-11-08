@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { deletePrivateEvent } from "./actions";
 import { PRIVATE_EVENT_TYPE_LABELS } from "@/lib/privateEvents";
 import { formatDate } from "@/lib/labels";
+import { todaysEventDate } from "@/lib/scheduleTime";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TrashIcon } from "@/components/icons";
 import type { PrivateEventRow } from "@/lib/types";
@@ -12,6 +13,8 @@ export default async function PrivateEventsDashboard() {
   const { data: events, error } = await supabase
     .from("private_events")
     .select("*")
+    .is("deleted_at", null)
+    .gte("event_date", todaysEventDate())
     .order("event_date", { ascending: true })
     .returns<PrivateEventRow[]>();
 
@@ -19,12 +22,26 @@ export default async function PrivateEventsDashboard() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-serif text-2xl font-bold">האירועים הפרטיים שלי</h1>
-        <Link
-          href="/private-events/new"
-          className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-        >
-          + אירוע חדש
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/private-events/new"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+          >
+            + אירוע חדש
+          </Link>
+          <Link
+            href="/private-events/archive"
+            className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+          >
+            ארכיון
+          </Link>
+          <Link
+            href="/private-events/trash"
+            className="rounded-full border-2 border-border-classic bg-background px-4 py-2 text-sm font-medium hover:bg-accent-soft"
+          >
+            פח מיחזור
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -32,7 +49,13 @@ export default async function PrivateEventsDashboard() {
       )}
 
       {!error && (!events || events.length === 0) && (
-        <p className="text-foreground/80">אין עדיין אירועים פרטיים. לחצו על &quot;אירוע חדש&quot; כדי להתחיל.</p>
+        <p className="text-foreground/80">
+          אין אירועים פרטיים קרובים. לחצו על &quot;אירוע חדש&quot; כדי להתחיל, או עברו ל
+          <Link href="/private-events/archive" className="text-accent hover:underline">
+            ארכיון
+          </Link>{" "}
+          לצפייה באירועים שחלפו.
+        </p>
       )}
 
       <ul className="flex flex-col gap-3">
