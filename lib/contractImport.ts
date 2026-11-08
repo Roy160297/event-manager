@@ -28,8 +28,6 @@ export interface ContractExtraction {
   client_2_name: string | null;
   event_type: PrivateEventType | null;
   event_date: string | null;
-  // The date exactly as it is printed on the page, for the day/month check.
-  event_date_printed: string | null;
   start_time: string | null;
   // A second time when the form has two written (e.g. "19:00 / 18:30").
   start_time_alt: string | null;
@@ -68,12 +66,7 @@ const RESPONSE_SCHEMA = {
       type: Type.STRING,
       nullable: true,
       description:
-        'תאריך האירוע בפורמט YYYY-MM-DD, מסעיף 1. הפורמט המודפס בחוזה הוא בדרך כלל DD/MM/YYYY (יום/חודש/שנה) - המר בהתאם.',
-    },
-    event_date_printed: {
-      type: Type.STRING,
-      nullable: true,
-      description: "התאריך בדיוק כפי שהוא מודפס בחוזה, ללא המרה (למשל 08/04/2027).",
+        'תאריך האירוע בפורמט YYYY-MM-DD, מסעיף 1. תאריכים בחוזה הם תמיד יום/חודש/שנה (DD/MM/YYYY או DD/MM/YY) - לעולם לא חודש/יום. שנה בת שתי ספרות היא 20YY.',
     },
     start_time: {
       type: Type.STRING,
@@ -230,24 +223,6 @@ function normalizeDate(value: string | null | undefined): string | null {
   return valid ? clean(value) : null;
 }
 
-function displayDate(iso: string): string {
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
-}
-
-// A date whose day and month are both 12 or below reads two ways. The
-// contract is printed DD/MM/YYYY, but the printed form can come out with the
-// parts reversed (right-to-left layout flips a typed year/month/day), so the
-// reading is always shown back for a check instead of silently trusted.
-export function ambiguousDateWarning(iso: string | null, printed: string | null): string | null {
-  if (!iso) return null;
-  const [y, m, d] = iso.split("-").map(Number);
-  if (m > 12 || d > 12 || m === d) return null;
-  const swapped = `${String(m).padStart(2, "0")}/${String(d).padStart(2, "0")}/${y}`;
-  const shown = printed ? `בחוזה מודפס ${printed}. ` : "";
-  return `${shown}נקרא כ-${displayDate(iso)} (יום/חודש/שנה). אם התאריך בפועל הוא ${swapped} - תקנו אותו לפני יצירת האירוע.`;
-}
-
 // Pure step split out from the Gemini call so the normalising and the
 // warnings can be unit-tested without mocking the API.
 export function buildContractDraft(extraction: ContractExtraction): ContractImportDraft {
@@ -264,8 +239,6 @@ export function buildContractDraft(extraction: ContractExtraction): ContractImpo
 
   const eventDate = normalizeDate(extraction.event_date);
   if (!eventDate) warnings.push("לא זוהה תאריך האירוע - בחרו אותו ידנית.");
-  const dateWarning = ambiguousDateWarning(eventDate, clean(extraction.event_date_printed));
-  if (dateWarning) warnings.push(dateWarning);
 
   const startTime = normalizeTime(extraction.start_time);
   const altTime = normalizeTime(extraction.start_time_alt);

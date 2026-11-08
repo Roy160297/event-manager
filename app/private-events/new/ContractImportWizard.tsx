@@ -83,10 +83,6 @@ export function ContractImportWizard() {
         className="flex max-w-md flex-col gap-3 rounded-md border border-border-classic bg-accent-soft/30 p-4"
       >
         <h2 className="text-base font-bold">יצירת אירוע מחוזה חתום</h2>
-        <p className="text-sm text-foreground/70">
-          מעלים את ה-PDF של ההסכם החתום, והפרטים (שמות, תאריך, שעה, אורחים, טלפונים ואימיילים) נקראים ממנו. לפני
-          שהאירוע נוצר מוצג מסך לבדיקה ותיקון.
-        </p>
         <input
           ref={fileInputRef}
           type="file"

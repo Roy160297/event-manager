@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { ambiguousDateWarning, buildContractDraft, type ContractExtraction } from "./contractImport";
+import { buildContractDraft, type ContractExtraction } from "./contractImport";
 
 const base: ContractExtraction = {
   client_1_name: "אלמוג כהן",
   client_2_name: "טאי לוי",
   event_type: "wedding",
   event_date: "2027-08-04",
-  event_date_printed: "08/04/2027",
   start_time: "19:00",
   start_time_alt: null,
   hall_name: "בית",
@@ -47,6 +46,12 @@ describe("buildContractDraft", () => {
     expect(buildContractDraft({ ...base, estimated_guests: " 240 אורחים" }).estimated_guests).toBe("240");
   });
 
+  it("keeps the date as read, with no day/month warning", () => {
+    const draft = buildContractDraft({ ...base, event_date: "2027-04-08" });
+    expect(draft.event_date).toBe("2027-04-08");
+    expect(draft.warnings.some((w) => w.includes("יום/חודש"))).toBe(false);
+  });
+
   it("rejects an impossible date and warns that it is missing", () => {
     const draft = buildContractDraft({ ...base, event_date: "2027-02-31" });
     expect(draft.event_date).toBeNull();
@@ -77,25 +82,5 @@ describe("buildContractDraft", () => {
     const draft = buildContractDraft({ ...base, client_1_name: null, client_2_name: null });
     expect(draft.name).toBe("");
     expect(draft.warnings.some((w) => w.includes("שמות הלקוחות"))).toBe(true);
-  });
-});
-
-describe("ambiguousDateWarning", () => {
-  it("warns with both readings when day and month could swap", () => {
-    const warning = ambiguousDateWarning("2027-04-08", "08/04/2027");
-    expect(warning).toContain("08/04/2027");
-    expect(warning).toContain("04/08/2027");
-  });
-
-  it("stays quiet when the day is above 12", () => {
-    expect(ambiguousDateWarning("2027-08-25", "25/08/2027")).toBeNull();
-  });
-
-  it("stays quiet when day and month are equal", () => {
-    expect(ambiguousDateWarning("2027-05-05", "05/05/2027")).toBeNull();
-  });
-
-  it("returns nothing without a date", () => {
-    expect(ambiguousDateWarning(null, null)).toBeNull();
   });
 });
