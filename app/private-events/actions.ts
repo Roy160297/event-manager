@@ -7,6 +7,8 @@ import { extractSuppliersFromImage, type SupplierImportDraft } from "@/lib/suppl
 import { isFriday } from "@/lib/scheduleTime";
 import { applyDefaultSchedule } from "@/app/private-events/[id]/timeline/actions";
 import { extractEventDraftFromImage, applyCarriedReservePercent } from "@/lib/imageImport";
+import { extractContractFromPdf, type ContractImportDraft } from "@/lib/contractImport";
+import { PRIVATE_EVENT_TYPE_LABELS } from "@/lib/privateEvents";
 import type { PrivateEventRow, PrivateEventType } from "@/lib/types";
 
 export async function createPrivateEvent(formData: FormData): Promise<string | void> {
@@ -38,6 +40,70 @@ export async function createPrivateEvent(formData: FormData): Promise<string | v
 
   revalidatePath("/private-events");
   redirect(`/private-events/${data.id}`);
+}
+
+// A scanned two-page contract is well under this; the cap keeps the request
+// inside the host's request-body limit and fails with a clear message instead
+// of a bare "Failed to fetch".
+const MAX_CONTRACT_PDF_BYTES = 4 * 1024 * 1024;
+
+// Returns { error } on failure instead of throwing - see parseSupplierImage.
+export async function parseContractPdf(formData: FormData): Promise<ContractImportDraft | { error: string }> {
+  try {
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) throw new Error("יש לבחור קובץ PDF");
+    if (file.size > MAX_CONTRACT_PDF_BYTES) throw new Error("הקובץ גדול מדי (מעל 4MB) - נסו לסרוק בגודל קטן יותר");
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (buffer.subarray(0, 5).toString("latin1") !== "%PDF-") throw new Error("הקובץ שנבחר אינו PDF");
+
+    return await extractContractFromPdf(buffer, file.name || null);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "שגיאה בעיבוד החוזה" };
+  }
+}
+
+// Creates the event from the reviewed contract draft. Returns the new id (the
+// wizard navigates there) rather than redirecting, since redirect() inside a
+// Server Action called from an event handler does not resolve for the caller.
+export async function createPrivateEventFromContract(
+  draft: ContractImportDraft,
+): Promise<{ id: string } | { error: string }> {
+  try {
+    const name = draft.name.trim();
+    if (!name || !draft.event_date) throw new Error("שם הלקוח, סוג האירוע ותאריך הם שדות חובה");
+    if (!(draft.event_type in PRIVATE_EVENT_TYPE_LABELS)) throw new Error("סוג האירוע אינו תקין");
+
+    const text = (value: string | null) => value?.trim() || null;
+    const startTime = draft.start_time || (isFriday(draft.event_date) ? "12:00" : "19:30");
+
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("private_events")
+      .insert({
+        name,
+        event_type: draft.event_type,
+        event_date: draft.event_date,
+        start_time: startTime,
+        end_time: "03:00",
+        hall_name: text(draft.hall_name),
+        estimated_guests: text(draft.estimated_guests),
+        contact_email: text(draft.contact_email),
+        contact_email_2: text(draft.contact_email_2),
+        contact_phone: text(draft.contact_phone),
+        contact_phone_2: text(draft.contact_phone_2),
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    await applyDefaultSchedule(data.id, draft.event_type, draft.event_date, startTime);
+
+    revalidatePath("/private-events");
+    return { id: data.id };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "שגיאה ביצירת האירוע" };
+  }
 }
 
 export async function updatePrivateEventDetails(eventId: string, formData: FormData): Promise<string | void> {

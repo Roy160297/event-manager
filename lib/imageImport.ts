@@ -216,7 +216,7 @@ function sleep(ms: number): Promise<void> {
 // was throwing immediately and skipping every other attempt in the ladder
 // (including tiers that had never been tried yet), surfacing Gemini's raw
 // JSON error to the user instead of retrying.
-function isTransientOverload(err: unknown): boolean {
+export function isTransientOverload(err: unknown): boolean {
   if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) return true;
   const message = err instanceof Error ? err.message : String(err);
   return (
