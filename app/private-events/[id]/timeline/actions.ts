@@ -62,7 +62,7 @@ const EVENING_WEDDING_SCHEDULE: { label: string; time: string; notes?: string }[
   { label: "כתובה", time: "20:15" },
   { label: "מזנונים נסגרים, הכנות לחופה והדרכה", time: "20:45", notes: "יצירת שביל חופה" },
   { label: "חופה", time: "21:00" },
-  { label: "מזנונים נפתחים (מנות עיקריות)", time: "21:20", notes: "15-20 דקות ריקודים" },
+  { label: "צמצום מזנונים מתחת לגלריה", time: "21:20", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק'. 15-20 דקות ריקודים" },
   { label: "מנות עיקריות", time: "21:50", notes: "הכלה מחליפה ללוק שני" },
   { label: "ריקודים", time: "22:20" },
   { label: "קינוחים", time: "22:50", notes: "קיפול מזנונים" },
@@ -99,7 +99,8 @@ const EVENING_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: s
     notes: "יצירת שביל חופה",
   },
   { label: "חופה", time: "21:30" },
-  { label: "ריקודים", time: "21:50", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
+  { label: "ריקודים", time: "21:50" },
+  { label: "צמצום מזנונים מתחת לגלריה", time: "21:50", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק'" },
   { label: "קינוחים", time: "22:30", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "23:30", notes: "קיפול הקינוחים" },
 ];
@@ -137,7 +138,8 @@ const FRIDAY_REVERSE_WEDDING_SCHEDULE: { label: string; time: string; notes?: st
     notes: "יצירת שביל חופה",
   },
   { label: "חופה", time: "14:00" },
-  { label: "ריקודים", time: "14:20", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק' (מתחת לגלריה)" },
+  { label: "ריקודים", time: "14:20" },
+  { label: "צמצום מזנונים מתחת לגלריה", time: "14:20", notes: "פתיחת מזנון עיקריות מצומצם לכ45 דק'" },
   { label: "קינוחים", time: "15:00", notes: "קיפול מזנונים" },
   { label: "אפטר", time: "16:00", notes: "קיפול הקינוחים" },
 ];
