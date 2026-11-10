@@ -4,8 +4,24 @@
 // almost never need to change. Needs DOMParser, hence it runs in the offscreen
 // document.
 (function (root) {
+  // iPlan's markup carries inline handlers (onclick="...") and script blocks.
+  // DOMParser never runs them, but an extension page's CSP still logs a
+  // violation ("Executing inline event handler...") for every one it sees in the
+  // parsed string, which fills the extension's error page. Nothing here reads
+  // them, so they are dropped from the text before parsing.
+  function stripExecutable(html) {
+    let out = String(html).replace(/<script\b[\s\S]*?<\/script\s*>/gi, "");
+    // One handler per tag per pass (the tag prefix is consumed), so repeat.
+    const handler = /(<[a-z][^>]*?)\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+    for (let prev = ""; prev !== out; ) {
+      prev = out;
+      out = out.replace(handler, "$1");
+    }
+    return out.replace(/(\s(?:href|src|action|formaction)\s*=\s*["']?)\s*javascript:/gi, "$1#blocked:");
+  }
+
   function docOf(html) {
-    return new DOMParser().parseFromString(html, "text/html");
+    return new DOMParser().parseFromString(stripExecutable(html), "text/html");
   }
 
   // Month calendar JSON ({ html }) -> closed events with their quick-view URL.
