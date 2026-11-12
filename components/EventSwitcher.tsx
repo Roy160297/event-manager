@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import { formatDate } from "@/lib/labels";
 import { eventEntryHref } from "@/lib/eventEntry";
 import { todaysEventDate } from "@/lib/scheduleTime";
+import { findDayOfEventManager, isManagedBy } from "@/lib/dayOfEventManager";
 import type { EventRow } from "@/lib/types";
 
 type SwitcherEvent = Pick<EventRow, "id" | "name" | "event_date" | "event_type" | "manager_id">;
@@ -46,9 +47,10 @@ export function EventSwitcher({
   const subPath = currentEventId ? (match?.[2] ?? "") : "";
 
   const today = todaysEventDate();
+  const dayOfManagerId = findDayOfEventManager(managers)?.id ?? null;
   const normalizedQuery = query.trim().toLowerCase();
   const filtered = events
-    .filter((event) => !selectedManagerId || event.manager_id === selectedManagerId)
+    .filter((event) => !selectedManagerId || isManagedBy(event, selectedManagerId, dayOfManagerId, today))
     .filter((event) =>
       !normalizedQuery ||
       `${event.name} ${formatDate(event.event_date)} ${event.event_date}`.toLowerCase().includes(normalizedQuery),

@@ -6,6 +6,8 @@ import { buildCalendarFeed, type FeedEvent } from "@/lib/calendarFeed";
 import { getVenueSettings } from "@/lib/venueSettings";
 import { totalGuestCount } from "@/lib/guestCount";
 import { getEventManagerCandidates } from "@/lib/staff";
+import { findDayOfEventManager } from "@/lib/dayOfEventManager";
+import { todaysEventDate } from "@/lib/scheduleTime";
 import type { EventRow, StaffRow } from "@/lib/types";
 
 type EventWithManager = EventRow & { staff: Pick<StaffRow, "name"> | null };
@@ -43,7 +45,13 @@ export async function GET(request: Request) {
     .neq("status", "canceled")
     .gte("event_date", `${month}-01`)
     .lt("event_date", `${nextMonth}-01`);
-  if (isEventManager) query = query.eq("manager_id", currentStaff.id);
+  if (isEventManager) {
+    const dayOfManager = findDayOfEventManager(managerCandidates);
+    query =
+      dayOfManager?.id === currentStaff.id
+        ? query.or(`manager_id.eq.${currentStaff.id},event_date.eq.${todaysEventDate()}`)
+        : query.eq("manager_id", currentStaff.id);
+  }
   const { data: events, error } = await query.order("event_date", { ascending: true }).returns<EventWithManager[]>();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });

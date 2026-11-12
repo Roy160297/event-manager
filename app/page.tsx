@@ -12,6 +12,7 @@ import { TrashIcon } from "@/components/icons";
 import { getCurrentStaff } from "@/lib/auth";
 import { HoverPrefetchLink } from "@/components/HoverPrefetchLink";
 import { eventEntryHref } from "@/lib/eventEntry";
+import { findDayOfEventManager, isManagedBy } from "@/lib/dayOfEventManager";
 import { getEventManagerCandidates } from "@/lib/staff";
 import { getVenueSettings } from "@/lib/venueSettings";
 import { canRead, canWrite } from "@/lib/permissions";
@@ -52,11 +53,12 @@ export default async function EventsDashboard({
   const effectiveManagerId =
     managerParam === "all" ? null : (managerParam ?? (isSelfAManager ? currentStaff.id : null));
 
+  const highlightDate = todaysEventDate();
+  const dayOfManagerId = findDayOfEventManager(managers)?.id ?? null;
   const filteredEvents = effectiveManagerId
-    ? events?.filter((event) => event.manager_id === effectiveManagerId)
+    ? events?.filter((event) => isManagedBy(event, effectiveManagerId, dayOfManagerId, highlightDate))
     : events;
   const managerName = (id: string | null) => managers?.find((manager) => manager.id === id)?.name ?? null;
-  const highlightDate = todaysEventDate();
 
   return (
     <div className="flex flex-col gap-6">

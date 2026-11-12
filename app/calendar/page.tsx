@@ -11,6 +11,8 @@ import { canRead } from "@/lib/permissions";
 import { AddToCalendar, type CalendarPreviewEvent } from "@/components/AddToCalendar";
 import { DEFAULT_START_MINUTES, FIXED_END_MINUTES } from "@/lib/calendarFeed";
 import { getEventManagerCandidates } from "@/lib/staff";
+import { findDayOfEventManager, isManagedBy } from "@/lib/dayOfEventManager";
+import { todaysEventDate } from "@/lib/scheduleTime";
 import type { EventRow, StaffRow } from "@/lib/types";
 
 function pad(value: number) {
@@ -130,9 +132,10 @@ export default async function CalendarPage({
   const hhmm = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
   // An event manager only adds their own events; everyone else gets the lot.
   const isEventManager = managerCandidates.some((manager) => manager.id === currentStaff.id);
+  const dayOfManagerId = findDayOfEventManager(managerCandidates)?.id ?? null;
   const previewEvents: CalendarPreviewEvent[] = (events ?? [])
     .filter((event) => event.status !== "canceled")
-    .filter((event) => !isEventManager || event.manager_id === currentStaff.id)
+    .filter((event) => !isEventManager || isManagedBy(event, currentStaff.id, dayOfManagerId, todaysEventDate()))
     .map((event) => ({
       id: event.id,
       dateLabel: formatDateWithWeekday(event.event_date),

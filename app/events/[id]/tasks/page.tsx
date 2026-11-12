@@ -13,6 +13,8 @@ import RoleChecklist from "./RoleChecklist";
 import { CLOSING_CHECKLIST_KEY, appliesToEventType, getChecklists } from "@/lib/checklists";
 import { EventSummaryReportExport } from "./EventSummaryReportExport";
 import { SUMMARY_REPORT_ANCHOR } from "@/lib/eventEntry";
+import { findDayOfEventManager } from "@/lib/dayOfEventManager";
+import { todaysEventDate } from "@/lib/scheduleTime";
 import { SendChecklistsEmailButton, type ChecklistForEmail } from "./SendChecklistsEmailButton";
 import { ChecklistSignBlock } from "@/components/ChecklistSignBlock";
 import { ChecklistPhotos } from "@/components/ChecklistPhotos";
@@ -195,7 +197,10 @@ export default async function TasksPage({
     await unsignChecklist(eventId, "event_summary_report");
   }
 
-  const manager = staff?.find((member) => member.id === event?.manager_id) ?? null;
+  // On the day itself the event manager's seat - the name on their checklists'
+  // signatures - is Eldar's, not the assigned manager's.
+  const dayOfManager = event?.event_date === todaysEventDate() ? findDayOfEventManager(staff) : null;
+  const manager = dayOfManager ?? staff?.find((member) => member.id === event?.manager_id) ?? null;
   const managerName = manager?.name ?? null;
   const managerEmail = manager?.email ?? null;
   // Same field as "מספר אורחים - התחייבות" on the overview (סקירה) tab -
