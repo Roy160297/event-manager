@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clearEventWaiters, importEventWaiters } from "./actions";
+import { clearEventWaiters, importEventWaiters, previewEventWaiters } from "./actions";
 
 export interface RosterEntry {
   id: string;
@@ -31,28 +31,72 @@ export default function EventWaitersRoster({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  // The picked file stays here while we ask which unknown names to add.
+  const [pending, setPending] = useState<{
+    file: File;
+    total: number;
+    unknown: { name: string; phone: string | null; shiftRole: string | null }[];
+    selected: Set<string>;
+  } | null>(null);
+
+  async function runImport(file: File, addNames: string[]) {
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("add_names", JSON.stringify(addNames));
+    const { total, addedNames, skippedNames } = await importEventWaiters(eventId, formData);
+    const parts = [`נטענו ${total} מלצרים לאירוע.`];
+    if (addedNames.length > 0) parts.push(`נוספו למאגר המלצרים (${addedNames.length}): ${addedNames.join(", ")}.`);
+    if (skippedNames.length > 0) parts.push(`לא נוספו (${skippedNames.length}): ${skippedNames.join(", ")}.`);
+    setNotice(parts.join(" "));
+    router.refresh();
+  }
+
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
     setNotice(null);
+    setPending(null);
     setIsPending(true);
-    const formData = new FormData();
-    formData.set("file", file);
     try {
-      const { total, addedNames } = await importEventWaiters(eventId, formData);
-      setNotice(
-        addedNames.length > 0
-          ? `נטענו ${total} מלצרים לאירוע. נוספו אוטומטית לרשימת המלצרים (${addedNames.length}): ${addedNames.join(", ")}.`
-          : `נטענו ${total} מלצרים לאירוע. כולם כבר קיימים ברשימת המלצרים.`,
-      );
-      router.refresh();
+      const formData = new FormData();
+      formData.set("file", file);
+      const { total, unknown } = await previewEventWaiters(formData);
+      if (unknown.length > 0) {
+        setPending({ file, total, unknown, selected: new Set(unknown.map((waiter) => waiter.name)) });
+      } else {
+        await runImport(file, []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ");
     } finally {
       setIsPending(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  }
+
+  async function confirmPending() {
+    if (!pending) return;
+    setError(null);
+    setIsPending(true);
+    try {
+      await runImport(pending.file, [...pending.selected]);
+      setPending(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "שגיאה בהעלאת הקובץ");
+    } finally {
+      setIsPending(false);
+    }
+  }
+
+  function toggleUnknown(name: string) {
+    setPending((current) => {
+      if (!current) return current;
+      const selected = new Set(current.selected);
+      if (selected.has(name)) selected.delete(name);
+      else selected.add(name);
+      return { ...current, selected };
+    });
   }
 
   async function handleClear() {
@@ -128,6 +172,52 @@ export default function EventWaitersRoster({
             ))}
           </ul>
         </details>
+      )}
+
+      {pending && (
+        <div className="flex flex-col gap-2 rounded-md border border-accent bg-accent-soft/40 p-3 text-sm">
+          <p className="font-medium">
+            {pending.unknown.length === 1
+              ? "מלצר אחד מהקובץ לא מופיע בקטגוריית המלצרים. להוסיף אותו?"
+              : `${pending.unknown.length} מלצרים מהקובץ לא מופיעים בקטגוריית המלצרים. להוסיף אותם?`}
+          </p>
+          <ul className="flex flex-col gap-1">
+            {pending.unknown.map((waiter) => (
+              <li key={waiter.name}>
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={pending.selected.has(waiter.name)}
+                    onChange={() => toggleUnknown(waiter.name)}
+                    disabled={isPending}
+                  />
+                  <span className="font-medium">{waiter.name}</span>
+                  {waiter.shiftRole && <span className="text-foreground/70">{waiter.shiftRole}</span>}
+                  {waiter.phone && <span className="text-xs text-foreground/50" dir="ltr">{waiter.phone}</span>}
+                </label>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-foreground/60">מי שלא יסומן לא יתווסף לקטגוריית המלצרים ולא ישובץ באירוע.</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={confirmPending}
+              disabled={isPending}
+              className="rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {isPending ? "מעבד..." : `המשך (${pending.selected.size} יתווספו)`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPending(null)}
+              disabled={isPending}
+              className="rounded-full border border-border-classic px-4 py-1.5 text-xs hover:bg-accent-soft disabled:opacity-50"
+            >
+              ביטול
+            </button>
+          </div>
+        </div>
       )}
 
       {notice && <p className="rounded-md bg-green-50 p-2 text-sm text-green-800">{notice}</p>}

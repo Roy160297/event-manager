@@ -19,7 +19,7 @@ export async function syncLocationsFromSketch(
     supabase.from("waiter_assignments").select("location_id").eq("event_id", eventId),
   ]);
 
-  const assignedLocationIds = new Set((assignments ?? []).map((a) => a.location_id));
+  const assignedLocationIds = new Set((assignments ?? []).map((a) => a.location_id).filter((id): id is string => !!id));
   const existingByKey = new Map((existingLocations ?? []).map((loc) => [`${loc.location_type}:${loc.label}`, loc]));
 
   const draftEntries: { location_type: "table" | "food_stand"; label: string; capacity: number }[] = [

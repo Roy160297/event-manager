@@ -240,7 +240,8 @@ export interface WaiterAssignmentRow {
   id: string;
   event_id: string;
   waiter_id: string;
-  location_id: string;
+  // null for an event-level duty (door, runner, hall prep, ...): the duty is `role`.
+  location_id: string | null;
   // Legacy rows may still carry the old "waiter" default; new assignments are
   // always a specific WaiterSkill now (see the 00000000000064 migration).
   role: WaiterRole | WaiterSkill;

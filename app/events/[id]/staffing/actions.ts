@@ -6,7 +6,9 @@ import { extractPdfText } from "@/lib/pdfImport";
 import { normalizeWaiterName, parseEventWaiterRoster } from "@/lib/eventWaiterImport";
 import { parseTableSketchDraft } from "@/lib/tableSketchImport";
 import { syncLocationsFromSketch } from "@/lib/sketchSync";
-import type { LocationType, WaiterRole, WaiterSkill } from "@/lib/types";
+import { planSkillAssignments } from "@/lib/waiterAutoAssign";
+import { EVENT_DUTIES } from "@/lib/waiterDuties";
+import type { LocationRow, LocationType, WaiterRole, WaiterSkill } from "@/lib/types";
 
 export async function createLocation(eventId: string, formData: FormData) {
   const supabase = await createClient();
@@ -178,22 +180,56 @@ export async function unassignWaiter(eventId: string, assignmentId: string) {
   revalidatePath(`/events/${eventId}/staffing`);
 }
 
-// Replaces the event's waiter roster with the uploaded file. Anyone in the
-// file who isn't in the permanent pool yet is added to it (names reported
-// back so the UI can tell the user who was new); re-uploading simply swaps
-// the roster, leaving any table assignments already made untouched.
-export async function importEventWaiters(
-  eventId: string,
-  formData: FormData,
-): Promise<{ total: number; addedNames: string[] }> {
-  const supabase = await createClient();
-
+async function readRosterFile(formData: FormData) {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("יש לבחור קובץ");
   if (!/\.xlsx?$/i.test(file.name)) throw new Error("יש להעלות קובץ Excel (xlsx)");
-
   const roster = parseEventWaiterRoster(Buffer.from(await file.arrayBuffer()));
   if (roster.length === 0) throw new Error("לא נמצאו מלצרים בקובץ");
+  return roster;
+}
+
+// First step of the roster upload: reads the file without saving anything and
+// reports who in it is not in the permanent waiters pool yet, so the UI can
+// ask whether to add them.
+export async function previewEventWaiters(
+  formData: FormData,
+): Promise<{ total: number; unknown: { name: string; phone: string | null; shiftRole: string | null }[] }> {
+  const supabase = await createClient();
+  const roster = await readRosterFile(formData);
+
+  const { data: pool, error } = await supabase.from("waiters").select("name").returns<{ name: string }[]>();
+  if (error) throw new Error(error.message);
+  const known = new Set((pool ?? []).map((waiter) => normalizeWaiterName(waiter.name)));
+
+  return {
+    total: roster.length,
+    unknown: roster
+      .filter((waiter) => !known.has(normalizeWaiterName(waiter.name)))
+      .map(({ name, phone, shiftRole }) => ({ name, phone, shiftRole })),
+  };
+}
+
+// Replaces the event's waiter roster with the uploaded file. Anyone in the
+// file who isn't in the permanent pool is added to it only if their name is in
+// `add_names` (the answer to the preview question); the rest are skipped and
+// reported back. Re-uploading swaps the roster; assignments already made are
+// left untouched.
+export async function importEventWaiters(
+  eventId: string,
+  formData: FormData,
+): Promise<{ total: number; addedNames: string[]; skippedNames: string[] }> {
+  const supabase = await createClient();
+  const roster = await readRosterFile(formData);
+
+  let addNames: string[] = [];
+  try {
+    const parsed = JSON.parse(String(formData.get("add_names") ?? "[]"));
+    if (Array.isArray(parsed)) addNames = parsed.map(String);
+  } catch {
+    // Treated as "add nobody".
+  }
+  const toAdd = new Set(addNames.map(normalizeWaiterName));
 
   const { data: pool, error: poolError } = await supabase
     .from("waiters")
@@ -204,10 +240,13 @@ export async function importEventWaiters(
   const idByName = new Map((pool ?? []).map((waiter) => [normalizeWaiterName(waiter.name), waiter.id]));
 
   const missing = roster.filter((waiter) => !idByName.has(normalizeWaiterName(waiter.name)));
-  if (missing.length > 0) {
+  const newWaiters = missing.filter((waiter) => toAdd.has(normalizeWaiterName(waiter.name)));
+  const skipped = missing.filter((waiter) => !toAdd.has(normalizeWaiterName(waiter.name)));
+
+  if (newWaiters.length > 0) {
     const { data: inserted, error: insertError } = await supabase
       .from("waiters")
-      .insert(missing.map((waiter) => ({ name: waiter.name, phone: waiter.phone })))
+      .insert(newWaiters.map((waiter) => ({ name: waiter.name, phone: waiter.phone })))
       .select("id, name")
       .returns<{ id: string; name: string }[]>();
     if (insertError) {
@@ -220,28 +259,125 @@ export async function importEventWaiters(
     for (const waiter of inserted ?? []) idByName.set(normalizeWaiterName(waiter.name), waiter.id);
   }
 
-  const { error: deleteError } = await supabase.from("event_waiters").delete().eq("event_id", eventId);
-  if (deleteError) throw new Error(deleteError.message);
-
-  const { error: rosterError } = await supabase.from("event_waiters").insert(
-    roster.map((waiter) => ({
+  const rosterRows = roster
+    .filter((waiter) => idByName.has(normalizeWaiterName(waiter.name)))
+    .map((waiter) => ({
       event_id: eventId,
       waiter_id: idByName.get(normalizeWaiterName(waiter.name)),
       shift_role: waiter.shiftRole,
       arrival_time: waiter.arrival,
       end_time: waiter.end,
-    })),
-  );
+    }));
+  if (rosterRows.length === 0) throw new Error("אף מלצר מהקובץ לא נוסף לאירוע");
+
+  const { error: deleteError } = await supabase.from("event_waiters").delete().eq("event_id", eventId);
+  if (deleteError) throw new Error(deleteError.message);
+
+  const { error: rosterError } = await supabase.from("event_waiters").insert(rosterRows);
   if (rosterError) throw new Error(rosterError.message);
 
   revalidatePath(`/events/${eventId}/staffing`);
   revalidatePath("/waiters");
-  return { total: roster.length, addedNames: missing.map((waiter) => waiter.name) };
+  return {
+    total: rosterRows.length,
+    addedNames: newWaiters.map((waiter) => waiter.name),
+    skippedNames: skipped.map((waiter) => waiter.name),
+  };
 }
 
 export async function clearEventWaiters(eventId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("event_waiters").delete().eq("event_id", eventId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/events/${eventId}/staffing`);
+}
+
+// Assigns a waiter to an event-level duty (door, runner, hall prep, ...), as
+// opposed to assignWaiter above which attaches them to a table/stand.
+export async function assignDuty(eventId: string, waiterId: string, duty: WaiterSkill) {
+  if (!waiterId) return;
+  if (!EVENT_DUTIES.includes(duty)) throw new Error("תפקיד לא תקין");
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("waiter_assignments")
+    .insert({ event_id: eventId, location_id: null, waiter_id: waiterId, role: duty });
+  if (error) {
+    throw new Error(error.code === "23505" ? "המלצר כבר משובץ לתפקיד הזה" : error.message);
+  }
+  revalidatePath(`/events/${eventId}/staffing`);
+}
+
+export interface AutoAssignResult {
+  assigned: number;
+  shortages: { duty: WaiterSkill; missing: number }[];
+  unstaffedLocations: number;
+}
+
+// Fills whatever is still open for the event's roster according to each
+// waiter's skills (see lib/waiterAutoAssign.ts). Only adds - existing
+// assignments are never touched.
+export async function autoAssignBySkills(eventId: string): Promise<AutoAssignResult> {
+  const supabase = await createClient();
+
+  const [{ data: eventWaiters }, { data: waiters }, { data: skills }, { data: locations }, { data: existing }] =
+    await Promise.all([
+      supabase.from("event_waiters").select("waiter_id, shift_role").eq("event_id", eventId),
+      supabase.from("waiters").select("id, name"),
+      supabase.from("waiter_skills").select("waiter_id, skill"),
+      supabase.from("locations").select("id, location_type, label").eq("event_id", eventId).returns<LocationRow[]>(),
+      supabase.from("waiter_assignments").select("waiter_id, location_id, role").eq("event_id", eventId),
+    ]);
+
+  if (!eventWaiters || eventWaiters.length === 0) throw new Error("יש להעלות קודם רשימת מלצרים לאירוע");
+
+  const skillsByWaiter = new Map<string, WaiterSkill[]>();
+  for (const row of skills ?? []) {
+    skillsByWaiter.set(row.waiter_id, [...(skillsByWaiter.get(row.waiter_id) ?? []), row.skill as WaiterSkill]);
+  }
+  const nameById = new Map((waiters ?? []).map((waiter) => [waiter.id, waiter.name as string]));
+
+  const plan = planSkillAssignments({
+    waiters: eventWaiters
+      .filter((entry) => nameById.has(entry.waiter_id))
+      .map((entry) => ({
+        id: entry.waiter_id as string,
+        name: nameById.get(entry.waiter_id)!,
+        skills: skillsByWaiter.get(entry.waiter_id) ?? [],
+        shiftRole: entry.shift_role as string | null,
+      })),
+    locations: (locations ?? []).map((location) => ({
+      id: location.id,
+      type: location.location_type,
+      label: location.label,
+    })),
+    existing: (existing ?? []).map((row) => ({
+      waiterId: row.waiter_id as string,
+      locationId: row.location_id as string | null,
+      role: row.role as string,
+    })),
+  });
+
+  if (plan.assignments.length > 0) {
+    const { error } = await supabase.from("waiter_assignments").insert(
+      plan.assignments.map((assignment) => ({
+        event_id: eventId,
+        waiter_id: assignment.waiterId,
+        location_id: assignment.locationId,
+        role: assignment.role,
+      })),
+    );
+    if (error) throw new Error(error.message);
+  }
+
+  revalidatePath(`/events/${eventId}/staffing`);
+  return { assigned: plan.assignments.length, shortages: plan.shortages, unstaffedLocations: plan.unstaffedLocations };
+}
+
+// Removes every waiter assignment of the event (tables, stands and duties) so
+// the automatic assignment can be run again from scratch.
+export async function clearAllAssignments(eventId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("waiter_assignments").delete().eq("event_id", eventId);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/staffing`);
 }

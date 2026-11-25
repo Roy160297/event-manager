@@ -1,8 +1,11 @@
-import { assignWaiter, createLocation, deleteAllLocations, deleteLocation, unassignWaiter, updateLocation } from "./actions";
+import { assignDuty, assignWaiter, createLocation, deleteAllLocations, deleteLocation, unassignWaiter, updateLocation } from "./actions";
 import { AssignWaiterForm } from "./AssignWaiterForm";
+import { AssignDutyForm } from "./AssignDutyForm";
+import { AutoAssignBar } from "./AutoAssignBar";
 import { createClient } from "@/lib/supabase/server";
 import { actionErrorMessage } from "@/lib/actionError";
-import { ASSIGNMENT_ROLE_LABELS, LOCATION_TYPE_LABELS } from "@/lib/labels";
+import { ASSIGNMENT_ROLE_LABELS, LOCATION_TYPE_LABELS, WAITER_SKILL_LABELS } from "@/lib/labels";
+import { DUTY_QUOTAS, EVENT_DUTIES } from "@/lib/waiterDuties";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
@@ -152,6 +155,78 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
       />
 
       <EventWaitersRoster eventId={eventId} roster={rosterEntries} canWrite={canWriteStaffing} />
+
+      {canWriteStaffing && (
+        <AutoAssignBar eventId={eventId} hasRoster={hasRoster} assignmentCount={assignments?.length ?? 0} />
+      )}
+
+      <section className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+        <h2 className="text-sm font-medium">תפקידים באירוע</h2>
+        <ul className="flex flex-col gap-2">
+          {EVENT_DUTIES.map((duty) => {
+            const dutyAssignments = (assignments ?? []).filter((a) => a.location_id === null && a.role === duty);
+            const takenIds = new Set(dutyAssignments.map((a) => a.waiter_id));
+            const candidates = selectableWaiters.filter((w) => !takenIds.has(w.id));
+            const skilled = candidates.filter((w) => skillsByWaiter[w.id]?.includes(duty));
+            const others = candidates.filter((w) => !skillsByWaiter[w.id]?.includes(duty));
+            const quota = DUTY_QUOTAS[duty];
+
+            async function addDutyAssignment(formData: FormData) {
+              "use server";
+              await assignDuty(eventId, String(formData.get("waiter_id") ?? ""), duty);
+            }
+
+            return (
+              <li key={duty} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-border-classic px-3 py-2">
+                <div className="min-w-[8rem] shrink-0">
+                  <p className="font-medium">{WAITER_SKILL_LABELS[duty]}</p>
+                  {quota !== undefined && (
+                    <p className={`text-xs ${dutyAssignments.length >= quota ? "text-foreground/60" : "text-amber-700"}`}>
+                      {dutyAssignments.length} מתוך {quota}
+                    </p>
+                  )}
+                  {quota === undefined && dutyAssignments.length > 0 && (
+                    <p className="text-xs text-foreground/60">{dutyAssignments.length} משובצים</p>
+                  )}
+                </div>
+                <div className="flex min-w-[8rem] flex-1 flex-wrap items-center gap-1.5">
+                  {dutyAssignments.length === 0 ? (
+                    <span className="text-xs text-foreground/50">לא משובץ</span>
+                  ) : (
+                    dutyAssignments.map((assignment) => {
+                      async function remove() {
+                        "use server";
+                        await unassignWaiter(eventId, assignment.id);
+                      }
+                      const name = assignment.waiters?.name ?? "";
+                      return canWriteStaffing ? (
+                        <form key={assignment.id} action={remove}>
+                          <button
+                            type="submit"
+                            className="flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-sm hover:opacity-80"
+                            title="הסר שיבוץ"
+                          >
+                            {name} ✕
+                          </button>
+                        </form>
+                      ) : (
+                        <span key={assignment.id} className="rounded-full bg-accent-soft px-3 py-1 text-sm">
+                          {name}
+                        </span>
+                      );
+                    })
+                  )}
+                </div>
+                {canWriteStaffing && candidates.length > 0 && (
+                  <div className="shrink-0">
+                    <AssignDutyForm skilled={skilled} others={others} action={addDutyAssignment} />
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
       {canWriteStaffing && (
         <details className="rounded-lg border border-border-classic bg-surface">
