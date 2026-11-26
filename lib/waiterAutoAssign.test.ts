@@ -152,4 +152,18 @@ describe("planSkillAssignments", () => {
     });
     expect(rolesOf(plan, "a")).toEqual(["reception:door"]);
   });
+
+  it("sends everyone left in the reception to clearing, and they are still free for the hall", () => {
+    const plan = planSkillAssignments({
+      waiters: [waiter("d", ["door"]), waiter("a"), waiter("b"), waiter("c")],
+      locations: [stand("S"), table("1"), table("2")],
+      existing: [],
+    });
+    // door -> d; stand -> one of a/b/c; the other two clear
+    expect(plan.assignments.filter((x) => x.role === "clearing" && x.phase === "reception")).toHaveLength(2);
+    expect(plan.assignments.filter((x) => x.role === "clearing").every((x) => x.locationId === null)).toBe(true);
+    // clearing in the reception does not use up anyone in the hall
+    expect(plan.assignments.filter((x) => x.role === "table")).toHaveLength(2);
+    expect(plan.unstaffed).toEqual({ receptionStands: 0, hallStands: 0, tables: 0 });
+  });
 });

@@ -70,7 +70,7 @@ export function AutoAssignBar({
           <h2 className="text-sm font-medium">שיבוץ לפי כישורים</h2>
           <p className="text-xs text-foreground/60">
             כל האירוע: ראנרים {DUTY_QUOTAS.runner}, מלצרית משפחה, מארחת ובריסטה לפי הקובץ. קבלת הפנים: מלצר דלת{" "}
-            {DUTY_QUOTAS.door}, הכנת אולם {DUTY_QUOTAS.hall_prep}, מלצר בכל עמדה. האולם: מלצר בכל עמדה, והשאר מכסים את
+            {DUTY_QUOTAS.door}, הכנת אולם {DUTY_QUOTAS.hall_prep}, מלצר בכל עמדה וכל השאר פינויים. האולם: מלצר בכל עמדה, והשאר מכסים את
             השולחנות (עד {MAX_TABLES_PER_WAITER} לכל אחד). משלים רק את מה שעדיין לא שובץ.
           </p>
         </div>

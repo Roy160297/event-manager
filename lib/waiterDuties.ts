@@ -7,12 +7,12 @@ export const PHASE_LABELS: Record<EventPhase, string> = {
 };
 
 // Duties with no table/stand, grouped by when they happen. The reception has a
-// door waiter, hall-prep waiters and a pilot; runners, the family waiter, the
+// door waiter, hall-prep waiters, a pilot and clearing (everyone else); runners, the family waiter, the
 // hostess and the barista work the whole event. The hall has the joker (a
 // floating waiter) next to its stands and tables.
 export const PHASE_DUTIES: Record<EventPhase, EventDuty[]> = {
   event: ["runner", "family_waiter", "hostess", "barista"],
-  reception: ["door", "piloting", "hall_prep"],
+  reception: ["door", "piloting", "hall_prep", "clearing"],
   hall: ["joker"],
 };
 

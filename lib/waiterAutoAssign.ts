@@ -47,7 +47,7 @@ type FloorPhase = "reception" | "hall";
 //  2. reception: the door waiter, then hall prep - by skill, up to the venue's
 //     numbers (piloting is manual);
 //  3. reception stands: one waiter each - stand-skilled first, anyone free if
-//     there are not enough of them;
+//     there are not enough of them - and then everyone still free clears;
 //  4. hall stands: the same;
 //  5. hall tables: the waiters still free cover them, up to
 //     MAX_TABLES_PER_WAITER each, neighbouring tables together; table-skilled
@@ -127,6 +127,8 @@ export function planSkillAssignments(input: {
     }
   };
   staffStands("reception");
+  // Everyone still free in the reception clears - the number differs per event.
+  for (const waiter of free("reception").sort(bySpecialisation)) take(waiter, null, "clearing", "reception");
   staffStands("hall");
 
   // Tables (hall only): spread over the free waiters, neighbours together.
