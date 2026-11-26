@@ -7,8 +7,8 @@ import { normalizeWaiterName, parseEventWaiterRoster } from "@/lib/eventWaiterIm
 import { parseTableSketchDraft } from "@/lib/tableSketchImport";
 import { syncLocationsFromSketch } from "@/lib/sketchSync";
 import { planSkillAssignments } from "@/lib/waiterAutoAssign";
-import { EVENT_DUTIES } from "@/lib/waiterDuties";
-import type { EventDuty, LocationRow, LocationType, WaiterRole, WaiterSkill } from "@/lib/types";
+import { EVENT_DUTIES, dutyPhase } from "@/lib/waiterDuties";
+import type { EventDuty, EventPhase, LocationRow, LocationType, WaiterSkill } from "@/lib/types";
 
 export async function createLocation(eventId: string, formData: FormData) {
   const supabase = await createClient();
@@ -158,18 +158,35 @@ export async function updateLocation(eventId: string, locationId: string, formDa
   revalidatePath(`/events/${eventId}/staffing`);
 }
 
+// Puts a waiter on a table or food stand for one phase. The duty is implied by
+// the location (a stand -> "station", a table -> "table"); tables only exist in
+// the hall phase.
 export async function assignWaiter(
   eventId: string,
   locationId: string,
   waiterId: string,
-  role: WaiterRole | WaiterSkill,
+  phase: "reception" | "hall",
 ) {
   if (!waiterId) return;
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("waiter_assignments")
-    .insert({ event_id: eventId, location_id: locationId, waiter_id: waiterId, role });
-  if (error) throw new Error(error.message);
+  const { data: location, error: locationError } = await supabase
+    .from("locations")
+    .select("location_type")
+    .eq("id", locationId)
+    .single<{ location_type: LocationType }>();
+  if (locationError || !location) throw new Error("השולחן/העמדה לא נמצא");
+  if (location.location_type === "table" && phase === "reception") throw new Error("שולחנות משובצים רק בשלב האולם");
+
+  const { error } = await supabase.from("waiter_assignments").insert({
+    event_id: eventId,
+    location_id: locationId,
+    waiter_id: waiterId,
+    role: location.location_type === "table" ? "table" : "station",
+    phase,
+  });
+  if (error) {
+    throw new Error(error.code === "23505" ? "המלצר כבר משובץ כאן" : error.message);
+  }
   revalidatePath(`/events/${eventId}/staffing`);
 }
 
@@ -300,7 +317,7 @@ export async function assignDuty(eventId: string, waiterId: string, duty: EventD
   const supabase = await createClient();
   const { error } = await supabase
     .from("waiter_assignments")
-    .insert({ event_id: eventId, location_id: null, waiter_id: waiterId, role: duty });
+    .insert({ event_id: eventId, location_id: null, waiter_id: waiterId, role: duty, phase: dutyPhase(duty) });
   if (error) {
     throw new Error(error.code === "23505" ? "המלצר כבר משובץ לתפקיד הזה" : error.message);
   }
@@ -310,7 +327,7 @@ export async function assignDuty(eventId: string, waiterId: string, duty: EventD
 export interface AutoAssignResult {
   assigned: number;
   shortages: { duty: WaiterSkill; missing: number }[];
-  unstaffedLocations: number;
+  unstaffed: { receptionStands: number; hallStands: number; tables: number };
 }
 
 // Fills whatever is still open for the event's roster according to each
@@ -325,7 +342,7 @@ export async function autoAssignBySkills(eventId: string): Promise<AutoAssignRes
       supabase.from("waiters").select("id, name"),
       supabase.from("waiter_skills").select("waiter_id, skill"),
       supabase.from("locations").select("id, location_type, label").eq("event_id", eventId).returns<LocationRow[]>(),
-      supabase.from("waiter_assignments").select("waiter_id, location_id, role").eq("event_id", eventId),
+      supabase.from("waiter_assignments").select("waiter_id, location_id, role, phase").eq("event_id", eventId),
     ]);
 
   if (!eventWaiters || eventWaiters.length === 0) throw new Error("יש להעלות קודם רשימת מלצרים לאירוע");
@@ -354,6 +371,7 @@ export async function autoAssignBySkills(eventId: string): Promise<AutoAssignRes
       waiterId: row.waiter_id as string,
       locationId: row.location_id as string | null,
       role: row.role as string,
+      phase: row.phase as EventPhase,
     })),
   });
 
@@ -364,13 +382,14 @@ export async function autoAssignBySkills(eventId: string): Promise<AutoAssignRes
         waiter_id: assignment.waiterId,
         location_id: assignment.locationId,
         role: assignment.role,
+        phase: assignment.phase,
       })),
     );
     if (error) throw new Error(error.message);
   }
 
   revalidatePath(`/events/${eventId}/staffing`);
-  return { assigned: plan.assignments.length, shortages: plan.shortages, unstaffedLocations: plan.unstaffedLocations };
+  return { assigned: plan.assignments.length, shortages: plan.shortages, unstaffed: plan.unstaffed };
 }
 
 // Removes every waiter assignment of the event (tables, stands and duties) so
@@ -380,4 +399,42 @@ export async function clearAllAssignments(eventId: string) {
   const { error } = await supabase.from("waiter_assignments").delete().eq("event_id", eventId);
   if (error) throw new Error(error.message);
   revalidatePath(`/events/${eventId}/staffing`);
+}
+
+// Re-reads the sketch that is already saved on the event and syncs the tables
+// and food stands from it (the same sync the upload does) - for when the list
+// was cleared or came out wrong and should be rebuilt from the sketch.
+export async function reimportLocationsFromSketch(
+  eventId: string,
+): Promise<{ added: number; updated: number; removed: number; tables: number; stands: number; warnings: string[] }> {
+  const supabase = await createClient();
+
+  const { data: event, error: eventError } = await supabase
+    .from("events")
+    .select("table_sketch_path")
+    .eq("id", eventId)
+    .single<{ table_sketch_path: string | null }>();
+  if (eventError) throw new Error(eventError.message);
+  const path = event?.table_sketch_path;
+  if (!path) throw new Error("לא הועלתה סקיצה לאירוע");
+  if (!path.toLowerCase().endsWith(".pdf")) throw new Error("ניתן לייבא שולחנות ועמדות רק מסקיצת PDF מ-iPlan");
+
+  const { data: file, error: downloadError } = await supabase.storage.from(TABLE_SKETCH_BUCKET).download(path);
+  if (downloadError || !file) throw new Error(downloadError?.message ?? "לא ניתן לקרוא את הסקיצה");
+
+  const draft = parseTableSketchDraft(await extractPdfText(Buffer.from(await file.arrayBuffer())));
+  if (draft.tables.length === 0 && draft.foodStands.length === 0) {
+    throw new Error(draft.warnings[0] ?? "לא זוהו שולחנות או עמדות בסקיצה");
+  }
+
+  const result = await syncLocationsFromSketch(supabase, eventId, draft);
+  if (draft.tables.length > 0) {
+    await supabase
+      .from("events")
+      .update({ sketch_seated_chairs_count: String(draft.tables.reduce((sum, t) => sum + t.seated, 0)) })
+      .eq("id", eventId);
+  }
+
+  revalidatePath(`/events/${eventId}/staffing`);
+  return { ...result, tables: draft.tables.length, stands: draft.foodStands.length, warnings: draft.warnings };
 }

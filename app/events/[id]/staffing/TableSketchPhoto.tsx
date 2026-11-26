@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { actionErrorMessage } from "@/lib/actionError";
-import { removeTableSketch, updateSeatedChairsCount, uploadTableSketch } from "./actions";
+import { reimportLocationsFromSketch, removeTableSketch, updateSeatedChairsCount, uploadTableSketch } from "./actions";
 
 export default function TableSketchPhoto({
   eventId,
@@ -54,6 +54,30 @@ export default function TableSketchPhoto({
     }
   }
 
+  // Rebuilds the tables/stands list from the sketch that is already saved.
+  async function handleReimport() {
+    setError(null);
+    setSuccessMessage(null);
+    setIsPending(true);
+    try {
+      const { added, updated, removed, tables, stands, warnings } = await reimportLocationsFromSketch(eventId);
+      const parts: string[] = [];
+      if (added > 0) parts.push(`${added} נוספו`);
+      if (updated > 0) parts.push(`${updated} עודכנו`);
+      if (removed > 0) parts.push(`${removed} לא-מאוישים הוסרו`);
+      setSuccessMessage(
+        `יובאו מהסקיצה ${tables} שולחנות ו-${stands} עמדות${parts.length > 0 ? ` (${parts.join(", ")})` : " - הרשימה כבר תאמה את הסקיצה"}.${
+          warnings.length > 0 ? ` שימו לב: ${warnings.join(" ")}` : ""
+        }`,
+      );
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "שגיאה בייבוא מהסקיצה");
+    } finally {
+      setIsPending(false);
+    }
+  }
+
   async function handleRemove() {
     setError(null);
     setSuccessMessage(null);
@@ -98,6 +122,16 @@ export default function TableSketchPhoto({
               >
                 מעבר ל-iPlan
               </a>
+            )}
+            {sketchUrl && isPdf && (
+              <button
+                type="button"
+                onClick={handleReimport}
+                disabled={isPending}
+                className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft disabled:opacity-50"
+              >
+                ייבא שולחנות ועמדות מהסקיצה
+              </button>
             )}
             {sketchUrl && (
               <button

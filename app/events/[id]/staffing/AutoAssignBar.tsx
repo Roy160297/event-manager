@@ -35,9 +35,10 @@ export function AutoAssignBar({
           `${WAITER_SKILL_LABELS[shortage.duty]}: חסרים ${shortage.missing} מתוך ${quota} (אין מספיק מלצרים עם הכישור).`,
         );
       }
-      if (result.unstaffedLocations > 0) {
-        parts.push(`${result.unstaffedLocations} שולחנות/עמדות נשארו ללא מלצר.`);
-      }
+      const { receptionStands, hallStands, tables } = result.unstaffed;
+      if (receptionStands > 0) parts.push(`${receptionStands} עמדות בקבלת הפנים נשארו ללא מלצר.`);
+      if (hallStands > 0) parts.push(`${hallStands} עמדות באולם נשארו ללא מלצר.`);
+      if (tables > 0) parts.push(`${tables} שולחנות נשארו ללא מלצר.`);
       setNotice(parts.join(" "));
       router.refresh();
     } catch (err) {
@@ -68,8 +69,9 @@ export function AutoAssignBar({
         <div>
           <h2 className="text-sm font-medium">שיבוץ לפי כישורים</h2>
           <p className="text-xs text-foreground/60">
-            מלצר דלת {DUTY_QUOTAS.door} (רק בקבלת הפנים), ראנרים {DUTY_QUOTAS.runner}, הכנת אולם {DUTY_QUOTAS.hall_prep}, מלצר בכל עמדה,
-            והשאר מכסים את השולחנות (עד {MAX_TABLES_PER_WAITER} לכל אחד). משלים רק את מה שעדיין לא שובץ.
+            כל האירוע: ראנרים {DUTY_QUOTAS.runner}, מלצרית משפחה, מארחת ובריסטה לפי הקובץ. קבלת הפנים: מלצר דלת{" "}
+            {DUTY_QUOTAS.door}, הכנת אולם {DUTY_QUOTAS.hall_prep}, מלצר בכל עמדה. האולם: מלצר בכל עמדה, והשאר מכסים את
+            השולחנות (עד {MAX_TABLES_PER_WAITER} לכל אחד). משלים רק את מה שעדיין לא שובץ.
           </p>
         </div>
         <div className="flex items-center gap-2">

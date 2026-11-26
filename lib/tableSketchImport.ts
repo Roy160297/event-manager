@@ -17,7 +17,9 @@ export interface TableSketchDraft {
   warnings: string[];
 }
 
-const TABLE_NUMBER_PATTERN = /^\d{1,3}$/;
+// A star in front of the number ("*19") marks a special table in the sketch;
+// it is still table 19.
+const TABLE_NUMBER_PATTERN = /^\*?\d{1,3}$/;
 const OCCUPANCY_PATTERN = /^(\d+)(?:\+(\d+))?\/(\d+)$/;
 
 // When two tables sit close together in the sketch's layout, pdf-parse's
@@ -63,6 +65,8 @@ export function parseTableSketchDraft(rawText: string): TableSketchDraft {
   const foodStands: TableSketchFoodStand[] = [];
   const warnings: string[] = [];
 
+  const tablesWithoutOccupancy: string[] = [];
+
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
@@ -72,15 +76,19 @@ export function parseTableSketchDraft(rawText: string): TableSketchDraft {
     }
 
     if (TABLE_NUMBER_PATTERN.test(line)) {
+      const label = line.replace("*", "");
       const next = lines[i + 1] ?? "";
       const occupancyMatch = next.match(OCCUPANCY_PATTERN);
       if (occupancyMatch) {
         const seated = Number(occupancyMatch[1]) + Number(occupancyMatch[2] ?? 0);
-        tables.push({ label: line, capacity: Number(occupancyMatch[3]), seated });
+        tables.push({ label, capacity: Number(occupancyMatch[3]), seated });
         i += 2;
         continue;
       }
-      warnings.push(`מספר שולחן "${line}" ללא נתוני תפוסה תואמים - נדרשת בדיקה ידנית`);
+      // iPlan leaves the occupancy line out of a table nobody is seated at, so
+      // the number alone is still a table - just with an unknown capacity.
+      tables.push({ label, capacity: 0, seated: 0 });
+      tablesWithoutOccupancy.push(label);
       i += 1;
       continue;
     }
@@ -96,9 +104,27 @@ export function parseTableSketchDraft(rawText: string): TableSketchDraft {
       .map((s) => s.trim())
       .filter(Boolean);
     for (const name of stationNames) {
+      // Stray punctuation or a single letter is a fragment of a wrapped label,
+      // not a station.
+      if (!/[\p{L}\d]{2,}/u.test(name)) continue;
       foodStands.push({ label: name });
     }
     i += 1;
+  }
+
+  if (tablesWithoutOccupancy.length > 0) {
+    warnings.push(
+      `לשולחנות ${tablesWithoutOccupancy.join(", ")} אין נתוני תפוסה בסקיצה - הקיבולת שלהם הוגדרה 0 וניתן לעדכן ידנית`,
+    );
+  }
+
+  // Two stations with the same name ("דג", "דג") are two different stands;
+  // number the repeats so each one is its own row.
+  const seenStands = new Map<string, number>();
+  for (const stand of foodStands) {
+    const count = (seenStands.get(stand.label) ?? 0) + 1;
+    seenStands.set(stand.label, count);
+    if (count > 1) stand.label = `${stand.label} (${count})`;
   }
 
   if (tables.length === 0 && foodStands.length === 0) {

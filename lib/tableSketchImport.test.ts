@@ -25,10 +25,36 @@ describe("parseTableSketchDraft", () => {
     expect(draft.foodStands).toEqual([{ label: "בשר כפול" }]);
   });
 
-  it("warns instead of crashing on a table number with no matching occupancy line", () => {
-    const draft = parseTableSketchDraft("5\nבשר כפול");
-    expect(draft.tables).toEqual([]);
-    expect(draft.warnings.some((w) => w.includes('"5"'))).toBe(true);
+  it("keeps a table number that has no occupancy line (empty table) with capacity 0 and a warning", () => {
+    const draft = parseTableSketchDraft("5\nבשר כפול\n6\n7");
+    expect(draft.tables).toEqual([
+      { label: "5", capacity: 0, seated: 0 },
+      { label: "6", capacity: 0, seated: 0 },
+      { label: "7", capacity: 0, seated: 0 },
+    ]);
+    expect(draft.foodStands).toEqual([{ label: "בשר כפול" }]);
+    expect(draft.warnings).toHaveLength(1);
+    expect(draft.warnings[0]).toContain("5, 6, 7");
+  });
+
+  it("reads a starred table number ('*19') as table 19, not a food stand", () => {
+    const draft = parseTableSketchDraft("רחבת ריקודים\n18\n9/9\n*19\n9/9");
+    expect(draft.tables).toEqual([
+      { label: "18", capacity: 9, seated: 9 },
+      { label: "19", capacity: 9, seated: 9 },
+    ]);
+    expect(draft.foodStands).toEqual([]);
+    expect(draft.warnings).toEqual([]);
+  });
+
+  it("numbers repeated station names so each stand is its own row", () => {
+    const draft = parseTableSketchDraft("בשר כפול\nדג\tדג\tעוף\nעוף");
+    expect(draft.foodStands.map((s) => s.label)).toEqual(["בשר כפול", "דג", "דג (2)", "עוף", "עוף (2)"]);
+  });
+
+  it("ignores stray punctuation and single letters left by wrapped labels", () => {
+    const draft = parseTableSketchDraft("וילון\n-\nה");
+    expect(draft.foodStands).toEqual([{ label: "וילון" }]);
   });
 
   it("warns instead of crashing on an orphaned occupancy line", () => {

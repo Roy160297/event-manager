@@ -1,11 +1,10 @@
 import { assignDuty, assignWaiter, createLocation, deleteAllLocations, deleteLocation, unassignWaiter, updateLocation } from "./actions";
-import { AssignWaiterForm } from "./AssignWaiterForm";
 import { AssignDutyForm } from "./AssignDutyForm";
 import { AutoAssignBar } from "./AutoAssignBar";
 import { createClient } from "@/lib/supabase/server";
 import { actionErrorMessage } from "@/lib/actionError";
 import { ASSIGNMENT_ROLE_LABELS, LOCATION_TYPE_LABELS } from "@/lib/labels";
-import { DUTY_QUOTAS, EVENT_DUTIES } from "@/lib/waiterDuties";
+import { DUTY_QUOTAS, PHASE_DUTIES, PHASE_LABELS } from "@/lib/waiterDuties";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
@@ -18,13 +17,13 @@ import { StaffingRow } from "./StaffingRow";
 import { getCurrentStaff } from "@/lib/auth";
 import { canRead, canWrite } from "@/lib/permissions";
 import type {
+  EventDuty,
   EventRow,
   EventWaiterRow,
   GuestRow,
   LocationRow,
   LocationType,
   WaiterAssignmentRow,
-  WaiterRole,
   WaiterRow,
   WaiterSkill,
   WaiterSkillRow,
@@ -143,6 +142,210 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
     await deleteAllLocations(eventId);
   }
 
+  const allAssignments = assignments ?? [];
+
+  // Chips for the people assigned somewhere; for editors each chip removes
+  // the assignment when pressed.
+  function renderChips(list: AssignmentWithWaiter[]) {
+    if (list.length === 0) return <span className="text-xs text-foreground/50">לא משובץ</span>;
+    return list.map((assignment) => {
+      async function remove() {
+        "use server";
+        await unassignWaiter(eventId, assignment.id);
+      }
+      const name = assignment.waiters?.name ?? "";
+      return canWriteStaffing ? (
+        <form key={assignment.id} action={remove}>
+          <button
+            type="submit"
+            className="flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-sm hover:opacity-80"
+            title="הסר שיבוץ"
+          >
+            {name} ✕
+          </button>
+        </form>
+      ) : (
+        <span key={assignment.id} className="rounded-full bg-accent-soft px-3 py-1 text-sm">
+          {name}
+        </span>
+      );
+    });
+  }
+
+  // One line per event-level duty (runners, door, hall prep, ...).
+  function renderDutyRows(duties: EventDuty[]) {
+    return (
+      <ul className="flex flex-col gap-2">
+        {duties.map((duty) => {
+          const dutyAssignments = allAssignments.filter((a) => a.location_id === null && a.role === duty);
+          const takenIds = new Set(dutyAssignments.map((a) => a.waiter_id));
+          const candidates = selectableWaiters.filter((w) => !takenIds.has(w.id));
+          const skilled = candidates.filter((w) => skillsByWaiter[w.id]?.includes(duty as WaiterSkill));
+          const others = candidates.filter((w) => !skillsByWaiter[w.id]?.includes(duty as WaiterSkill));
+          const quota = DUTY_QUOTAS[duty as WaiterSkill];
+
+          async function addDutyAssignment(formData: FormData) {
+            "use server";
+            await assignDuty(eventId, String(formData.get("waiter_id") ?? ""), duty);
+          }
+
+          return (
+            <li
+              key={duty}
+              className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-border-classic px-3 py-2"
+            >
+              <div className="min-w-[8rem] shrink-0">
+                <p className="font-medium">{ASSIGNMENT_ROLE_LABELS[duty]}</p>
+                {quota !== undefined && (
+                  <p className={`text-xs ${dutyAssignments.length >= quota ? "text-foreground/60" : "text-amber-700"}`}>
+                    {dutyAssignments.length} מתוך {quota}
+                  </p>
+                )}
+                {quota === undefined && dutyAssignments.length > 0 && (
+                  <p className="text-xs text-foreground/60">{dutyAssignments.length} משובצים</p>
+                )}
+              </div>
+              <div className="flex min-w-[8rem] flex-1 flex-wrap items-center gap-1.5">
+                {renderChips(dutyAssignments)}
+              </div>
+              {canWriteStaffing && candidates.length > 0 && (
+                <div className="shrink-0">
+                  <AssignDutyForm skilled={skilled} others={others} action={addDutyAssignment} />
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
+  // The rows of a stand/table list for one phase. Stands appear in both phases;
+  // tables only in the hall. Editing/deleting a location is offered once, in
+  // the hall list.
+  function buildLocationItems(list: LocationRow[], phase: "reception" | "hall", withEdit: boolean) {
+    return list.map((location) => {
+      const assignedToLocation = allAssignments.filter((a) => a.location_id === location.id && a.phase === phase);
+      const assignedWaiterIds = new Set(assignedToLocation.map((a) => a.waiter_id));
+      const availableWaiters = selectableWaiters.filter((w) => !assignedWaiterIds.has(w.id));
+      const skill: WaiterSkill = location.location_type === "table" ? "table" : "station";
+      const skilled = availableWaiters.filter((w) => skillsByWaiter[w.id]?.includes(skill));
+      const others = availableWaiters.filter((w) => !skillsByWaiter[w.id]?.includes(skill));
+      const guestCount = location.location_type === "table" ? guestCountByTable.get(location.label) ?? 0 : null;
+
+      async function removeLocation() {
+        "use server";
+        await deleteLocation(eventId, location.id);
+      }
+      async function addAssignment(formData: FormData) {
+        "use server";
+        await assignWaiter(eventId, location.id, String(formData.get("waiter_id") ?? ""), phase);
+      }
+      async function saveLocationEdit(formData: FormData) {
+        "use server";
+        try {
+          await updateLocation(eventId, location.id, formData);
+        } catch (err) {
+          return actionErrorMessage(err);
+        }
+      }
+
+      const title = (
+        <>
+          <p className="font-medium">
+            {location.location_type === "table" ? (
+              `שולחן ${location.label}`
+            ) : (
+              <>
+                {location.label}{" "}
+                <span className="text-xs font-normal text-foreground/60">
+                  ({LOCATION_TYPE_LABELS[location.location_type]})
+                </span>
+              </>
+            )}
+          </p>
+          {location.location_type === "table" && (
+            <p className="text-xs text-foreground/60">
+              קיבולת: {location.capacity}
+              {guestCount !== null ? ` · אורחים משובצים: ${guestCount}` : ""}
+            </p>
+          )}
+        </>
+      );
+
+      const assignPanel =
+        canWriteStaffing && availableWaiters.length > 0 ? (
+          <AssignDutyForm skilled={skilled} others={others} action={addAssignment} />
+        ) : null;
+
+      const editPanel =
+        canWriteStaffing && withEdit ? (
+          <div className="flex flex-col gap-3">
+            <SaveDetailsForm action={saveLocationEdit} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <label className="flex flex-col gap-1 text-sm">
+                <span>סוג</span>
+                <select
+                  name="location_type"
+                  defaultValue={location.location_type}
+                  className="rounded-md border border-border-classic bg-surface px-3 py-2"
+                >
+                  {LOCATION_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {LOCATION_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-1 flex-col gap-1 text-sm">
+                <span>שם</span>
+                <input
+                  name="label"
+                  defaultValue={location.label}
+                  required
+                  className="rounded-md border border-border-classic bg-surface px-3 py-2"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span>קיבולת</span>
+                <input
+                  type="number"
+                  name="capacity"
+                  min={0}
+                  defaultValue={location.capacity}
+                  className="w-24 rounded-md border border-border-classic bg-surface px-3 py-2"
+                />
+              </label>
+              <button
+                type="submit"
+                className="rounded-full border border-border-classic bg-surface px-4 py-2 text-sm hover:bg-accent-soft"
+              >
+                שמור
+              </button>
+            </SaveDetailsForm>
+            <form action={removeLocation}>
+              <ConfirmSubmitButton
+                message={`למחוק את ${location.location_type === "table" ? `שולחן ${location.label}` : location.label}? שיבוצי המלצרים אליו יימחקו גם הם.`}
+                className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+              >
+                <TrashIcon className="h-4 w-4" />
+                מחק
+              </ConfirmSubmitButton>
+            </form>
+          </div>
+        ) : null;
+
+      return {
+        id: location.id,
+        assigned: assignedToLocation.length > 0,
+        node: (
+          <StaffingRow title={title} chips={renderChips(assignedToLocation)} assignPanel={assignPanel} editPanel={editPanel} />
+        ),
+      };
+    });
+  }
+
+  const standLocations = (locations ?? []).filter((l) => l.location_type === "food_stand");
+
   return (
     <div className="flex flex-col gap-6">
       <TableSketchPhoto
@@ -157,294 +360,93 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
       <EventWaitersRoster eventId={eventId} roster={rosterEntries} canWrite={canWriteStaffing} />
 
       {canWriteStaffing && (
-        <AutoAssignBar eventId={eventId} hasRoster={hasRoster} assignmentCount={assignments?.length ?? 0} />
+        <AutoAssignBar eventId={eventId} hasRoster={hasRoster} assignmentCount={allAssignments.length} />
       )}
-
-      <section className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
-        <h2 className="text-sm font-medium">תפקידים באירוע</h2>
-        <ul className="flex flex-col gap-2">
-          {EVENT_DUTIES.map((duty) => {
-            const dutyAssignments = (assignments ?? []).filter((a) => a.location_id === null && a.role === duty);
-            const takenIds = new Set(dutyAssignments.map((a) => a.waiter_id));
-            const candidates = selectableWaiters.filter((w) => !takenIds.has(w.id));
-            const skilled = candidates.filter((w) => skillsByWaiter[w.id]?.includes(duty as WaiterSkill));
-            const others = candidates.filter((w) => !skillsByWaiter[w.id]?.includes(duty as WaiterSkill));
-            const quota = DUTY_QUOTAS[duty as WaiterSkill];
-
-            async function addDutyAssignment(formData: FormData) {
-              "use server";
-              await assignDuty(eventId, String(formData.get("waiter_id") ?? ""), duty);
-            }
-
-            return (
-              <li key={duty} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-border-classic px-3 py-2">
-                <div className="min-w-[8rem] shrink-0">
-                  <p className="font-medium">{ASSIGNMENT_ROLE_LABELS[duty]}</p>
-                  {quota !== undefined && (
-                    <p className={`text-xs ${dutyAssignments.length >= quota ? "text-foreground/60" : "text-amber-700"}`}>
-                      {dutyAssignments.length} מתוך {quota}
-                    </p>
-                  )}
-                  {quota === undefined && dutyAssignments.length > 0 && (
-                    <p className="text-xs text-foreground/60">{dutyAssignments.length} משובצים</p>
-                  )}
-                </div>
-                <div className="flex min-w-[8rem] flex-1 flex-wrap items-center gap-1.5">
-                  {dutyAssignments.length === 0 ? (
-                    <span className="text-xs text-foreground/50">לא משובץ</span>
-                  ) : (
-                    dutyAssignments.map((assignment) => {
-                      async function remove() {
-                        "use server";
-                        await unassignWaiter(eventId, assignment.id);
-                      }
-                      const name = assignment.waiters?.name ?? "";
-                      return canWriteStaffing ? (
-                        <form key={assignment.id} action={remove}>
-                          <button
-                            type="submit"
-                            className="flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-sm hover:opacity-80"
-                            title="הסר שיבוץ"
-                          >
-                            {name} ✕
-                          </button>
-                        </form>
-                      ) : (
-                        <span key={assignment.id} className="rounded-full bg-accent-soft px-3 py-1 text-sm">
-                          {name}
-                        </span>
-                      );
-                    })
-                  )}
-                </div>
-                {canWriteStaffing && candidates.length > 0 && (
-                  <div className="shrink-0">
-                    <AssignDutyForm skilled={skilled} others={others} action={addDutyAssignment} />
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </section>
 
       {canWriteStaffing && (
         <details className="rounded-lg border border-border-classic bg-surface">
           <summary className="cursor-pointer px-4 py-3 text-sm font-medium">הוספה וניהול שולחנות ועמדות</summary>
           <div className="flex flex-col gap-3 border-t border-border-classic p-4">
-        <form
-          action={addLocation}
-          className="flex flex-col gap-3 sm:flex-row sm:items-end"
-        >
-          <label className="flex flex-col gap-1 text-sm">
-            <span>סוג</span>
-            <select
-              name="location_type"
-              defaultValue="table"
-              className="rounded-md border border-border-classic bg-surface px-3 py-2"
-            >
-              {LOCATION_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {LOCATION_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-1 flex-col gap-1 text-sm">
-            <span>שם</span>
-            <input
-              name="label"
-              required
-              placeholder='לדוגמה: שולחן 5, "עמדת סושי"'
-              className="rounded-md border border-border-classic bg-surface px-3 py-2"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span>קיבולת</span>
-            <input
-              type="number"
-              name="capacity"
-              min={0}
-              defaultValue={0}
-              className="w-24 rounded-md border border-border-classic bg-surface px-3 py-2"
-            />
-          </label>
-          <button
-            type="submit"
-            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-          >
-            הוסף
-          </button>
-        </form>
+            <form action={addLocation} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <label className="flex flex-col gap-1 text-sm">
+                <span>סוג</span>
+                <select
+                  name="location_type"
+                  defaultValue="table"
+                  className="rounded-md border border-border-classic bg-surface px-3 py-2"
+                >
+                  {LOCATION_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {LOCATION_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-1 flex-col gap-1 text-sm">
+                <span>שם</span>
+                <input
+                  name="label"
+                  required
+                  placeholder='לדוגמה: שולחן 5, "עמדת סושי"'
+                  className="rounded-md border border-border-classic bg-surface px-3 py-2"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span>קיבולת</span>
+                <input
+                  type="number"
+                  name="capacity"
+                  min={0}
+                  defaultValue={0}
+                  className="w-24 rounded-md border border-border-classic bg-surface px-3 py-2"
+                />
+              </label>
+              <button
+                type="submit"
+                className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+              >
+                הוסף
+              </button>
+            </form>
             {locations && locations.length > 0 && (
-        <form action={removeAllLocations}>
-          <ConfirmSubmitButton
-            message="למחוק את כל השולחנות והעמדות של האירוע? כל שיבוץ מלצרים קיים יימחק גם הוא. לא ניתן לשחזר פעולה זו."
-            className="w-full rounded-full border-2 border-red-300 bg-background px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-          >
-            מחק את כל השולחנות והעמדות
-          </ConfirmSubmitButton>
-        </form>
+              <form action={removeAllLocations}>
+                <ConfirmSubmitButton
+                  message="למחוק את כל השולחנות והעמדות של האירוע? כל שיבוץ מלצרים קיים יימחק גם הוא. לא ניתן לשחזר פעולה זו."
+                  className="w-full rounded-full border-2 border-red-300 bg-background px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                >
+                  מחק את כל השולחנות והעמדות
+                </ConfirmSubmitButton>
+              </form>
             )}
           </div>
         </details>
       )}
 
-      {(!locations || locations.length === 0) && (
-        <p className="text-foreground/60">עדיין לא הוגדרו שולחנות או עמדות אוכל.</p>
-      )}
+      <section className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+        <h2 className="text-sm font-medium">{PHASE_LABELS.event}</h2>
+        {renderDutyRows(PHASE_DUTIES.event)}
+      </section>
 
-      {locations && locations.length > 0 && (
-        <StaffingLocationList
-          items={locations.map((location) => {
-            const assignedToLocation = assignments?.filter((a) => a.location_id === location.id) ?? [];
-            const assignedWaiterIds = new Set(assignedToLocation.map((a) => a.waiter_id));
-            const availableWaiters = selectableWaiters.filter((w) => !assignedWaiterIds.has(w.id));
-            const guestCount = location.location_type === "table" ? guestCountByTable.get(location.label) ?? 0 : null;
+      <section className="flex flex-col gap-3">
+        <h2 className="text-base font-semibold">{PHASE_LABELS.reception}</h2>
+        <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+          {renderDutyRows(PHASE_DUTIES.reception)}
+        </div>
+        {standLocations.length > 0 ? (
+          <StaffingLocationList items={buildLocationItems(standLocations, "reception", false)} />
+        ) : (
+          <p className="text-sm text-foreground/60">אין עמדות באירוע. ייבאו מהסקיצה או הוסיפו ידנית.</p>
+        )}
+      </section>
 
-            async function removeLocation() {
-              "use server";
-              await deleteLocation(eventId, location.id);
-            }
-            async function addAssignment(formData: FormData) {
-              "use server";
-              await assignWaiter(
-                eventId,
-                location.id,
-                String(formData.get("waiter_id") ?? ""),
-                String(formData.get("role") ?? "waiter") as WaiterRole | WaiterSkill,
-              );
-            }
-            async function saveLocationEdit(formData: FormData) {
-              "use server";
-              try {
-                await updateLocation(eventId, location.id, formData);
-              } catch (err) {
-                return actionErrorMessage(err);
-              }
-            }
-
-            const title = (
-              <>
-                <p className="font-medium">
-                  {location.location_type === "table" ? (
-                    `שולחן ${location.label}`
-                  ) : (
-                    <>
-                      {location.label}{" "}
-                      <span className="text-xs font-normal text-foreground/60">
-                        ({LOCATION_TYPE_LABELS[location.location_type]})
-                      </span>
-                    </>
-                  )}
-                </p>
-                {location.location_type === "table" && (
-                  <p className="text-xs text-foreground/60">
-                    קיבולת: {location.capacity}
-                    {guestCount !== null ? ` · אורחים משובצים: ${guestCount}` : ""}
-                  </p>
-                )}
-              </>
-            );
-
-            const chips =
-              assignedToLocation.length === 0 ? (
-                <span className="text-xs text-foreground/50">לא משובץ</span>
-              ) : (
-                assignedToLocation.map((assignment) => {
-                  async function remove() {
-                    "use server";
-                    await unassignWaiter(eventId, assignment.id);
-                  }
-                  const label = `${assignment.waiters?.name ?? ""}${
-                    assignment.role !== "waiter" ? ` (${ASSIGNMENT_ROLE_LABELS[assignment.role] ?? assignment.role})` : ""
-                  }`;
-                  return canWriteStaffing ? (
-                    <form key={assignment.id} action={remove}>
-                      <button
-                        type="submit"
-                        className="flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-sm hover:opacity-80"
-                        title="הסר שיבוץ"
-                      >
-                        {label} ✕
-                      </button>
-                    </form>
-                  ) : (
-                    <span key={assignment.id} className="rounded-full bg-accent-soft px-3 py-1 text-sm">
-                      {label}
-                    </span>
-                  );
-                })
-              );
-
-            const assignPanel =
-              canWriteStaffing && availableWaiters.length > 0 ? (
-                <AssignWaiterForm waiters={availableWaiters} skillsByWaiter={skillsByWaiter} action={addAssignment} />
-              ) : null;
-
-            const editPanel = canWriteStaffing ? (
-              <div className="flex flex-col gap-3">
-                <SaveDetailsForm action={saveLocationEdit} className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span>סוג</span>
-                    <select
-                      name="location_type"
-                      defaultValue={location.location_type}
-                      className="rounded-md border border-border-classic bg-surface px-3 py-2"
-                    >
-                      {LOCATION_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {LOCATION_TYPE_LABELS[type]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="flex flex-1 flex-col gap-1 text-sm">
-                    <span>שם</span>
-                    <input
-                      name="label"
-                      defaultValue={location.label}
-                      required
-                      className="rounded-md border border-border-classic bg-surface px-3 py-2"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span>קיבולת</span>
-                    <input
-                      type="number"
-                      name="capacity"
-                      min={0}
-                      defaultValue={location.capacity}
-                      className="w-24 rounded-md border border-border-classic bg-surface px-3 py-2"
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    className="rounded-full border border-border-classic bg-surface px-4 py-2 text-sm hover:bg-accent-soft"
-                  >
-                    שמור
-                  </button>
-                </SaveDetailsForm>
-                <form action={removeLocation}>
-                  <ConfirmSubmitButton
-                    message={`למחוק את ${location.location_type === "table" ? `שולחן ${location.label}` : location.label}? שיבוצי המלצרים אליו יימחקו גם הם.`}
-                    className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                    מחק
-                  </ConfirmSubmitButton>
-                </form>
-              </div>
-            ) : null;
-
-            return {
-              id: location.id,
-              assigned: assignedToLocation.length > 0,
-              node: <StaffingRow title={title} chips={chips} assignPanel={assignPanel} editPanel={editPanel} />,
-            };
-          })}
-        />
-      )}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-base font-semibold">{PHASE_LABELS.hall}</h2>
+        {!locations || locations.length === 0 ? (
+          <p className="text-foreground/60">עדיין לא הוגדרו שולחנות או עמדות אוכל.</p>
+        ) : (
+          <StaffingLocationList items={buildLocationItems(locations, "hall", true)} />
+        )}
+      </section>
     </div>
   );
 }

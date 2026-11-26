@@ -10,6 +10,8 @@ export type WaiterRole = "waiter" | "runner";
 // Event duties for staff who are not waiters - not part of the skills grid.
 export type StaffDuty = "hostess" | "barista";
 export type EventDuty = WaiterSkill | StaffDuty;
+// The reception, the hall that follows it, or the whole event (see migration 102).
+export type EventPhase = "event" | "reception" | "hall";
 export type WaiterSkill =
   | "runner"
   | "clearing"
@@ -248,6 +250,7 @@ export interface WaiterAssignmentRow {
   // Legacy rows may still carry the old "waiter" default; new assignments are
   // always a specific WaiterSkill now (see the 00000000000064 migration).
   role: WaiterRole | EventDuty;
+  phase: EventPhase;
 }
 
 export interface ChecklistSignatureRow {
