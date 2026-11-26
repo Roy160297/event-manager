@@ -1,11 +1,10 @@
 import {
   DUTIES_COMPATIBLE_WITH_FLOOR_WORK,
   DUTY_QUOTAS,
-  FAMILY_SHIFT_ROLE,
   MAX_TABLES_PER_WAITER,
-  NON_FLOOR_SHIFT_ROLES,
+  SHIFT_ROLE_DUTIES,
 } from "@/lib/waiterDuties";
-import type { LocationType, WaiterSkill } from "@/lib/types";
+import type { EventDuty, LocationType, WaiterSkill } from "@/lib/types";
 
 const FLOOR_COMPATIBLE = new Set<string>(DUTIES_COMPATIBLE_WITH_FLOOR_WORK);
 
@@ -31,7 +30,7 @@ export interface PlanExisting {
 export interface PlannedAssignment {
   waiterId: string;
   locationId: string | null;
-  role: WaiterSkill;
+  role: EventDuty;
 }
 
 export interface AssignmentPlan {
@@ -41,9 +40,13 @@ export interface AssignmentPlan {
   unstaffedLocations: number;
 }
 
-// Fills the gaps only - whoever already holds anything (other than hall prep)
-// keeps their place, and quotas count the duties already staffed. Order:
-//  1. door, runners, hall prep - by skill, up to the venue's numbers;
+// Fills the gaps only - whoever already holds anything (other than door or
+// hall prep) keeps their place, and quotas count the duties already staffed.
+// Order:
+//  0. roster rows for family / hostess / barista go to that duty and nothing
+//     else;
+//  1. door, runners, hall prep - by skill, up to the venue's numbers, one such
+//     duty per person (door and hall prep still leave them free for the floor);
 //  2. every food stand gets a waiter - stand-skilled first, anyone free if
 //     there are not enough of them;
 //  3. the waiters still free cover the tables, up to MAX_TABLES_PER_WAITER
@@ -65,34 +68,36 @@ export function planSkillAssignments(input: {
   for (const a of input.existing) {
     if (!a.locationId) dutyCounts.set(a.role, (dutyCounts.get(a.role) ?? 0) + 1);
   }
-  // Hall prep is added on top of a waiter's floor work, so it needs its own
-  // "already doing this duty" set instead of relying on `busy`.
-  const holdsDuty = new Set(input.existing.filter((a) => !a.locationId).map((a) => `${a.waiterId}:${a.role}`));
+  // Someone with a quota duty (door, runner, hall prep) is not given a second one.
+  const onQuotaDuty = new Set(
+    input.existing.filter((a) => !a.locationId && a.role in DUTY_QUOTAS).map((a) => a.waiterId),
+  );
 
   const assignments: PlannedAssignment[] = [];
   const shortages: AssignmentPlan["shortages"] = [];
 
-  const isFloorStaff = (waiter: PlanWaiter) =>
-    !waiter.shiftRole || !NON_FLOOR_SHIFT_ROLES.includes(waiter.shiftRole.trim());
-  const free = () => input.waiters.filter((w) => !busy.has(w.id) && isFloorStaff(w));
-  const take = (waiter: PlanWaiter, locationId: string | null, role: WaiterSkill) => {
+  const dedicatedDuty = (waiter: PlanWaiter) => SHIFT_ROLE_DUTIES[waiter.shiftRole?.trim() ?? ""];
+  const free = () => input.waiters.filter((w) => !busy.has(w.id) && !dedicatedDuty(w));
+  const take = (waiter: PlanWaiter, locationId: string | null, role: EventDuty) => {
     if (!FLOOR_COMPATIBLE.has(role)) busy.add(waiter.id);
+    if (!locationId && role in DUTY_QUOTAS) onQuotaDuty.add(waiter.id);
     assignments.push({ waiterId: waiter.id, locationId, role });
   };
   const bySpecialisation = (a: PlanWaiter, b: PlanWaiter) =>
     a.skills.length - b.skills.length || a.name.localeCompare(b.name, "he");
   const withSkill = (skill: WaiterSkill) => free().filter((w) => w.skills.includes(skill)).sort(bySpecialisation);
 
-  // The roster file already says who the family waiter is.
-  for (const waiter of free()) {
-    if (waiter.shiftRole?.trim() === FAMILY_SHIFT_ROLE) take(waiter, null, "family_waiter");
+  // The roster file already says who the family waiter, hostess and barista are.
+  for (const waiter of input.waiters.filter((w) => !busy.has(w.id))) {
+    const duty = dedicatedDuty(waiter);
+    if (duty) take(waiter, null, duty);
   }
 
   for (const [duty, quota] of Object.entries(DUTY_QUOTAS) as [WaiterSkill, number][]) {
     const needed = quota - (dutyCounts.get(duty) ?? 0);
     if (needed <= 0) continue;
     const picked = withSkill(duty)
-      .filter((w) => !holdsDuty.has(`${w.id}:${duty}`))
+      .filter((w) => !onQuotaDuty.has(w.id))
       .slice(0, needed);
     for (const waiter of picked) take(waiter, null, duty);
     if (picked.length < needed) shortages.push({ duty, missing: needed - picked.length });

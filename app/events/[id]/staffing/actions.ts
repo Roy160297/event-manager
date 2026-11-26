@@ -8,7 +8,7 @@ import { parseTableSketchDraft } from "@/lib/tableSketchImport";
 import { syncLocationsFromSketch } from "@/lib/sketchSync";
 import { planSkillAssignments } from "@/lib/waiterAutoAssign";
 import { EVENT_DUTIES } from "@/lib/waiterDuties";
-import type { LocationRow, LocationType, WaiterRole, WaiterSkill } from "@/lib/types";
+import type { EventDuty, LocationRow, LocationType, WaiterRole, WaiterSkill } from "@/lib/types";
 
 export async function createLocation(eventId: string, formData: FormData) {
   const supabase = await createClient();
@@ -294,7 +294,7 @@ export async function clearEventWaiters(eventId: string) {
 
 // Assigns a waiter to an event-level duty (door, runner, hall prep, ...), as
 // opposed to assignWaiter above which attaches them to a table/stand.
-export async function assignDuty(eventId: string, waiterId: string, duty: WaiterSkill) {
+export async function assignDuty(eventId: string, waiterId: string, duty: EventDuty) {
   if (!waiterId) return;
   if (!EVENT_DUTIES.includes(duty)) throw new Error("תפקיד לא תקין");
   const supabase = await createClient();

@@ -51,7 +51,11 @@ describe("planSkillAssignments", () => {
       locations: [],
       existing: [{ waiterId: "old", locationId: null, role: "door" }],
     });
-    expect(assignments).toEqual([{ waiterId: "new", locationId: null, role: "clearing" }]);
+    // the existing door waiter is still free for the floor afterwards
+    expect(assignments.map((a) => [a.waiterId, a.role]).sort()).toEqual([
+      ["new", "clearing"],
+      ["old", "clearing"],
+    ]);
     expect(shortages.map((s) => s.duty)).toEqual(["runner", "hall_prep"]);
   });
 
@@ -127,21 +131,33 @@ describe("planSkillAssignments", () => {
     expect(assignments.find((a) => a.role === "door")?.waiterId).toBe("only");
   });
 
-  it("sends the family waiter to that duty and leaves hostess/barista out", () => {
+  it("sends family, hostess and barista rows to their own duty and nothing else", () => {
     const { assignments } = planSkillAssignments({
       waiters: [
-        waiter("fam", [], "משפחה"),
-        waiter("host", [], "מארחת"),
+        waiter("fam", ["table"], "משפחה"),
+        waiter("host", ["table", "door"], "מארחת"),
         waiter("bar", [], "בריסטה"),
         waiter("dis", [], "פירוק"),
       ],
-      locations: [],
+      locations: [{ id: "T1", type: "table", label: "1" }],
       existing: [],
     });
-    expect(assignments.map((a) => [a.waiterId, a.role])).toEqual([
-      ["fam", "family_waiter"],
-      ["dis", "clearing"],
+    expect(assignments.map((a) => [a.waiterId, a.role, a.locationId])).toEqual([
+      ["fam", "family_waiter", null],
+      ["host", "hostess", null],
+      ["bar", "barista", null],
+      ["dis", "table", "T1"],
     ]);
+  });
+
+  it("lets the door waiter take a table afterwards, but not a second quota duty", () => {
+    const { assignments } = planSkillAssignments({
+      waiters: [waiter("d", ["door", "runner"]), waiter("r", ["runner"]), waiter("r2", ["runner"])],
+      locations: [{ id: "T1", type: "table", label: "1" }],
+      existing: [],
+    });
+    expect(assignments.filter((a) => a.waiterId === "d").map((a) => a.role).sort()).toEqual(["door", "table"]);
+    expect(assignments.filter((a) => a.role === "runner").map((a) => a.waiterId).sort()).toEqual(["r", "r2"]);
   });
 
   it("never assigns someone who already holds a table", () => {

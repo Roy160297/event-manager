@@ -9,6 +9,7 @@ import type {
   TaskStatus,
   WaiterRole,
   WaiterSkill,
+  StaffDuty,
 } from "@/lib/types";
 
 export const MONTH_LABELS = [
@@ -157,9 +158,14 @@ export const WAITER_SKILL_LABELS: Record<WaiterSkill, string> = {
   family_waiter: "מלצרית משפחה",
 };
 
+export const STAFF_DUTY_LABELS: Record<StaffDuty, string> = {
+  hostess: "מארחת",
+  barista: "בריסטה",
+};
+
 // Covers both a fresh assignment's role (always a WaiterSkill now) and a
 // legacy row's WaiterRole - skill labels win where the two overlap (runner).
-export const ASSIGNMENT_ROLE_LABELS: Record<string, string> = { ...WAITER_ROLE_LABELS, ...WAITER_SKILL_LABELS };
+export const ASSIGNMENT_ROLE_LABELS: Record<string, string> = { ...WAITER_ROLE_LABELS, ...WAITER_SKILL_LABELS, ...STAFF_DUTY_LABELS };
 
 export function formatDate(value: string | null): string {
   if (!value) return "—";

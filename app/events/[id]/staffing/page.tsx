@@ -4,7 +4,7 @@ import { AssignDutyForm } from "./AssignDutyForm";
 import { AutoAssignBar } from "./AutoAssignBar";
 import { createClient } from "@/lib/supabase/server";
 import { actionErrorMessage } from "@/lib/actionError";
-import { ASSIGNMENT_ROLE_LABELS, LOCATION_TYPE_LABELS, WAITER_SKILL_LABELS } from "@/lib/labels";
+import { ASSIGNMENT_ROLE_LABELS, LOCATION_TYPE_LABELS } from "@/lib/labels";
 import { DUTY_QUOTAS, EVENT_DUTIES } from "@/lib/waiterDuties";
 import { TrashIcon } from "@/components/icons";
 import { SaveDetailsForm } from "@/components/SaveDetailsForm";
@@ -167,9 +167,9 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
             const dutyAssignments = (assignments ?? []).filter((a) => a.location_id === null && a.role === duty);
             const takenIds = new Set(dutyAssignments.map((a) => a.waiter_id));
             const candidates = selectableWaiters.filter((w) => !takenIds.has(w.id));
-            const skilled = candidates.filter((w) => skillsByWaiter[w.id]?.includes(duty));
-            const others = candidates.filter((w) => !skillsByWaiter[w.id]?.includes(duty));
-            const quota = DUTY_QUOTAS[duty];
+            const skilled = candidates.filter((w) => skillsByWaiter[w.id]?.includes(duty as WaiterSkill));
+            const others = candidates.filter((w) => !skillsByWaiter[w.id]?.includes(duty as WaiterSkill));
+            const quota = DUTY_QUOTAS[duty as WaiterSkill];
 
             async function addDutyAssignment(formData: FormData) {
               "use server";
@@ -179,7 +179,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
             return (
               <li key={duty} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-border-classic px-3 py-2">
                 <div className="min-w-[8rem] shrink-0">
-                  <p className="font-medium">{WAITER_SKILL_LABELS[duty]}</p>
+                  <p className="font-medium">{ASSIGNMENT_ROLE_LABELS[duty]}</p>
                   {quota !== undefined && (
                     <p className={`text-xs ${dutyAssignments.length >= quota ? "text-foreground/60" : "text-amber-700"}`}>
                       {dutyAssignments.length} מתוך {quota}

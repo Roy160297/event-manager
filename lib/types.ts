@@ -7,6 +7,9 @@ export type TaskPriority = "low" | "normal" | "high";
 export type RsvpStatus = "pending" | "confirmed" | "declined";
 export type LocationType = "table" | "food_stand";
 export type WaiterRole = "waiter" | "runner";
+// Event duties for staff who are not waiters - not part of the skills grid.
+export type StaffDuty = "hostess" | "barista";
+export type EventDuty = WaiterSkill | StaffDuty;
 export type WaiterSkill =
   | "runner"
   | "clearing"
@@ -244,7 +247,7 @@ export interface WaiterAssignmentRow {
   location_id: string | null;
   // Legacy rows may still carry the old "waiter" default; new assignments are
   // always a specific WaiterSkill now (see the 00000000000064 migration).
-  role: WaiterRole | WaiterSkill;
+  role: WaiterRole | EventDuty;
 }
 
 export interface ChecklistSignatureRow {
