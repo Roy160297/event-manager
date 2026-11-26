@@ -123,16 +123,21 @@ export default function TableSketchPhoto({
                 מעבר ל-iPlan
               </a>
             )}
-            {sketchUrl && isPdf && (
-              <button
-                type="button"
-                onClick={handleReimport}
-                disabled={isPending}
-                className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft disabled:opacity-50"
-              >
-                ייבא שולחנות ועמדות מהסקיצה
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleReimport}
+              disabled={isPending || !sketchUrl || !isPdf}
+              title={
+                !sketchUrl
+                  ? "יש להעלות קודם סקיצת PDF"
+                  : !isPdf
+                    ? "ניתן לייבא רק מסקיצת PDF מ-iPlan"
+                    : undefined
+              }
+              className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft disabled:opacity-50"
+            >
+              ייבא שולחנות ועמדות מהסקיצה
+            </button>
             {sketchUrl && (
               <button
                 type="button"
