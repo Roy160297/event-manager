@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { WAITER_SKILL_LABELS } from "@/lib/labels";
-import { DUTY_QUOTAS } from "@/lib/waiterDuties";
+import { DUTY_QUOTAS, MAX_TABLES_PER_WAITER } from "@/lib/waiterDuties";
 import { autoAssignBySkills, clearAllAssignments } from "./actions";
 
 // One-click assignment of the event's roster by skill, plus a reset so it can
@@ -68,8 +68,8 @@ export function AutoAssignBar({
         <div>
           <h2 className="text-sm font-medium">שיבוץ לפי כישורים</h2>
           <p className="text-xs text-foreground/60">
-            מלצר דלת {DUTY_QUOTAS.door}, ראנרים {DUTY_QUOTAS.runner}, הכנת אולם {DUTY_QUOTAS.hall_prep}, עמדות ושולחנות
-            לפי הכישור, וכל השאר פינויים. משלים רק את מה שעדיין לא שובץ.
+            מלצר דלת {DUTY_QUOTAS.door}, ראנרים {DUTY_QUOTAS.runner}, הכנת אולם {DUTY_QUOTAS.hall_prep}, מלצר בכל עמדה,
+            והשאר מכסים את השולחנות (עד {MAX_TABLES_PER_WAITER} לכל אחד). משלים רק את מה שעדיין לא שובץ.
           </p>
         </div>
         <div className="flex items-center gap-2">

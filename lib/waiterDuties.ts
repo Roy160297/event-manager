@@ -12,7 +12,15 @@ export const DUTY_QUOTAS: Partial<Record<WaiterSkill, number>> = {
   hall_prep: 6,
 };
 
-// The roster file's "תפקיד" column. A "משפחה" row is the family waiter; the
-// others are not floor staff, so the automatic assignment leaves them alone.
+// Hall prep happens before the event, so whoever does it still works the floor
+// (a stand or tables) afterwards; every other duty takes the waiter fully.
+export const DUTIES_COMPATIBLE_WITH_FLOOR_WORK: WaiterSkill[] = ["hall_prep"];
+
+// The roster file's "תפקיד" column. A "משפחה" row is the family waiter; hostess
+// and barista are not waiters, so the automatic assignment leaves them alone.
+// (Dismantling crew - "פירוק" - are ordinary waiters who stay on for it.)
 export const FAMILY_SHIFT_ROLE = "משפחה";
-export const NON_FLOOR_SHIFT_ROLES = ["מארחת", "בריסטה", "פירוק"];
+export const NON_FLOOR_SHIFT_ROLES = ["מארחת", "בריסטה"];
+
+// A waiter covers at most this many tables.
+export const MAX_TABLES_PER_WAITER = 2;

@@ -55,23 +55,67 @@ describe("planSkillAssignments", () => {
     expect(shortages.map((s) => s.duty)).toEqual(["runner", "hall_prep"]);
   });
 
-  it("puts table-skilled waiters on open tables in numeric order, and stand-skilled on stands", () => {
+  it("puts a waiter on every food stand, even if nobody has the stand skill", () => {
     const { assignments, unstaffedLocations } = planSkillAssignments({
-      waiters: [waiter("t1", ["table"]), waiter("t2", ["table"]), waiter("s1", ["station"])],
+      waiters: [waiter("s1", ["station"]), waiter("a"), waiter("b")],
       locations: [
-        { id: "L10", type: "table", label: "10" },
-        { id: "L2", type: "table", label: "2" },
-        { id: "L3", type: "table", label: "3" },
-        { id: "S", type: "food_stand", label: "סושי" },
+        { id: "S1", type: "food_stand", label: "סושי" },
+        { id: "S2", type: "food_stand", label: "פסטה" },
+        { id: "S3", type: "food_stand", label: "בשר" },
       ],
       existing: [],
     });
-    expect(assignments).toEqual([
-      { waiterId: "s1", locationId: "S", role: "station" },
-      { waiterId: "t1", locationId: "L2", role: "table" },
-      { waiterId: "t2", locationId: "L3", role: "table" },
-    ]);
+    expect(assignments.filter((a) => a.role === "station")).toHaveLength(3);
+    expect(assignments.some((a) => a.waiterId === "s1" && a.role === "station")).toBe(true);
+    expect(unstaffedLocations).toBe(0);
+  });
+
+  it("covers the tables with the waiters who are not on stands, two tables at most each", () => {
+    const tables = ["1", "2", "3", "4", "5", "6", "7"].map((label) => ({ id: `T${label}`, type: "table" as const, label }));
+    const { assignments, unstaffedLocations } = planSkillAssignments({
+      waiters: [waiter("a"), waiter("b"), waiter("c"), waiter("d"), waiter("st", ["station"])],
+      locations: [{ id: "S", type: "food_stand", label: "סושי" }, ...tables],
+      existing: [],
+    });
+    expect(assignments.find((a) => a.locationId === "S")?.waiterId).toBe("st");
+    const perWaiter = new Map<string, string[]>();
+    for (const a of assignments.filter((x) => x.role === "table")) {
+      perWaiter.set(a.waiterId, [...(perWaiter.get(a.waiterId) ?? []), a.locationId!]);
+    }
+    expect([...perWaiter.values()].map((t) => t.length).sort()).toEqual([1, 2, 2, 2]);
+    // neighbouring tables stay together
+    expect([...perWaiter.values()]).toContainEqual(["T1", "T2"]);
+    expect(unstaffedLocations).toBe(0);
+  });
+
+  it("leaves tables open when even two each is not enough", () => {
+    const tables = ["1", "2", "3", "4", "5"].map((label) => ({ id: `T${label}`, type: "table" as const, label }));
+    const { assignments, unstaffedLocations } = planSkillAssignments({
+      waiters: [waiter("a"), waiter("b")],
+      locations: tables,
+      existing: [],
+    });
+    expect(assignments.filter((a) => a.role === "table")).toHaveLength(4);
     expect(unstaffedLocations).toBe(1);
+  });
+
+  it("uses table-skilled waiters first and sends the surplus to clearing when tables are few", () => {
+    const { assignments } = planSkillAssignments({
+      waiters: [waiter("a"), waiter("t", ["table"]), waiter("b")],
+      locations: [{ id: "T1", type: "table", label: "1" }],
+      existing: [],
+    });
+    expect(assignments.find((x) => x.role === "table")?.waiterId).toBe("t");
+    expect(assignments.filter((x) => x.role === "clearing")).toHaveLength(2);
+  });
+
+  it("lets hall prep people also work the floor", () => {
+    const { assignments } = planSkillAssignments({
+      waiters: [waiter("h", ["hall_prep"])],
+      locations: [{ id: "T1", type: "table", label: "1" }],
+      existing: [],
+    });
+    expect(assignments.map((x) => x.role).sort()).toEqual(["hall_prep", "table"]);
   });
 
   it("uses the most specialised waiter first so flexible ones stay free", () => {
@@ -83,21 +127,20 @@ describe("planSkillAssignments", () => {
     expect(assignments.find((a) => a.role === "door")?.waiterId).toBe("only");
   });
 
-  it("sends the family waiter to that duty and leaves hostess/barista/dismantling out", () => {
+  it("sends the family waiter to that duty and leaves hostess/barista out", () => {
     const { assignments } = planSkillAssignments({
       waiters: [
         waiter("fam", [], "משפחה"),
         waiter("host", [], "מארחת"),
         waiter("bar", [], "בריסטה"),
         waiter("dis", [], "פירוק"),
-        waiter("w"),
       ],
       locations: [],
       existing: [],
     });
     expect(assignments.map((a) => [a.waiterId, a.role])).toEqual([
       ["fam", "family_waiter"],
-      ["w", "clearing"],
+      ["dis", "clearing"],
     ]);
   });
 
