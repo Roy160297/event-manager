@@ -43,7 +43,7 @@ type FloorPhase = "reception" | "hall";
 // waiter can be busy in one and free in the other:
 //  0. roster rows for family / hostess / barista go to that duty for the whole
 //     event and nothing else;
-//  1. runners - by skill, for the whole event;
+//  1. runners and the joker - by skill, for the whole event;
 //  2. reception: the door waiter, then hall prep - by skill, up to the venue's
 //     numbers (piloting is manual);
 //  3. reception stands: one waiter each - stand-skilled first, anyone free if
@@ -99,7 +99,7 @@ export function planSkillAssignments(input: {
     if (duty && !busy.reception.has(waiter.id) && !busy.hall.has(waiter.id)) take(waiter, null, duty, "event");
   }
 
-  for (const duty of ["runner", "door", "hall_prep"] as const) {
+  for (const duty of ["runner", "joker", "door", "hall_prep"] as const) {
     const quota = DUTY_QUOTAS[duty] ?? 0;
     const needed = quota - (dutyCounts.get(duty) ?? 0);
     if (needed <= 0) continue;

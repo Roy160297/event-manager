@@ -441,9 +441,11 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold">{PHASE_LABELS.hall}</h2>
-        <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
-          {renderDutyRows(PHASE_DUTIES.hall)}
-        </div>
+        {PHASE_DUTIES.hall.length > 0 && (
+          <div className="flex flex-col gap-3 rounded-lg border border-border-classic bg-surface p-4">
+            {renderDutyRows(PHASE_DUTIES.hall)}
+          </div>
+        )}
         {!locations || locations.length === 0 ? (
           <p className="text-foreground/60">עדיין לא הוגדרו שולחנות או עמדות אוכל.</p>
         ) : (

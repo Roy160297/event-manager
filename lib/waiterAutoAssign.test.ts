@@ -166,4 +166,17 @@ describe("planSkillAssignments", () => {
     expect(plan.assignments.filter((x) => x.role === "table")).toHaveLength(2);
     expect(plan.unstaffed).toEqual({ receptionStands: 0, hallStands: 0, tables: 0 });
   });
+
+  it("gives the single joker to one waiter for the whole event, so they get no stand or table", () => {
+    const plan = planSkillAssignments({
+      waiters: [waiter("j", ["joker"]), waiter("j2", ["joker"]), waiter("a")],
+      locations: [table("1"), table("2")],
+      existing: [],
+    });
+    const jokers = plan.assignments.filter((x) => x.role === "joker");
+    expect(jokers).toHaveLength(1);
+    expect(jokers[0].phase).toBe("event");
+    const jokerId = jokers[0].waiterId;
+    expect(plan.assignments.filter((x) => x.waiterId === jokerId)).toHaveLength(1);
+  });
 });
