@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import * as XLSX from "xlsx";
 import { parseExcelBuffer } from "@/lib/csv-import";
 import { guessGuestMapping, mapGuestRows } from "@/lib/guestImport";
-import { parseSketchHtml, renderSketchSvg, seatedTotal, sketchDraft, sketchSummary } from "@/lib/iplanSketch";
+import { parseSketchHtml, renderSketchSvg, seatedTotal, sketchDraft, sketchDraftFromSvg, sketchSummary } from "@/lib/iplanSketch";
 
 // Shapes as they appear in iPlan's sketch print page: JSON inside an attribute,
 // quotes written as &quot;.
@@ -84,6 +84,24 @@ describe("parseSketchHtml", () => {
   it("ignores a broken attribute and a page without a sketch", () => {
     expect(parseSketchHtml('<g class="sketch_shape" data-init_model="{not json"></g>').shapes).toEqual([]);
     expect(parseSketchHtml("<html></html>").shapes).toEqual([]);
+  });
+});
+
+describe("sketchDraftFromSvg", () => {
+  it("reads back the same tables and stands from the drawing kept on the event", () => {
+    const sketch = parseSketchHtml(html);
+    const fromSvg = sketchDraftFromSvg(renderSketchSvg(sketch));
+    expect(fromSvg).toEqual(sketchDraft(sketch));
+  });
+
+  it("keeps the seated count including optioned guests and skips the dance floor", () => {
+    const fromSvg = sketchDraftFromSvg(renderSketchSvg(parseSketchHtml(html)));
+    expect(fromSvg.tables.find((t) => t.label === "15")).toEqual({ label: "15", capacity: 9, seated: 7 });
+    expect(fromSvg.foodStands.map((s) => s.label)).toEqual(["בשר כפול", "סלטים"]);
+  });
+
+  it("returns nothing for a drawing with no captions", () => {
+    expect(sketchDraftFromSvg("<svg></svg>")).toEqual({ tables: [], foodStands: [] });
   });
 });
 

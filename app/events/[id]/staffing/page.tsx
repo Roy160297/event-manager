@@ -122,6 +122,8 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
     ? ((await supabase.storage.from("event-sketches").createSignedUrl(sketchPath, 60 * 60)).data?.signedUrl ?? null)
     : null;
   const isSketchPdf = sketchPath?.toLowerCase().endsWith(".pdf") ?? false;
+  // A PDF upload or a drawing synced from iPlan (SVG) can be read back for the tables/stands.
+  const canReimportSketch = isSketchPdf || (sketchPath?.toLowerCase().endsWith(".svg") ?? false);
 
   const guestCountByTable = new Map<string, number>();
   for (const guest of guests ?? []) {
@@ -352,6 +354,7 @@ export default async function StaffingPage({ params }: { params: Promise<{ id: s
         eventId={eventId}
         sketchUrl={sketchUrl}
         isPdf={isSketchPdf}
+        canReimport={canReimportSketch}
         canWrite={canWriteStaffing}
         seatedChairsCount={event?.sketch_seated_chairs_count ?? null}
         iplanEnabled={(await getVenueSettings()).iplan_enabled}

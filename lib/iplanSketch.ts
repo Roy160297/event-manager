@@ -203,6 +203,35 @@ export function sketchDraft(sketch: ParsedSketch): SketchDraft {
   return { tables, foodStands };
 }
 
+// The same list read back from a sketch drawing this module produced earlier
+// (the SVG kept on the event), for rebuilding the tables / stands without going
+// to iPlan again. Every table is drawn as its number followed by its
+// "seated/seats" caption; any other caption is a food stand.
+export function sketchDraftFromSvg(svg: string): SketchDraft {
+  const unescape = (value: string) =>
+    value.replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  const texts = [...svg.matchAll(/<text\b[^>]*>([^<]*)<\/text>/g)].map((match) => unescape(match[1]).trim()).filter(Boolean);
+  const occupancy = /^(\d+)(?:\+(\d+))?\/(\d+)$/;
+
+  const tables: SketchDraft["tables"] = [];
+  const foodStands: SketchDraft["foodStands"] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < texts.length; i++) {
+    const text = texts[i];
+    const next = texts[i + 1]?.match(occupancy);
+    if (/^\d{1,3}$/.test(text) && next) {
+      tables.push({ label: text, capacity: Number(next[3]), seated: Number(next[1]) + Number(next[2] ?? 0) });
+      i += 1;
+      continue;
+    }
+    if (occupancy.test(text) || /^\d+$/.test(text)) continue;
+    if (NOT_A_STAND.some((word) => text.includes(word)) || seen.has(text)) continue;
+    seen.add(text);
+    foodStands.push({ label: text });
+  }
+  return { tables: tables.sort((a, b) => Number(a.label) - Number(b.label)), foodStands };
+}
+
 export function seatedTotal(draft: SketchDraft): number {
   return draft.tables.reduce((sum, table) => sum + table.seated, 0);
 }

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { extractPdfText } from "@/lib/pdfImport";
 import { normalizeWaiterName, parseEventWaiterRoster } from "@/lib/eventWaiterImport";
 import { parseTableSketchDraft } from "@/lib/tableSketchImport";
+import { sketchDraftFromSvg } from "@/lib/iplanSketch";
 import { syncLocationsFromSketch } from "@/lib/sketchSync";
 import { planSkillAssignments } from "@/lib/waiterAutoAssign";
 import { EVENT_DUTIES, dutyPhase } from "@/lib/waiterDuties";
@@ -417,12 +418,18 @@ export async function reimportLocationsFromSketch(
   if (eventError) throw new Error(eventError.message);
   const path = event?.table_sketch_path;
   if (!path) throw new Error("לא הועלתה סקיצה לאירוע");
-  if (!path.toLowerCase().endsWith(".pdf")) throw new Error("ניתן לייבא שולחנות ועמדות רק מסקיצת PDF מ-iPlan");
+  const isSvg = path.toLowerCase().endsWith(".svg");
+  if (!isSvg && !path.toLowerCase().endsWith(".pdf")) {
+    throw new Error("ניתן לייבא שולחנות ועמדות רק מסקיצת PDF או מסקיצה שסונכרנה מ-iPlan");
+  }
 
   const { data: file, error: downloadError } = await supabase.storage.from(TABLE_SKETCH_BUCKET).download(path);
   if (downloadError || !file) throw new Error(downloadError?.message ?? "לא ניתן לקרוא את הסקיצה");
 
-  const draft = parseTableSketchDraft(await extractPdfText(Buffer.from(await file.arrayBuffer())));
+  // A sketch synced from iPlan is kept as a drawing (SVG); an uploaded one as a PDF.
+  const draft = isSvg
+    ? { ...sketchDraftFromSvg(await file.text()), warnings: [] as string[] }
+    : parseTableSketchDraft(await extractPdfText(Buffer.from(await file.arrayBuffer())));
   if (draft.tables.length === 0 && draft.foodStands.length === 0) {
     throw new Error(draft.warnings[0] ?? "לא זוהו שולחנות או עמדות בסקיצה");
   }

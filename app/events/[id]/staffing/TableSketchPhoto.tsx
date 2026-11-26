@@ -11,6 +11,7 @@ export default function TableSketchPhoto({
   eventId,
   sketchUrl,
   isPdf,
+  canReimport,
   canWrite,
   seatedChairsCount,
   iplanEnabled,
@@ -18,6 +19,7 @@ export default function TableSketchPhoto({
   eventId: string;
   sketchUrl: string | null;
   isPdf: boolean;
+  canReimport: boolean;
   canWrite: boolean;
   seatedChairsCount: string | null;
   iplanEnabled: boolean;
@@ -126,12 +128,12 @@ export default function TableSketchPhoto({
             <button
               type="button"
               onClick={handleReimport}
-              disabled={isPending || !sketchUrl || !isPdf}
+              disabled={isPending || !sketchUrl || !canReimport}
               title={
                 !sketchUrl
                   ? "יש להעלות קודם סקיצת PDF"
-                  : !isPdf
-                    ? "ניתן לייבא רק מסקיצת PDF מ-iPlan"
+                  : !canReimport
+                    ? "ניתן לייבא רק מסקיצת PDF מ-iPlan או מסקיצה שסונכרנה מ-iPlan"
                     : undefined
               }
               className="rounded-full border border-border-classic px-4 py-2 text-sm hover:bg-accent-soft disabled:opacity-50"
