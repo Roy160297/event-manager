@@ -17,6 +17,7 @@ describe("planSkillAssignments", () => {
   it("fills runners (whole event), door and hall prep (reception) by skill up to the quotas", () => {
     const waiters = [
       waiter("d", ["door"]),
+      waiter("j", ["joker"]),
       waiter("r1", ["runner"]),
       waiter("r2", ["runner"]),
       waiter("r3", ["runner"]),
@@ -40,6 +41,7 @@ describe("planSkillAssignments", () => {
     });
     expect(plan.shortages).toEqual([
       { duty: "runner", missing: 1 },
+      { duty: "joker", missing: 1 },
       { duty: "door", missing: 1 },
       { duty: "hall_prep", missing: 6 },
     ]);
@@ -52,7 +54,7 @@ describe("planSkillAssignments", () => {
       existing: [{ waiterId: "old", locationId: null, role: "door", phase: "reception" }],
     });
     expect(plan.assignments.filter((a) => a.role === "door")).toEqual([]);
-    expect(plan.shortages.map((s) => s.duty)).toEqual(["runner", "hall_prep"]);
+    expect(plan.shortages.map((s) => s.duty)).toEqual(["runner", "joker", "hall_prep"]);
   });
 
   it("sends family, hostess and barista rows to their own duty for the whole event and nothing else", () => {
