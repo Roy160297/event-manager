@@ -145,6 +145,7 @@ export const WAITER_SKILLS: WaiterSkill[] = [
   "hall_prep",
   "door",
   "family_waiter",
+  "joker",
 ];
 
 export const WAITER_SKILL_LABELS: Record<WaiterSkill, string> = {
@@ -156,6 +157,7 @@ export const WAITER_SKILL_LABELS: Record<WaiterSkill, string> = {
   hall_prep: "הכנת אולם",
   door: "מלצר דלת",
   family_waiter: "מלצרית משפחה",
+  joker: "ג'וקר",
 };
 
 export const STAFF_DUTY_LABELS: Record<StaffDuty, string> = {

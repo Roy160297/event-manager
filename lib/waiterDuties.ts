@@ -8,22 +8,23 @@ export const PHASE_LABELS: Record<EventPhase, string> = {
 
 // Duties with no table/stand, grouped by when they happen. The reception has a
 // door waiter, hall-prep waiters and a pilot; runners, the family waiter, the
-// hostess and the barista work the whole event. The hall phase has no
-// duties of its own - only stands and tables.
+// hostess and the barista work the whole event. The hall has the joker (a
+// floating waiter) next to its stands and tables.
 export const PHASE_DUTIES: Record<EventPhase, EventDuty[]> = {
   event: ["runner", "family_waiter", "hostess", "barista"],
   reception: ["door", "piloting", "hall_prep"],
-  hall: [],
+  hall: ["joker"],
 };
 
-export const EVENT_DUTIES: EventDuty[] = [...PHASE_DUTIES.event, ...PHASE_DUTIES.reception];
+export const EVENT_DUTIES: EventDuty[] = [...PHASE_DUTIES.event, ...PHASE_DUTIES.reception, ...PHASE_DUTIES.hall];
 
 export function dutyPhase(duty: EventDuty): EventPhase {
-  return PHASE_DUTIES.reception.includes(duty) ? "reception" : "event";
+  if (PHASE_DUTIES.reception.includes(duty)) return "reception";
+  return PHASE_DUTIES.hall.includes(duty) ? "hall" : "event";
 }
 
 // How many people the venue wants on a duty. Duties missing here (piloting,
-// family, hostess, barista) are manual only.
+// family, hostess, barista, joker) are manual only.
 export const DUTY_QUOTAS: Partial<Record<WaiterSkill, number>> = {
   door: 1,
   runner: 2,

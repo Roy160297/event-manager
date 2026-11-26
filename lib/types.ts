@@ -20,7 +20,8 @@ export type WaiterSkill =
   | "table"
   | "hall_prep"
   | "door"
-  | "family_waiter";
+  | "family_waiter"
+  | "joker";
 export type PermissionResource =
   | "events"
   | "guests"
