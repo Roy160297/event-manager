@@ -43,12 +43,13 @@ type FloorPhase = "reception" | "hall";
 // waiter can be busy in one and free in the other:
 //  0. roster rows for family / hostess / barista go to that duty for the whole
 //     event and nothing else;
-//  1. runners and the joker - by skill, for the whole event;
+//  1. runners - by skill, for the whole event;
 //  2. reception: the door waiter, then hall prep - by skill, up to the venue's
 //     numbers (piloting is manual);
 //  3. reception stands: one waiter each - stand-skilled first, anyone free if
 //     there are not enough of them - and then everyone still free clears;
 //  4. hall stands: the same;
+//     (the hall joker is picked by skill before the stands);
 //  5. hall tables: the waiters still free cover them, up to
 //     MAX_TABLES_PER_WAITER each, neighbouring tables together; table-skilled
 //     waiters are used first when there are fewer tables than waiters.

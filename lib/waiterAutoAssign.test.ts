@@ -169,7 +169,7 @@ describe("planSkillAssignments", () => {
     expect(plan.unstaffed).toEqual({ receptionStands: 0, hallStands: 0, tables: 0 });
   });
 
-  it("gives the single joker to one waiter for the whole event, so they get no stand or table", () => {
+  it("gives the single joker to one waiter in the hall only, so they get no stand or table there", () => {
     const plan = planSkillAssignments({
       waiters: [waiter("j", ["joker"]), waiter("j2", ["joker"]), waiter("a")],
       locations: [table("1"), table("2")],
@@ -177,8 +177,10 @@ describe("planSkillAssignments", () => {
     });
     const jokers = plan.assignments.filter((x) => x.role === "joker");
     expect(jokers).toHaveLength(1);
-    expect(jokers[0].phase).toBe("event");
+    expect(jokers[0].phase).toBe("hall");
     const jokerId = jokers[0].waiterId;
-    expect(plan.assignments.filter((x) => x.waiterId === jokerId)).toHaveLength(1);
+    expect(plan.assignments.filter((x) => x.waiterId === jokerId && x.phase === "hall")).toHaveLength(1);
+    // after the reception only - in the reception they clear like everyone else
+    expect(plan.assignments.some((x) => x.waiterId === jokerId && x.phase === "reception")).toBe(true);
   });
 });
